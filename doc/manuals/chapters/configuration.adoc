@@ -128,6 +128,7 @@ individual fields of each CSV line.
 .Descripton of CSV fields in OsmoSGSN CDR file
 [options="header",cols="15%,85%"]
 |===
+|Field Name|Description
 |timestamp|Timestamp in YYYYMMDDhhmmssXXX where XXX are milli-seconds
 |imsi|IMSI causing this CDR
 |imei|IMEI causing this CDR
@@ -135,7 +136,7 @@ individual fields of each CSV line.
 |cell_id|Cell ID in which the MS was registered last
 |lac|Location Area Code in which the MS was registered last
 |hlr|HLR of the subscriber
-|event|Possible events are explained below in <<sgsn-cdr-evt>>
+|event|Possible events are explained below in <<sgsn-cdr-event>>
 |pdp|
 |pdp_duration|duration of the PDP context so far
 |ggsn_addr|GGSN related to the PDP context
