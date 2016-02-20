@@ -1,0 +1,126 @@
+[[chapter_introduction]]
+== Overview
+
+[[intro_overview]]
+=== About OsmoSGSN
+
+OsmoSGSN is the Osmocom implementation of the GPRS SGSN (Serving Gprs
+Support Node) element inside the GPRS network.  The SGSN plays a similar
+central function to the GPRS network as the MSC plays in the GSM
+network.
+
+The SGSN is connected on the downlink side to Gb interfaces of the BSS,
+specifically the PCU inside the BSS.  The SGSN is further connected by
+the GTP protocol to the GGSN which terminates the tunnels towards the
+external packet data network (e.g. IPv4).
+
+OsmoSGSN supports both a PCU that is co-located with(in) the BTS, as
+well as a PCU that is co-located with(in) the BSC.  In combination with
+OsmoNITB/OsmoBSC/OsmoBTS, the PCU is co-located within the BTS.
+
+[[fig-gprs-pcubts]]
+.GPRS network architecture with PCU in BTS
+[graphviz]
+----
+digraph G {
+	rankdir=LR;
+	MS0 [label="MS"]
+	MS1 [label="MS"]
+	MS0->BTS [label="Um"]
+	MS1->BTS [label="Um"]
+	BTS->BSC [label="Abis"]
+	BSC->MSC [label="A"]
+	BTS->PCU [label="pcu_sock"]
+	PCU->SGSN [label="Gb"]
+	SGSN->GGSN [label="GTP"]
+}
+----
+
+=== Software Components
+
+OsmoNITB contains a variety of different software components, which
+we'll quickly describe in this section.
+
+==== Gb Implementation
+
+OsmoSGSN implements the ETSI/3GPP specified Gb interface, including TS
+08.16 (NS), TS 08.18 (BSSGP) and TS 08.64 (LLC) protocols. As transport
+layers for NS, it supports NS/IP (NS encapsulated in UDP/IP), as well as
+NS/FR/GRE/IP.  The latter is provided in order to use a Router with
+Ethernet and Frame Relay interface to convert to actual physical Frame
+Relay medium, which is not directly supported by OsmoSGSN.
+
+The actual Gb Implementation is part of the libosmogb library, which is
+in turn part of the libosmocore software package.  This allows the same
+Gb implementation to be used from osmo-pcu, osmo-gbproxy as well as
+OsmoSGSN.
+
+
+==== GTP Implementation
+
+OsmoSGSN uses the libgtp implementation originating from OpenGGSN. It
+supports both GTPv0 and GTPv1.
+
+
+==== GMM Implementation
+
+The GPRS Mobility Management implementation is quite simplistic at this
+point. It supports the GPRS ATTACH and GPRS ROUTING AREA UPDATE
+procedures, as well as GPRS ATTACH and GPRS DETACH.
+
+However, as the SGSN currently does not implement any type of HLR
+access, it is not able to authenticate a subscriber or even check if the
+subscriber exists at all.  As such, all non-roaming subscribes are
+allowed to attach to OsmoSGSN.  Non-roaming means that the first 5
+digits of the IMSI must match the MCC and MNC of the cell that the
+subscriber is registering to.
+
+
+==== LLC Implementation
+
+The LLC (Logical Link Control) implementation of OsmoSGSN only supports
+non-acknowledged mode, as this is the most common use case in real-world
+GPRS networks.
+
+Furthermore, it does not support IP header nor payload compression at
+this point.  Addition of those features is subject to customer demand or
+user/customer contributions.
+
+The LLC implementation does support LLC encryption.  However, as no HLR
+access is implemented yet, there is no way to enable/configure
+per-subscriber specific keys.
+
+
+==== Session Management Implementation
+
+The session management procedures ACTIVATE PDP CONTEXT and DEACTIVATE
+PDP CONTEXT are supported.  However, no MODIFY PDP CONTEXT and no
+Network-initiated PDP context activation is possible.  This is again
+covering the predominant use cases and configurations in GPRS real-world
+networks while skipping the more esoteric features.
+
+Multiple PDP contexts can be attached by a single MS.
+
+Currently, all PDP contexts are routed to the same GGSN, irrespective of
+the APN used/configured in the MS.  This is sufficient (and actually
+desirable) for small autonomous networks, but of course not suitable for
+real networks in roaming scenarios.  Please contact sysmocom in case you
+require additional features such as DNS-based APN resolving.
+
+=== Limitations
+
+At the time of writing, OsmoSGSN still has a number of limitations,
+which are a result of the demand-driven Open Source development model.
+If you require any of those features, please consider implementing and
+contributing them, or contracting the existing OsmoSGSN developers for
+performing that work.
+
+Known Limitations include:
+
+* No LLC encryption support
+* No interface to the OsmoNITB HLR
+* No paging coordination between SGSN and MSC
+* No SMS over Ps support
+* No IuPS interface for 3G (in progress)
+* No IP header compression
+* No payload compression

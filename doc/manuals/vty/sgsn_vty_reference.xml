@@ -1,0 +1,1355 @@
+<vtydoc xmlns='urn:osmocom:xml:libosmocore:vty:doc:1.0'>
+  <node id='0'>
+  </node>
+  <node id='1'>
+    <command id='show version'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='version' doc='Displays program version' />
+      </params>
+    </command>
+    <command id='show online-help'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='online-help' doc='Online help' />
+      </params>
+    </command>
+    <command id='list'>
+      <params>
+        <param name='list' doc='Print command list' />
+      </params>
+    </command>
+    <command id='exit'>
+      <params>
+        <param name='exit' doc='Exit current mode and down to previous mode' />
+      </params>
+    </command>
+    <command id='help'>
+      <params>
+        <param name='help' doc='Description of the interactive help system' />
+      </params>
+    </command>
+    <command id='enable'>
+      <params>
+        <param name='enable' doc='Turn on privileged mode command' />
+      </params>
+    </command>
+    <command id='terminal length &lt;0-512&gt;'>
+      <params>
+        <param name='terminal' doc='Set terminal line parameters' />
+        <param name='length' doc='Set number of lines on a screen' />
+        <param name='&lt;0-512&gt;' doc='Number of lines on screen (0 for no pausing)' />
+      </params>
+    </command>
+    <command id='terminal no length'>
+      <params>
+        <param name='terminal' doc='Set terminal line parameters' />
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='length' doc='Set number of lines on a screen' />
+      </params>
+    </command>
+    <command id='echo .MESSAGE'>
+      <params>
+        <param name='echo' doc='Echo a message back to the vty' />
+        <param name='.MESSAGE' doc='The message to echo' />
+      </params>
+    </command>
+    <command id='who'>
+      <params>
+        <param name='who' doc='Display who is on vty' />
+      </params>
+    </command>
+    <command id='show history'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='history' doc='Display the session command history' />
+      </params>
+    </command>
+    <command id='logging enable'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='enable' doc='Enables logging to this vty' />
+      </params>
+    </command>
+    <command id='logging disable'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='disable' doc='Disables logging to this vty' />
+      </params>
+    </command>
+    <command id='logging filter all (0|1)'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='filter' doc='Filter log messages' />
+        <param name='all' doc='Do you want to log all messages?' />
+        <param name='0' doc='Only print messages matched by other filters' />
+        <param name='1' doc='Bypass filter and print all messages' />
+      </params>
+    </command>
+    <command id='logging color (0|1)'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='color' doc='Configure color-printing for log messages' />
+        <param name='0' doc='Don&apos;t use color for printing messages' />
+        <param name='1' doc='Use color for printing messages' />
+      </params>
+    </command>
+    <command id='logging timestamp (0|1)'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='timestamp' doc='Configure log message timestamping' />
+        <param name='0' doc='Don&apos;t prefix each log message' />
+        <param name='1' doc='Prefix each log message with current timestamp' />
+      </params>
+    </command>
+    <command id='logging set-log-mask MASK'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='set-log-mask' doc='Set the logmask of this logging target' />
+        <param name='MASK' doc='The logmask to use' />
+      </params>
+    </command>
+    <command id='logging set log mask MASK'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='set' doc='Decide which categories to output.' />
+        <param name='log' doc='Log commands' />
+        <param name='mask' doc='Mask commands' />
+        <param name='MASK' doc='The logmask to use' />
+      </params>
+    </command>
+    <command id='logging level (all|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|lglobal|llapd|linp|lmux|lmi|lmib|lsms) (everything|debug|info|notice|error|fatal)'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='level' doc='Set the log level for a specified category' />
+        <param name='all' doc='Global setting for all subsystems' />
+        <param name='mm' doc='Layer3 Mobility Management (MM)' />
+        <param name='pag' doc='Paging Subsystem' />
+        <param name='meas' doc='Radio Measurement Processing' />
+        <param name='ref' doc='Reference Counting' />
+        <param name='gprs' doc='GPRS Packet Service' />
+        <param name='ns' doc='GPRS Network Service (NS)' />
+        <param name='bssgp' doc='GPRS BSS Gateway Protocol (BSSGP)' />
+        <param name='llc' doc='GPRS Logical Link Control Protocol (LLC)' />
+        <param name='sndcp' doc='GPRS Sub-Network Dependent Control Protocol (SNDCP)' />
+        <param name='lglobal' doc='Library-internal global log family' />
+        <param name='llapd' doc='LAPD in libosmogsm' />
+        <param name='linp' doc='A-bis Intput Subsystem' />
+        <param name='lmux' doc='A-bis B-Subchannel TRAU Frame Multiplex' />
+        <param name='lmi' doc='A-bis Input Driver for Signalling' />
+        <param name='lmib' doc='A-bis Input Driver for B-Channels (voice)' />
+        <param name='lsms' doc='Layer3 Short Message Service (SMS)' />
+        <param name='everything' doc='Log simply everything' />
+        <param name='debug' doc='Log debug messages and higher levels' />
+        <param name='info' doc='Log informational messages and higher levels' />
+        <param name='notice' doc='Log noticable messages and higher levels' />
+        <param name='error' doc='Log error messages and higher levels' />
+        <param name='fatal' doc='Log only fatal messages' />
+      </params>
+    </command>
+    <command id='show logging vty'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='logging' doc='Show current logging configuration' />
+        <param name='vty' doc='Show current logging configuration for this vty' />
+      </params>
+    </command>
+    <command id='show alarms'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='alarms' doc='Show current logging configuration' />
+      </params>
+    </command>
+    <command id='show sgsn'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='sgsn' doc='Display information about the SGSN' />
+      </params>
+    </command>
+    <command id='show mm-context imsi IMSI [pdp]'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='mm-context' doc='MM Context' />
+        <param name='imsi' doc='Identify by IMSI' />
+        <param name='IMSI' doc='IMSI of the MM Context' />
+        <param name='[pdp]' doc='Include PDP Context Information' />
+      </params>
+    </command>
+    <command id='show mm-context all [pdp]'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='mm-context' doc='MM Context' />
+        <param name='all' doc='All MM Contexts' />
+        <param name='[pdp]' doc='Include PDP Context Information' />
+      </params>
+    </command>
+    <command id='show pdp-context all'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='pdp-context' doc='Display information on PDP Context' />
+        <param name='all' doc='Show everything' />
+      </params>
+    </command>
+    <command id='show ns'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='ns' doc='Display information about the NS protocol' />
+      </params>
+    </command>
+    <command id='show ns stats'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='ns' doc='Display information about the NS protocol' />
+        <param name='stats' doc='Include statistics' />
+      </params>
+    </command>
+    <command id='show ns (nsei|nsvc) &lt;0-65535&gt; [stats]'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='ns' doc='Display information about the NS protocol' />
+        <param name='nsei' doc='Select one NSE by its NSE Identifier' />
+        <param name='nsvc' doc='Select one NSE by its NS-VC Identifier' />
+        <param name='&lt;0-65535&gt;' doc='The Identifier of selected type' />
+        <param name='[stats]' doc='Include Statistics' />
+      </params>
+    </command>
+    <command id='logging filter nsvc (nsei|nsvci) &lt;0-65535&gt;'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='filter' doc='Filter log messages' />
+        <param name='nsvc' doc='Filter based on NS Virtual Connection' />
+        <param name='nsei' doc='Identify NS-VC by NSEI' />
+        <param name='nsvci' doc='Identify NS-VC by NSVCI' />
+        <param name='&lt;0-65535&gt;' doc='Numeric identifier' />
+      </params>
+    </command>
+    <command id='show bssgp'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='bssgp' doc='Show information about the BSSGP protocol' />
+      </params>
+    </command>
+    <command id='show bssgp stats'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='bssgp' doc='Show information about the BSSGP protocol' />
+        <param name='stats' doc='Include statistics' />
+      </params>
+    </command>
+    <command id='show bssgp nsei &lt;0-65535&gt; [stats]'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='bssgp' doc='Show information about the BSSGP protocol' />
+        <param name='nsei' doc='Show all BVCs on one NSE' />
+        <param name='&lt;0-65535&gt;' doc='The NSEI' />
+        <param name='[stats]' doc='Include Statistics' />
+      </params>
+    </command>
+    <command id='logging filter bvc nsei &lt;0-65535&gt; bvci &lt;0-65535&gt;'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='filter' doc='Filter log messages' />
+        <param name='bvc' doc='Filter based on BSSGP Virtual Connection' />
+        <param name='nsei' doc='NSEI of the BVC to be filtered' />
+        <param name='&lt;0-65535&gt;' doc='Network Service Entity Identifier (NSEI)' />
+        <param name='bvci' doc='BVCI of the BVC to be filtered' />
+        <param name='&lt;0-65535&gt;' doc='BSSGP Virtual Connection Identifier (BVCI)' />
+      </params>
+    </command>
+    <command id='show llc'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='llc' doc='Display information about the LLC protocol' />
+      </params>
+    </command>
+    <command id='show sndcp'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='sndcp' doc='Display information about the SNDCP protocol' />
+      </params>
+    </command>
+  </node>
+  <node id='2'>
+  </node>
+  <node id='3'>
+    <command id='help'>
+      <params>
+        <param name='help' doc='Description of the interactive help system' />
+      </params>
+    </command>
+    <command id='list'>
+      <params>
+        <param name='list' doc='Print command list' />
+      </params>
+    </command>
+    <command id='write terminal'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+        <param name='terminal' doc='Write to terminal' />
+      </params>
+    </command>
+    <command id='write file'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+        <param name='file' doc='Write to configuration file' />
+      </params>
+    </command>
+    <command id='write memory'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+        <param name='memory' doc='Write configuration to the file (same as write file)' />
+      </params>
+    </command>
+    <command id='write'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+      </params>
+    </command>
+    <command id='show running-config'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='running-config' doc='running configuration' />
+      </params>
+    </command>
+    <command id='exit'>
+      <params>
+        <param name='exit' doc='Exit current mode and down to previous mode' />
+      </params>
+    </command>
+    <command id='disable'>
+      <params>
+        <param name='disable' doc='Turn off privileged mode command' />
+      </params>
+    </command>
+    <command id='configure terminal'>
+      <params>
+        <param name='configure' doc='Configuration from vty interface' />
+        <param name='terminal' doc='Configuration terminal' />
+      </params>
+    </command>
+    <command id='copy running-config startup-config'>
+      <params>
+        <param name='copy' doc='Copy configuration' />
+        <param name='running-config' doc='Copy running config to... ' />
+        <param name='startup-config' doc='Copy running config to startup config (same as write file)' />
+      </params>
+    </command>
+    <command id='show startup-config'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='startup-config' doc='Contentes of startup configuration' />
+      </params>
+    </command>
+    <command id='show version'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='version' doc='Displays program version' />
+      </params>
+    </command>
+    <command id='show online-help'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='online-help' doc='Online help' />
+      </params>
+    </command>
+    <command id='terminal length &lt;0-512&gt;'>
+      <params>
+        <param name='terminal' doc='Set terminal line parameters' />
+        <param name='length' doc='Set number of lines on a screen' />
+        <param name='&lt;0-512&gt;' doc='Number of lines on screen (0 for no pausing)' />
+      </params>
+    </command>
+    <command id='terminal no length'>
+      <params>
+        <param name='terminal' doc='Set terminal line parameters' />
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='length' doc='Set number of lines on a screen' />
+      </params>
+    </command>
+    <command id='echo .MESSAGE'>
+      <params>
+        <param name='echo' doc='Echo a message back to the vty' />
+        <param name='.MESSAGE' doc='The message to echo' />
+      </params>
+    </command>
+    <command id='who'>
+      <params>
+        <param name='who' doc='Display who is on vty' />
+      </params>
+    </command>
+    <command id='show history'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='history' doc='Display the session command history' />
+      </params>
+    </command>
+    <command id='terminal monitor'>
+      <params>
+        <param name='terminal' doc='Set terminal line parameters' />
+        <param name='monitor' doc='Copy debug output to the current terminal line' />
+      </params>
+    </command>
+    <command id='terminal no monitor'>
+      <params>
+        <param name='terminal' doc='Set terminal line parameters' />
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='monitor' doc='Copy debug output to the current terminal line' />
+      </params>
+    </command>
+    <command id='logging enable'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='enable' doc='Enables logging to this vty' />
+      </params>
+    </command>
+    <command id='logging disable'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='disable' doc='Disables logging to this vty' />
+      </params>
+    </command>
+    <command id='logging filter all (0|1)'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='filter' doc='Filter log messages' />
+        <param name='all' doc='Do you want to log all messages?' />
+        <param name='0' doc='Only print messages matched by other filters' />
+        <param name='1' doc='Bypass filter and print all messages' />
+      </params>
+    </command>
+    <command id='logging color (0|1)'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='color' doc='Configure color-printing for log messages' />
+        <param name='0' doc='Don&apos;t use color for printing messages' />
+        <param name='1' doc='Use color for printing messages' />
+      </params>
+    </command>
+    <command id='logging timestamp (0|1)'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='timestamp' doc='Configure log message timestamping' />
+        <param name='0' doc='Don&apos;t prefix each log message' />
+        <param name='1' doc='Prefix each log message with current timestamp' />
+      </params>
+    </command>
+    <command id='logging set-log-mask MASK'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='set-log-mask' doc='Set the logmask of this logging target' />
+        <param name='MASK' doc='The logmask to use' />
+      </params>
+    </command>
+    <command id='logging set log mask MASK'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='set' doc='Decide which categories to output.' />
+        <param name='log' doc='Log commands' />
+        <param name='mask' doc='Mask commands' />
+        <param name='MASK' doc='The logmask to use' />
+      </params>
+    </command>
+    <command id='logging level (all|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|lglobal|llapd|linp|lmux|lmi|lmib|lsms) (everything|debug|info|notice|error|fatal)'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='level' doc='Set the log level for a specified category' />
+        <param name='all' doc='Global setting for all subsystems' />
+        <param name='mm' doc='Layer3 Mobility Management (MM)' />
+        <param name='pag' doc='Paging Subsystem' />
+        <param name='meas' doc='Radio Measurement Processing' />
+        <param name='ref' doc='Reference Counting' />
+        <param name='gprs' doc='GPRS Packet Service' />
+        <param name='ns' doc='GPRS Network Service (NS)' />
+        <param name='bssgp' doc='GPRS BSS Gateway Protocol (BSSGP)' />
+        <param name='llc' doc='GPRS Logical Link Control Protocol (LLC)' />
+        <param name='sndcp' doc='GPRS Sub-Network Dependent Control Protocol (SNDCP)' />
+        <param name='lglobal' doc='Library-internal global log family' />
+        <param name='llapd' doc='LAPD in libosmogsm' />
+        <param name='linp' doc='A-bis Intput Subsystem' />
+        <param name='lmux' doc='A-bis B-Subchannel TRAU Frame Multiplex' />
+        <param name='lmi' doc='A-bis Input Driver for Signalling' />
+        <param name='lmib' doc='A-bis Input Driver for B-Channels (voice)' />
+        <param name='lsms' doc='Layer3 Short Message Service (SMS)' />
+        <param name='everything' doc='Log simply everything' />
+        <param name='debug' doc='Log debug messages and higher levels' />
+        <param name='info' doc='Log informational messages and higher levels' />
+        <param name='notice' doc='Log noticable messages and higher levels' />
+        <param name='error' doc='Log error messages and higher levels' />
+        <param name='fatal' doc='Log only fatal messages' />
+      </params>
+    </command>
+    <command id='show logging vty'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='logging' doc='Show current logging configuration' />
+        <param name='vty' doc='Show current logging configuration for this vty' />
+      </params>
+    </command>
+    <command id='show alarms'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='alarms' doc='Show current logging configuration' />
+      </params>
+    </command>
+    <command id='show sgsn'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='sgsn' doc='Display information about the SGSN' />
+      </params>
+    </command>
+    <command id='show mm-context imsi IMSI [pdp]'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='mm-context' doc='MM Context' />
+        <param name='imsi' doc='Identify by IMSI' />
+        <param name='IMSI' doc='IMSI of the MM Context' />
+        <param name='[pdp]' doc='Include PDP Context Information' />
+      </params>
+    </command>
+    <command id='show mm-context all [pdp]'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='mm-context' doc='MM Context' />
+        <param name='all' doc='All MM Contexts' />
+        <param name='[pdp]' doc='Include PDP Context Information' />
+      </params>
+    </command>
+    <command id='show pdp-context all'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='pdp-context' doc='Display information on PDP Context' />
+        <param name='all' doc='Show everything' />
+      </params>
+    </command>
+    <command id='show ns'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='ns' doc='Display information about the NS protocol' />
+      </params>
+    </command>
+    <command id='show ns stats'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='ns' doc='Display information about the NS protocol' />
+        <param name='stats' doc='Include statistics' />
+      </params>
+    </command>
+    <command id='show ns (nsei|nsvc) &lt;0-65535&gt; [stats]'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='ns' doc='Display information about the NS protocol' />
+        <param name='nsei' doc='Select one NSE by its NSE Identifier' />
+        <param name='nsvc' doc='Select one NSE by its NS-VC Identifier' />
+        <param name='&lt;0-65535&gt;' doc='The Identifier of selected type' />
+        <param name='[stats]' doc='Include Statistics' />
+      </params>
+    </command>
+    <command id='logging filter nsvc (nsei|nsvci) &lt;0-65535&gt;'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='filter' doc='Filter log messages' />
+        <param name='nsvc' doc='Filter based on NS Virtual Connection' />
+        <param name='nsei' doc='Identify NS-VC by NSEI' />
+        <param name='nsvci' doc='Identify NS-VC by NSVCI' />
+        <param name='&lt;0-65535&gt;' doc='Numeric identifier' />
+      </params>
+    </command>
+    <command id='nsvc (nsei|nsvci) &lt;0-65535&gt; (block|unblock|reset)'>
+      <params>
+        <param name='nsvc' doc='Perform an operation on a NSVC' />
+        <param name='nsei' doc='NSEI to identify NS-VC Identifier (NS-VCI)' />
+        <param name='nsvci' doc='NS-VC Identifier (NS-VCI)' />
+        <param name='&lt;0-65535&gt;' doc='The NSEI' />
+        <param name='block' doc='Initiate BLOCK procedure' />
+        <param name='unblock' doc='Initiate UNBLOCK procedure' />
+        <param name='reset' doc='Initiate RESET procedure' />
+      </params>
+    </command>
+    <command id='show bssgp'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='bssgp' doc='Show information about the BSSGP protocol' />
+      </params>
+    </command>
+    <command id='show bssgp stats'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='bssgp' doc='Show information about the BSSGP protocol' />
+        <param name='stats' doc='Include statistics' />
+      </params>
+    </command>
+    <command id='show bssgp nsei &lt;0-65535&gt; [stats]'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='bssgp' doc='Show information about the BSSGP protocol' />
+        <param name='nsei' doc='Show all BVCs on one NSE' />
+        <param name='&lt;0-65535&gt;' doc='The NSEI' />
+        <param name='[stats]' doc='Include Statistics' />
+      </params>
+    </command>
+    <command id='logging filter bvc nsei &lt;0-65535&gt; bvci &lt;0-65535&gt;'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='filter' doc='Filter log messages' />
+        <param name='bvc' doc='Filter based on BSSGP Virtual Connection' />
+        <param name='nsei' doc='NSEI of the BVC to be filtered' />
+        <param name='&lt;0-65535&gt;' doc='Network Service Entity Identifier (NSEI)' />
+        <param name='bvci' doc='BVCI of the BVC to be filtered' />
+        <param name='&lt;0-65535&gt;' doc='BSSGP Virtual Connection Identifier (BVCI)' />
+      </params>
+    </command>
+    <command id='show llc'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='llc' doc='Display information about the LLC protocol' />
+      </params>
+    </command>
+    <command id='show sndcp'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='sndcp' doc='Display information about the SNDCP protocol' />
+      </params>
+    </command>
+  </node>
+  <node id='4'>
+    <command id='help'>
+      <params>
+        <param name='help' doc='Description of the interactive help system' />
+      </params>
+    </command>
+    <command id='list'>
+      <params>
+        <param name='list' doc='Print command list' />
+      </params>
+    </command>
+    <command id='write terminal'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+        <param name='terminal' doc='Write to terminal' />
+      </params>
+    </command>
+    <command id='write file'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+        <param name='file' doc='Write to configuration file' />
+      </params>
+    </command>
+    <command id='write memory'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+        <param name='memory' doc='Write configuration to the file (same as write file)' />
+      </params>
+    </command>
+    <command id='write'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+      </params>
+    </command>
+    <command id='show running-config'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='running-config' doc='running configuration' />
+      </params>
+    </command>
+    <command id='exit'>
+      <params>
+        <param name='exit' doc='Exit current mode and down to previous mode' />
+      </params>
+    </command>
+    <command id='end'>
+      <params>
+        <param name='end' doc='End current mode and change to enable mode.' />
+      </params>
+    </command>
+    <command id='hostname WORD'>
+      <params>
+        <param name='hostname' doc='Set system&apos;s network name' />
+        <param name='WORD' doc='This system&apos;s network name' />
+      </params>
+    </command>
+    <command id='no hostname [HOSTNAME]'>
+      <params>
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='hostname' doc='Reset system&apos;s network name' />
+        <param name='[HOSTNAME]' doc='Host name of this router' />
+      </params>
+    </command>
+    <command id='password (8|) WORD'>
+      <params>
+        <param name='password' doc='Assign the terminal connection password' />
+        <param name='8' doc='Specifies a HIDDEN password will follow' />
+        <param name='' doc='dummy string ' />
+        <param name='WORD' doc='The HIDDEN line password string' />
+      </params>
+    </command>
+    <command id='password LINE'>
+      <params>
+        <param name='password' doc='Assign the terminal connection password' />
+        <param name='LINE' doc='The UNENCRYPTED (cleartext) line password' />
+      </params>
+    </command>
+    <command id='enable password (8|) WORD'>
+      <params>
+        <param name='enable' doc='Modify enable password parameters' />
+        <param name='password' doc='Assign the privileged level password' />
+        <param name='8' doc='Specifies a HIDDEN password will follow' />
+        <param name='' doc='dummy string ' />
+        <param name='WORD' doc='The HIDDEN &apos;enable&apos; password string' />
+      </params>
+    </command>
+    <command id='enable password LINE'>
+      <params>
+        <param name='enable' doc='Modify enable password parameters' />
+        <param name='password' doc='Assign the privileged level password' />
+        <param name='LINE' doc='The UNENCRYPTED (cleartext) &apos;enable&apos; password' />
+      </params>
+    </command>
+    <command id='no enable password'>
+      <params>
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='enable' doc='Modify enable password parameters' />
+        <param name='password' doc='Assign the privileged level password' />
+      </params>
+    </command>
+    <command id='banner motd default'>
+      <params>
+        <param name='banner' doc='Set banner string' />
+        <param name='motd' doc='Strings for motd' />
+        <param name='default' doc='Default string' />
+      </params>
+    </command>
+    <command id='banner motd file [FILE]'>
+      <params>
+        <param name='banner' doc='Set banner' />
+        <param name='motd' doc='Banner for motd' />
+        <param name='file' doc='Banner from a file' />
+        <param name='[FILE]' doc='Filename' />
+      </params>
+    </command>
+    <command id='no banner motd'>
+      <params>
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='banner' doc='Set banner string' />
+        <param name='motd' doc='Strings for motd' />
+      </params>
+    </command>
+    <command id='service terminal-length &lt;0-512&gt;'>
+      <params>
+        <param name='service' doc='Set up miscellaneous service' />
+        <param name='terminal-length' doc='System wide terminal length configuration' />
+        <param name='&lt;0-512&gt;' doc='Number of lines of VTY (0 means no line control)' />
+      </params>
+    </command>
+    <command id='no service terminal-length [&lt;0-512&gt;]'>
+      <params>
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='service' doc='Set up miscellaneous service' />
+        <param name='terminal-length' doc='System wide terminal length configuration' />
+        <param name='[&lt;0-512&gt;]' doc='Number of lines of VTY (0 means no line control)' />
+      </params>
+    </command>
+    <command id='line vty'>
+      <params>
+        <param name='line' doc='Configure a terminal line' />
+        <param name='vty' doc='Virtual terminal' />
+      </params>
+    </command>
+    <command id='service advanced-vty'>
+      <params>
+        <param name='service' doc='Set up miscellaneous service' />
+        <param name='advanced-vty' doc='Enable advanced mode vty interface' />
+      </params>
+    </command>
+    <command id='no service advanced-vty'>
+      <params>
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='service' doc='Set up miscellaneous service' />
+        <param name='advanced-vty' doc='Enable advanced mode vty interface' />
+      </params>
+    </command>
+    <command id='show history'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='history' doc='Display the session command history' />
+      </params>
+    </command>
+    <command id='log stderr'>
+      <params>
+        <param name='log' doc='Configure logging sub-system' />
+        <param name='stderr' doc='Logging via STDERR of the process' />
+      </params>
+    </command>
+    <command id='no log stderr'>
+      <params>
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='log' doc='Configure logging sub-system' />
+        <param name='stderr' doc='Logging via STDERR of the process' />
+      </params>
+    </command>
+    <command id='log file .FILENAME'>
+      <params>
+        <param name='log' doc='Configure logging sub-system' />
+        <param name='file' doc='Logging to text file' />
+        <param name='.FILENAME' doc='Filename' />
+      </params>
+    </command>
+    <command id='no log file .FILENAME'>
+      <params>
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='log' doc='Configure logging sub-system' />
+        <param name='file' doc='Logging to text file' />
+        <param name='.FILENAME' doc='Filename' />
+      </params>
+    </command>
+    <command id='log alarms &lt;2-32700&gt;'>
+      <params>
+        <param name='log' doc='Configure logging sub-system' />
+        <param name='alarms' doc='Logging alarms to osmo_strrb' />
+        <param name='&lt;2-32700&gt;' doc='Maximum number of messages to log' />
+      </params>
+    </command>
+    <command id='no log alarms'>
+      <params>
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='log' doc='Configure logging sub-system' />
+        <param name='alarms' doc='Logging alarms to osmo_strrb' />
+      </params>
+    </command>
+    <command id='log syslog (authpriv|cron|daemon|ftp|lpr|mail|news|user|uucp)'>
+      <params>
+        <param name='log' doc='Configure logging sub-system' />
+        <param name='syslog' doc='Logging via syslog' />
+        <param name='authpriv' doc='Security/authorization messages facility' />
+        <param name='cron' doc='Clock daemon (cron/at) facility' />
+        <param name='daemon' doc='General system daemon facility' />
+        <param name='ftp' doc='Ftp daemon facility' />
+        <param name='lpr' doc='Line printer facility' />
+        <param name='mail' doc='Mail facility' />
+        <param name='news' doc='News facility' />
+        <param name='user' doc='Generic facility' />
+        <param name='uucp' doc='UUCP facility' />
+      </params>
+    </command>
+    <command id='log syslog local &lt;0-7&gt;'>
+      <params>
+        <param name='log' doc='Configure logging sub-system' />
+        <param name='syslog' doc='Logging via syslog' />
+        <param name='local' doc='Syslog LOCAL facility' />
+        <param name='&lt;0-7&gt;' doc='Local facility number' />
+      </params>
+    </command>
+    <command id='no log syslog'>
+      <params>
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='log' doc='Configure logging sub-system' />
+        <param name='syslog' doc='Logging via syslog' />
+      </params>
+    </command>
+    <command id='sgsn'>
+      <params>
+        <param name='sgsn' doc='Configure the SGSN' />
+      </params>
+    </command>
+    <command id='ns'>
+      <params>
+        <param name='ns' doc='Configure the GPRS Network Service' />
+      </params>
+    </command>
+    <command id='bssgp'>
+      <params>
+        <param name='bssgp' doc='Configure the GPRS BSS Gateway Protocol' />
+      </params>
+    </command>
+  </node>
+  <node id='7'>
+    <command id='help'>
+      <params>
+        <param name='help' doc='Description of the interactive help system' />
+      </params>
+    </command>
+    <command id='list'>
+      <params>
+        <param name='list' doc='Print command list' />
+      </params>
+    </command>
+    <command id='write terminal'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+        <param name='terminal' doc='Write to terminal' />
+      </params>
+    </command>
+    <command id='write file'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+        <param name='file' doc='Write to configuration file' />
+      </params>
+    </command>
+    <command id='write memory'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+        <param name='memory' doc='Write configuration to the file (same as write file)' />
+      </params>
+    </command>
+    <command id='write'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+      </params>
+    </command>
+    <command id='show running-config'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='running-config' doc='running configuration' />
+      </params>
+    </command>
+    <command id='exit'>
+      <params>
+        <param name='exit' doc='Exit current mode and down to previous mode' />
+      </params>
+    </command>
+    <command id='end'>
+      <params>
+        <param name='end' doc='End current mode and change to enable mode.' />
+      </params>
+    </command>
+    <command id='logging filter all (0|1)'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='filter' doc='Filter log messages' />
+        <param name='all' doc='Do you want to log all messages?' />
+        <param name='0' doc='Only print messages matched by other filters' />
+        <param name='1' doc='Bypass filter and print all messages' />
+      </params>
+    </command>
+    <command id='logging color (0|1)'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='color' doc='Configure color-printing for log messages' />
+        <param name='0' doc='Don&apos;t use color for printing messages' />
+        <param name='1' doc='Use color for printing messages' />
+      </params>
+    </command>
+    <command id='logging timestamp (0|1)'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='timestamp' doc='Configure log message timestamping' />
+        <param name='0' doc='Don&apos;t prefix each log message' />
+        <param name='1' doc='Prefix each log message with current timestamp' />
+      </params>
+    </command>
+    <command id='logging level (all|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|lglobal|llapd|linp|lmux|lmi|lmib|lsms) (everything|debug|info|notice|error|fatal)'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='level' doc='Set the log level for a specified category' />
+        <param name='all' doc='Global setting for all subsystems' />
+        <param name='mm' doc='Layer3 Mobility Management (MM)' />
+        <param name='pag' doc='Paging Subsystem' />
+        <param name='meas' doc='Radio Measurement Processing' />
+        <param name='ref' doc='Reference Counting' />
+        <param name='gprs' doc='GPRS Packet Service' />
+        <param name='ns' doc='GPRS Network Service (NS)' />
+        <param name='bssgp' doc='GPRS BSS Gateway Protocol (BSSGP)' />
+        <param name='llc' doc='GPRS Logical Link Control Protocol (LLC)' />
+        <param name='sndcp' doc='GPRS Sub-Network Dependent Control Protocol (SNDCP)' />
+        <param name='lglobal' doc='Library-internal global log family' />
+        <param name='llapd' doc='LAPD in libosmogsm' />
+        <param name='linp' doc='A-bis Intput Subsystem' />
+        <param name='lmux' doc='A-bis B-Subchannel TRAU Frame Multiplex' />
+        <param name='lmi' doc='A-bis Input Driver for Signalling' />
+        <param name='lmib' doc='A-bis Input Driver for B-Channels (voice)' />
+        <param name='lsms' doc='Layer3 Short Message Service (SMS)' />
+        <param name='everything' doc='Log simply everything' />
+        <param name='debug' doc='Log debug messages and higher levels' />
+        <param name='info' doc='Log informational messages and higher levels' />
+        <param name='notice' doc='Log noticable messages and higher levels' />
+        <param name='error' doc='Log error messages and higher levels' />
+        <param name='fatal' doc='Log only fatal messages' />
+      </params>
+    </command>
+    <command id='logging filter nsvc (nsei|nsvci) &lt;0-65535&gt;'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='filter' doc='Filter log messages' />
+        <param name='nsvc' doc='Filter based on NS Virtual Connection' />
+        <param name='nsei' doc='Identify NS-VC by NSEI' />
+        <param name='nsvci' doc='Identify NS-VC by NSVCI' />
+        <param name='&lt;0-65535&gt;' doc='Numeric identifier' />
+      </params>
+    </command>
+    <command id='logging filter bvc nsei &lt;0-65535&gt; bvci &lt;0-65535&gt;'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='filter' doc='Filter log messages' />
+        <param name='bvc' doc='Filter based on BSSGP Virtual Connection' />
+        <param name='nsei' doc='NSEI of the BVC to be filtered' />
+        <param name='&lt;0-65535&gt;' doc='Network Service Entity Identifier (NSEI)' />
+        <param name='bvci' doc='BVCI of the BVC to be filtered' />
+        <param name='&lt;0-65535&gt;' doc='BSSGP Virtual Connection Identifier (BVCI)' />
+      </params>
+    </command>
+  </node>
+  <node id='8'>
+    <command id='help'>
+      <params>
+        <param name='help' doc='Description of the interactive help system' />
+      </params>
+    </command>
+    <command id='list'>
+      <params>
+        <param name='list' doc='Print command list' />
+      </params>
+    </command>
+    <command id='write terminal'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+        <param name='terminal' doc='Write to terminal' />
+      </params>
+    </command>
+    <command id='write file'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+        <param name='file' doc='Write to configuration file' />
+      </params>
+    </command>
+    <command id='write memory'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+        <param name='memory' doc='Write configuration to the file (same as write file)' />
+      </params>
+    </command>
+    <command id='write'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+      </params>
+    </command>
+    <command id='show running-config'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='running-config' doc='running configuration' />
+      </params>
+    </command>
+    <command id='exit'>
+      <params>
+        <param name='exit' doc='Exit current mode and down to previous mode' />
+      </params>
+    </command>
+    <command id='end'>
+      <params>
+        <param name='end' doc='End current mode and change to enable mode.' />
+      </params>
+    </command>
+    <command id='login'>
+      <params>
+        <param name='login' doc='Enable password checking' />
+      </params>
+    </command>
+    <command id='no login'>
+      <params>
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='login' doc='Enable password checking' />
+      </params>
+    </command>
+  </node>
+  <node id='11'>
+    <command id='help'>
+      <params>
+        <param name='help' doc='Description of the interactive help system' />
+      </params>
+    </command>
+    <command id='list'>
+      <params>
+        <param name='list' doc='Print command list' />
+      </params>
+    </command>
+    <command id='write terminal'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+        <param name='terminal' doc='Write to terminal' />
+      </params>
+    </command>
+    <command id='write file'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+        <param name='file' doc='Write to configuration file' />
+      </params>
+    </command>
+    <command id='write memory'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+        <param name='memory' doc='Write configuration to the file (same as write file)' />
+      </params>
+    </command>
+    <command id='write'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+      </params>
+    </command>
+    <command id='show running-config'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='running-config' doc='running configuration' />
+      </params>
+    </command>
+    <command id='exit'>
+      <params>
+        <param name='exit' doc='Exit current mode and down to previous mode' />
+      </params>
+    </command>
+    <command id='end'>
+      <params>
+        <param name='end' doc='End current mode and change to enable mode.' />
+      </params>
+    </command>
+    <command id='nse &lt;0-65535&gt; nsvci &lt;0-65534&gt;'>
+      <params>
+        <param name='nse' doc='Persistent NS Entity' />
+        <param name='&lt;0-65535&gt;' doc='NS Entity ID (NSEI)' />
+        <param name='nsvci' doc='NS Virtual Connection' />
+        <param name='&lt;0-65534&gt;' doc='NS Virtual Connection ID (NSVCI)' />
+      </params>
+    </command>
+    <command id='nse &lt;0-65535&gt; remote-ip A.B.C.D'>
+      <params>
+        <param name='nse' doc='Persistent NS Entity' />
+        <param name='&lt;0-65535&gt;' doc='NS Entity ID (NSEI)' />
+        <param name='remote-ip' doc='Remote IP Address' />
+        <param name='A.B.C.D' doc='Remote IP Address' />
+      </params>
+    </command>
+    <command id='nse &lt;0-65535&gt; remote-port &lt;0-65535&gt;'>
+      <params>
+        <param name='nse' doc='Persistent NS Entity' />
+        <param name='&lt;0-65535&gt;' doc='NS Entity ID (NSEI)' />
+        <param name='remote-port' doc='Remote UDP Port' />
+        <param name='&lt;0-65535&gt;' doc='Remote UDP Port Number' />
+      </params>
+    </command>
+    <command id='nse &lt;0-65535&gt; fr-dlci &lt;16-1007&gt;'>
+      <params>
+        <param name='nse' doc='Persistent NS Entity' />
+        <param name='&lt;0-65535&gt;' doc='NS Entity ID (NSEI)' />
+        <param name='fr-dlci' doc='Frame Relay DLCI' />
+        <param name='&lt;16-1007&gt;' doc='Frame Relay DLCI Number' />
+      </params>
+    </command>
+    <command id='nse &lt;0-65535&gt; encapsulation (udp|framerelay-gre)'>
+      <params>
+        <param name='nse' doc='Persistent NS Entity' />
+        <param name='&lt;0-65535&gt;' doc='NS Entity ID (NSEI)' />
+        <param name='encapsulation' doc='Encapsulation for NS' />
+        <param name='udp' doc='UDP/IP Encapsulation' />
+        <param name='framerelay-gre' doc='Frame-Relay/GRE/IP Encapsulation' />
+      </params>
+    </command>
+    <command id='nse &lt;0-65535&gt; remote-role (sgsn|bss)'>
+      <params>
+        <param name='nse' doc='Persistent NS Entity' />
+        <param name='&lt;0-65535&gt;' doc='NS Entity ID (NSEI)' />
+        <param name='remote-role' doc='Remote NSE Role' />
+        <param name='sgsn' doc='Remote Peer is SGSN' />
+        <param name='bss' doc='Remote Peer is BSS' />
+      </params>
+    </command>
+    <command id='no nse &lt;0-65535&gt;'>
+      <params>
+        <param name='no' doc='Delete Persistent NS Entity' />
+        <param name='nse' doc='Delete Persistent NS Entity' />
+        <param name='&lt;0-65535&gt;' doc='NS Entity ID (NSEI)' />
+      </params>
+    </command>
+    <command id='timer (tns-block|tns-block-retries|tns-reset|tns-reset-retries|tns-test|tns-alive|tns-alive-retries) &lt;0-65535&gt;'>
+      <params>
+        <param name='timer' doc='Network Service Timer' />
+        <param name='tns-block' doc='(un)blocking Timer (Tns-block) timeout' />
+        <param name='tns-block-retries' doc='(un)blocking Timer (Tns-block) number of retries' />
+        <param name='tns-reset' doc='Reset Timer (Tns-reset) timeout' />
+        <param name='tns-reset-retries' doc='Reset Timer (Tns-reset) number of retries' />
+        <param name='tns-test' doc='Test Timer (Tns-test) timeout' />
+        <param name='tns-alive' doc='Alive Timer (Tns-alive) timeout' />
+        <param name='tns-alive-retries' doc='Alive Timer (Tns-alive) number of retries' />
+        <param name='&lt;0-65535&gt;' doc='Timer Value' />
+      </params>
+    </command>
+    <command id='encapsulation udp local-ip A.B.C.D'>
+      <params>
+        <param name='encapsulation' doc='NS encapsulation options' />
+        <param name='udp' doc='NS over UDP Encapsulation' />
+        <param name='local-ip' doc='Set the IP address on which we listen for NS/UDP' />
+        <param name='A.B.C.D' doc='IP Address' />
+      </params>
+    </command>
+    <command id='encapsulation udp local-port &lt;0-65535&gt;'>
+      <params>
+        <param name='encapsulation' doc='NS encapsulation options' />
+        <param name='udp' doc='NS over UDP Encapsulation' />
+        <param name='local-port' doc='Set the UDP port on which we listen for NS/UDP' />
+        <param name='&lt;0-65535&gt;' doc='UDP port number' />
+      </params>
+    </command>
+    <command id='encapsulation udp dscp &lt;0-255&gt;'>
+      <params>
+        <param name='encapsulation' doc='NS encapsulation options' />
+        <param name='udp' doc='NS over UDP Encapsulation' />
+        <param name='dscp' doc='Set DSCP/TOS on the UDP socket' />
+        <param name='&lt;0-255&gt;' doc='DSCP Value' />
+      </params>
+    </command>
+    <command id='encapsulation framerelay-gre enabled (1|0)'>
+      <params>
+        <param name='encapsulation' doc='NS encapsulation options' />
+        <param name='framerelay-gre' doc='NS over Frame Relay over GRE Encapsulation' />
+        <param name='enabled' doc='Enable or disable Frame Relay over GRE' />
+        <param name='1' doc='Enable' />
+        <param name='0' doc='Disable' />
+      </params>
+    </command>
+    <command id='encapsulation framerelay-gre local-ip A.B.C.D'>
+      <params>
+        <param name='encapsulation' doc='NS encapsulation options' />
+        <param name='framerelay-gre' doc='NS over Frame Relay over GRE Encapsulation' />
+        <param name='local-ip' doc='Set the IP address on which we listen for NS/FR/GRE' />
+        <param name='A.B.C.D' doc='IP Address' />
+      </params>
+    </command>
+  </node>
+  <node id='12'>
+    <command id='help'>
+      <params>
+        <param name='help' doc='Description of the interactive help system' />
+      </params>
+    </command>
+    <command id='list'>
+      <params>
+        <param name='list' doc='Print command list' />
+      </params>
+    </command>
+    <command id='write terminal'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+        <param name='terminal' doc='Write to terminal' />
+      </params>
+    </command>
+    <command id='write file'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+        <param name='file' doc='Write to configuration file' />
+      </params>
+    </command>
+    <command id='write memory'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+        <param name='memory' doc='Write configuration to the file (same as write file)' />
+      </params>
+    </command>
+    <command id='write'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+      </params>
+    </command>
+    <command id='show running-config'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='running-config' doc='running configuration' />
+      </params>
+    </command>
+    <command id='exit'>
+      <params>
+        <param name='exit' doc='Exit current mode and down to previous mode' />
+      </params>
+    </command>
+    <command id='end'>
+      <params>
+        <param name='end' doc='End current mode and change to enable mode.' />
+      </params>
+    </command>
+  </node>
+  <node id='21'>
+    <command id='help'>
+      <params>
+        <param name='help' doc='Description of the interactive help system' />
+      </params>
+    </command>
+    <command id='list'>
+      <params>
+        <param name='list' doc='Print command list' />
+      </params>
+    </command>
+    <command id='write terminal'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+        <param name='terminal' doc='Write to terminal' />
+      </params>
+    </command>
+    <command id='write file'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+        <param name='file' doc='Write to configuration file' />
+      </params>
+    </command>
+    <command id='write memory'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+        <param name='memory' doc='Write configuration to the file (same as write file)' />
+      </params>
+    </command>
+    <command id='write'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+      </params>
+    </command>
+    <command id='show running-config'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='running-config' doc='running configuration' />
+      </params>
+    </command>
+    <command id='exit'>
+      <params>
+        <param name='exit' doc='Exit current mode and down to previous mode' />
+      </params>
+    </command>
+    <command id='end'>
+      <params>
+        <param name='end' doc='End current mode and change to enable mode.' />
+      </params>
+    </command>
+    <command id='gtp local-ip A.B.C.D'>
+      <params>
+        <param name='gtp' doc='GTP Parameters' />
+        <param name='local-ip' doc='Set the IP address for the local GTP bind' />
+        <param name='A.B.C.D' doc='IPv4 Address' />
+      </params>
+    </command>
+    <command id='ggsn &lt;0-255&gt; remote-ip A.B.C.D'>
+      <params>
+        <param name='ggsn' doc='Configure the GGSN information' />
+        <param name='&lt;0-255&gt;' doc='GGSN Number' />
+        <param name='remote-ip' doc='IP information' />
+        <param name='A.B.C.D' doc='IPv4 Address' />
+      </params>
+    </command>
+    <command id='ggsn &lt;0-255&gt; gtp-version (0|1)'>
+      <params>
+        <param name='ggsn' doc='Configure the GGSN information' />
+        <param name='&lt;0-255&gt;' doc='GGSN Number' />
+        <param name='gtp-version' doc='GTP Version' />
+        <param name='0' doc='Version 0' />
+        <param name='1' doc='Version 1' />
+      </params>
+    </command>
+    <command id='imsi-acl (add|del) IMSI'>
+      <params>
+        <param name='imsi-acl' doc='Access Control List of foreign IMSIs' />
+        <param name='add' doc='Add IMSI to ACL' />
+        <param name='del' doc='Remove IMSI from ACL' />
+        <param name='IMSI' doc='IMSI of subscriber' />
+      </params>
+    </command>
+    <command id='auth-policy (accept-all|closed)'>
+      <params>
+        <param name='auth-policy' doc='Autorization Policy of SGSN' />
+        <param name='accept-all' doc='Accept all IMSIs (DANGEROUS' />
+        <param name='closed' doc='Accept only home network subscribers or those in ACL' />
+      </params>
+    </command>
+  </node>
+</vtydoc>

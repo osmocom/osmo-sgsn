@@ -1,0 +1,35 @@
+== Running OsmoSGSN
+
+The OsmoSGSN executable (`osmo-sgsn`) offers the following command-line
+options:
+
+
+=== SYNOPSIS
+
+*osmo-sgsn* [-h|-V] [-d 'DBGMASK'] [-D] [-c 'CONFIGFILE'] [-s] [-e 'LOGLEVEL'] 
+
+
+=== OPTIONS
+
+*-h, --help*::
+	Print a short help message about the supported options
+*-V, --version*::
+	Print the compile-time version number of the OsmoBTS program
+*-d, --debug 'DBGMASK','DBGLEVELS'*::
+	Set the log subsystems and levels for logging to stderr. This
+	has mostly been superseded by VTY-based logging configuration,
+	see <<logging>> for further information.
+*-D, --daemonize*::
+	Fork the process as a daemon into background.
+*-c, --config-file 'CONFIGFILE'*::
+	Specify the file and path name of the configuration file to be
+	used. If none is specified, use `osmo_sgsn.cfg` in the current
+	working directory.
+*-s, --disable-color*::
+	Disable colors for logging to stderr. This has mostly been
+	deprecated by VTY based logging configuration, see <<logging>>
+	for more information.
+*-e, --log-level 'LOGLEVEL'*::
+	Set the global log level for logging to stderr. This has mostly
+	been deprecated by VTY based logging configuration, see
+	<<logging>> for more information.

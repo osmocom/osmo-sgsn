@@ -1,0 +1,163 @@
+== Configuring OsmoSGSN
+
+Contrary to other network elements (like OsmoBSC, OsmoNITB), the
+OsmoSGSN has a relatively simple configuration.
+
+On the one hand, this is primary because the PCU configuration happens
+from the BSC side.
+
+On the other hand, it is because the Gb interface does not need an
+explicit configuration of all each PCU connecting to the SGSN.  The
+administrator only has to ensure that the NS and BSSGP layer identities
+(NSEI, NSVCI, BVCI) are unique for each PCU connecting to the SGSN.
+
+=== Configuring the Gp interface
+
+The Gp interface is the GTP-C and GTP-U based interface between the SGSN
+and the GGSNs.  It is implemented via UDP on well-known source and
+destination ports.
+
+When a MS requests establishment of a PDP context, it specifies the APN
+(Access Point Name) to which the context shall be established.  This APN
+determines which GGSN shall be used, and that in turn determines which
+external IP network the MS will be connected to.
+
+There are two modes in which GGSNs can be configured:
+
+. static GGSN/APN configuration
+. dynamic GGSN/APN configuration
+
+==== Static GGSN/APN configuration
+
+In this mode, there is a static list of GGSNs and APNs configured in
+OsmoSGSN via the VTY / config file.
+
+This is a non-standard method outside of the 3GPP specifications for the
+SGSN, and is typically only used in private/small GPRS networks without
+any access to a GRX.
+
+.Example: Static GGSN/APN configuration (single catch-all GGSN)
+----
+OsmoSGSN(config-sgsn)# gtp local-ip 172.0.0.1 <1>
+OsmoSGSN(config-sgsn)# ggsn 0 remote-ip 127.0.0.2 <2>
+OsmoSGSN(config-sgsn)# ggsn 0 gtp-version 1 <3>
+OsmoSGSN(config-sgsn)# apn * ggsn 0 <4>
+----
+<1> Configure the local IP address at the SGSN used for Gp/GTP
+<2> Specify the remote IP address of the GGSN (for GGSN 0)
+<3> Specify the GTP protocol version used for GGSN 0
+<4> Route all APN names to GGSN 0
+
+
+==== Dynamic GGSN/APN configuration
+
+In this mode, the SGSN will use a DNS-based method to perform the lookup
+from the APN (as specified by the MS) towards the GGSN IP address.
+
+This is the official method as per the 3GPP specifications for the SGSN,
+and what is used on GRX.
+
+.Example: Dynamic GGSN/APN configuration
+----
+OsmoSGSN(config-sgsn)# gtp local-ip 192.168.0.11 <1>
+OsmoSGSN(config-sgsn)# ggsn dynamic <2>
+OsmoSGSN(config-sgsn)# grx-dns-add 1.2.3.4 <3>
+----
+<1> Configure the local IP address at the SGSN used for Gp/GTP
+<2> Enable the dynamic GGSN resolving mode
+<3> Specify the IP address of a DNS server for APN resolution
+
+
+=== Subscriber Configuration
+
+As opposed to OsmoNITB, OsmoSGSN does not feature a built-in HLR.
+
+It can thus operate only in the following two modes:
+
+. Accessing an external HLR (or HLR gateway) via the GSUP protocol
+. Accepting subscribers based on internal ACL (access control list)
+
+==== Accessing an external HLR via GSUP
+
+The non-standard GSUP protocol was created to provide OsmoSGSN with
+access to an external HLR while avoiding the complexities of the
+TCAP/MAP protocol stack commonly used by HLRs.
+
+A custom HLR could either directly implement GSUP, or an external gateway
+can be used to convert GSUP to the respective MAP operations.
+
+The primitives/operations of GSUP are modelled to have a 1:1
+correspondence to their MAP counterparts.  However, the encoding is much
+simplified by use of a binary TLV encoding similar to Layer 3 of
+GSM/GPRS.
+
+GSUP performs a challenge-response authentication protocol called OAP,
+which uses the standard MILEAGE algorithm for mutual authentication
+between OsmoSGSN and the HLR/HLR-GW.
+
+[[sgsn-ex-gsup]]
+.Example: Using an external HLR via GSUP
+----
+OsmoSGSN(config-sgsn)# gsup remote-ip 2.3.4.5 <1>
+OsmoSGSN(config-sgsn)# gsup remote-port 10000 <2>
+OsmoSGSN(config-sgsn)# gsup oap-k 000102030405060708090a0b0c0d0e0f <3>
+OsmoSGSN(config-sgsn)# gsup oap-opc 101112131415161718191a1b1c1d1e1f <4>
+----
+<1> Configure the IP address of the (remote) HLR or HLR-GW
+<2> Configure the TCP port of the (remote) HLR or HLR-GW
+<3> Specify the OAP shared key
+<4> Specify the OAP shared OPC
+
+
+=== CDR configuration
+
+OsmoSGSN can write a text log file containing CDR (call data records),
+which are commonly used for accounting/billing purpose.
+
+.Example: CDR configuration
+----
+OsmoSGSN(config-sgsn)# cdr filename /var/log/osmosgsn.cdr
+OsmoSGSN(config-sgsn)# cdr interval 600 <1>
+----
+<1> Periodically log existing PDP contexts every 600 seconds (10 min)
+
+The CDR file is a simple CSV file including a header line naming the
+individual fields of each CSV line.
+
+[[sgsn-cdr]]
+.Descripton of CSV fields in OsmoSGSN CDR file
+[options="header",cols="15%,85%"]
+|===
+|timestamp|Timestamp in YYYYMMDDhhmmssXXX where XXX are milli-seconds
+|imsi|IMSI causing this CDR
+|imei|IMEI causing this CDR
+|msisdn|MSISDN causing this CDR (if known)
+|cell_id|Cell ID in which the MS was registered last
+|lac|Location Area Code in which the MS was registered last
+|hlr|HLR of the subscriber
+|event|Possible events are explained below in <<sgsn-cdr-evt>>
+|pdp|
+|pdp_duration|duration of the PDP context so far
+|ggsn_addr|GGSN related to the PDP context
+|sgsn_addr|SGSN related to the PDP context
+|apni|APN identifier of the PDP context
+|eua_addr|IP address allocated to the PDP context
+|vol_in|Number of bytes in MO direction
+|vol_out|Number of bytes in MT direction
+|charging_id|Related charging ID
+|===
+
+[[sgsn-cdr-event]]
+.Description of OsmoSGSN CDR Events
+[options="header",cols="15%,85%"]
+|===
+|Event|Description
+|attach|GMM ATTACH COMPLETE about to be sent to MS
+|update|GMM ROUTING AREA UPDATE COMPLETE about to be sent to MS
+|detach|GMM DETACH REQUEST received from MS
+|free|Release of the MM context memory
+|pdp-act|GTP CREATE PDP CONTEXT CONFIRM received from GGSN
+|pdp-deact|GTP DELETE PDP CONTEXT CONFIRM received from GGSN
+|pdp-terminate|Forced PDP context termination during MM context release
+|pdp-free|Release of the PDP context memory
+|===
