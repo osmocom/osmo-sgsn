@@ -29,14 +29,14 @@ By default, the following identifiers should be used:
 * IPA OSMO protocol extension: 0x05
 
 For more information about the IPA multiplex, please see the 'OsmoBTS
-Abis/IP Specifiation'.
+Abis/IP Specification'.
 
 === Procedures
 
 ==== Authentication management
 
 The SGSN sends a SEND_AUTHENTICATION_INFO_REQ message containing the MS's IMSI
-to the peer.  On errors, especially if authentication info is not availabe for
+to the peer.  On errors, especially if authentication info is not available for
 that IMSI, the peer returns a SEND_AUTHENTICATION_INFO_ERR message.  Otherwise
 the peer returns a SEND_AUTHENTICATION_INFO_RES message. If this message
 contains at least one authentication tuple, the SGSN replaces all tuples that

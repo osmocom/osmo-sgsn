@@ -125,7 +125,7 @@ The CDR file is a simple CSV file including a header line naming the
 individual fields of each CSV line.
 
 [[sgsn-cdr]]
-.Descripton of CSV fields in OsmoSGSN CDR file
+.Description of CSV fields in OsmoSGSN CDR file
 [options="header",cols="15%,85%"]
 |===
 |Field Name|Description
