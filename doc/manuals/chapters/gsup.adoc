@@ -4,14 +4,29 @@
 === General
 
 This chapter describes the remote protocol that is used by the SGSN to update
-and manage the local subscriber list. The protocol and the messages are
-designed after the corresponding MAP messages (see 3GPP TS 09.02) with the
-following differences:
-
-* The encoding uses TLV structures instead of ASN.1 encodings
-* Segmentation is not used
+and manage the local subscriber list.  Functionally, it resembles the
+interface between the SGSN on the one hand side, and HLR/AUC on the
+other side.
 
 For more information, see the specification of the Gr interface (3GPP TS 03.60).
+
+Traditionally, the GSM MAP (Mobile Application Part) protocol is used
+for this purpose, running on top of a full telecom signalling protocol
+stck of MTP2/MTP3/SCCP/TCAP, or any of the SIGTRAN alternatvives.
+
+In order to avoid many of the complexities of MAP, which are difficult
+to implement in the plain C language evnironment of the Osmocom
+cellular network elements like the SGSN, we introduce the GSUP
+protocol.
+
+The GSUP protocol and the messages are designed after the
+corresponding MAP messages (see 3GPP TS 09.02) with the following
+main differences:
+
+* The encoding uses TLV structures instead of ASN.1 BER
+* Segmentation is not used, i.e. we rely on the fact that the
+  underlying transport protocol can transport signalling messages of
+  any size.
 
 === Connection
 
@@ -43,6 +58,46 @@ contains at least one authentication tuple, the SGSN replaces all tuples that
 are assigned to the subscriber. If the message doesn't contain any tuple the
 SGSN may reject the Attach Request. (see 3GPP TS 09.02, 25.5.6)
 
+.Send Authentication Info (Normal Case)
+["mscgen"]
+----
+msc {
+  hscale="1.5";
+  SGSN [label="SGSN"], Peer [label="Network Peer (HLR)"];
+
+  SGSN -> Peer [label="SEND AUTHENTICATION INFO REQUEST (IMSI)"];
+  Peer -> SGSN [label="SEND AUTHENTICATION INFO RESPONSE (Tuples)"];
+}
+----
+
+.Send Authentication Info (Erroneous Case)
+["mscgen"]
+----
+msc {
+  hscale="1.5";
+  SGSN [label="SGSN"], Peer [label="Network Peer (HLR)"];
+
+  SGSN -> Peer [label="SEND AUTHENTICATION INFO REQUEST (IMSI)"];
+  Peer -> SGSN [label="SEND AUTHENTICATION INFO ERROR (Cause)"];
+}
+----
+
+==== Reporting of Authentication Failure
+
+Using this procedure, the SGSN reports authentication failures to the
+HLR.
+
+.Authentication Failure Report (Normal Case)
+["mscgen"]
+----
+msc {
+  hscale="1.5";
+  SGSN [label="SGSN"], Peer [label="Network Peer (HLR)"];
+
+  SGSN -> Peer [label="AUTHENTICATION FAILURE REPORT (IMSI)"];
+}
+----
+
 ==== Location Updating
 
 The SGSN sends a UPDATE_LOCATION_REQ to the peer. If the request is denied by
@@ -53,7 +108,97 @@ the 'PDP info complete' information element is set in the message, the SGSN
 clears existing PDP information fields in the subscriber record first.
 (see 3GPP TS 09.02, 19.1.1.8)
 
-...
+.Update Location (Normal Case)
+["mscgen"]
+----
+msc {
+  hscale="1.5";
+  SGSN [label="SGSN"], Peer [label="Network Peer (HLR)"];
+
+  SGSN -> Peer [label="UPDATE LOCATION REQUEST (IMSI)"];
+  Peer -> SGSN [label="INSERT SUBSCRIBER DATA"];
+  SGSN -> Peer [label="INSERT SUBSCRIBER DATA ACK"];
+  Peer -> SGSN [label="UPDATE LOCATTION RESULT"];
+}
+----
+
+.Update Location (Error Case)
+["mscgen"]
+----
+msc {
+  hscale="1.5";
+  SGSN [label="SGSN"], Peer [label="Network Peer (HLR)"];
+
+  SGSN -> Peer [label="UPDATE LOCATION REQUEST (IMSI)"];
+  Peer -> SGSN [label="UPDATE LOCATTION ERROR (Cause)"];
+}
+----
+
+==== Location Cancellation
+
+Using the Location Cancellation procedure, the Network Peer (HLR) can
+request the SGSN to remove a subscriber record.
+
+.Cancel Location (Normal Case)
+["mscgen"]
+----
+msc {
+  hscale="1.5";
+  SGSN [label="SGSN"], Peer [label="Network Peer (HLR)"];
+
+  Peer -> SGSN [label="CANCEL LOCATION REQUEST (IMSI)"];
+  SGSN -> Peer [label="CANCEL LOCATION RESULT"];
+}
+----
+
+.Cancel Location (Error Case)
+["mscgen"]
+----
+msc {
+  hscale="1.5";
+  SGSN [label="SGSN"], Peer [label="Network Peer (HLR)"];
+
+  Peer -> SGSN [label="CANCEL LOCATION REQUEST (IMSI)"];
+  SGSN -> Peer [label="CANCEL LOCATION ERROR (Cause)"];
+}
+----
+
+==== Purge MS
+
+Using the Purge MS procedure, the SGSN can request purging of MS
+related state from a previous SGSN during an inter-SGSN location
+update.
+
+.Purge MS (Normal Case)
+["mscgen"]
+----
+msc {
+  hscale="1.5";
+  SGSN [label="SGSN"], Peer [label="Network Peer (HLR)"];
+
+  SGSN -> Peer [label="PURGE MS REQUEST (IMSI)"];
+  Peer -> SGSN [label="PURGE MS RESULT"];
+}
+----
+
+==== Delete Subscriber Data
+
+Using the Delete Subscriber Data procedure, the Peer (HLR) can remove
+some of the subscriber data from the SGSN.  This is used in case the
+subscription details (e.g. PDP Contexts / APNs) change while the
+subscriber is registred to that SGSN.
+
+.Delete Subscriber Data (Normal Case)
+["mscgen"]
+----
+msc {
+  hscale="1.5";
+  SGSN [label="SGSN"], Peer [label="Network Peer (HLR)"];
+
+  Peer -> SGSN [label="DELETE SUBSCRIBER DATA REQUEST (IMSI)"];
+  SGSN -> Peer [label="DELETE SUBSCRIBER DATA RESULT"];
+}
+----
 
 === Message Format
 
