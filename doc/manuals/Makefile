@@ -22,8 +22,9 @@ include $(TOPDIR)/build/Makefile.inc
 osmosgsn-usermanual.pdf: chapters/*.adoc
 
 clean:
-	rm -rf osmosgsn-usermanual__*.{svg,png,check}
-	rm -rf $(cleanfiles)
+	-rm -rf $(cleanfiles)
+	-rm osmosgsn-usermanual__*.svg osmosgsn-usermanual__*.png
+	-rm osmosgsn-usermanual.check
 
 gen-sgsn-vty-docbook: FORCE
 	$(call command,xsltproc -o generated/combined1.xml \
