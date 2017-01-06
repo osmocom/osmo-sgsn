@@ -67,6 +67,43 @@ OsmoSGSN(config-sgsn)# grx-dns-add 1.2.3.4 <3>
 <2> Enable the dynamic GGSN resolving mode
 <3> Specify the IP address of a DNS server for APN resolution
 
+[[auth-pol]]
+=== Authorization Policy
+
+Authorization determines whether a particular subscriber can access
+your network or not.
+
+The following 4 authorization policy options are available:
+
+`accept-all`: All IMSIs will be accepted.
+
+`acl-only`: Accept only IMSIs, which are explicitly white-listed
+by the Access Control List (ACL), and the rest will be rejected.
+
+`closed`: Accept only home network subscribers.
+The combination of MCC and MNC fully identifies a subscriber's
+home network, also known as a Home Network Identity (HNI, i.e.
+MCC and MNC found at the start of the IMSI, e.g. MCC 901 and
+MNC 700 with IMSI 901700000003080). The ACL is also heeded.
+
+`remote`: GSUP protocol is used to remotely access a HLR.
+Only remote subscription data will be used.
+
+.Example: Assign or change authorization policy:
+----
+OsmoSGSN> enable
+OsmoSGSN# configure terminal
+OsmoSGSN(config)# sgsn
+OsmoSGSN(config-sgsn)# auth-policy acl-only <1>
+OsmoSGSN(config-sgsn)# write <2>
+Configuration saved to sgsn.cfg
+OsmoSGSN(config-sgsn)# end
+OsmoSGSN# disable
+OsmoSGSN>
+----
+<1> 'acl-only' is selected as authorization policy
+<2> Saves current changes to cofiguration to make this policy
+persistent
 
 === Subscriber Configuration
 

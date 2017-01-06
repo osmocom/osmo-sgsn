@@ -23,16 +23,16 @@ OsmoNITB/OsmoBSC/OsmoBTS, the PCU is co-located within the BTS.
 [graphviz]
 ----
 digraph G {
-	rankdir=LR;
-	MS0 [label="MS"]
-	MS1 [label="MS"]
-	MS0->BTS [label="Um"]
-	MS1->BTS [label="Um"]
-	BTS->BSC [label="Abis"]
-	BSC->MSC [label="A"]
-	BTS->PCU [label="pcu_sock"]
-	PCU->SGSN [label="Gb"]
-	SGSN->GGSN [label="GTP"]
+        rankdir=LR;
+        MS0 [label="MS"];
+        MS1 [label="MS"];
+        MS0->BTS [label="Um"];
+        MS1->BTS [label="Um"];
+        BTS->BSC [label="Abis"];
+        BSC->MSC [label="A"];
+        BTS->PCU [label="pcu_sock"];
+        PCU->SGSN [label="Gb"];
+        SGSN->GGSN [label="GTP"];
 }
 ----
 
@@ -67,14 +67,6 @@ supports both GTPv0 and GTPv1.
 The GPRS Mobility Management implementation is quite simplistic at this
 point. It supports the GPRS ATTACH and GPRS ROUTING AREA UPDATE
 procedures, as well as GPRS ATTACH and GPRS DETACH.
-
-However, as the SGSN currently does not implement any type of HLR
-access, it is not able to authenticate a subscriber or even check if the
-subscriber exists at all.  As such, all non-roaming subscribes are
-allowed to attach to OsmoSGSN.  Non-roaming means that the first 5
-digits of the IMSI must match the MCC and MNC of the cell that the
-subscriber is registering to.
-
 
 ==== LLC Implementation
 
