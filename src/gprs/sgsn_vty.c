@@ -94,7 +94,7 @@ const struct value_string sgsn_auth_pol_strs[] = {
 static struct osmo_tdef sgsn_T_defs[] = {
 	{ .T=3312, .default_val=GSM0408_T3312_SECS, .desc="Periodic RA Update timer (s)" },
 	{ .T=3313, .default_val=GSM0408_T3313_SECS, .desc="Waiting for paging response timer (s)" },
-	{ .T=3314, .default_val=GSM0408_T3314_SECS, .desc="Force to STANDBY on expiry timer (s)" },
+	{ .T=3314, .default_val=GSM0408_T3314_SECS, .desc="READY timer. Force to STANDBY on expiry timer (s)" },
 	{ .T=3316, .default_val=GSM0408_T3316_SECS, .desc="AA-Ready timer (s)" },
 	{ .T=3322, .default_val=GSM0408_T3322_SECS, .desc="Detach request -> accept timer (s)" },
 	{ .T=3350, .default_val=GSM0408_T3350_SECS, .desc="Waiting for ATT/RAU/TMSI_COMPL timer (s)" },

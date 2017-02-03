@@ -156,6 +156,10 @@ struct sgsn_mm_ctx {
 		struct gprs_llc_llme	*llme;
 		uint32_t		tlli;
 		uint32_t		tlli_new;
+
+		/* timer for mm state. state=READY: T3314 (aka TS 23.060 "READY timer") */
+		struct osmo_timer_list  state_timer;
+		unsigned int		state_T;	/* Txxxx number but only used for pmm_states */
 	} gb;
 	struct {
 		int			new_key;

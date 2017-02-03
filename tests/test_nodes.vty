@@ -2,7 +2,7 @@ OsmoSGSN> enable
 OsmoSGSN# show timer
 T3312 = 600 s	Periodic RA Update timer (s) (default: 600 s)
 T3313 = 30 s	Waiting for paging response timer (s) (default: 30 s)
-T3314 = 44 s	Force to STANDBY on expiry timer (s) (default: 44 s)
+T3314 = 44 s	READY timer. Force to STANDBY on expiry timer (s) (default: 44 s)
 T3316 = 44 s	AA-Ready timer (s) (default: 44 s)
 T3322 = 6 s	Detach request -> accept timer (s) (default: 6 s)
 T3350 = 6 s	Waiting for ATT/RAU/TMSI_COMPL timer (s) (default: 6 s)

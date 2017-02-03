@@ -341,6 +341,11 @@ void sgsn_mm_ctx_cleanup_free(struct sgsn_mm_ctx *mm)
 		osmo_timer_del(&mm->timer);
 	}
 
+	if (osmo_timer_pending(&mm->gb.state_timer)) {
+		LOGMMCTXP(LOGL_INFO, mm, "Cancelling MM state timer %u\n", mm->gb.state_T);
+		osmo_timer_del(&mm->gb.state_timer);
+	}
+
 	memset(&sig_data, 0, sizeof(sig_data));
 	sig_data.mm = mm;
 	osmo_signal_dispatch(SS_SGSN, S_SGSN_MM_FREE, &sig_data);

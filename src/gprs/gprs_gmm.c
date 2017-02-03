@@ -137,6 +137,57 @@ static void mmctx_change_gtpu_endpoints_to_sgsn(struct sgsn_mm_ctx *mm_ctx)
 	}
 }
 
+static void mmctx_set_mm_state(struct sgsn_mm_ctx *ctx, enum gprs_pmm_state state);
+static void mmctx_state_timer_cb(void *_mm)
+{
+	struct sgsn_mm_ctx *mm = _mm;
+
+	switch (mm->gb.state_T) {
+	case 3314:
+		switch (mm->pmm_state) {
+		case MM_READY:
+			LOGMMCTXP(LOGL_INFO, mm, "T3314 expired\n");
+			mmctx_set_mm_state(mm, MM_STANDBY);
+			break;
+		default:
+			LOGMMCTXP(LOGL_ERROR, mm, "T3314 expired in state %s != MM_READY\n",
+				  get_value_string(gprs_pmm_state_names, mm->pmm_state));
+			break;
+		}
+		break;
+	default:
+		LOGMMCTXP(LOGL_ERROR, mm, "state timer expired in unknown mode %u\n",
+			mm->gb.state_T);
+		break;
+	}
+}
+
+static void mmctx_state_timer_start(struct sgsn_mm_ctx *mm, unsigned int T)
+{
+	unsigned long seconds;
+
+	if (mm->gb.state_T && mm->gb.state_T != T)
+		LOGMMCTXP(LOGL_ERROR, mm, "Attempting to start timer %u but %u is active!\n",
+			  T, mm->gb.state_T);
+
+	mm->gb.state_T = T;
+	mm->gb.state_timer.data = mm;
+	mm->gb.state_timer.cb = &mmctx_state_timer_cb;
+
+	seconds = osmo_tdef_get(sgsn->cfg.T_defs, T, OSMO_TDEF_S, -1);
+	osmo_timer_schedule(&mm->gb.state_timer, seconds, 0);
+}
+
+static void mmctx_state_timer_stop(struct sgsn_mm_ctx *mm, unsigned int T)
+{
+	if (mm->gb.state_T == T)
+		osmo_timer_del(&mm->gb.state_timer);
+	else
+		LOGMMCTXP(LOGL_ERROR, mm, "Attempting to stop timer %u but %u is active!\n",
+			  T, mm->gb.state_T);
+	mm->gb.state_T = 0;
+}
+
 static void mmctx_set_pmm_state(struct sgsn_mm_ctx *ctx, enum gprs_pmm_state state)
 {
 	OSMO_ASSERT(ctx->ran_type == MM_CTX_T_UTRAN_Iu);
@@ -172,6 +223,24 @@ static void mmctx_set_mm_state(struct sgsn_mm_ctx *ctx, enum gprs_pmm_state stat
 	LOGMMCTXP(LOGL_INFO, ctx, "Changing MM state from %s to %s\n",
 		  get_value_string(gprs_pmm_state_names, ctx->pmm_state),
 		  get_value_string(gprs_pmm_state_names, state));
+
+	switch (state) {
+	case MM_READY:
+		/* on expiration, T3314 moves mm state back to MM_STANDBY */
+		mmctx_state_timer_start(ctx, 3314);
+		break;
+	case MM_IDLE:
+		if (ctx->pmm_state == MM_READY)
+			mmctx_state_timer_stop(ctx, 3314);
+		break;
+	case MM_STANDBY:
+		if (ctx->pmm_state == MM_READY)
+			mmctx_state_timer_stop(ctx, 3314);
+		break;
+	default:
+		/* when changing to state != MM_READY */
+		break;
+	}
 
 	ctx->pmm_state = state;
 }
@@ -2968,6 +3037,21 @@ int gsm0408_gprs_rcvmsg_iu(struct msgb *msg, struct gprs_ra_id *ra_id,
 	return rc;
 }
 
+/* Update the MM context state */
+static void gsm0408_gprs_notify_pdu_gb(struct sgsn_mm_ctx *mmctx)
+{
+	switch (mmctx->pmm_state) {
+	case MM_STANDBY:
+		mmctx_set_mm_state(mmctx, MM_READY);
+		break;
+	case MM_READY: /* RE-arm the timer upon receival of Gb PDUs */
+		mmctx_state_timer_start(mmctx, 3314);
+		break;
+	default:
+		break;
+	}
+}
+
 /* Main entry point for incoming 04.08 GPRS messages from Gb */
 int gsm0408_gprs_rcvmsg_gb(struct msgb *msg, struct gprs_llc_llme *llme,
 			   bool drop_cipherable)
@@ -2987,6 +3071,9 @@ int gsm0408_gprs_rcvmsg_gb(struct msgb *msg, struct gprs_llc_llme *llme,
 	}
 
 	/* MMCTX can be NULL */
+
+	if (mmctx)
+		gsm0408_gprs_notify_pdu_gb(mmctx);
 
 	switch (pdisc) {
 	case GSM48_PDISC_MM_GPRS:
