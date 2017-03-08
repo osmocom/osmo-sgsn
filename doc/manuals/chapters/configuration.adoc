@@ -70,24 +70,35 @@ OsmoSGSN(config-sgsn)# grx-dns-add 1.2.3.4 <3>
 [[auth-pol]]
 === Authorization Policy
 
-Authorization determines whether a particular subscriber can access
-your network or not.
+The authorization policy controls by which rules a subscriber is accepted or
+rejected. The possible options range from accepting just all subscribers without
+further checking, to a fine grained access-control, handled by an external HLR.
 
-The following 4 authorization policy options are available:
+accept-all:: All subscribers that attempt to attach to the GPRS network are
+accepted without further checking. This option is intended to be used for
+testing in a controlled environment only. A wide-open network may attract
+subscribers from foreign networks and disrupt their service. It is highly
+recommended to pick one of the options below.
 
-`accept-all`: All IMSIs will be accepted.
+remote:: This option allows to connect OsmoSGSN to an external HLR via the
+GSUP protocol. This will be the preferred option in larger networks.
 
-`acl-only`: Accept only IMSIs, which are explicitly white-listed
-by the Access Control List (ACL), and the rest will be rejected.
+acl-only:: If no external HLR is available, the network operator has the
+option to control the access using an access control list. The access control
+list contains the IMSI numbers of the allowed subscribers. This method offers
+fine grained access control and is ideal for small networks and lab test
+environments.
 
-`closed`: Accept only home network subscribers.
-The combination of MCC and MNC fully identifies a subscriber's
-home network, also known as a Home Network Identity (HNI, i.e.
-MCC and MNC found at the start of the IMSI, e.g. MCC 901 and
-MNC 700 with IMSI 901700000003080). The ACL is also heeded.
+closed:: This policy mode softens the strict *acl-only* only mode by also
+implicitly accepting home network subscribers. The decision is made by the MCC
+and MNC part of the IMSI number. The combination of MCC and MNC fully identifies
+a subscribers home network, also known as a Home Network Identity (HNI, i.e.
+MCC and MNC found at the start of the IMSI, e.g. MCC 901 and MNC 700 with
+IMSI 901700000003080).
 
-`remote`: GSUP protocol is used to remotely access a HLR.
-Only remote subscription data will be used.
+NOTE: The policy mode *closed* must not be confused with the equally named
+policy that is defined for osmo-nitb!
+
 
 .Example: Assign or change authorization policy:
 ----
@@ -105,6 +116,18 @@ OsmoSGSN>
 <2> Saves current changes to cofiguration to make this policy
 persistent
 
+.Example: Access control list:
+----
+sgsn
+ auth-policy acl-only <1>
+ imsi-acl add 001010000000003
+ imsi-acl add 001010000000002
+ imsi-acl add 001010000000001
+ imsi-acl add 901700000000068 <2>
+----
+<1> Set the authorization policy
+<2> Add as many subscribers as required
+
 === Subscriber Configuration
 
 As opposed to OsmoNITB, OsmoSGSN does not feature a built-in HLR.
@@ -112,7 +135,8 @@ As opposed to OsmoNITB, OsmoSGSN does not feature a built-in HLR.
 It can thus operate only in the following two modes:
 
 . Accessing an external HLR (or HLR gateway) via the GSUP protocol
-. Accepting subscribers based on internal ACL (access control list)
+. Accepting subscribers based on internal ACL (access control list),
+  see also <<auth-pol>>
 
 ==== Accessing an external HLR via GSUP
 
