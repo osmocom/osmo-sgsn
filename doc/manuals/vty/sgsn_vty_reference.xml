@@ -102,6 +102,24 @@
         <param name='1' doc='Prefix each log message with current timestamp' />
       </params>
     </command>
+    <command id='logging print extended-timestamp (0|1)'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='print' doc='Log output settings' />
+        <param name='extended-timestamp' doc='Configure log message timestamping' />
+        <param name='0' doc='Don&apos;t prefix each log message' />
+        <param name='1' doc='Prefix each log message with current timestamp with YYYYMMDDhhmmssnnn' />
+      </params>
+    </command>
+    <command id='logging print category (0|1)'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='print' doc='Log output settings' />
+        <param name='category' doc='Configure log message' />
+        <param name='0' doc='Don&apos;t prefix each log message' />
+        <param name='1' doc='Prefix each log message with category/subsystem name' />
+      </params>
+    </command>
     <command id='logging set-log-mask MASK'>
       <params>
         <param name='logging' doc='Configure log message to this terminal' />
@@ -118,7 +136,7 @@
         <param name='MASK' doc='The logmask to use' />
       </params>
     </command>
-    <command id='logging level (all|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|lglobal|llapd|linp|lmux|lmi|lmib|lsms) (everything|debug|info|notice|error|fatal)'>
+    <command id='logging level (all|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|slhc|ranap|sua|v42bis|lglobal|llapd|linp|lmux|lmi|lmib|lsms|lctrl|lgtp|lstats) (everything|debug|info|notice|error|fatal)'>
       <params>
         <param name='logging' doc='Configure log message to this terminal' />
         <param name='level' doc='Set the log level for a specified category' />
@@ -132,6 +150,10 @@
         <param name='bssgp' doc='GPRS BSS Gateway Protocol (BSSGP)' />
         <param name='llc' doc='GPRS Logical Link Control Protocol (LLC)' />
         <param name='sndcp' doc='GPRS Sub-Network Dependent Control Protocol (SNDCP)' />
+        <param name='slhc' doc='RFC1144 TCP/IP Header compression (SLHC)' />
+        <param name='ranap' doc='RAN Application Part (RANAP)' />
+        <param name='sua' doc='SCCP User Adaptation (SUA)' />
+        <param name='v42bis' doc='V.42bis data compression (SNDCP)' />
         <param name='lglobal' doc='Library-internal global log family' />
         <param name='llapd' doc='LAPD in libosmogsm' />
         <param name='linp' doc='A-bis Intput Subsystem' />
@@ -139,10 +161,13 @@
         <param name='lmi' doc='A-bis Input Driver for Signalling' />
         <param name='lmib' doc='A-bis Input Driver for B-Channels (voice)' />
         <param name='lsms' doc='Layer3 Short Message Service (SMS)' />
-        <param name='everything' doc='Log simply everything' />
+        <param name='lctrl' doc='Control Interface' />
+        <param name='lgtp' doc='GPRS GTP library' />
+        <param name='lstats' doc='Statistics messages and logging' />
+        <param name='everything' doc='Don&apos;t use. It doesn&apos;t log anything' />
         <param name='debug' doc='Log debug messages and higher levels' />
         <param name='info' doc='Log informational messages and higher levels' />
-        <param name='notice' doc='Log noticable messages and higher levels' />
+        <param name='notice' doc='Log noticeable messages and higher levels' />
         <param name='error' doc='Log error messages and higher levels' />
         <param name='fatal' doc='Log only fatal messages' />
       </params>
@@ -158,6 +183,29 @@
       <params>
         <param name='show' doc='Show running system information' />
         <param name='alarms' doc='Show current logging configuration' />
+      </params>
+    </command>
+    <command id='show stats'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='stats' doc='Show statistical values' />
+      </params>
+    </command>
+    <command id='show stats level (global|peer|subscriber)'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='stats' doc='Show statistical values' />
+        <param name='level' doc='Set the maximum group level' />
+        <param name='global' doc='Show global groups only' />
+        <param name='peer' doc='Show global and network peer related groups' />
+        <param name='subscriber' doc='Show global, peer, and subscriber groups' />
+      </params>
+    </command>
+    <command id='show asciidoc counters'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='asciidoc' doc='Asciidoc generation' />
+        <param name='counters' doc='Generate table of all registered counters' />
       </params>
     </command>
     <command id='show sgsn'>
@@ -188,6 +236,13 @@
         <param name='show' doc='Show running system information' />
         <param name='pdp-context' doc='Display information on PDP Context' />
         <param name='all' doc='Show everything' />
+      </params>
+    </command>
+    <command id='show subscriber cache'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='subscriber' doc='Show information about subscribers' />
+        <param name='cache' doc='Display contents of subscriber cache' />
       </params>
     </command>
     <command id='show ns'>
@@ -254,6 +309,17 @@
         <param name='&lt;0-65535&gt;' doc='Network Service Entity Identifier (NSEI)' />
         <param name='bvci' doc='BVCI of the BVC to be filtered' />
         <param name='&lt;0-65535&gt;' doc='BSSGP Virtual Connection Identifier (BVCI)' />
+      </params>
+    </command>
+    <command id='bssgp bvc nsei &lt;0-65535&gt; bvci &lt;0-65535&gt; reset'>
+      <params>
+        <param name='bssgp' doc='Initiate BVC RESET procedure for a given NSEI and BVCI' />
+        <param name='bvc' doc='Filter based on BSSGP Virtual Connection' />
+        <param name='nsei' doc='NSEI of the BVC to be filtered' />
+        <param name='&lt;0-65535&gt;' doc='Network Service Entity Identifier (NSEI)' />
+        <param name='bvci' doc='BVCI of the BVC to be filtered' />
+        <param name='&lt;0-65535&gt;' doc='BSSGP Virtual Connection Identifier (BVCI)' />
+        <param name='reset' doc='Perform reset procedure' />
       </params>
     </command>
     <command id='show llc'>
@@ -433,6 +499,24 @@
         <param name='1' doc='Prefix each log message with current timestamp' />
       </params>
     </command>
+    <command id='logging print extended-timestamp (0|1)'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='print' doc='Log output settings' />
+        <param name='extended-timestamp' doc='Configure log message timestamping' />
+        <param name='0' doc='Don&apos;t prefix each log message' />
+        <param name='1' doc='Prefix each log message with current timestamp with YYYYMMDDhhmmssnnn' />
+      </params>
+    </command>
+    <command id='logging print category (0|1)'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='print' doc='Log output settings' />
+        <param name='category' doc='Configure log message' />
+        <param name='0' doc='Don&apos;t prefix each log message' />
+        <param name='1' doc='Prefix each log message with category/subsystem name' />
+      </params>
+    </command>
     <command id='logging set-log-mask MASK'>
       <params>
         <param name='logging' doc='Configure log message to this terminal' />
@@ -449,7 +533,7 @@
         <param name='MASK' doc='The logmask to use' />
       </params>
     </command>
-    <command id='logging level (all|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|lglobal|llapd|linp|lmux|lmi|lmib|lsms) (everything|debug|info|notice|error|fatal)'>
+    <command id='logging level (all|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|slhc|ranap|sua|v42bis|lglobal|llapd|linp|lmux|lmi|lmib|lsms|lctrl|lgtp|lstats) (everything|debug|info|notice|error|fatal)'>
       <params>
         <param name='logging' doc='Configure log message to this terminal' />
         <param name='level' doc='Set the log level for a specified category' />
@@ -463,6 +547,10 @@
         <param name='bssgp' doc='GPRS BSS Gateway Protocol (BSSGP)' />
         <param name='llc' doc='GPRS Logical Link Control Protocol (LLC)' />
         <param name='sndcp' doc='GPRS Sub-Network Dependent Control Protocol (SNDCP)' />
+        <param name='slhc' doc='RFC1144 TCP/IP Header compression (SLHC)' />
+        <param name='ranap' doc='RAN Application Part (RANAP)' />
+        <param name='sua' doc='SCCP User Adaptation (SUA)' />
+        <param name='v42bis' doc='V.42bis data compression (SNDCP)' />
         <param name='lglobal' doc='Library-internal global log family' />
         <param name='llapd' doc='LAPD in libosmogsm' />
         <param name='linp' doc='A-bis Intput Subsystem' />
@@ -470,10 +558,13 @@
         <param name='lmi' doc='A-bis Input Driver for Signalling' />
         <param name='lmib' doc='A-bis Input Driver for B-Channels (voice)' />
         <param name='lsms' doc='Layer3 Short Message Service (SMS)' />
-        <param name='everything' doc='Log simply everything' />
+        <param name='lctrl' doc='Control Interface' />
+        <param name='lgtp' doc='GPRS GTP library' />
+        <param name='lstats' doc='Statistics messages and logging' />
+        <param name='everything' doc='Don&apos;t use. It doesn&apos;t log anything' />
         <param name='debug' doc='Log debug messages and higher levels' />
         <param name='info' doc='Log informational messages and higher levels' />
-        <param name='notice' doc='Log noticable messages and higher levels' />
+        <param name='notice' doc='Log noticeable messages and higher levels' />
         <param name='error' doc='Log error messages and higher levels' />
         <param name='fatal' doc='Log only fatal messages' />
       </params>
@@ -489,6 +580,29 @@
       <params>
         <param name='show' doc='Show running system information' />
         <param name='alarms' doc='Show current logging configuration' />
+      </params>
+    </command>
+    <command id='show stats'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='stats' doc='Show statistical values' />
+      </params>
+    </command>
+    <command id='show stats level (global|peer|subscriber)'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='stats' doc='Show statistical values' />
+        <param name='level' doc='Set the maximum group level' />
+        <param name='global' doc='Show global groups only' />
+        <param name='peer' doc='Show global and network peer related groups' />
+        <param name='subscriber' doc='Show global, peer, and subscriber groups' />
+      </params>
+    </command>
+    <command id='show asciidoc counters'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='asciidoc' doc='Asciidoc generation' />
+        <param name='counters' doc='Generate table of all registered counters' />
       </params>
     </command>
     <command id='show sgsn'>
@@ -519,6 +633,77 @@
         <param name='show' doc='Show running system information' />
         <param name='pdp-context' doc='Display information on PDP Context' />
         <param name='all' doc='Show everything' />
+      </params>
+    </command>
+    <command id='show subscriber cache'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='subscriber' doc='Show information about subscribers' />
+        <param name='cache' doc='Display contents of subscriber cache' />
+      </params>
+    </command>
+    <command id='update-subscriber imsi IMSI insert auth-triplet &lt;1-5&gt; sres SRES rand RAND kc KC'>
+      <params>
+        <param name='update-subscriber' doc='Update subscriber list' />
+        <param name='imsi' doc='Use the IMSI to select the subscriber' />
+        <param name='IMSI' doc='The IMSI' />
+        <param name='insert' doc='Insert data into the subscriber record' />
+        <param name='auth-triplet' doc='Update authentication triplet' />
+        <param name='&lt;1-5&gt;' doc='Triplet index' />
+        <param name='sres' doc='Set SRES value' />
+        <param name='SRES' doc='SRES value (4 byte) in hex' />
+        <param name='rand' doc='Set RAND value' />
+        <param name='RAND' doc='RAND value (16 byte) in hex' />
+        <param name='kc' doc='Set Kc value' />
+        <param name='KC' doc='Kc value (8 byte) in hex' />
+      </params>
+    </command>
+    <command id='update-subscriber imsi IMSI create'>
+      <params>
+        <param name='update-subscriber' doc='Update subscriber list' />
+        <param name='imsi' doc='Use the IMSI to select the subscriber' />
+        <param name='IMSI' doc='The IMSI' />
+        <param name='create' doc='Create a subscriber entry' />
+      </params>
+    </command>
+    <command id='update-subscriber imsi IMSI destroy'>
+      <params>
+        <param name='update-subscriber' doc='Update subscriber list' />
+        <param name='imsi' doc='Use the IMSI to select the subscriber' />
+        <param name='IMSI' doc='The IMSI' />
+        <param name='destroy' doc='Destroy a subscriber entry' />
+      </params>
+    </command>
+    <command id='update-subscriber imsi IMSI cancel (update-procedure|subscription-withdraw)'>
+      <params>
+        <param name='update-subscriber' doc='Update subscriber list' />
+        <param name='imsi' doc='Use the IMSI to select the subscriber' />
+        <param name='IMSI' doc='The IMSI' />
+        <param name='cancel' doc='Cancel (remove) subscriber record' />
+        <param name='update-procedure' doc='The MS moved to another SGSN' />
+        <param name='subscription-withdraw' doc='The subscription is no longer valid' />
+      </params>
+    </command>
+    <command id='update-subscriber imsi IMSI update-location-result (ok|system-failure|data-missing|unexpected-data-value|unknown-subscriber|roaming-not-allowed)'>
+      <params>
+        <param name='update-subscriber' doc='Update subscriber list' />
+        <param name='imsi' doc='Use the IMSI to select the subscriber' />
+        <param name='IMSI' doc='The IMSI' />
+        <param name='update-location-result' doc='Complete the update location procedure' />
+        <param name='ok' doc='The update location request succeeded' />
+        <param name='system-failure' doc='Force error code SystemFailure' />
+        <param name='data-missing' doc='Force error code DataMissing' />
+        <param name='unexpected-data-value' doc='Force error code UnexpectedDataValue' />
+        <param name='unknown-subscriber' doc='Force error code UnknownSubscriber' />
+        <param name='roaming-not-allowed' doc='Force error code RoamingNotAllowed' />
+      </params>
+    </command>
+    <command id='update-subscriber imsi IMSI update-auth-info'>
+      <params>
+        <param name='update-subscriber' doc='Update subscriber list' />
+        <param name='imsi' doc='Use the IMSI to select the subscriber' />
+        <param name='IMSI' doc='The IMSI' />
+        <param name='update-auth-info' doc='Complete the send authentication info procedure' />
       </params>
     </command>
     <command id='show ns'>
@@ -596,6 +781,17 @@
         <param name='&lt;0-65535&gt;' doc='Network Service Entity Identifier (NSEI)' />
         <param name='bvci' doc='BVCI of the BVC to be filtered' />
         <param name='&lt;0-65535&gt;' doc='BSSGP Virtual Connection Identifier (BVCI)' />
+      </params>
+    </command>
+    <command id='bssgp bvc nsei &lt;0-65535&gt; bvci &lt;0-65535&gt; reset'>
+      <params>
+        <param name='bssgp' doc='Initiate BVC RESET procedure for a given NSEI and BVCI' />
+        <param name='bvc' doc='Filter based on BSSGP Virtual Connection' />
+        <param name='nsei' doc='NSEI of the BVC to be filtered' />
+        <param name='&lt;0-65535&gt;' doc='Network Service Entity Identifier (NSEI)' />
+        <param name='bvci' doc='BVCI of the BVC to be filtered' />
+        <param name='&lt;0-65535&gt;' doc='BSSGP Virtual Connection Identifier (BVCI)' />
+        <param name='reset' doc='Perform reset procedure' />
       </params>
     </command>
     <command id='show llc'>
@@ -845,9 +1041,58 @@
         <param name='syslog' doc='Logging via syslog' />
       </params>
     </command>
+    <command id='log gsmtap [HOSTNAME]'>
+      <params>
+        <param name='log' doc='Configure logging sub-system' />
+        <param name='gsmtap' doc='Logging via GSMTAP' />
+        <param name='[HOSTNAME]' doc='Host name to send the GSMTAP logging to (UDP port 4729)' />
+      </params>
+    </command>
+    <command id='stats reporter statsd'>
+      <params>
+        <param name='stats' doc='Configure stats sub-system' />
+        <param name='reporter' doc='Configure a stats reporter' />
+        <param name='statsd' doc='Report to a STATSD server' />
+      </params>
+    </command>
+    <command id='no stats reporter statsd'>
+      <params>
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='stats' doc='Configure stats sub-system' />
+        <param name='reporter' doc='Configure a stats reporter' />
+        <param name='statsd' doc='Report to a STATSD server' />
+      </params>
+    </command>
+    <command id='stats reporter log'>
+      <params>
+        <param name='stats' doc='Configure stats sub-system' />
+        <param name='reporter' doc='Configure a stats reporter' />
+        <param name='log' doc='Report to the logger' />
+      </params>
+    </command>
+    <command id='no stats reporter log'>
+      <params>
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='stats' doc='Configure stats sub-system' />
+        <param name='reporter' doc='Configure a stats reporter' />
+        <param name='log' doc='Report to the logger' />
+      </params>
+    </command>
+    <command id='stats interval &lt;1-65535&gt;'>
+      <params>
+        <param name='stats' doc='Configure stats sub-system' />
+        <param name='interval' doc='Set the reporting interval' />
+        <param name='&lt;1-65535&gt;' doc='Interval in seconds' />
+      </params>
+    </command>
     <command id='sgsn'>
       <params>
         <param name='sgsn' doc='Configure the SGSN' />
+      </params>
+    </command>
+    <command id='ctrl'>
+      <params>
+        <param name='ctrl' doc='Configure the Control Interface' />
       </params>
     </command>
     <command id='ns'>
@@ -936,7 +1181,25 @@
         <param name='1' doc='Prefix each log message with current timestamp' />
       </params>
     </command>
-    <command id='logging level (all|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|lglobal|llapd|linp|lmux|lmi|lmib|lsms) (everything|debug|info|notice|error|fatal)'>
+    <command id='logging print extended-timestamp (0|1)'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='print' doc='Log output settings' />
+        <param name='extended-timestamp' doc='Configure log message timestamping' />
+        <param name='0' doc='Don&apos;t prefix each log message' />
+        <param name='1' doc='Prefix each log message with current timestamp with YYYYMMDDhhmmssnnn' />
+      </params>
+    </command>
+    <command id='logging print category (0|1)'>
+      <params>
+        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='print' doc='Log output settings' />
+        <param name='category' doc='Configure log message' />
+        <param name='0' doc='Don&apos;t prefix each log message' />
+        <param name='1' doc='Prefix each log message with category/subsystem name' />
+      </params>
+    </command>
+    <command id='logging level (all|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|slhc|ranap|sua|v42bis|lglobal|llapd|linp|lmux|lmi|lmib|lsms|lctrl|lgtp|lstats) (everything|debug|info|notice|error|fatal)'>
       <params>
         <param name='logging' doc='Configure log message to this terminal' />
         <param name='level' doc='Set the log level for a specified category' />
@@ -950,6 +1213,10 @@
         <param name='bssgp' doc='GPRS BSS Gateway Protocol (BSSGP)' />
         <param name='llc' doc='GPRS Logical Link Control Protocol (LLC)' />
         <param name='sndcp' doc='GPRS Sub-Network Dependent Control Protocol (SNDCP)' />
+        <param name='slhc' doc='RFC1144 TCP/IP Header compression (SLHC)' />
+        <param name='ranap' doc='RAN Application Part (RANAP)' />
+        <param name='sua' doc='SCCP User Adaptation (SUA)' />
+        <param name='v42bis' doc='V.42bis data compression (SNDCP)' />
         <param name='lglobal' doc='Library-internal global log family' />
         <param name='llapd' doc='LAPD in libosmogsm' />
         <param name='linp' doc='A-bis Intput Subsystem' />
@@ -957,10 +1224,13 @@
         <param name='lmi' doc='A-bis Input Driver for Signalling' />
         <param name='lmib' doc='A-bis Input Driver for B-Channels (voice)' />
         <param name='lsms' doc='Layer3 Short Message Service (SMS)' />
-        <param name='everything' doc='Log simply everything' />
+        <param name='lctrl' doc='Control Interface' />
+        <param name='lgtp' doc='GPRS GTP library' />
+        <param name='lstats' doc='Statistics messages and logging' />
+        <param name='everything' doc='Don&apos;t use. It doesn&apos;t log anything' />
         <param name='debug' doc='Log debug messages and higher levels' />
         <param name='info' doc='Log informational messages and higher levels' />
-        <param name='notice' doc='Log noticable messages and higher levels' />
+        <param name='notice' doc='Log noticeable messages and higher levels' />
         <param name='error' doc='Log error messages and higher levels' />
         <param name='fatal' doc='Log only fatal messages' />
       </params>
@@ -1037,6 +1307,123 @@
         <param name='end' doc='End current mode and change to enable mode.' />
       </params>
     </command>
+    <command id='local-ip ADDR'>
+      <params>
+        <param name='local-ip' doc='Set the IP address to which we bind locally' />
+        <param name='ADDR' doc='IP Address' />
+      </params>
+    </command>
+    <command id='no local-ip'>
+      <params>
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='local-ip' doc='Set the IP address to which we bind locally' />
+      </params>
+    </command>
+    <command id='remote-ip ADDR'>
+      <params>
+        <param name='remote-ip' doc='Set the remote IP address to which we connect' />
+        <param name='ADDR' doc='IP Address' />
+      </params>
+    </command>
+    <command id='remote-port &lt;1-65535&gt;'>
+      <params>
+        <param name='remote-port' doc='Set the remote port to which we connect' />
+        <param name='&lt;1-65535&gt;' doc='Remote port number' />
+      </params>
+    </command>
+    <command id='mtu &lt;100-65535&gt;'>
+      <params>
+        <param name='mtu' doc='Set the maximum packet size' />
+        <param name='&lt;100-65535&gt;' doc='Size in byte' />
+      </params>
+    </command>
+    <command id='no mtu'>
+      <params>
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='mtu' doc='Set the maximum packet size' />
+      </params>
+    </command>
+    <command id='prefix PREFIX'>
+      <params>
+        <param name='prefix' doc='Set the item name prefix' />
+        <param name='PREFIX' doc='The prefix string' />
+      </params>
+    </command>
+    <command id='no prefix'>
+      <params>
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='prefix' doc='Set the item name prefix' />
+      </params>
+    </command>
+    <command id='level (global|peer|subscriber)'>
+      <params>
+        <param name='level' doc='Set the maximum group level' />
+        <param name='global' doc='Report global groups only' />
+        <param name='peer' doc='Report global and network peer related groups' />
+        <param name='subscriber' doc='Report global, peer, and subscriber groups' />
+      </params>
+    </command>
+    <command id='enable'>
+      <params>
+        <param name='enable' doc='Enable the reporter' />
+      </params>
+    </command>
+    <command id='disable'>
+      <params>
+        <param name='disable' doc='Disable the reporter' />
+      </params>
+    </command>
+  </node>
+  <node id='9'>
+    <command id='help'>
+      <params>
+        <param name='help' doc='Description of the interactive help system' />
+      </params>
+    </command>
+    <command id='list'>
+      <params>
+        <param name='list' doc='Print command list' />
+      </params>
+    </command>
+    <command id='write terminal'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+        <param name='terminal' doc='Write to terminal' />
+      </params>
+    </command>
+    <command id='write file'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+        <param name='file' doc='Write to configuration file' />
+      </params>
+    </command>
+    <command id='write memory'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+        <param name='memory' doc='Write configuration to the file (same as write file)' />
+      </params>
+    </command>
+    <command id='write'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+      </params>
+    </command>
+    <command id='show running-config'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='running-config' doc='running configuration' />
+      </params>
+    </command>
+    <command id='exit'>
+      <params>
+        <param name='exit' doc='Exit current mode and down to previous mode' />
+      </params>
+    </command>
+    <command id='end'>
+      <params>
+        <param name='end' doc='End current mode and change to enable mode.' />
+      </params>
+    </command>
     <command id='login'>
       <params>
         <param name='login' doc='Enable password checking' />
@@ -1048,8 +1435,14 @@
         <param name='login' doc='Enable password checking' />
       </params>
     </command>
+    <command id='bind A.B.C.D'>
+      <params>
+        <param name='bind' doc='Accept VTY telnet connections on local interface' />
+        <param name='A.B.C.D' doc='Local interface IP address (default: 127.0.0.1)' />
+      </params>
+    </command>
   </node>
-  <node id='11'>
+  <node id='12'>
     <command id='help'>
       <params>
         <param name='help' doc='Description of the interactive help system' />
@@ -1211,7 +1604,7 @@
       </params>
     </command>
   </node>
-  <node id='12'>
+  <node id='13'>
     <command id='help'>
       <params>
         <param name='help' doc='Description of the interactive help system' />
@@ -1262,7 +1655,15 @@
       </params>
     </command>
   </node>
-  <node id='21'>
+  <node id='14'>
+    <command id='bind A.B.C.D'>
+      <params>
+        <param name='bind' doc='Set bind address to listen for Control connections' />
+        <param name='A.B.C.D' doc='Local IP address (default 127.0.0.1)' />
+      </params>
+    </command>
+  </node>
+  <node id='26'>
     <command id='help'>
       <params>
         <param name='help' doc='Description of the interactive help system' />
@@ -1344,11 +1745,258 @@
         <param name='IMSI' doc='IMSI of subscriber' />
       </params>
     </command>
-    <command id='auth-policy (accept-all|closed)'>
+    <command id='auth-policy (accept-all|closed|acl-only|remote)'>
       <params>
         <param name='auth-policy' doc='Autorization Policy of SGSN' />
-        <param name='accept-all' doc='Accept all IMSIs (DANGEROUS' />
-        <param name='closed' doc='Accept only home network subscribers or those in ACL' />
+        <param name='accept-all' doc='Accept all IMSIs (DANGEROUS)' />
+        <param name='closed' doc='Accept only home network subscribers or those in the ACL' />
+        <param name='acl-only' doc='Accept only subscribers in the ACL' />
+        <param name='remote' doc='Use remote subscription data only (HLR)' />
+      </params>
+    </command>
+    <command id='encryption (GEA0|GEA1|GEA2|GEA3|GEA4)'>
+      <params>
+        <param name='encryption' doc='Set encryption algorithm for SGSN' />
+        <param name='GEA0' doc='Use GEA0 (no encryption)' />
+        <param name='GEA1' doc='Use GEA1' />
+        <param name='GEA2' doc='Use GEA2' />
+        <param name='GEA3' doc='Use GEA3' />
+        <param name='GEA4' doc='Use GEA4' />
+      </params>
+    </command>
+    <command id='gsup remote-ip A.B.C.D'>
+      <params>
+        <param name='gsup' doc='GSUP Parameters' />
+        <param name='remote-ip' doc='Set the IP address of the remote GSUP server' />
+        <param name='A.B.C.D' doc='IPv4 Address' />
+      </params>
+    </command>
+    <command id='gsup remote-port &lt;0-65535&gt;'>
+      <params>
+        <param name='gsup' doc='GSUP Parameters' />
+        <param name='remote-port' doc='Set the TCP port of the remote GSUP server' />
+        <param name='&lt;0-65535&gt;' doc='Remote TCP port' />
+      </params>
+    </command>
+    <command id='gsup oap-id &lt;0-65535&gt;'>
+      <params>
+        <param name='gsup' doc='GSUP Parameters' />
+        <param name='oap-id' doc='Set the SGSN&apos;s OAP client ID' />
+        <param name='&lt;0-65535&gt;' doc='OAP client ID (0 == disabled)' />
+      </params>
+    </command>
+    <command id='gsup oap-k K'>
+      <params>
+        <param name='gsup' doc='GSUP Parameters' />
+        <param name='oap-k' doc='Set the OAP shared secret K' />
+        <param name='K' doc='K value (16 byte) hex' />
+      </params>
+    </command>
+    <command id='gsup oap-opc OPC'>
+      <params>
+        <param name='gsup' doc='GSUP Parameters' />
+        <param name='oap-opc' doc='Set the OAP shared secret OPC' />
+        <param name='OPC' doc='OPC value (16 byte) hex' />
+      </params>
+    </command>
+    <command id='apn APNAME ggsn &lt;0-255&gt;'>
+      <params>
+        <param name='apn' doc='Configure the information per APN' />
+        <param name='APNAME' doc='The APN gateway name optionally prefixed by &apos;*&apos; (wildcard)' />
+        <param name='ggsn' doc='Select the GGSN to use when the APN gateway prefix matches' />
+        <param name='&lt;0-255&gt;' doc='The GGSN id' />
+      </params>
+    </command>
+    <command id='apn APNAME imsi-prefix IMSIPRE ggsn &lt;0-255&gt;'>
+      <params>
+        <param name='apn' doc='Configure the information per APN' />
+        <param name='APNAME' doc='The APN gateway name optionally prefixed by &apos;*&apos; (wildcard)' />
+        <param name='imsi-prefix' doc='Restrict rule to a certain IMSI prefix' />
+        <param name='IMSIPRE' doc='An IMSI prefix' />
+        <param name='ggsn' doc='Select the GGSN to use when APN gateway and IMSI prefix match' />
+        <param name='&lt;0-255&gt;' doc='The GGSN id' />
+      </params>
+    </command>
+    <command id='access-point-name NAME'>
+      <params>
+        <param name='access-point-name' doc='Configure a global list of allowed APNs' />
+        <param name='NAME' doc='Add this NAME to the list' />
+      </params>
+    </command>
+    <command id='no access-point-name NAME'>
+      <params>
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='access-point-name' doc='Configure a global list of allowed APNs' />
+        <param name='NAME' doc='Remove entry with NAME' />
+      </params>
+    </command>
+    <command id='cdr filename NAME'>
+      <params>
+        <param name='cdr' doc='CDR' />
+        <param name='filename' doc='Set filename' />
+        <param name='NAME' doc='name' />
+      </params>
+    </command>
+    <command id='no cdr filename'>
+      <params>
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='cdr' doc='CDR' />
+        <param name='filename' doc='Disable CDR generation' />
+      </params>
+    </command>
+    <command id='cdr interval &lt;1-2147483647&gt;'>
+      <params>
+        <param name='cdr' doc='CDR' />
+        <param name='interval' doc='PDP periodic log interval' />
+        <param name='&lt;1-2147483647&gt;' doc='Seconds' />
+      </params>
+    </command>
+    <command id='ggsn dynamic'>
+      <params>
+        <param name='ggsn' doc='Configure the GGSN information' />
+        <param name='dynamic' doc='Enable dynamic GRX based look-up (requires restart)' />
+      </params>
+    </command>
+    <command id='grx-dns-add A.B.C.D'>
+      <params>
+        <param name='grx-dns-add' doc='Add DNS server' />
+        <param name='A.B.C.D' doc='IPv4 address' />
+      </params>
+    </command>
+    <command id='timer t3312 &lt;0-65535&gt;'>
+      <params>
+        <param name='timer' doc='Configure GPRS Timers' />
+        <param name='t3312' doc='Periodic RA Update timer (s)' />
+        <param name='&lt;0-65535&gt;' doc='Timer Value in seconds' />
+      </params>
+    </command>
+    <command id='timer t3322 &lt;0-65535&gt;'>
+      <params>
+        <param name='timer' doc='Configure GPRS Timers' />
+        <param name='t3322' doc='Detach request -&gt; accept timer (s)' />
+        <param name='&lt;0-65535&gt;' doc='Timer Value in seconds' />
+      </params>
+    </command>
+    <command id='timer t3350 &lt;0-65535&gt;'>
+      <params>
+        <param name='timer' doc='Configure GPRS Timers' />
+        <param name='t3350' doc='Waiting for ATT/RAU/TMSI_COMPL timer (s)' />
+        <param name='&lt;0-65535&gt;' doc='Timer Value in seconds' />
+      </params>
+    </command>
+    <command id='timer t3360 &lt;0-65535&gt;'>
+      <params>
+        <param name='timer' doc='Configure GPRS Timers' />
+        <param name='t3360' doc='Waiting for AUTH/CIPH response timer (s)' />
+        <param name='&lt;0-65535&gt;' doc='Timer Value in seconds' />
+      </params>
+    </command>
+    <command id='timer t3370 &lt;0-65535&gt;'>
+      <params>
+        <param name='timer' doc='Configure GPRS Timers' />
+        <param name='t3370' doc='Waiting for IDENTITY response timer (s)' />
+        <param name='&lt;0-65535&gt;' doc='Timer Value in seconds' />
+      </params>
+    </command>
+    <command id='timer t3313 &lt;0-65535&gt;'>
+      <params>
+        <param name='timer' doc='Configure GPRS Timers' />
+        <param name='t3313' doc='Waiting for paging response timer (s)' />
+        <param name='&lt;0-65535&gt;' doc='Timer Value in seconds' />
+      </params>
+    </command>
+    <command id='timer t3314 &lt;0-65535&gt;'>
+      <params>
+        <param name='timer' doc='Configure GPRS Timers' />
+        <param name='t3314' doc='Force to STANDBY on expiry timer (s)' />
+        <param name='&lt;0-65535&gt;' doc='Timer Value in seconds' />
+      </params>
+    </command>
+    <command id='timer t3316 &lt;0-65535&gt;'>
+      <params>
+        <param name='timer' doc='Configure GPRS Timers' />
+        <param name='t3316' doc='AA-Ready timer (s)' />
+        <param name='&lt;0-65535&gt;' doc='Timer Value in seconds' />
+      </params>
+    </command>
+    <command id='timer t3385 &lt;0-65535&gt;'>
+      <params>
+        <param name='timer' doc='Configure GPRS Timers' />
+        <param name='t3385' doc='Wait for ACT PDP CTX REQ timer (s)' />
+        <param name='&lt;0-65535&gt;' doc='Timer Value in seconds' />
+      </params>
+    </command>
+    <command id='timer t3386 &lt;0-65535&gt;'>
+      <params>
+        <param name='timer' doc='Configure GPRS Timers' />
+        <param name='t3386' doc='Wait for MODIFY PDP CTX ACK timer (s)' />
+        <param name='&lt;0-65535&gt;' doc='Timer Value in seconds' />
+      </params>
+    </command>
+    <command id='timer t3395 &lt;0-65535&gt;'>
+      <params>
+        <param name='timer' doc='Configure GPRS Timers' />
+        <param name='t3395' doc='Wait for DEACT PDP CTX ACK timer (s)' />
+        <param name='&lt;0-65535&gt;' doc='Timer Value in seconds' />
+      </params>
+    </command>
+    <command id='timer t3397 &lt;0-65535&gt;'>
+      <params>
+        <param name='timer' doc='Configure GPRS Timers' />
+        <param name='t3397' doc='Wait for DEACT AA PDP CTX ACK timer (s)' />
+        <param name='&lt;0-65535&gt;' doc='Timer Value in seconds' />
+      </params>
+    </command>
+    <command id='no compression rfc1144'>
+      <params>
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='compression' doc='Configure compression' />
+        <param name='rfc1144' doc='disable rfc1144 TCP/IP header compression' />
+      </params>
+    </command>
+    <command id='compression rfc1144 active slots &lt;1-256&gt;'>
+      <params>
+        <param name='compression' doc='Configure compression' />
+        <param name='rfc1144' doc='RFC1144 Header compresion scheme' />
+        <param name='active' doc='Compression is actively proposed' />
+        <param name='slots' doc='Number of compression state slots' />
+        <param name='&lt;1-256&gt;' doc='Number of compression state slots' />
+      </params>
+    </command>
+    <command id='compression rfc1144 passive'>
+      <params>
+        <param name='compression' doc='Configure compression' />
+        <param name='rfc1144' doc='RFC1144 Header compresion scheme' />
+        <param name='passive' doc='Compression is available on request' />
+      </params>
+    </command>
+    <command id='no compression v42bis'>
+      <params>
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='compression' doc='Configure compression' />
+        <param name='v42bis' doc='disable V.42bis data compression' />
+      </params>
+    </command>
+    <command id='compression v42bis active direction (ms|sgsn|both) codewords &lt;512-65535&gt; strlen &lt;6-250&gt;'>
+      <params>
+        <param name='compression' doc='Configure compression' />
+        <param name='v42bis' doc='V.42bis data compresion scheme' />
+        <param name='active' doc='Compression is actively proposed' />
+        <param name='direction' doc='Direction in which the compression shall be active (p0)' />
+        <param name='ms' doc='Compress ms-&gt;sgsn direction only' />
+        <param name='sgsn' doc='Compress sgsn-&gt;ms direction only' />
+        <param name='both' doc='Both directions' />
+        <param name='codewords' doc='Number of codewords (p1)' />
+        <param name='&lt;512-65535&gt;' doc='Number of codewords' />
+        <param name='strlen' doc='Maximum string length (p2)' />
+        <param name='&lt;6-250&gt;' doc='Maximum string length' />
+      </params>
+    </command>
+    <command id='compression v42bis passive'>
+      <params>
+        <param name='compression' doc='Configure compression' />
+        <param name='v42bis' doc='V.42bis data compresion scheme' />
+        <param name='passive' doc='Compression is available on request' />
       </params>
     </command>
   </node>

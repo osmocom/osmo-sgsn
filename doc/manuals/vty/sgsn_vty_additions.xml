@@ -1,5 +1,5 @@
 <vtydoc xmlns='urn:osmocom:xml:libosmocore:vty:doc:1.0'>
-    <node id='21'>
+    <node id='26'>
     <child_of nodeid='4' />
     <name>SGSN Configuration Node</name>
     <description>Configure the remote GGSN, access-control and other
