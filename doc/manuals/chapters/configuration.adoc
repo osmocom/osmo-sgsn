@@ -223,3 +223,83 @@ individual fields of each CSV line.
 |pdp-terminate|Forced PDP context termination during MM context release
 |pdp-free|Release of the PDP context memory
 |===
+
+
+=== User traffic compression
+
+In order to save optimize GPRS bandwith, OsmoSGSN implements header and data
+compression schemes. The compression will reduce the packet length in order
+to save radio bandwith.
+
+==== Header compression
+
+On TCP/IP connections, each packet is prepended with a fairly long TCP/IP
+header. The header contains a lot of static information that never changes
+throughout the connection. (source and destination address, port numbers etc.)
+OsmoSGSN implements a TCP/IP header compression scheme called RFC1144, also
+known as SLHC. This type of header compression removes the TCP/IP header
+entirely and replaces it with a shorter version, that only contains the
+information that is absolutely necessary to identify and check the packet.
+The receiving part then restores the original header and forwards it to higher
+layers.
+
+*compression rfc1144 passive*::
+TCP/IP header compression has to be actively requested by the modem. The
+network will not promote compression by itself. This is the recommended mode
+of operation.
+
+*compression rfc1144 active slots <1-256>*::
+TCP/IP header compression is actively promoted by the network. Modems may still
+actively request different compression parameters or reject the offered
+compression parameters entirely. The number of slots is the maximum number
+of packet headers per subscriber that can be stored in the codebook.
+
+.Example: Accept compression if requested:
+----
+sgsn
+ compression rfc1144 passive
+----
+
+.Example: Actively promote compression:
+----
+sgsn
+ compression rfc1144 active slots 8
+----
+
+NOTE: The usage of TCP/IP options may disturb the RFC1144 header compression
+scheme. TCP/IP options may render RFC1144 ineffective if variable data is
+encoded into the option section of the TCP/IP packet. (e.g. TCP option 8,
+Timestamp)
+
+
+==== Data compression
+
+Data compression works on the raw packet data, including the header part of the
+packet. If enabled, header compression is applied before first data compression
+is applied. OsmoSGSN implements the V.42bis data compression scheme.
+
+*compression rfc1144 passive*::
+V42bis data compression has to be actively requested by the modem. The network
+will not promote compression by itself. This is the recommended mode of
+operation.
+
+*compression v42bis active direction (ms|sgsn|both) codewords <512-65535> strlen <6-250>*::
+V42bis data compression is actively promoted by the network. Modems may still
+actively request different compression parameters or reject the offered
+compression parameters entirely. The direction configures which sides are
+allowed to send compressed packets. For most cases, compressing 'both'
+directions will be the preferred option. The following to parameters configure
+the codebook size by the maxium number ('codewords') and size ('strlen') of
+entries.
+
+.Example: Accept compression if requested:
+----
+sgsn
+ compression v42bis passive
+----
+
+.Example: Actively promote compression:
+----
+sgsn
+ compression v42bis active direction both codewords 512 strlen 20
+----
