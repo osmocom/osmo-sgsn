@@ -65,8 +65,8 @@ msc {
   hscale="1.5";
   SGSN [label="SGSN"], Peer [label="Network Peer (HLR)"];
 
-  SGSN -> Peer [label="SEND AUTHENTICATION INFO REQUEST (IMSI)"];
-  Peer -> SGSN [label="SEND AUTHENTICATION INFO RESPONSE (Tuples)"];
+  SGSN => Peer [label="SEND AUTHENTICATION INFO REQUEST (IMSI)"];
+  Peer => SGSN [label="SEND AUTHENTICATION INFO RESPONSE (Tuples)"];
 }
 ----
 
@@ -77,8 +77,8 @@ msc {
   hscale="1.5";
   SGSN [label="SGSN"], Peer [label="Network Peer (HLR)"];
 
-  SGSN -> Peer [label="SEND AUTHENTICATION INFO REQUEST (IMSI)"];
-  Peer -> SGSN [label="SEND AUTHENTICATION INFO ERROR (Cause)"];
+  SGSN => Peer [label="SEND AUTHENTICATION INFO REQUEST (IMSI)"];
+  Peer => SGSN [label="SEND AUTHENTICATION INFO ERROR (Cause)"];
 }
 ----
 
@@ -94,7 +94,7 @@ msc {
   hscale="1.5";
   SGSN [label="SGSN"], Peer [label="Network Peer (HLR)"];
 
-  SGSN -> Peer [label="AUTHENTICATION FAILURE REPORT (IMSI)"];
+  SGSN => Peer [label="AUTHENTICATION FAILURE REPORT (IMSI)"];
 }
 ----
 
@@ -115,10 +115,10 @@ msc {
   hscale="1.5";
   SGSN [label="SGSN"], Peer [label="Network Peer (HLR)"];
 
-  SGSN -> Peer [label="UPDATE LOCATION REQUEST (IMSI)"];
-  Peer -> SGSN [label="INSERT SUBSCRIBER DATA"];
-  SGSN -> Peer [label="INSERT SUBSCRIBER DATA ACK"];
-  Peer -> SGSN [label="UPDATE LOCATTION RESULT"];
+  SGSN => Peer [label="UPDATE LOCATION REQUEST (IMSI)"];
+  Peer => SGSN [label="INSERT SUBSCRIBER DATA"];
+  SGSN => Peer [label="INSERT SUBSCRIBER DATA ACK"];
+  Peer => SGSN [label="UPDATE LOCATTION RESULT"];
 }
 ----
 
@@ -129,8 +129,8 @@ msc {
   hscale="1.5";
   SGSN [label="SGSN"], Peer [label="Network Peer (HLR)"];
 
-  SGSN -> Peer [label="UPDATE LOCATION REQUEST (IMSI)"];
-  Peer -> SGSN [label="UPDATE LOCATTION ERROR (Cause)"];
+  SGSN => Peer [label="UPDATE LOCATION REQUEST (IMSI)"];
+  Peer => SGSN [label="UPDATE LOCATTION ERROR (Cause)"];
 }
 ----
 
@@ -146,8 +146,8 @@ msc {
   hscale="1.5";
   SGSN [label="SGSN"], Peer [label="Network Peer (HLR)"];
 
-  Peer -> SGSN [label="CANCEL LOCATION REQUEST (IMSI)"];
-  SGSN -> Peer [label="CANCEL LOCATION RESULT"];
+  Peer => SGSN [label="CANCEL LOCATION REQUEST (IMSI)"];
+  SGSN => Peer [label="CANCEL LOCATION RESULT"];
 }
 ----
 
@@ -158,8 +158,8 @@ msc {
   hscale="1.5";
   SGSN [label="SGSN"], Peer [label="Network Peer (HLR)"];
 
-  Peer -> SGSN [label="CANCEL LOCATION REQUEST (IMSI)"];
-  SGSN -> Peer [label="CANCEL LOCATION ERROR (Cause)"];
+  Peer => SGSN [label="CANCEL LOCATION REQUEST (IMSI)"];
+  SGSN => Peer [label="CANCEL LOCATION ERROR (Cause)"];
 }
 ----
 
@@ -176,8 +176,8 @@ msc {
   hscale="1.5";
   SGSN [label="SGSN"], Peer [label="Network Peer (HLR)"];
 
-  SGSN -> Peer [label="PURGE MS REQUEST (IMSI)"];
-  Peer -> SGSN [label="PURGE MS RESULT"];
+  SGSN => Peer [label="PURGE MS REQUEST (IMSI)"];
+  Peer => SGSN [label="PURGE MS RESULT"];
 }
 ----
 
@@ -195,8 +195,8 @@ msc {
   hscale="1.5";
   SGSN [label="SGSN"], Peer [label="Network Peer (HLR)"];
 
-  Peer -> SGSN [label="DELETE SUBSCRIBER DATA REQUEST (IMSI)"];
-  SGSN -> Peer [label="DELETE SUBSCRIBER DATA RESULT"];
+  Peer => SGSN [label="DELETE SUBSCRIBER DATA REQUEST (IMSI)"];
+  SGSN => Peer [label="DELETE SUBSCRIBER DATA RESULT"];
 }
 ----
 
@@ -221,7 +221,7 @@ ignored.
 
 ==== Send Authentication Info Request
 
-Direction: SGSN -> Network peer
+Direction: SGSN => Network peer
 
 [options="header",cols="5%,20%,45%,10%,10%,10%"]
 |===
@@ -239,7 +239,7 @@ both optional IEs are present, or none of them.
 
 ==== Send Authentication Info Error
 
-Direction: Network peer -> SGSN
+Direction: Network peer => SGSN
 
 [options="header",cols="5%,20%,45%,10%,10%,10%"]
 |===
@@ -251,7 +251,7 @@ Direction: Network peer -> SGSN
 
 ==== Send Authentication Info Response
 
-Direction: Network peer -> SGSN
+Direction: Network peer => SGSN
 
 [options="header",cols="5%,20%,45%,10%,10%,10%"]
 |===
@@ -263,7 +263,7 @@ Direction: Network peer -> SGSN
 
 ==== Authentication Failure Report
 
-Direction: SGSN -> Network peer
+Direction: SGSN => Network peer
 
 [options="header",cols="5%,20%,45%,10%,10%,10%"]
 |===
@@ -275,7 +275,7 @@ Direction: SGSN -> Network peer
 
 ==== Update Location Request
 
-Direction: SGSN -> Network peer
+Direction: SGSN => Network peer
 
 [options="header",cols="5%,20%,45%,10%,10%,10%"]
 |===
@@ -287,7 +287,7 @@ Direction: SGSN -> Network peer
 
 ==== Update Location Error
 
-Direction: Network peer -> SGSN
+Direction: Network peer => SGSN
 
 [options="header",cols="5%,20%,45%,10%,10%,10%"]
 |===
@@ -299,7 +299,7 @@ Direction: Network peer -> SGSN
 
 ==== Update Location Result
 
-Direction: Network peer -> SGSN
+Direction: Network peer => SGSN
 
 [options="header",cols="5%,20%,45%,10%,10%,10%"]
 |===
@@ -316,7 +316,7 @@ If the PDP info complete IE is present, the old PDP info list shall be cleared.
 
 ==== Location Cancellation Request
 
-Direction: Network peer -> SGSN
+Direction: Network peer => SGSN
 
 [options="header",cols="5%,20%,45%,10%,10%,10%"]
 |===
@@ -329,7 +329,7 @@ Direction: Network peer -> SGSN
 
 ==== Location Cancellation Result
 
-Direction: SGSN -> Network peer
+Direction: SGSN => Network peer
 
 [options="header",cols="5%,20%,45%,10%,10%,10%"]
 |===
@@ -341,7 +341,7 @@ Direction: SGSN -> Network peer
 
 ==== Purge MS Request
 
-Direction: SGSN -> Network peer
+Direction: SGSN => Network peer
 
 [options="header",cols="5%,20%,45%,10%,10%,10%"]
 |===
@@ -354,7 +354,7 @@ Direction: SGSN -> Network peer
 
 ==== Purge MS Error
 
-Direction: Network peer -> SGSN
+Direction: Network peer => SGSN
 
 [options="header",cols="5%,20%,45%,10%,10%,10%"]
 |===
@@ -366,7 +366,7 @@ Direction: Network peer -> SGSN
 
 ==== Purge MS Result
 
-Direction: Network peer -> SGSN
+Direction: Network peer => SGSN
 
 [options="header",cols="5%,20%,45%,10%,10%,10%"]
 |===
@@ -378,7 +378,7 @@ Direction: Network peer -> SGSN
 
 ==== Insert Subscriber Data Request
 
-Direction: Network peer -> SGSN
+Direction: Network peer => SGSN
 
 [options="header",cols="5%,20%,45%,10%,10%,10%"]
 |===
@@ -396,7 +396,7 @@ If the PDP info complete IE is present, the old PDP info list shall be cleared.
 
 ==== Insert Subscriber Data Error
 
-Direction: SGSN -> Network peer
+Direction: SGSN => Network peer
 
 [options="header",cols="5%,20%,45%,10%,10%,10%"]
 |===
@@ -408,7 +408,7 @@ Direction: SGSN -> Network peer
 
 ==== Insert Subscriber Data Result
 
-Direction: SGSN -> Network peer
+Direction: SGSN => Network peer
 
 [options="header",cols="5%,20%,45%,10%,10%,10%"]
 |===
@@ -419,7 +419,7 @@ Direction: SGSN -> Network peer
 
 ==== Delete Subscriber Data Request
 
-Direction: Network peer -> SGSN
+Direction: Network peer => SGSN
 
 [options="header",cols="5%,20%,45%,10%,10%,10%"]
 |===
@@ -432,7 +432,7 @@ Direction: Network peer -> SGSN
 
 ==== Delete Subscriber Data Error
 
-Direction: SGSN -> Network peer
+Direction: SGSN => Network peer
 
 [options="header",cols="5%,20%,45%,10%,10%,10%"]
 |===
@@ -444,7 +444,7 @@ Direction: SGSN -> Network peer
 
 ==== Delete Subscriber Data Result
 
-Direction: Network peer -> SGSN
+Direction: Network peer => SGSN
 
 [options="header",cols="5%,20%,45%,10%,10%,10%"]
 |===
