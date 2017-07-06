@@ -390,6 +390,7 @@ Direction: Network peer => SGSN
 |09|HLR Number|<<gsup-ie-hlr>>|O|TLV|0-9
 |04|PDP info complete|<<gsup-ie-empty>>|M|TLV|2
 |05|PDP info|<<gsup-ie-pdpinfo>>|0-10|TLV|
+|14|PDP-Charging Characteristics|<<gsup-ie-charging>>|O|TLV|4
 |===
 
 If the PDP info complete IE is present, the old PDP info list shall be cleared.
@@ -503,6 +504,7 @@ This is a container for information elements describing a single PDP.
 |11|PDP Type|<<gsup-ie-pdptype>>|C|TLV|4
 |12|Access Point Name|<<gsup-ie-apn>>|C|TLV|3-102
 |13|Quality of Service|<<gsup-ie-qos>>|O|TLV|1-20
+|14|PDP-Charging Characteristics|<<gsup-ie-charging>>|O|TLV|4
 |===
 
 The conditional IE are mandantory unless mentioned otherwise.
@@ -692,6 +694,7 @@ IEI that shall be used for the encoding.
 |0x11|PDP Type|<<gsup-ie-pdptype>>
 |0x12|Access Point Name|<<gsup-ie-apn>>
 |0x13|QoS|<<gsup-ie-qos>>
+|0x14|PDP-Charging Characteristics|<<gsup-ie-charging>>
 |0x20|RAND|<<gsup-ie-rand>>
 |0x21|SRES|<<gsup-ie-sres>>
 |0x22|Kc|<<gsup-ie-kc>>
@@ -801,6 +804,27 @@ Priority and the reset are encoded as octets 3-N of 24.008.
 	16-23:	Payload
 }
 ----
+
+
+[[gsup-ie-charging]]
+==== PDP-Charging Characteristics
+
+This encodes the ChargingCharacteristics of 3GPP TS 32.215. A HLR may
+send this as part of the InsertSubscriberData or within a single PDP
+context definition. If the HLR supplies this information it must be
+used by the SGSN when activating a PDP context.
+
+[packetdiag]
+----
+{
+	colwidth = 8
+	node_height = 24
+
+	0-3:	Profile Index
+	4-15:	Behavior
+}
+----
+
 
 [[gsup-ie-hlr]]
 ==== HLR Number encoded as 3GPP TS 09.02 ISDN-AddressString
