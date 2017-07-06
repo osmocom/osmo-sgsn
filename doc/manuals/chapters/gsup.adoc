@@ -501,7 +501,7 @@ This is a container for information elements describing a single PDP.
 |  |Length of PDP Info IE||M|V|1
 |10|PDP Context ID|<<gsup-ie-pdpctxid>>|C|TLV|3
 |11|PDP Type|<<gsup-ie-pdptype>>|C|TLV|4
-|12|Access Point Name|3GPP TS 04.08, Ch. 10.5.6.1|C|TLV|3-102
+|12|Access Point Name|<<gsup-ie-apn>>|C|TLV|3-102
 |13|Quality of Service|<<gsup-ie-qos>>|O|TLV|1-20
 |===
 
@@ -690,7 +690,8 @@ IEI that shall be used for the encoding.
 |0x09|HLR Number|<<gsup-ie-hlr>>
 |0x10|PDP Context ID|<<gsup-ie-pdpctxid>>
 |0x11|PDP Type|<<gsup-ie-pdptype>>
-|0x12|QoS|<<gsup-ie-qos>>
+|0x12|Access Point Name|<<gsup-ie-apn>>
+|0x13|QoS|<<gsup-ie-qos>>
 |0x20|RAND|<<gsup-ie-rand>>
 |0x21|SRES|<<gsup-ie-sres>>
 |0x22|Kc|<<gsup-ie-kc>>
@@ -771,6 +772,12 @@ to the GGSN during the activation of the primary PDP Context.
 	36-39:	Digit N
 }
 ----
+
+[[gsup-ie-apn]]
+==== Access Point Name
+
+This encodes the Access Point Name of a PDP Context. The encoding
+is defined in 3GPP TS 23.003.
 
 [[gsup-ie-qos]]
 ==== Quality of Service Subscribed Service
