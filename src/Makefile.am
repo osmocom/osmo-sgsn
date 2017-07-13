@@ -20,6 +20,6 @@ AM_LDFLAGS = \
 	$(NULL)
 
 # Programs
-SUBDIRS += \
+SUBDIRS = \
 	gprs \
 	$(NULL)
