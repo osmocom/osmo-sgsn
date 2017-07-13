@@ -252,7 +252,6 @@ static const struct log_info gprs_log_info = {
 
 int main(int argc, char **argv)
 {
-	struct gsm_network dummy_network;
 	int rc;
 
 	tall_bsc_ctx = talloc_named_const(NULL, 0, "nsip_proxy");
@@ -296,7 +295,7 @@ int main(int argc, char **argv)
 	}
 
 	/* start telnet after reading config for vty_get_bind_addr() */
-	rc = telnet_init_dynif(tall_bsc_ctx, &dummy_network,
+	rc = telnet_init_dynif(tall_bsc_ctx, NULL,
 			       vty_get_bind_addr(), OSMO_VTY_PORT_GBPROXY);
 	if (rc < 0)
 		exit(1);

@@ -22,16 +22,17 @@
 
 #include <openbsc/gb_proxy.h>
 
-#include <openbsc/gsm_data.h>
-#include <openbsc/gsm_data_shared.h>
 #include <openbsc/debug.h>
 
 #include <osmocom/gprs/protocol/gsm_08_18.h>
 #include <osmocom/core/rate_ctr.h>
 #include <osmocom/core/stats.h>
 #include <osmocom/core/talloc.h>
+#include <osmocom/gsm/tlv.h>
 
 #include <string.h>
+
+extern void *tall_bsc_ctx;
 
 static const struct rate_ctr_desc peer_ctr_description[] = {
 	{ "blocked",	   "BVC Block                       " },

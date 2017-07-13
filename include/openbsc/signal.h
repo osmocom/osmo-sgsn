@@ -27,6 +27,10 @@
 
 #include <osmocom/core/signal.h>
 
+enum signal_subsystems {
+	SS_SGSN,
+};
+
 /* GPRS SGSN signals SS_SGSN */
 enum signal_sgsn {
 	S_SGSN_ATTACH,

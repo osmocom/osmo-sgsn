@@ -30,6 +30,7 @@
 #include <osmocom/gprs/gprs_ns.h>
 #include <osmocom/gprs/gprs_bssgp.h>
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
+#include <osmocom/gsm/gsm_utils.h>
 #include <osmocom/ranap/iu_client.h>
 
 #include <openbsc/gprs_subscriber.h>
@@ -50,6 +51,7 @@
 #define GPRS_LLME_CHECK_TICK 30
 
 extern struct sgsn_instance *sgsn;
+extern void *tall_bsc_ctx;
 
 LLIST_HEAD(sgsn_mm_ctxts);
 LLIST_HEAD(sgsn_ggsn_ctxts);
