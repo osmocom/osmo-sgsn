@@ -205,7 +205,6 @@ int gbproxy_vty_go_parent(struct vty *vty)
 {
         switch (vty->node) {
         case GBPROXY_NODE:
-        case SGSN_NODE:
         default:
                 if (gbproxy_vty_is_config_node(vty, vty->node))
                         vty->node = CONFIG_NODE;

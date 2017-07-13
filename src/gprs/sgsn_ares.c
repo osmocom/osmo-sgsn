@@ -24,6 +24,8 @@
 
 #include <netdb.h>
 
+extern void *tall_bsc_ctx;
+
 struct cares_event_fd {
 	struct llist_head head;
 	struct osmo_fd fd;

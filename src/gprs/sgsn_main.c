@@ -167,13 +167,40 @@ static void signal_handler(int signal)
 /* NSI that BSSGP uses when transmitting on NS */
 extern struct gprs_ns_inst *bssgp_nsi;
 
-extern int bsc_vty_go_parent(struct vty *vty);
+int sgsn_vty_is_config_node(struct vty *vty, int node)
+{
+        switch (node) {
+        /* add items that are not config */
+        case CONFIG_NODE:
+                return 0;
+
+        default:
+                return 1;
+        }
+}
+
+int sgsn_vty_go_parent(struct vty *vty)
+{
+        switch (vty->node) {
+        case SGSN_NODE:
+        default:
+                if (sgsn_vty_is_config_node(vty, vty->node))
+                        vty->node = CONFIG_NODE;
+                else
+                        vty->node = ENABLE_NODE;
+
+                vty->index = NULL;
+        }
+
+        return vty->node;
+}
+
 
 static struct vty_app_info vty_info = {
 	.name 		= "OsmoSGSN",
 	.version	= PACKAGE_VERSION,
-	.go_parent_cb	= bsc_vty_go_parent,
-	.is_config_node	= bsc_vty_is_config_node,
+	.go_parent_cb	= sgsn_vty_go_parent,
+	.is_config_node	= sgsn_vty_is_config_node,
 };
 
 static void print_help(void)
@@ -319,12 +346,11 @@ static const struct log_info gprs_log_info = {
 	.num_cat = ARRAY_SIZE(gprs_categories),
 };
 
-int sgsn_ranap_iu_event(struct ue_conn_ctx *ctx, enum ranap_iu_event_type type, void *data);
+int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type type, void *data);
 
 int main(int argc, char **argv)
 {
 	struct ctrl_handle *ctrl;
-	struct gsm_network dummy_network;
 	struct osmo_sccp_instance *sccp;
 	int rc;
 
@@ -382,7 +408,7 @@ int main(int argc, char **argv)
 	}
 
 	/* start telnet after reading config for vty_get_bind_addr() */
-	rc = telnet_init_dynif(tall_bsc_ctx, &dummy_network,
+	rc = telnet_init_dynif(tall_bsc_ctx, NULL,
 			       vty_get_bind_addr(), OSMO_VTY_PORT_SGSN);
 	if (rc < 0)
 		exit(1);
