@@ -26,8 +26,8 @@
 
 #include <osmocom/core/talloc.h>
 #include <osmocom/core/rate_ctr.h>
+#include <osmocom/gsm/gsm48.h>
 
-#include <openbsc/gsm_04_08.h>
 #include <osmocom/gprs/gprs_ns.h>
 #include <osmocom/gsm/apn.h>
 

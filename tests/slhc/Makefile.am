@@ -9,7 +9,6 @@ slhc_test_SOURCES = slhc_test.c
 
 slhc_test_LDADD = \
 	$(top_builddir)/src/gprs/slhc.o \
-	$(top_builddir)/src/libcommon/libcommon.a \
 	$(LIBOSMOCORE_LIBS)
 
 

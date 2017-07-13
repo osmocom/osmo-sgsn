@@ -19,34 +19,7 @@ AM_LDFLAGS = \
 	$(COVERAGE_LDFLAGS) \
 	$(NULL)
 
-# Libraries
-SUBDIRS = \
-	libcommon \
-	libvlr \
-	libbsc \
-	libmsc \
-	libtrau \
-	libfilter \
-	libcommon-cs \
-	$(NULL)
-
 # Programs
-SUBDIRS += \
-	osmo-msc \
-	utils \
-	ipaccess \
+SUBDIRS = \
 	gprs \
 	$(NULL)
-
-# Conditional Programs
-if BUILD_NAT
-SUBDIRS += \
-	osmo-bsc_nat \
-	$(NULL)
-endif
-
-if BUILD_BSC
-SUBDIRS += \
-	osmo-bsc \
-	$(NULL)
-endif

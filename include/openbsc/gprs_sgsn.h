@@ -10,8 +10,7 @@
 
 #include <osmocom/crypt/gprs_cipher.h>
 #include <osmocom/gsm/protocol/gsm_23_003.h>
-
-#include <openbsc/gsm_data.h>
+#include <osmocom/crypt/auth.h>
 
 #define GSM_EXTENSION_LENGTH 15
 #define GSM_APN_LENGTH 102
@@ -118,6 +117,13 @@ struct service_info {
 };
 
 struct ranap_ue_conn_ctx;
+
+struct gsm_auth_tuple {
+        int use_count;
+        int key_seq;
+        struct osmo_auth_vector vec;
+};
+#define GSM_KEY_SEQ_INVAL       7       /* GSM 04.08 - 10.5.1.2 */
 
 /* According to TS 03.60, Table 5: SGSN MM and PDP Contexts */
 /* Extended by 3GPP TS 23.060, Table 6: SGSN MM and PDP Contexts */

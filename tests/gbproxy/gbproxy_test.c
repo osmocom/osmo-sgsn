@@ -49,6 +49,8 @@
 
 #define MATCH_ANY (-1)
 
+void *tall_bsc_ctx;
+
 struct gbproxy_config gbcfg = {0};
 
 struct llist_head *received_messages = NULL;

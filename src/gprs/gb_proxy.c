@@ -47,11 +47,12 @@
 #include <openbsc/gb_proxy.h>
 
 #include <openbsc/gprs_llc.h>
-#include <openbsc/gsm_04_08.h>
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 #include <openbsc/gprs_utils.h>
 
 #include <openssl/rand.h>
+
+extern void *tall_bsc_ctx;
 
 static const struct rate_ctr_desc global_ctr_description[] = {
 	{ "inv-bvci",	    "Invalid BVC Identifier          " },

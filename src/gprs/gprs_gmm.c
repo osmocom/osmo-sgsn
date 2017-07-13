@@ -35,7 +35,6 @@
 
 #include "bscconfig.h"
 
-#include <openbsc/db.h>
 #include <osmocom/core/msgb.h>
 #include <osmocom/gsm/tlv.h>
 #include <osmocom/gsm/gsm_utils.h>
@@ -56,11 +55,6 @@
 #endif
 
 #include <openbsc/debug.h>
-#include <openbsc/gsm_data.h>
-#include <openbsc/gsm_subscriber.h>
-#include <openbsc/gsm_04_08.h>
-#include <openbsc/paging.h>
-#include <openbsc/transaction.h>
 #include <openbsc/gprs_llc.h>
 #include <openbsc/gprs_sgsn.h>
 #include <openbsc/gprs_gmm.h>
@@ -75,6 +69,7 @@
 #define PTMSI_ALLOC
 
 extern struct sgsn_instance *sgsn;
+extern void *tall_bsc_ctx;
 
 static const struct tlv_definition gsm48_gmm_att_tlvdef = {
 	.def = {

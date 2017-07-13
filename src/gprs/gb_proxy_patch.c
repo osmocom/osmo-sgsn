@@ -23,12 +23,13 @@
 #include <openbsc/gprs_utils.h>
 #include <openbsc/gprs_gb_parse.h>
 
-#include <openbsc/gsm_data.h>
 #include <openbsc/debug.h>
 
 #include <osmocom/gprs/protocol/gsm_08_18.h>
 #include <osmocom/core/rate_ctr.h>
 #include <osmocom/gsm/apn.h>
+
+extern void *tall_bsc_ctx;
 
 /* patch RA identifier in place */
 static void gbproxy_patch_raid(uint8_t *raid_enc, struct gbproxy_peer *peer,

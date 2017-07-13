@@ -26,7 +26,6 @@
 
 #include <arpa/inet.h>
 
-#include <openbsc/gsm_data.h>
 #include <osmocom/core/msgb.h>
 #include <osmocom/gsm/tlv.h>
 #include <osmocom/core/talloc.h>

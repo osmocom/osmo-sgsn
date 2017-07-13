@@ -51,6 +51,8 @@
 #include <osmocom/ranap/iu_client.h>
 #endif
 
+extern void *tall_bsc_ctx;
+
 static struct sgsn_config *g_cfg = NULL;
 
 const struct value_string sgsn_auth_pol_strs[] = {

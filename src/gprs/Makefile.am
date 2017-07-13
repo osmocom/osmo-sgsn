@@ -62,7 +62,6 @@ osmo_gbproxy_SOURCES = \
 	gprs_utils.c \
 	$(NULL)
 osmo_gbproxy_LDADD = \
-	$(top_builddir)/src/libcommon/libcommon.a \
 	$(OSMO_LIBS) \
 	$(LIBCRYPTO_LIBS) \
 	-lrt \
@@ -93,9 +92,10 @@ osmo_sgsn_SOURCES = \
 	slhc.c \
 	gprs_llc_xid.c \
 	v42bis.c \
+	gsup_client.c \
+	oap_client.c \
 	$(NULL)
 osmo_sgsn_LDADD = \
-	$(top_builddir)/src/libcommon/libcommon.a \
 	$(OSMO_LIBS) \
 	$(LIBOSMOABIS_LIBS) \
 	$(LIBCARES_LIBS) \
@@ -122,7 +122,6 @@ osmo_gtphub_SOURCES = \
 	gprs_utils.c \
 	$(NULL)
 osmo_gtphub_LDADD = \
-	$(top_builddir)/src/libcommon/libcommon.a \
 	$(LIBOSMOCORE_LIBS) \
 	$(LIBOSMOGSM_LIBS) \
 	$(LIBOSMOVTY_LIBS) \

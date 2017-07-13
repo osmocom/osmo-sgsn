@@ -29,7 +29,7 @@ oap_client_test_SOURCES = \
 
 oap_client_test_LDADD = \
 	$(top_builddir)/src/gprs/gprs_utils.o \
-	$(top_builddir)/src/libcommon/libcommon.a \
+	$(top_builddir)/src/gprs/oap_client.o \
 	$(LIBOSMOCORE_LIBS) \
 	$(LIBOSMOGSM_LIBS) \
 	-lrt

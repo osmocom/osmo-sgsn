@@ -62,13 +62,13 @@
 #include <osmocom/ctrl/control_if.h>
 #include <osmocom/ctrl/ports.h>
 
-#include <osmocom/sigtran/protocol/m3ua.h>
-
 #include <gtp.h>
 
 #include "../../bscconfig.h"
 
 #if BUILD_IU
+#include <osmocom/sigtran/osmo_ss7.h>
+#include <osmocom/sigtran/protocol/m3ua.h>
 #include <osmocom/ranap/iu_client.h>
 #endif
 
@@ -173,13 +173,40 @@ static void signal_handler(int signal)
 /* NSI that BSSGP uses when transmitting on NS */
 extern struct gprs_ns_inst *bssgp_nsi;
 
-extern int bsc_vty_go_parent(struct vty *vty);
+int sgsn_vty_is_config_node(struct vty *vty, int node)
+{
+	/* So far the SGSN has no nested nodes that need parent node
+	 * declaration, except for the ss7 vty nodes. */
+	switch (node) {
+	case SGSN_NODE:
+		return 1;
+	default:
+#if BUILD_IU
+		return osmo_ss7_is_config_node(vty, node);
+#else
+		return 0;
+#endif
+	}
+}
+
+int sgsn_vty_go_parent(struct vty *vty)
+{
+	/* So far the SGSN has no nested nodes that need parent node
+	 * declaration, except for the ss7 vty nodes. */
+#if BUILD_IU
+	return osmo_ss7_vty_go_parent(vty);
+#else
+	vty->node = CONFIG_NODE;
+	vty->index = NULL;
+	return 0;
+#endif
+}
 
 static struct vty_app_info vty_info = {
 	.name 		= "OsmoSGSN",
 	.version	= PACKAGE_VERSION,
-	.go_parent_cb	= bsc_vty_go_parent,
-	.is_config_node	= bsc_vty_is_config_node,
+	.go_parent_cb	= sgsn_vty_go_parent,
+	.is_config_node	= sgsn_vty_is_config_node,
 };
 
 static void print_help(void)
@@ -325,14 +352,17 @@ static const struct log_info gprs_log_info = {
 	.num_cat = ARRAY_SIZE(gprs_categories),
 };
 
-int sgsn_ranap_iu_event(struct ue_conn_ctx *ctx, enum ranap_iu_event_type type, void *data);
+#if BUILD_IU
+int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type type, void *data);
+#endif
 
 int main(int argc, char **argv)
 {
 	struct ctrl_handle *ctrl;
-	struct gsm_network dummy_network;
-	struct osmo_sccp_instance *sccp;
 	int rc;
+#if BUILD_IU
+	struct osmo_sccp_instance *sccp;
+#endif
 
 	srand(time(NULL));
 	tall_bsc_ctx = talloc_named_const(NULL, 0, "osmo_sgsn");
@@ -354,7 +384,11 @@ int main(int argc, char **argv)
 	osmo_stats_vty_add_cmds(&gprs_log_info);
 	sgsn_vty_init(&sgsn_inst.cfg);
 	ctrl_vty_init(tall_bsc_ctx);
+
+#if BUILD_IU
 	osmo_ss7_init();
+	osmo_ss7_vty_init_asp(tall_bsc_ctx);
+#endif
 
 	handle_options(argc, argv);
 
@@ -389,7 +423,7 @@ int main(int argc, char **argv)
 	}
 
 	/* start telnet after reading config for vty_get_bind_addr() */
-	rc = telnet_init_dynif(tall_bsc_ctx, &dummy_network,
+	rc = telnet_init_dynif(tall_bsc_ctx, NULL,
 			       vty_get_bind_addr(), OSMO_VTY_PORT_SGSN);
 	if (rc < 0)
 		exit(1);
@@ -442,7 +476,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-#ifdef BUILD_IU
+#if BUILD_IU
 	sccp = osmo_sccp_simple_client(tall_bsc_ctx, "OsmoSGSN",
 				       2 /* FIXME: configurable */,
 				       OSMO_SS7_ASP_PROT_M3UA, 0,

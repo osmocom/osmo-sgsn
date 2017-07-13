@@ -28,7 +28,6 @@
 #include <osmocom/core/talloc.h>
 #include <osmocom/gprs/gprs_bssgp.h>
 
-#include <openbsc/gsm_data.h>
 #include <openbsc/debug.h>
 #include <openbsc/gprs_sgsn.h>
 #include <openbsc/gprs_gmm.h>

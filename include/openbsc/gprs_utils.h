@@ -24,6 +24,8 @@
 #include <stdint.h>
 #include <sys/types.h>
 
+#include <osmocom/core/msgb.h>
+
 struct msgb;
 struct gprs_ra_id;
 
@@ -42,3 +44,12 @@ int gprs_parse_mi_tmsi(const uint8_t *value, size_t value_len, uint32_t *tmsi);
 void gprs_parse_tmsi(const uint8_t *value, uint32_t *tmsi);
 
 int gprs_ra_id_equals(const struct gprs_ra_id *id1, const struct gprs_ra_id *id2);
+
+#define GSM48_ALLOC_SIZE        2048
+#define GSM48_ALLOC_HEADROOM    256
+
+static inline struct msgb *gsm48_msgb_alloc_name(const char *name)
+{
+        return msgb_alloc_headroom(GSM48_ALLOC_SIZE, GSM48_ALLOC_HEADROOM,
+                                   name);
+}
