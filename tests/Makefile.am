@@ -1,36 +1,9 @@
 SUBDIRS = \
 	libiudummy \
-	gsm0408 \
-	channel \
-	mgcp \
 	gprs \
-	abis \
 	gbproxy \
-	trau \
-	subscr \
-	mm_auth \
-	nanobts_omlattr \
-	vlr \
-	sms_queue \
-	msc_vlr \
 	$(NULL)
 
-if BUILD_NAT
-SUBDIRS += \
-	bsc-nat \
-	bsc-nat-trie \
-	$(NULL)
-endif
-if BUILD_BSC
-SUBDIRS += \
-	bsc \
-	$(NULL)
-endif
-if BUILD_SMPP
-SUBDIRS += \
-	smpp \
-	$(NULL)
-endif
 if HAVE_LIBGTP
 SUBDIRS += \
 	gtphub \
