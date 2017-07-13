@@ -189,13 +189,40 @@ static void handle_options(int argc, char **argv)
 	}
 }
 
-extern int bsc_vty_go_parent(struct vty *vty);
+int gbproxy_vty_is_config_node(struct vty *vty, int node)
+{
+        switch (node) {
+        /* add items that are not config */
+        case CONFIG_NODE:
+                return 0;
+
+        default:
+                return 1;
+        }
+}
+
+int gbproxy_vty_go_parent(struct vty *vty)
+{
+        switch (vty->node) {
+        case GBPROXY_NODE:
+        case SGSN_NODE:
+        default:
+                if (gbproxy_vty_is_config_node(vty, vty->node))
+                        vty->node = CONFIG_NODE;
+                else
+                        vty->node = ENABLE_NODE;
+
+                vty->index = NULL;
+        }
+
+        return vty->node;
+}
 
 static struct vty_app_info vty_info = {
 	.name 		= "OsmoGbProxy",
 	.version	= PACKAGE_VERSION,
-	.go_parent_cb	= bsc_vty_go_parent,
-	.is_config_node	= bsc_vty_is_config_node,
+	.go_parent_cb	= gbproxy_vty_go_parent,
+	.is_config_node	= gbproxy_vty_is_config_node,
 };
 
 /* default categories */

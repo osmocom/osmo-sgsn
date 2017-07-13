@@ -53,6 +53,8 @@
 
 #include <openssl/rand.h>
 
+extern void *tall_bsc_ctx;
+
 static const struct rate_ctr_desc global_ctr_description[] = {
 	{ "inv-bvci",	    "Invalid BVC Identifier          " },
 	{ "inv-lai",	    "Invalid Location Area Identifier" },
