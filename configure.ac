@@ -223,48 +223,15 @@ AC_OUTPUT(
     include/openbsc/Makefile
     include/Makefile
     src/Makefile
-    src/libtrau/Makefile
-    src/libbsc/Makefile
-    src/libmsc/Makefile
-    src/libvlr/Makefile
-    src/libmgcp/Makefile
-    src/libcommon/Makefile
-    src/libfilter/Makefile
-    src/libcommon-cs/Makefile
-    src/osmo-msc/Makefile
-    src/osmo-bsc/Makefile
-    src/osmo-bsc_nat/Makefile
-    src/osmo-bsc_mgcp/Makefile
-    src/ipaccess/Makefile
-    src/utils/Makefile
     src/gprs/Makefile
     tests/Makefile
     tests/atlocal
     tests/libiudummy/Makefile
-    tests/gsm0408/Makefile
-    tests/channel/Makefile
-    tests/bsc/Makefile
-    tests/bsc-nat/Makefile
-    tests/bsc-nat-trie/Makefile
-    tests/mgcp/Makefile
     tests/gprs/Makefile
     tests/gbproxy/Makefile
-    tests/abis/Makefile
-    tests/smpp/Makefile
-    tests/trau/Makefile
     tests/sgsn/Makefile
-    tests/subscr/Makefile
     tests/oap/Makefile
     tests/gtphub/Makefile
-    tests/mm_auth/Makefile
-    tests/xid/Makefile
-    tests/sndcp_xid/Makefile
-    tests/slhc/Makefile
-    tests/v42bis/Makefile
-    tests/nanobts_omlattr/Makefile
-    tests/vlr/Makefile
-    tests/sms_queue/Makefile
-    tests/msc_vlr/Makefile
     doc/Makefile
     doc/examples/Makefile
     Makefile)
