@@ -92,6 +92,7 @@ osmo_sgsn_SOURCES = \
 	slhc.c \
 	gprs_llc_xid.c \
 	v42bis.c \
+	gsup_client.c \
 	$(NULL)
 osmo_sgsn_LDADD = \
 	$(OSMO_LIBS) \
