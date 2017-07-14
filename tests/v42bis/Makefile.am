@@ -9,7 +9,6 @@ v42bis_test_SOURCES = v42bis_test.c
 
 v42bis_test_LDADD = \
 	$(top_builddir)/src/gprs/v42bis.o \
-	$(top_builddir)/src/libcommon/libcommon.a \
 	$(LIBOSMOCORE_LIBS)
 
 
