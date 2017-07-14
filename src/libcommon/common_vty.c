@@ -24,7 +24,6 @@
 #include <osmocom/core/talloc.h>
 
 #include <openbsc/vty.h>
-#include <openbsc/gsm_data.h>
 #include <openbsc/debug.h>
 #include <openbsc/gsm_subscriber.h>
 #include <openbsc/bsc_nat.h>

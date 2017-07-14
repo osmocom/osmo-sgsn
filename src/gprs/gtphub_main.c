@@ -39,6 +39,8 @@
 #include <osmocom/vty/telnet_interface.h>
 #include <osmocom/vty/ports.h>
 
+#include <osmocom/sigtran/osmo_ss7.h>
+
 #include <openbsc/debug.h>
 #include <openbsc/gtphub.h>
 #include <openbsc/vty.h>
@@ -46,7 +48,7 @@
 #include "../../bscconfig.h"
 
 extern void *osmo_gtphub_ctx;
-
+void *tall_bsc_ctx;
 
 const char *gtphub_copyright =
 	"Copyright (C) 2015 sysmocom s.f.m.c GmbH <info@sysmocom.de>\r\n"
@@ -112,13 +114,38 @@ static void signal_handler(int signal)
 	}
 }
 
-extern int bsc_vty_go_parent(struct vty *vty);
+int gtphub_vty_go_parent(struct vty *vty)
+{
+	switch (vty->node) {
+	default:
+		osmo_ss7_vty_go_parent(vty);
+	}
+
+	return vty->node;
+}
+
+int gtphub_vty_is_config_node(struct vty *vty, int node)
+{
+	/* Check if libosmo-sccp declares the node in
+	 * question as config node */
+	if (osmo_ss7_is_config_node(vty, node))
+		return 1;
+
+	switch (node) {
+	/* add items that are not config */
+	case CONFIG_NODE:
+		return 0;
+
+	default:
+		return 1;
+	}
+}
 
 static struct vty_app_info vty_info = {
 	.name 		= "OsmoGTPhub",
 	.version	= PACKAGE_VERSION,
-	.go_parent_cb	= bsc_vty_go_parent,
-	.is_config_node	= bsc_vty_is_config_node,
+	.go_parent_cb	= gtphub_vty_go_parent,
+	.is_config_node	= gtphub_vty_is_config_node,
 };
 
 struct cmdline_cfg {

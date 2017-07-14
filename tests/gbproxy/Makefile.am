@@ -40,9 +40,6 @@ gbproxy_test_LDADD = \
 	$(top_builddir)/src/gprs/gprs_llc_parse.o \
 	$(top_builddir)/src/gprs/crc24.o \
 	$(top_builddir)/src/gprs/gprs_utils.o \
-	$(top_builddir)/src/libcommon/libcommon.a \
-	$(top_builddir)/src/libbsc/libbsc.a \
-	$(top_builddir)/src/libtrau/libtrau.a \
 	$(LIBOSMOCORE_LIBS) \
 	$(LIBOSMOGB_LIBS) \
 	$(LIBOSMOGSM_LIBS) \

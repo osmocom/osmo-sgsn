@@ -37,6 +37,7 @@
  * globals. */
 #include <openbsc/sgsn.h>
 extern struct sgsn_instance *sgsn;
+extern void *tall_bsc_ctx;
 
 static struct gtphub *g_hub = 0;
 static struct gtphub_cfg *g_cfg = 0;
