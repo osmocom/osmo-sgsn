@@ -232,6 +232,10 @@ AC_OUTPUT(
     tests/sgsn/Makefile
     tests/oap/Makefile
     tests/gtphub/Makefile
+    tests/xid/Makefile
+    tests/sndcp_xid/Makefile
+    tests/slhc/Makefile
+    tests/v42bis/Makefile
     doc/Makefile
     doc/examples/Makefile
     Makefile)
