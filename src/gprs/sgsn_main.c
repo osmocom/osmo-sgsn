@@ -479,10 +479,9 @@ int main(int argc, char **argv)
 #if BUILD_IU
 	sccp = osmo_sccp_simple_client(tall_bsc_ctx, "OsmoSGSN",
 				       2 /* FIXME: configurable */,
-				       OSMO_SS7_ASP_PROT_M3UA, 0,
-				       "127.0.0.4" /* FIXME: configurable */,
-				       M3UA_PORT,
-				       "127.0.0.1" /* FIXME: configurable */);
+				       OSMO_SS7_ASP_PROT_M3UA,
+				       0, NULL,
+				       0, "127.0.0.1");
 	if (!sccp) {
 		printf("Setting up SCCP client failed.\n");
 		return 8;
