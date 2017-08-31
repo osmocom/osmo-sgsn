@@ -1,3 +1,5 @@
+:gfdl-enabled:
+
 OsmoSGSN User Manual
 ====================
 Harald Welte <hwelte@sysmocom.de>
