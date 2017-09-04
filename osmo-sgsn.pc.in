@@ -3,8 +3,8 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@/
 
-Name: OpenBSC
-Description: OpenBSC base station controller
+Name: OsmoSGSN
+Description: Osmocom's Serving GPRS Support Node for 2G and 3G packet-switched mobile networks
 Requires:
 Version: @VERSION@
 Cflags: -I${includedir}
