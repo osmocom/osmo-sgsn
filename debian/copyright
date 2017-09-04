@@ -78,7 +78,6 @@ Files:     .gitignore
            doc/osmo-nitb-data_structures.dot
            doc/paging.txt
            include/Makefile.am
-           include/compat_af_isdn.h
            include/openbsc/Makefile.am
            include/openbsc/common.h
            include/openbsc/crc24.h
@@ -340,21 +339,6 @@ License:   GPL-3.0+
  .
  On Debian systems, the complete text of the GNU General Public License
  Version 3 can be found in `/usr/share/common-licenses/GPL-3'.
-
-Files:     include/mISDNif.h
-Copyright: 2008 Karsten Keil <kkeil@novell.com>
-License:   LGPL-2.1
- This code is free software; you can redistribute it and/or modify
- it under the terms of the GNU LESSER GENERAL PUBLIC LICENSE
- version 2.1 as published by the Free Software Foundation.
- .
- This code is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU LESSER GENERAL PUBLIC LICENSE for more details.
- .
- On Debian systems, the complete text of the GNU Lesser General Public License
- Version 2.1 can be found in `/usr/share/common-licenses/LGPL-2.1'.
 
 Files:     src/gprs/v42bis.c
 Copyright: 2005-2011 Steve Underwood

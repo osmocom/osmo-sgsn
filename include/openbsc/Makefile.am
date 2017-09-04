@@ -1,5 +1,4 @@
 noinst_HEADERS = \
-	a_reset.h \
 	common.h \
 	crc24.h \
 	debug.h \
