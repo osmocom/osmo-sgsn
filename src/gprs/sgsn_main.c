@@ -52,12 +52,12 @@
 
 #include <osmocom/ctrl/control_vty.h>
 
-#include <openbsc/signal.h>
-#include <openbsc/debug.h>
-#include <openbsc/vty.h>
-#include <openbsc/sgsn.h>
-#include <openbsc/gprs_llc.h>
-#include <openbsc/gprs_gmm.h>
+#include <osmocom/sgsn/signal.h>
+#include <osmocom/sgsn/debug.h>
+#include <osmocom/sgsn/vty.h>
+#include <osmocom/sgsn/sgsn.h>
+#include <osmocom/sgsn/gprs_llc.h>
+#include <osmocom/sgsn/gprs_gmm.h>
 
 #include <osmocom/ctrl/control_if.h>
 #include <osmocom/ctrl/ports.h>

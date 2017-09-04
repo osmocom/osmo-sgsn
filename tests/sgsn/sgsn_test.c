@@ -19,15 +19,15 @@
  *
  */
 
-#include <openbsc/gprs_llc.h>
-#include <openbsc/sgsn.h>
-#include <openbsc/gprs_gmm.h>
-#include <openbsc/debug.h>
-#include <openbsc/gprs_subscriber.h>
+#include <osmocom/sgsn/gprs_llc.h>
+#include <osmocom/sgsn/sgsn.h>
+#include <osmocom/sgsn/gprs_gmm.h>
+#include <osmocom/sgsn/debug.h>
+#include <osmocom/sgsn/gprs_subscriber.h>
 #include <osmocom/gsm/gsup.h>
-#include <openbsc/gsup_client.h>
-#include <openbsc/gprs_utils.h>
-#include <openbsc/gprs_gb_parse.h>
+#include <osmocom/sgsn/gsup_client.h>
+#include <osmocom/sgsn/gprs_utils.h>
+#include <osmocom/sgsn/gprs_gb_parse.h>
 
 #include <osmocom/gprs/gprs_bssgp.h>
 

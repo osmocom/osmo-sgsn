@@ -30,12 +30,12 @@
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 #include <osmocom/gsm/apn.h>
 
-#include <openbsc/debug.h>
-#include <openbsc/sgsn.h>
+#include <osmocom/sgsn/debug.h>
+#include <osmocom/sgsn/sgsn.h>
 #include <osmocom/gprs/gprs_ns.h>
-#include <openbsc/gprs_sgsn.h>
-#include <openbsc/vty.h>
-#include <openbsc/gsup_client.h>
+#include <osmocom/sgsn/gprs_sgsn.h>
+#include <osmocom/sgsn/vty.h>
+#include <osmocom/sgsn/gsup_client.h>
 
 #include <osmocom/vty/command.h>
 #include <osmocom/vty/vty.h>
@@ -657,7 +657,7 @@ DEFUN(cfg_auth_policy, cfg_auth_policy_cmd,
 }
 
 /* Subscriber */
-#include <openbsc/gprs_subscriber.h>
+#include <osmocom/sgsn/gprs_subscriber.h>
 
 static void subscr_dump_full_vty(struct vty *vty, struct gprs_subscr *gsub, int pending)
 {

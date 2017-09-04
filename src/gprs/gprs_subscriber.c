@@ -25,15 +25,15 @@
 #include <osmocom/gsm/apn.h>
 #include <osmocom/core/utils.h>
 #include <osmocom/core/logging.h>
-#include <openbsc/gprs_subscriber.h>
-#include <openbsc/gsup_client.h>
+#include <osmocom/sgsn/gprs_subscriber.h>
+#include <osmocom/sgsn/gsup_client.h>
 
-#include <openbsc/sgsn.h>
-#include <openbsc/gprs_sgsn.h>
-#include <openbsc/gprs_gmm.h>
-#include <openbsc/gprs_utils.h>
+#include <osmocom/sgsn/sgsn.h>
+#include <osmocom/sgsn/gprs_sgsn.h>
+#include <osmocom/sgsn/gprs_gmm.h>
+#include <osmocom/sgsn/gprs_utils.h>
 
-#include <openbsc/debug.h>
+#include <osmocom/sgsn/debug.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>

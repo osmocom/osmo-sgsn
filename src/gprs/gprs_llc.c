@@ -33,15 +33,15 @@
 #include <osmocom/gprs/gprs_bssgp.h>
 #include <osmocom/gsm/gsm_utils.h>
 
-#include <openbsc/debug.h>
-#include <openbsc/gprs_sgsn.h>
-#include <openbsc/gprs_gmm.h>
-#include <openbsc/gprs_llc.h>
-#include <openbsc/crc24.h>
-#include <openbsc/sgsn.h>
-#include <openbsc/gprs_llc_xid.h>
-#include <openbsc/gprs_sndcp_comp.h>
-#include <openbsc/gprs_sndcp.h>
+#include <osmocom/sgsn/debug.h>
+#include <osmocom/sgsn/gprs_sgsn.h>
+#include <osmocom/sgsn/gprs_gmm.h>
+#include <osmocom/sgsn/gprs_llc.h>
+#include <osmocom/sgsn/crc24.h>
+#include <osmocom/sgsn/sgsn.h>
+#include <osmocom/sgsn/gprs_llc_xid.h>
+#include <osmocom/sgsn/gprs_sndcp_comp.h>
+#include <osmocom/sgsn/gprs_sndcp.h>
 
 static struct gprs_llc_llme *llme_alloc(uint32_t tlli);
 static int gprs_llc_tx_xid(struct gprs_llc_lle *lle, struct msgb *msg,

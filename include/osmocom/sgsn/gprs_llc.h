@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <openbsc/gprs_sgsn.h>
-#include <openbsc/gprs_llc_xid.h>
+#include <osmocom/sgsn/gprs_sgsn.h>
+#include <osmocom/sgsn/gprs_llc_xid.h>
 
 /* Section 4.7 LLC Layer Structure */
 enum gprs_llc_sapi {

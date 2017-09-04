@@ -33,14 +33,14 @@
 #include <osmocom/core/talloc.h>
 #include <osmocom/gsm/tlv.h>
 
-#include <openbsc/gprs_llc.h>
-#include <openbsc/sgsn.h>
-#include <openbsc/gprs_sndcp_xid.h>
-#include <openbsc/v42bis.h>
-#include <openbsc/v42bis_private.h>
-#include <openbsc/debug.h>
-#include <openbsc/gprs_sndcp_comp.h>
-#include <openbsc/gprs_sndcp_dcomp.h>
+#include <osmocom/sgsn/gprs_llc.h>
+#include <osmocom/sgsn/sgsn.h>
+#include <osmocom/sgsn/gprs_sndcp_xid.h>
+#include <osmocom/sgsn/v42bis.h>
+#include <osmocom/sgsn/v42bis_private.h>
+#include <osmocom/sgsn/debug.h>
+#include <osmocom/sgsn/gprs_sndcp_comp.h>
+#include <osmocom/sgsn/gprs_sndcp_dcomp.h>
 
 /* A struct to capture the output data of compressor and decompressor */
 struct v42bis_output_buffer {

@@ -179,8 +179,9 @@ AM_CONFIG_HEADER(bscconfig.h)
 
 AC_OUTPUT(
     osmo-sgsn.pc
-    include/openbsc/Makefile
     include/Makefile
+    include/osmocom/Makefile
+    include/osmocom/sgsn/Makefile
     src/Makefile
     src/gprs/Makefile
     tests/Makefile

@@ -33,13 +33,13 @@
 #include <osmocom/core/talloc.h>
 #include <osmocom/gsm/tlv.h>
 
-#include <openbsc/gprs_llc.h>
-#include <openbsc/sgsn.h>
-#include <openbsc/gprs_sndcp_xid.h>
-#include <openbsc/slhc.h>
-#include <openbsc/debug.h>
-#include <openbsc/gprs_sndcp_comp.h>
-#include <openbsc/gprs_sndcp_pcomp.h>
+#include <osmocom/sgsn/gprs_llc.h>
+#include <osmocom/sgsn/sgsn.h>
+#include <osmocom/sgsn/gprs_sndcp_xid.h>
+#include <osmocom/sgsn/slhc.h>
+#include <osmocom/sgsn/debug.h>
+#include <osmocom/sgsn/gprs_sndcp_comp.h>
+#include <osmocom/sgsn/gprs_sndcp_pcomp.h>
 
 /* Initalize header compression */
 int gprs_sndcp_pcomp_init(const void *ctx, struct gprs_sndcp_comp *comp_entity,

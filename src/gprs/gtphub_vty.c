@@ -30,12 +30,12 @@
 #include <osmocom/vty/command.h>
 #include <osmocom/vty/misc.h>
 
-#include <openbsc/vty.h>
-#include <openbsc/gtphub.h>
+#include <osmocom/sgsn/vty.h>
+#include <osmocom/sgsn/gtphub.h>
 
 /* TODO split GRX ares from sgsn into a separate struct and allow use without
  * globals. */
-#include <openbsc/sgsn.h>
+#include <osmocom/sgsn/sgsn.h>
 extern struct sgsn_instance *sgsn;
 extern void *tall_bsc_ctx;
 

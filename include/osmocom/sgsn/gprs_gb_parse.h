@@ -1,6 +1,6 @@
 #pragma once
 
-#include <openbsc/gprs_llc.h>
+#include <osmocom/sgsn/gprs_llc.h>
 
 #include <sys/types.h>
 

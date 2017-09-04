@@ -21,11 +21,11 @@
 
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 #include <osmocom/core/utils.h>
-#include <openbsc/sgsn.h>
-#include <openbsc/gprs_sgsn.h>
-#include <openbsc/gprs_gmm.h>
-#include <openbsc/gprs_subscriber.h>
-#include <openbsc/debug.h>
+#include <osmocom/sgsn/sgsn.h>
+#include <osmocom/sgsn/gprs_sgsn.h>
+#include <osmocom/sgsn/gprs_gmm.h>
+#include <osmocom/sgsn/gprs_subscriber.h>
+#include <osmocom/sgsn/debug.h>
 
 const struct value_string auth_state_names[] = {
 	{ SGSN_AUTH_ACCEPTED,	"accepted"},

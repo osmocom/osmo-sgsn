@@ -19,8 +19,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <openbsc/slhc.h>
-#include <openbsc/debug.h>
+#include <osmocom/sgsn/slhc.h>
+#include <osmocom/sgsn/debug.h>
 
 #include <osmocom/core/talloc.h>
 #include <osmocom/core/utils.h>

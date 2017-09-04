@@ -19,7 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include <openbsc/gprs_utils.h>
+#include <osmocom/sgsn/gprs_utils.h>
 
 #include <osmocom/core/msgb.h>
 #include <osmocom/gprs/gprs_ns.h>

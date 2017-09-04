@@ -21,8 +21,8 @@
 #include <osmocom/core/application.h>
 #include <osmocom/gsm/oap.h>
 
-#include <openbsc/debug.h>
-#include <openbsc/oap_client.h>
+#include <osmocom/sgsn/debug.h>
+#include <osmocom/sgsn/oap_client.h>
 
 #include <stdio.h>
 #include <string.h>

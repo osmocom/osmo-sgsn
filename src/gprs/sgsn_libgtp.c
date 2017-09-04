@@ -42,14 +42,14 @@
 #include <osmocom/gprs/gprs_bssgp.h>
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 
-#include <openbsc/signal.h>
-#include <openbsc/debug.h>
-#include <openbsc/sgsn.h>
-#include <openbsc/gprs_llc.h>
-#include <openbsc/gprs_sgsn.h>
-#include <openbsc/gprs_gmm.h>
-#include <openbsc/gprs_subscriber.h>
-#include <openbsc/gprs_sndcp.h>
+#include <osmocom/sgsn/signal.h>
+#include <osmocom/sgsn/debug.h>
+#include <osmocom/sgsn/sgsn.h>
+#include <osmocom/sgsn/gprs_llc.h>
+#include <osmocom/sgsn/gprs_sgsn.h>
+#include <osmocom/sgsn/gprs_gmm.h>
+#include <osmocom/sgsn/gprs_subscriber.h>
+#include <osmocom/sgsn/gprs_sndcp.h>
 
 #ifdef BUILD_IU
 #include <osmocom/ranap/iu_client.h>

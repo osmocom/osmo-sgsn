@@ -19,7 +19,7 @@
  *
  */
 
-#include <openbsc/crc24.h>
+#include <osmocom/sgsn/crc24.h>
 
 /* CRC24 table - FCS */
 static const uint32_t tbl_crc24[256] = {

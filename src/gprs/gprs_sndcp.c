@@ -30,15 +30,15 @@
 #include <osmocom/core/talloc.h>
 #include <osmocom/gprs/gprs_bssgp.h>
 
-#include <openbsc/debug.h>
-#include <openbsc/gprs_llc.h>
-#include <openbsc/sgsn.h>
-#include <openbsc/gprs_sndcp.h>
-#include <openbsc/gprs_llc_xid.h>
-#include <openbsc/gprs_sndcp_xid.h>
-#include <openbsc/gprs_sndcp_pcomp.h>
-#include <openbsc/gprs_sndcp_dcomp.h>
-#include <openbsc/gprs_sndcp_comp.h>
+#include <osmocom/sgsn/debug.h>
+#include <osmocom/sgsn/gprs_llc.h>
+#include <osmocom/sgsn/sgsn.h>
+#include <osmocom/sgsn/gprs_sndcp.h>
+#include <osmocom/sgsn/gprs_llc_xid.h>
+#include <osmocom/sgsn/gprs_sndcp_xid.h>
+#include <osmocom/sgsn/gprs_sndcp_pcomp.h>
+#include <osmocom/sgsn/gprs_sndcp_dcomp.h>
+#include <osmocom/sgsn/gprs_sndcp_comp.h>
 
 #define DEBUG_IP_PACKETS 0	/* 0=Disabled, 1=Enabled */
 

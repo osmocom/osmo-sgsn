@@ -20,12 +20,12 @@
 
 #include <osmocom/gsm/gsm48.h>
 
-#include <openbsc/gb_proxy.h>
+#include <osmocom/sgsn/gb_proxy.h>
 
-#include <openbsc/gprs_utils.h>
-#include <openbsc/gprs_gb_parse.h>
+#include <osmocom/sgsn/gprs_utils.h>
+#include <osmocom/sgsn/gprs_gb_parse.h>
 
-#include <openbsc/debug.h>
+#include <osmocom/sgsn/debug.h>
 
 #include <osmocom/gsm/gsm_utils.h>
 

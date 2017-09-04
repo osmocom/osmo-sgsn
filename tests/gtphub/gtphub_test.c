@@ -28,9 +28,9 @@
 #include <osmocom/core/utils.h>
 #include <osmocom/core/application.h>
 
-#include <openbsc/debug.h>
+#include <osmocom/sgsn/debug.h>
 
-#include <openbsc/gtphub.h>
+#include <osmocom/sgsn/gtphub.h>
 #include <gtp.h>
 #include <gtpie.h>
 

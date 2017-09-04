@@ -23,7 +23,7 @@
 
 #include <stdint.h>
 #include <osmocom/core/linuxlist.h>
-#include <openbsc/gprs_sndcp_comp.h>
+#include <osmocom/sgsn/gprs_sndcp_comp.h>
 
 /* Note: The decompressed packet may have a maximum size of:
  * Return value + MAX_DECOMPR_INCR */

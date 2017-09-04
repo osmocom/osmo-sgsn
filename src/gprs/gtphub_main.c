@@ -41,9 +41,9 @@
 
 #include <osmocom/sigtran/osmo_ss7.h>
 
-#include <openbsc/debug.h>
-#include <openbsc/gtphub.h>
-#include <openbsc/vty.h>
+#include <osmocom/sgsn/debug.h>
+#include <osmocom/sgsn/gtphub.h>
+#include <osmocom/sgsn/vty.h>
 
 #include "../../bscconfig.h"
 

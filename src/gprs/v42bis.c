@@ -38,9 +38,9 @@
 #include <ctype.h>
 #include <assert.h>
 
-#include <openbsc/v42bis.h>
-#include <openbsc/v42bis_private.h>
-#include <openbsc/debug.h>
+#include <osmocom/sgsn/v42bis.h>
+#include <osmocom/sgsn/v42bis_private.h>
+#include <osmocom/sgsn/debug.h>
 #include <osmocom/core/talloc.h>
 
 

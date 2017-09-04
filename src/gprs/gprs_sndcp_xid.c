@@ -31,10 +31,10 @@
 #include <osmocom/core/talloc.h>
 #include <osmocom/gsm/tlv.h>
 
-#include <openbsc/debug.h>
-#include <openbsc/gprs_llc.h>
-#include <openbsc/sgsn.h>
-#include <openbsc/gprs_sndcp_xid.h>
+#include <osmocom/sgsn/debug.h>
+#include <osmocom/sgsn/gprs_llc.h>
+#include <osmocom/sgsn/sgsn.h>
+#include <osmocom/sgsn/gprs_sndcp_xid.h>
 
 /* When the propose bit in an SNDCP-XID compression field is set to zero,
  * the algorithm identifier is stripped. The algoritm parameters are specific

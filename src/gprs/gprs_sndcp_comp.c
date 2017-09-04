@@ -30,11 +30,11 @@
 #include <osmocom/core/talloc.h>
 #include <osmocom/core/utils.h>
 
-#include <openbsc/debug.h>
-#include <openbsc/gprs_sndcp_xid.h>
-#include <openbsc/gprs_sndcp_comp.h>
-#include <openbsc/gprs_sndcp_pcomp.h>
-#include <openbsc/gprs_sndcp_dcomp.h>
+#include <osmocom/sgsn/debug.h>
+#include <osmocom/sgsn/gprs_sndcp_xid.h>
+#include <osmocom/sgsn/gprs_sndcp_comp.h>
+#include <osmocom/sgsn/gprs_sndcp_pcomp.h>
+#include <osmocom/sgsn/gprs_sndcp_dcomp.h>
 
 /* Create a new compression entity from a XID-Field */
 static struct gprs_sndcp_comp *gprs_sndcp_comp_create(const void *ctx,

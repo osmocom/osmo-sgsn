@@ -28,7 +28,7 @@
 #include <osmocom/core/timer.h>
 #include <osmocom/core/rate_ctr.h>
 
-#include <openbsc/gprs_sgsn.h>
+#include <osmocom/sgsn/gprs_sgsn.h>
 
 
 /* support */

@@ -25,8 +25,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <openbsc/gtphub.h>
-#include <openbsc/debug.h>
+#include <osmocom/sgsn/gtphub.h>
+#include <osmocom/sgsn/debug.h>
 
 /* Convenience makro, note: only within this C file. */
 #define LOG(level, fmt, args...) \

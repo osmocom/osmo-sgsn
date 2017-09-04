@@ -20,9 +20,9 @@
  *
  */
 
-#include <openbsc/gb_proxy.h>
+#include <osmocom/sgsn/gb_proxy.h>
 
-#include <openbsc/debug.h>
+#include <osmocom/sgsn/debug.h>
 
 #include <osmocom/gprs/protocol/gsm_08_18.h>
 #include <osmocom/core/rate_ctr.h>

@@ -41,10 +41,10 @@
 #include <osmocom/gprs/gprs_ns.h>
 #include <osmocom/gprs/gprs_bssgp.h>
 
-#include <openbsc/signal.h>
-#include <openbsc/debug.h>
-#include <openbsc/vty.h>
-#include <openbsc/gb_proxy.h>
+#include <osmocom/sgsn/signal.h>
+#include <osmocom/sgsn/debug.h>
+#include <osmocom/sgsn/vty.h>
+#include <osmocom/sgsn/gb_proxy.h>
 
 #include <osmocom/vty/command.h>
 #include <osmocom/vty/telnet_interface.h>

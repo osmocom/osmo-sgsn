@@ -28,11 +28,11 @@
 #include <osmocom/core/talloc.h>
 #include <osmocom/gprs/gprs_bssgp.h>
 
-#include <openbsc/debug.h>
-#include <openbsc/gprs_sgsn.h>
-#include <openbsc/gprs_gmm.h>
-#include <openbsc/gprs_llc.h>
-#include <openbsc/crc24.h>
+#include <osmocom/sgsn/debug.h>
+#include <osmocom/sgsn/gprs_sgsn.h>
+#include <osmocom/sgsn/gprs_gmm.h>
+#include <osmocom/sgsn/gprs_llc.h>
+#include <osmocom/sgsn/crc24.h>
 
 static const struct value_string llc_cmd_strs[] = {
 	{ GPRS_LLC_NULL,	"NULL" },

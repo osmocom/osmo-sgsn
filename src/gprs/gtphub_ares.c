@@ -28,15 +28,15 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <openbsc/gtphub.h>
-#include <openbsc/debug.h>
+#include <osmocom/sgsn/gtphub.h>
+#include <osmocom/sgsn/debug.h>
 
 #include <osmocom/core/utils.h>
 #include <osmocom/gsm/apn.h>
 
 /* TODO split GRX ares from sgsn into a separate struct and allow use without
  * globals. */
-#include <openbsc/sgsn.h>
+#include <osmocom/sgsn/sgsn.h>
 extern struct sgsn_instance *sgsn;
 
 struct sgsn_instance sgsn_inst = { 0 };

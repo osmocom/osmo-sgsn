@@ -23,7 +23,7 @@
 
 #include <stdint.h>
 #include <osmocom/core/linuxlist.h>
-#include <openbsc/gprs_sndcp_xid.h>
+#include <osmocom/sgsn/gprs_sndcp_xid.h>
 
 /* Header / Data compression entity */
 struct gprs_sndcp_comp {

@@ -57,8 +57,8 @@
 #include <arpa/inet.h>
 #include <osmocom/core/utils.h>
 #include <osmocom/core/talloc.h>
-#include <openbsc/slhc.h>
-#include <openbsc/debug.h>
+#include <osmocom/sgsn/slhc.h>
+#include <osmocom/sgsn/debug.h>
 
 #define ERR_PTR(x) x
 

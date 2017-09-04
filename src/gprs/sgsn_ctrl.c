@@ -21,9 +21,9 @@
 
 #include <osmocom/ctrl/control_if.h>
 #include <osmocom/ctrl/control_cmd.h>
-#include <openbsc/gprs_sgsn.h>
-#include <openbsc/sgsn.h>
-#include <openbsc/debug.h>
+#include <osmocom/sgsn/gprs_sgsn.h>
+#include <osmocom/sgsn/sgsn.h>
+#include <osmocom/sgsn/debug.h>
 
 #include <pdp.h>
 

@@ -19,8 +19,8 @@
  *
  */
 
-#include <openbsc/sgsn.h>
-#include <openbsc/debug.h>
+#include <osmocom/sgsn/sgsn.h>
+#include <osmocom/sgsn/debug.h>
 
 #include <netdb.h>
 

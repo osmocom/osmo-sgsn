@@ -21,14 +21,14 @@
  *
  */
 
-#include <openbsc/gsup_client.h>
+#include <osmocom/sgsn/gsup_client.h>
 
 #include <osmocom/abis/ipa.h>
 #include <osmocom/gsm/protocol/ipaccess.h>
 #include <osmocom/core/msgb.h>
 #include <osmocom/core/logging.h>
 
-#include <openbsc/debug.h>
+#include <osmocom/sgsn/debug.h>
 
 #include <errno.h>
 #include <string.h>

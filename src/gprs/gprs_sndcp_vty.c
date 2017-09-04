@@ -31,10 +31,10 @@
 #include <osmocom/core/talloc.h>
 #include <osmocom/core/select.h>
 #include <osmocom/core/rate_ctr.h>
-#include <openbsc/debug.h>
-#include <openbsc/signal.h>
-#include <openbsc/gprs_llc.h>
-#include <openbsc/gprs_sndcp.h>
+#include <osmocom/sgsn/debug.h>
+#include <osmocom/sgsn/signal.h>
+#include <osmocom/sgsn/gprs_llc.h>
+#include <osmocom/sgsn/gprs_sndcp.h>
 
 #include <osmocom/vty/vty.h>
 #include <osmocom/vty/command.h>

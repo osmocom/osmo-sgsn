@@ -30,10 +30,10 @@
 #include <osmocom/core/msgb.h>
 #include <osmocom/core/talloc.h>
 
-#include <openbsc/debug.h>
-#include <openbsc/gprs_llc.h>
-#include <openbsc/sgsn.h>
-#include <openbsc/gprs_llc_xid.h>
+#include <osmocom/sgsn/debug.h>
+#include <osmocom/sgsn/gprs_llc.h>
+#include <osmocom/sgsn/sgsn.h>
+#include <osmocom/sgsn/gprs_llc_xid.h>
 
 const struct value_string gprs_llc_xid_type_names[] = {
 	{ GPRS_LLC_XID_T_VERSION,	"VERSION"},

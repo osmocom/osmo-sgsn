@@ -33,9 +33,9 @@
 #include <osmocom/core/statistics.h>
 #include <osmocom/gsm/protocol/gsm_04_08.h>
 
-#include <openbsc/gsm_data.h>
-#include <openbsc/bsc_msc_data.h>
-#include <openbsc/abis_nm.h>
+#include <osmocom/sgsn/gsm_data.h>
+#include <osmocom/sgsn/bsc_msc_data.h>
+#include <osmocom/sgsn/abis_nm.h>
 
 void *tall_bsc_ctx;
 

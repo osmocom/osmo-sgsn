@@ -1,3 +1,3 @@
 SUBDIRS = \
-	osmocom \
+	sgsn \
 	$(NULL)

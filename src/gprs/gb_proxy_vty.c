@@ -31,10 +31,10 @@
 #include <osmocom/gprs/gprs_ns.h>
 #include <osmocom/gsm/apn.h>
 
-#include <openbsc/debug.h>
-#include <openbsc/gb_proxy.h>
-#include <openbsc/gprs_utils.h>
-#include <openbsc/vty.h>
+#include <osmocom/sgsn/debug.h>
+#include <osmocom/sgsn/gb_proxy.h>
+#include <osmocom/sgsn/gprs_utils.h>
+#include <osmocom/sgsn/vty.h>
 
 #include <osmocom/vty/command.h>
 #include <osmocom/vty/vty.h>

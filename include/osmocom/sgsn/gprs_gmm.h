@@ -2,7 +2,7 @@
 #define _GPRS_GMM_H
 
 #include <osmocom/core/msgb.h>
-#include <openbsc/gprs_sgsn.h>
+#include <osmocom/sgsn/gprs_sgsn.h>
 
 #include <stdbool.h>
 
