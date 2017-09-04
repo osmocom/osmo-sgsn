@@ -22,7 +22,7 @@ Build-Depends: debhelper (>=9),
                libosmo-netif-dev
 Standards-Version: 3.9.8
 Vcs-Git: git://git.osmocom.org/osmo-sgsn.git
-Vcs-Browser: http://git.osmocom.org/gitweb?p=osmo-sgsn.git;a=summary
+Vcs-Browser: https://git.osmocom.org/osmo-sgsn
 Homepage: https://projects.osmocom.org/projects/osmo-sgsn
 
 
@@ -42,8 +42,7 @@ Description: OsmoSGSN: Osmocom's Serving GPRS Support Node for 2G and 3G packet-
 Package: osmo-gtphub
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Osmocom GTP Hub
- Proxy for comms between multiple SGSNs and GGSNs.
+Description: Osmocom GTP Hub: Proxy for GTP traffic between multiple SGSNs and GGSNs
 
 Package: osmo-gtphub-dbg
 Architecture: any
@@ -51,24 +50,19 @@ Section: debug
 Priority: extra
 Depends: osmo-gtphub (= ${binary:Version}), ${misc:Depends}
 Description: Debug symbols for Osmocom GTP Hub
- Make debugging possible
 
 Package: osmo-gbproxy
 Architecture: any
 Depends: ${shlibs:Depends},
          ${misc:Depends}
-Recommends: osmocom-sgsn
+Recommends: osmo-sgsn
 Description: Osmocom GPRS Gb Interface Proxy
  The purpose of the Gb proxy is to aggregate the Gb links of multiple
  BSS's and present them in one Gb link to the SGSN.
- .
- This package is part of OpenBSC and closely related to osmocom-sgsn.
 
 Package: osmo-gbproxy-dbg
 Architecture: any
 Section: debug
 Priority: extra
 Depends: osmo-gbproxy (= ${binary:Version}), ${misc:Depends}
-Description: Debug symbols for Osmocom GTP Hub
- Make debugging possible
-
+Description: Debug symbols for Osmocom GPRS Gb Interface Proxy

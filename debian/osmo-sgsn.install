@@ -1,4 +1,2 @@
-usr/bin
-usr/share/doc/openbsc/examples/osmo-gtphub
-usr/share/doc/openbsc/examples/osmo-gbproxy
+usr/bin/osmo-sgsn
 usr/share/doc/openbsc/examples/osmo-sgsn
