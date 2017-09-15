@@ -89,7 +89,6 @@ Files:     .gitignore
            include/osmocom/sgsn/gprs_sgsn.h
            include/osmocom/sgsn/gprs_sndcp.h
            include/osmocom/sgsn/gprs_subscriber.h
-           include/osmocom/sgsn/rest_octets.h
            include/osmocom/sgsn/sgsn.h
            include/osmocom/sgsn/vty.h
            m4/README

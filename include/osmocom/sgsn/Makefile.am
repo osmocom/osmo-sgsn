@@ -18,7 +18,6 @@ noinst_HEADERS = \
 	gsup_client.h \
 	gtphub.h \
 	oap_client.h \
-	rest_octets.h \
 	sgsn.h \
 	signal.h \
 	slhc.h \
