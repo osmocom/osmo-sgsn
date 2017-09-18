@@ -1018,9 +1018,9 @@ static int gbprox_rx_sig_from_bss(struct gbproxy_config *cfg,
 			if (!from_peer) {
 				/* if a PTP-BVC is reset, and we don't know that
 				 * PTP-BVCI yet, we should allocate a new peer */
-				LOGP(DGPRS, LOGL_INFO, "Allocationg new peer for "
-				     "BVCI=%u via NSEI=%u\n", bvci, nsei);
+				LOGP(DGPRS, LOGL_INFO, "Allocationg new peer for BVCI=%u via NSEI=%u\n", bvci, nsei);
 				from_peer = gbproxy_peer_alloc(cfg, bvci);
+				OSMO_ASSERT(from_peer);
 				from_peer->nsei = nsei;
 			}
 
