@@ -145,7 +145,6 @@ struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
 	const uint8_t *qos;
 	int rc;
 
-	LOGP(DGPRS, LOGL_ERROR, "Create PDP Context\n");
 	pctx = sgsn_pdp_ctx_alloc(mmctx, nsapi);
 	if (!pctx) {
 		LOGP(DGPRS, LOGL_ERROR, "Couldn't allocate PDP Ctx\n");
@@ -174,6 +173,7 @@ struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
 	pdp->selmode = 0xFC | 0x00;
 
 	/* IMSI, TEID/TEIC, FLLU/FLLC, TID, NSAPI set in pdp_newpdp */
+	LOGPDPCTXP(LOGL_NOTICE, pctx, "Create PDP Context\n");
 
 	/* Put the MSISDN in case we have it */
 	if (mmctx->subscr && mmctx->subscr->sgsn_data->msisdn_len) {
@@ -635,7 +635,8 @@ static int cb_conf(int type, int cause, struct pdp_t *pdp, void *cbp)
 /* Called whenever a PDP context is deleted for any reason */
 static int cb_delete_context(struct pdp_t *pdp)
 {
-	LOGP(DGPRS, LOGL_INFO, "PDP Context was deleted\n");
+	LOGPDPX(DGPRS, LOGL_INFO, pdp, "Context was deleted\n")   ;
+
 	return 0;
 }
 

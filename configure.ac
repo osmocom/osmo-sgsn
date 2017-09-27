@@ -62,7 +62,7 @@ AC_SUBST(osmo_ac_iu)
 
 
 found_libgtp=yes
-PKG_CHECK_MODULES(LIBGTP, libgtp >= 0.92, , found_libgtp=no)
+PKG_CHECK_MODULES(LIBGTP, libgtp >= 1.0.0, , found_libgtp=no)
 AM_CONDITIONAL(HAVE_LIBGTP, test "$found_libgtp" = yes)
 AC_SUBST(found_libgtp)
 
