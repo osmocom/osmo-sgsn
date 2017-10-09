@@ -1235,6 +1235,19 @@ static int gsm48_rx_gmm_id_resp(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 	return gsm48_gmm_authorize(ctx);
 }
 
+/* Allocate a new P-TMSI and change context state */
+static inline void ptmsi_update(struct sgsn_mm_ctx *ctx)
+{
+	uint32_t ptmsi;
+	/* Don't change the P-TMSI if a P-TMSI re-assignment is under way */
+	if (ctx->gmm_state != GMM_COMMON_PROC_INIT) {
+		ptmsi = sgsn_alloc_ptmsi();
+		ctx->p_tmsi_old = ctx->p_tmsi;
+		ctx->p_tmsi = ptmsi;
+	}
+	ctx->gmm_state = GMM_COMMON_PROC_INIT;
+}
+
 /* Section 9.4.1 Attach request */
 static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 				struct gprs_llc_llme *llme)
@@ -1391,12 +1404,7 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 	}
 #ifdef PTMSI_ALLOC
 	/* Allocate a new P-TMSI (+ P-TMSI signature) and update TLLI */
-	/* Don't change the P-TMSI if a P-TMSI re-assignment is under way */
-	if (ctx->gmm_state != GMM_COMMON_PROC_INIT) {
-		ctx->p_tmsi_old = ctx->p_tmsi;
-		ctx->p_tmsi = sgsn_alloc_ptmsi();
-	}
-	ctx->gmm_state = GMM_COMMON_PROC_INIT;
+	ptmsi_update(ctx);
 #endif
 
 	if (ctx->ran_type == MM_CTX_T_GERAN_Gb) {
@@ -1711,16 +1719,11 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	rate_ctr_inc(&mmctx->ctrg->ctr[GMM_CTR_RA_UPDATE]);
 
 #ifdef PTMSI_ALLOC
-	/* Don't change the P-TMSI if a P-TMSI re-assignment is under way */
-	if (mmctx->gmm_state != GMM_COMMON_PROC_INIT) {
-		mmctx->p_tmsi_old = mmctx->p_tmsi;
-		mmctx->p_tmsi = sgsn_alloc_ptmsi();
-	}
+	ptmsi_update(mmctx);
+
 	/* Start T3350 and re-transmit up to 5 times until ATTACH COMPLETE */
 	mmctx->t3350_mode = GMM_T3350_MODE_RAU;
 	mmctx_timer_start(mmctx, 3350, sgsn->cfg.timers.T3350);
-
-	mmctx->gmm_state = GMM_COMMON_PROC_INIT;
 #else
 	/* Make sure we are NORMAL (i.e. not SUSPENDED anymore) */
 	mmctx->gmm_state = GMM_REGISTERED_NORMAL;
