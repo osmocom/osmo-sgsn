@@ -1242,8 +1242,11 @@ static inline void ptmsi_update(struct sgsn_mm_ctx *ctx)
 	/* Don't change the P-TMSI if a P-TMSI re-assignment is under way */
 	if (ctx->gmm_state != GMM_COMMON_PROC_INIT) {
 		ptmsi = sgsn_alloc_ptmsi();
-		ctx->p_tmsi_old = ctx->p_tmsi;
-		ctx->p_tmsi = ptmsi;
+		if (ptmsi != GSM_RESERVED_TMSI) {
+			ctx->p_tmsi_old = ctx->p_tmsi;
+			ctx->p_tmsi = ptmsi;
+		} else
+			LOGMMCTXP(LOGL_ERROR, ctx, "P-TMSI allocation failure: using old one.\n");
 	}
 	ctx->gmm_state = GMM_COMMON_PROC_INIT;
 }
