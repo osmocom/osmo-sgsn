@@ -59,3 +59,7 @@ override_dh_strip:
 	dh_strip --dbg-package=osmo-sgsn-dbg
 	dh_strip --dbg-package=osmo-gtphub-dbg
 	dh_strip --dbg-package=osmo-gbproxy-dbg
+
+# Print test results in case of a failure
+override_dh_auto_test:
+	dh_auto_test || (find . -name testsuite.log -exec cat {} \; ; false)
