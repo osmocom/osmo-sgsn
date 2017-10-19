@@ -302,47 +302,47 @@ static struct log_info_cat gprs_categories[] = {
 	[DGPRS] = {
 		.name = "DGPRS",
 		.description = "GPRS Packet Service",
-		.enabled = 1, .loglevel = LOGL_DEBUG,
+		.enabled = 1, .loglevel = LOGL_NOTICE,
 	},
 	[DNS] = {
 		.name = "DNS",
 		.description = "GPRS Network Service (NS)",
-		.enabled = 1, .loglevel = LOGL_INFO,
+		.enabled = 1, .loglevel = LOGL_NOTICE,
 	},
 	[DBSSGP] = {
 		.name = "DBSSGP",
 		.description = "GPRS BSS Gateway Protocol (BSSGP)",
-		.enabled = 1, .loglevel = LOGL_DEBUG,
+		.enabled = 1, .loglevel = LOGL_NOTICE,
 	},
 	[DLLC] = {
 		.name = "DLLC",
 		.description = "GPRS Logical Link Control Protocol (LLC)",
-		.enabled = 1, .loglevel = LOGL_DEBUG,
+		.enabled = 1, .loglevel = LOGL_NOTICE,
 	},
 	[DSNDCP] = {
 		.name = "DSNDCP",
 		.description = "GPRS Sub-Network Dependent Control Protocol (SNDCP)",
-		.enabled = 1, .loglevel = LOGL_DEBUG,
+		.enabled = 1, .loglevel = LOGL_NOTICE,
 	},
 	[DRANAP] = {
 		.name = "DRANAP",
 		.description = "RAN Application Part (RANAP)",
-		.enabled = 1, .loglevel = LOGL_DEBUG,
+		.enabled = 1, .loglevel = LOGL_NOTICE,
 	},
 	[DSUA] = {
 		.name = "DSUA",
 		.description = "SCCP User Adaptation (SUA)",
-		.enabled = 1, .loglevel = LOGL_DEBUG,
+		.enabled = 1, .loglevel = LOGL_NOTICE,
 	},
 	[DSLHC] = {
 		.name = "DSLHC",
 		.description = "RFC1144 TCP/IP Header compression (SLHC)",
-		.enabled = 1, .loglevel = LOGL_DEBUG,
+		.enabled = 1, .loglevel = LOGL_NOTICE,
 	},
 	[DV42BIS] = {
 		.name = "DV42BIS",
 		.description = "V.42bis data compression (SNDCP)",
-		.enabled = 1, .loglevel = LOGL_DEBUG,
+		.enabled = 1, .loglevel = LOGL_NOTICE,
 	}
 };
 
