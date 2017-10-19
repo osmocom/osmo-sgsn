@@ -118,23 +118,6 @@ DECLARE_TIMER(3386, "Wait for MODIFY PDP CTX ACK timer (s)")
 DECLARE_TIMER(3395, "Wait for DEACT PDP CTX ACK timer (s)")
 DECLARE_TIMER(3397, "Wait for DEACT AA PDP CTX ACK timer (s)")
 
-
-#define GSM48_MAX_APN_LEN	102	/* 10.5.6.1 */
-/** Copy apn to a static buffer, replacing the length octets in apn_enc with '.'
- * and terminating with a '\0'. Return the static buffer.
- * len: the length of the encoded APN (which has no terminating zero).
- */
-static char *gprs_apn2str(uint8_t *apn, unsigned int len)
-{
-	static char apnbuf[GSM48_MAX_APN_LEN+1];
-
-	if (!apn)
-		return "";
-	osmo_apn_to_str(apnbuf, apn, len);
-
-	return apnbuf+1;
-}
-
 char *gprs_pdpaddr2str(uint8_t *pdpa, uint8_t len)
 {
 	static char str[INET6_ADDRSTRLEN + 10];
@@ -459,8 +442,9 @@ static void vty_dump_pdp(struct vty *vty, const char *pfx,
 	vty_out(vty, "%sPDP Context IMSI: %s, SAPI: %u, NSAPI: %u, TI: %u%s",
 		pfx, imsi, pdp->sapi, pdp->nsapi, pdp->ti, VTY_NEWLINE);
 	if (pdp->lib) {
+		char apnbuf[APN_MAXLEN + 1];
 		vty_out(vty, "%s  APN: %s%s", pfx,
-			gprs_apn2str(pdp->lib->apn_use.v, pdp->lib->apn_use.l),
+			osmo_apn_to_str(apnbuf, pdp->lib->apn_use.v, pdp->lib->apn_use.l),
 			VTY_NEWLINE);
 		vty_out(vty, "%s  PDP Address: %s%s", pfx,
 			gprs_pdpaddr2str(pdp->lib->eua.v, pdp->lib->eua.l),
