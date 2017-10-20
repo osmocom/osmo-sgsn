@@ -150,10 +150,8 @@ class TestVTYSGSN(TestVTYBase):
         self.assert_(res.find('Encapsulation NS-UDP-IP') >= 0)
         self.assertTrue(self.vty.verify('show bssgp', ['']))
         self.assertTrue(self.vty.verify('show bssgp stats', ['']))
-        # TODO: uncomment when the command does not segfault anymore
-        # self.assertTrue(self.vty.verify('show bssgp nsei 123', ['']))
-        # self.assertTrue(self.vty.verify('show bssgp nsei 123 stats', ['']))
-
+        self.assertTrue(self.vty.verify('show bssgp nsei 123', ['']))
+        self.assertTrue(self.vty.verify('show bssgp nsei 123 stats', ['']))
         self.assertTrue(self.vty.verify('show sgsn', ['']))
         self.assertTrue(self.vty.verify('show mm-context all', ['']))
         self.assertTrue(self.vty.verify('show mm-context imsi 000001234567', ['No MM context for IMSI 000001234567']))
