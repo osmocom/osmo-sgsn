@@ -152,7 +152,7 @@ class TestVTYSGSN(TestVTYBase):
         self.assertTrue(self.vty.verify('show bssgp stats', ['']))
         self.assertTrue(self.vty.verify('show bssgp nsei 123', ['']))
         self.assertTrue(self.vty.verify('show bssgp nsei 123 stats', ['']))
-        self.assertTrue(self.vty.verify('show sgsn', ['']))
+        self.assertTrue(self.vty.verify('show sgsn', ['  GSN: signalling 127.0.0.1, user traffic 127.0.0.1']))
         self.assertTrue(self.vty.verify('show mm-context all', ['']))
         self.assertTrue(self.vty.verify('show mm-context imsi 000001234567', ['No MM context for IMSI 000001234567']))
         self.assertTrue(self.vty.verify('show pdp-context all', ['']))

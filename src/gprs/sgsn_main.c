@@ -447,7 +447,8 @@ int main(int argc, char **argv)
 	if (rc) {
 		LOGP(DGPRS, LOGL_FATAL, "Cannot bind/listen on GTP socket\n");
 		exit(2);
-	}
+	} else
+		LOGP(DGPRS, LOGL_NOTICE, "libGTP v%s initialized\n", gtp_version());
 
 	rc = gprs_subscr_init(&sgsn_inst);
 	if (rc < 0) {

@@ -44,6 +44,7 @@
 #include <osmocom/abis/ipa.h>
 
 #include <pdp.h>
+#include <gtp.h>
 
 #include "../../bscconfig.h"
 
@@ -511,6 +512,10 @@ DEFUN(show_sgsn, show_sgsn_cmd, "show sgsn",
 			link->addr, link->port,
 			VTY_NEWLINE);
 	}
+	if (sgsn->gsn)
+		vty_out(vty, "  GSN: signalling %s, user traffic %s%s",
+			inet_ntoa(sgsn->gsn->gsnc), inet_ntoa(sgsn->gsn->gsnu), VTY_NEWLINE);
+
 	/* FIXME: statistics */
 	return CMD_SUCCESS;
 }
