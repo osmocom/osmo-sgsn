@@ -838,6 +838,9 @@ int sgsn_gtp_init(struct sgsn_instance *sgi)
 	}
 	gsn = sgi->gsn;
 
+	if (gsn->mode != GTP_MODE_SGSN)
+		return -EINVAL;
+
 	sgi->gtp_fd0.fd = gsn->fd0;
 	sgi->gtp_fd0.priv_nr = 0;
 	sgi->gtp_fd0.data = sgi;
