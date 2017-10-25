@@ -38,6 +38,10 @@ result (ALIVE) = 1
 
 Current NS-VCIs:
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
+         Packets at NS Level  ( In): 4
+         Packets at NS Level  (Out): 4
+         Bytes at NS Level    ( In): 12
+         Bytes at NS Level    (Out): 15
          NS-VC Block count         : 1
 
 --- Initialise BSS 1 ---
@@ -96,7 +100,15 @@ result (BVC_RESET) = 22
 
 Current NS-VCIs:
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:1111
+         Packets at NS Level  ( In): 5
+         Packets at NS Level  (Out): 4
+         Bytes at NS Level    ( In): 37
+         Bytes at NS Level    (Out): 12
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
+         Packets at NS Level  ( In): 4
+         Packets at NS Level  (Out): 5
+         Bytes at NS Level    ( In): 12
+         Bytes at NS Level    (Out): 37
          NS-VC Block count         : 1
 
 Peers:
@@ -170,8 +182,20 @@ result (BVC_RESET) = 22
 
 Current NS-VCIs:
     VCI 0x2001, NSEI 0x2000, peer 0x01020304:2222
+         Packets at NS Level  ( In): 5
+         Packets at NS Level  (Out): 4
+         Bytes at NS Level    ( In): 37
+         Bytes at NS Level    (Out): 12
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:1111
+         Packets at NS Level  ( In): 5
+         Packets at NS Level  (Out): 5
+         Bytes at NS Level    ( In): 37
+         Bytes at NS Level    (Out): 21
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
+         Packets at NS Level  ( In): 5
+         Packets at NS Level  (Out): 6
+         Bytes at NS Level    ( In): 21
+         Bytes at NS Level    (Out): 59
          NS-VC Block count         : 1
 
 Peers:
@@ -233,8 +257,20 @@ result (ALIVE_ACK) = 0
 
 Current NS-VCIs:
     VCI 0x2001, NSEI 0x2000, peer 0x01020304:2222
+         Packets at NS Level  ( In): 5
+         Packets at NS Level  (Out): 5
+         Bytes at NS Level    ( In): 37
+         Bytes at NS Level    (Out): 21
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:3333
+         Packets at NS Level  ( In): 9
+         Packets at NS Level  (Out): 9
+         Bytes at NS Level    ( In): 52
+         Bytes at NS Level    (Out): 33
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
+         Packets at NS Level  ( In): 6
+         Packets at NS Level  (Out): 6
+         Bytes at NS Level    ( In): 30
+         Bytes at NS Level    (Out): 59
          NS-VC Block count         : 1
 
 Peers:
@@ -284,8 +320,20 @@ result (ALIVE_ACK) = 0
 
 Current NS-VCIs:
     VCI 0x2001, NSEI 0x2000, peer 0x01020304:1111
+         Packets at NS Level  ( In): 9
+         Packets at NS Level  (Out): 9
+         Bytes at NS Level    ( In): 52
+         Bytes at NS Level    (Out): 33
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:3333
+         Packets at NS Level  ( In): 9
+         Packets at NS Level  (Out): 9
+         Bytes at NS Level    ( In): 52
+         Bytes at NS Level    (Out): 33
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
+         Packets at NS Level  ( In): 6
+         Packets at NS Level  (Out): 6
+         Bytes at NS Level    ( In): 30
+         Bytes at NS Level    (Out): 59
          NS-VC Block count         : 1
 
 Peers:
@@ -335,8 +383,20 @@ result (ALIVE_ACK) = 0
 
 Current NS-VCIs:
     VCI 0x2001, NSEI 0x2000, peer 0x01020304:1111
+         Packets at NS Level  ( In): 13
+         Packets at NS Level  (Out): 13
+         Bytes at NS Level    ( In): 67
+         Bytes at NS Level    (Out): 45
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:3333
+         Packets at NS Level  ( In): 9
+         Packets at NS Level  (Out): 9
+         Bytes at NS Level    ( In): 52
+         Bytes at NS Level    (Out): 33
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
+         Packets at NS Level  ( In): 6
+         Packets at NS Level  (Out): 6
+         Bytes at NS Level    ( In): 30
+         Bytes at NS Level    (Out): 59
          NS-VC Block count         : 1
 
 Peers:
@@ -386,8 +446,20 @@ result (ALIVE_ACK) = 0
 
 Current NS-VCIs:
     VCI 0x2001, NSEI 0x2000, peer 0x01020304:4444
+         Packets at NS Level  ( In): 17
+         Packets at NS Level  (Out): 17
+         Bytes at NS Level    ( In): 82
+         Bytes at NS Level    (Out): 57
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:3333
+         Packets at NS Level  ( In): 9
+         Packets at NS Level  (Out): 9
+         Bytes at NS Level    ( In): 52
+         Bytes at NS Level    (Out): 33
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
+         Packets at NS Level  ( In): 6
+         Packets at NS Level  (Out): 6
+         Bytes at NS Level    ( In): 30
+         Bytes at NS Level    (Out): 59
          NS-VC Block count         : 1
 
 Peers:
@@ -439,9 +511,21 @@ result (ALIVE_ACK) = 0
 
 Current NS-VCIs:
     VCI 0x2001, NSEI 0x2000, peer 0x01020304:3333
+         Packets at NS Level  ( In): 20
+         Packets at NS Level  (Out): 21
+         Bytes at NS Level    ( In): 85
+         Bytes at NS Level    (Out): 69
          NS-VC replaced other count: 1
     VCI 0x1001, NSEI 0x1000, peer 0x00000000:0
+         Packets at NS Level  ( In): 10
+         Packets at NS Level  (Out): 9
+         Bytes at NS Level    ( In): 64
+         Bytes at NS Level    (Out): 33
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
+         Packets at NS Level  ( In): 6
+         Packets at NS Level  (Out): 6
+         Bytes at NS Level    ( In): 30
+         Bytes at NS Level    (Out): 59
          NS-VC Block count         : 1
 
 Peers:
@@ -491,9 +575,21 @@ result (ALIVE_ACK) = 0
 
 Current NS-VCIs:
     VCI 0x2001, NSEI 0x2000, peer 0x01020304:3333
+         Packets at NS Level  ( In): 20
+         Packets at NS Level  (Out): 21
+         Bytes at NS Level    ( In): 85
+         Bytes at NS Level    (Out): 69
          NS-VC replaced other count: 1
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:1111
+         Packets at NS Level  ( In): 14
+         Packets at NS Level  (Out): 13
+         Bytes at NS Level    ( In): 79
+         Bytes at NS Level    (Out): 45
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
+         Packets at NS Level  ( In): 6
+         Packets at NS Level  (Out): 6
+         Bytes at NS Level    ( In): 30
+         Bytes at NS Level    (Out): 59
          NS-VC Block count         : 1
 
 Peers:
@@ -519,9 +615,21 @@ result (BVC_RESET) = 22
 
 Current NS-VCIs:
     VCI 0x2001, NSEI 0x2000, peer 0x01020304:3333
+         Packets at NS Level  ( In): 20
+         Packets at NS Level  (Out): 21
+         Bytes at NS Level    ( In): 85
+         Bytes at NS Level    (Out): 69
          NS-VC replaced other count: 1
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:1111
+         Packets at NS Level  ( In): 15
+         Packets at NS Level  (Out): 13
+         Bytes at NS Level    ( In): 101
+         Bytes at NS Level    (Out): 45
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
+         Packets at NS Level  ( In): 6
+         Packets at NS Level  (Out): 7
+         Bytes at NS Level    ( In): 30
+         Bytes at NS Level    (Out): 81
          NS-VC Block count         : 1
 
 Peers:
@@ -561,9 +669,21 @@ result (BVC_RESET) = 22
 
 Current NS-VCIs:
     VCI 0x2001, NSEI 0x2000, peer 0x01020304:3333
+         Packets at NS Level  ( In): 20
+         Packets at NS Level  (Out): 21
+         Bytes at NS Level    ( In): 85
+         Bytes at NS Level    (Out): 69
          NS-VC replaced other count: 1
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:1111
+         Packets at NS Level  ( In): 16
+         Packets at NS Level  (Out): 14
+         Bytes at NS Level    ( In): 123
+         Bytes at NS Level    (Out): 54
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
+         Packets at NS Level  ( In): 7
+         Packets at NS Level  (Out): 8
+         Bytes at NS Level    ( In): 39
+         Bytes at NS Level    (Out): 103
          NS-VC Block count         : 1
 
 Peers:
@@ -603,9 +723,21 @@ result (BVC_RESET) = 22
 
 Current NS-VCIs:
     VCI 0x2001, NSEI 0x2000, peer 0x01020304:3333
+         Packets at NS Level  ( In): 20
+         Packets at NS Level  (Out): 21
+         Bytes at NS Level    ( In): 85
+         Bytes at NS Level    (Out): 69
          NS-VC replaced other count: 1
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:1111
+         Packets at NS Level  ( In): 17
+         Packets at NS Level  (Out): 15
+         Bytes at NS Level    ( In): 145
+         Bytes at NS Level    (Out): 63
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
+         Packets at NS Level  ( In): 8
+         Packets at NS Level  (Out): 9
+         Bytes at NS Level    ( In): 48
+         Bytes at NS Level    (Out): 125
          NS-VC Block count         : 1
 
 Peers:
@@ -729,9 +861,21 @@ result (BVC_RESET) = 22
 
 Current NS-VCIs:
     VCI 0x2001, NSEI 0x2000, peer 0x01020304:3333
+         Packets at NS Level  ( In): 21
+         Packets at NS Level  (Out): 22
+         Bytes at NS Level    ( In): 107
+         Bytes at NS Level    (Out): 73
          NS-VC replaced other count: 1
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:1111
+         Packets at NS Level  ( In): 20
+         Packets at NS Level  (Out): 18
+         Bytes at NS Level    ( In): 157
+         Bytes at NS Level    (Out): 80
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
+         Packets at NS Level  ( In): 12
+         Packets at NS Level  (Out): 13
+         Bytes at NS Level    ( In): 69
+         Bytes at NS Level    (Out): 159
          NS-VC Block count         : 1
 
 Peers:
@@ -846,6 +990,10 @@ result (ALIVE) = 1
 
 Current NS-VCIs:
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
+         Packets at NS Level  ( In): 4
+         Packets at NS Level  (Out): 4
+         Bytes at NS Level    ( In): 12
+         Bytes at NS Level    (Out): 15
          NS-VC Block count         : 1
 
 --- Initialise BSS 1 ---
@@ -890,7 +1038,15 @@ result (ALIVE_ACK) = 0
 
 Current NS-VCIs:
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:1111
+         Packets at NS Level  ( In): 4
+         Packets at NS Level  (Out): 4
+         Bytes at NS Level    ( In): 15
+         Bytes at NS Level    (Out): 12
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
+         Packets at NS Level  ( In): 4
+         Packets at NS Level  (Out): 4
+         Bytes at NS Level    ( In): 12
+         Bytes at NS Level    (Out): 15
          NS-VC Block count         : 1
 
 --- Setup BVCI 1 ---
@@ -1051,8 +1207,16 @@ result (ALIVE_ACK) = 0
 
 Current NS-VCIs:
     VCI 0x1001, NSEI 0x2000, peer 0x01020304:1111
+         Packets at NS Level  ( In): 12
+         Packets at NS Level  (Out): 12
+         Bytes at NS Level    ( In): 82
+         Bytes at NS Level    (Out): 50
          NS-VC changed NSEI count  : 1
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
+         Packets at NS Level  ( In): 8
+         Packets at NS Level  (Out): 8
+         Bytes at NS Level    ( In): 38
+         Bytes at NS Level    (Out): 67
          NS-VC Block count         : 1
 
 --- Setup BVCI 1 ---
@@ -1263,10 +1427,22 @@ result (ALIVE_ACK) = 0
 
 Current NS-VCIs:
     VCI 0x2001, NSEI 0x2000, peer 0x01020304:1111
+         Packets at NS Level  ( In): 3
+         Packets at NS Level  (Out): 4
+         Bytes at NS Level    ( In): 3
+         Bytes at NS Level    (Out): 12
          NS-VC replaced other count: 1
     VCI 0x1001, NSEI 0x2000, peer 0x00000000:0
+         Packets at NS Level  ( In): 18
+         Packets at NS Level  (Out): 16
+         Bytes at NS Level    ( In): 150
+         Bytes at NS Level    (Out): 76
          NS-VC changed NSEI count  : 1
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
+         Packets at NS Level  ( In): 13
+         Packets at NS Level  (Out): 13
+         Bytes at NS Level    ( In): 68
+         Bytes at NS Level    (Out): 123
          NS-VC Block count         : 1
 
 --- Setup BVCI 1 ---
@@ -1592,7 +1768,15 @@ result (BVC_RESET_ACK) = 9
 
 Current NS-VCIs:
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:1111
+         Packets at NS Level  ( In): 5
+         Packets at NS Level  (Out): 5
+         Bytes at NS Level    ( In): 37
+         Bytes at NS Level    (Out): 21
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
+         Packets at NS Level  ( In): 5
+         Packets at NS Level  (Out): 5
+         Bytes at NS Level    ( In): 21
+         Bytes at NS Level    (Out): 37
          NS-VC Block count         : 1
 
 Gbproxy global:
@@ -1879,6 +2063,10 @@ result (ALIVE) = 1
 
 Current NS-VCIs:
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
+         Packets at NS Level  ( In): 4
+         Packets at NS Level  (Out): 4
+         Bytes at NS Level    ( In): 12
+         Bytes at NS Level    (Out): 15
          NS-VC Block count         : 1
 
 --- Initialise BSS 1 ---
@@ -1937,7 +2125,15 @@ result (BVC_RESET) = 22
 
 Current NS-VCIs:
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:1111
+         Packets at NS Level  ( In): 5
+         Packets at NS Level  (Out): 4
+         Bytes at NS Level    ( In): 37
+         Bytes at NS Level    (Out): 12
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
+         Packets at NS Level  ( In): 4
+         Packets at NS Level  (Out): 5
+         Bytes at NS Level    ( In): 12
+         Bytes at NS Level    (Out): 37
          NS-VC Block count         : 1
 
 Peers:
@@ -2396,7 +2592,15 @@ result (BVC_RESET_ACK) = 9
 
 Current NS-VCIs:
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:1111
+         Packets at NS Level  ( In): 5
+         Packets at NS Level  (Out): 5
+         Bytes at NS Level    ( In): 37
+         Bytes at NS Level    (Out): 21
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
+         Packets at NS Level  ( In): 5
+         Packets at NS Level  (Out): 5
+         Bytes at NS Level    ( In): 21
+         Bytes at NS Level    (Out): 37
          NS-VC Block count         : 1
 
 Gbproxy global:
@@ -3116,7 +3320,15 @@ result (BVC_RESET_ACK) = 9
 
 Current NS-VCIs:
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:1111
+         Packets at NS Level  ( In): 5
+         Packets at NS Level  (Out): 5
+         Bytes at NS Level    ( In): 37
+         Bytes at NS Level    (Out): 21
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
+         Packets at NS Level  ( In): 5
+         Packets at NS Level  (Out): 5
+         Bytes at NS Level    ( In): 21
+         Bytes at NS Level    (Out): 37
          NS-VC Block count         : 1
 
 Gbproxy global:
@@ -3443,7 +3655,15 @@ result (BVC_RESET_ACK) = 9
 
 Current NS-VCIs:
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:1111
+         Packets at NS Level  ( In): 5
+         Packets at NS Level  (Out): 5
+         Bytes at NS Level    ( In): 37
+         Bytes at NS Level    (Out): 21
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
+         Packets at NS Level  ( In): 5
+         Packets at NS Level  (Out): 5
+         Bytes at NS Level    ( In): 21
+         Bytes at NS Level    (Out): 37
          NS-VC Block count         : 1
 
 Gbproxy global:
@@ -4299,9 +4519,21 @@ result (BVC_RESET_ACK) = 1
 
 Current NS-VCIs:
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:1111
+         Packets at NS Level  ( In): 6
+         Packets at NS Level  (Out): 6
+         Bytes at NS Level    ( In): 59
+         Bytes at NS Level    (Out): 30
     VCI 0x0103, NSEI 0x0102, peer 0x15161718:32001
+         Packets at NS Level  ( In): 5
+         Packets at NS Level  (Out): 5
+         Bytes at NS Level    ( In): 21
+         Bytes at NS Level    (Out): 37
          NS-VC Block count         : 1
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
+         Packets at NS Level  ( In): 6
+         Packets at NS Level  (Out): 5
+         Bytes at NS Level    ( In): 30
+         Bytes at NS Level    (Out): 37
          NS-VC Block count         : 1
 
 Gbproxy global:
@@ -5490,7 +5722,15 @@ result (BVC_RESET_ACK) = 9
 
 Current NS-VCIs:
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:1111
+         Packets at NS Level  ( In): 5
+         Packets at NS Level  (Out): 5
+         Bytes at NS Level    ( In): 37
+         Bytes at NS Level    (Out): 21
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
+         Packets at NS Level  ( In): 5
+         Packets at NS Level  (Out): 5
+         Bytes at NS Level    ( In): 21
+         Bytes at NS Level    (Out): 37
          NS-VC Block count         : 1
 
 Gbproxy global:
@@ -7164,7 +7404,15 @@ result (BVC_RESET_ACK) = 9
 
 Current NS-VCIs:
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:1111
+         Packets at NS Level  ( In): 5
+         Packets at NS Level  (Out): 5
+         Bytes at NS Level    ( In): 37
+         Bytes at NS Level    (Out): 21
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
+         Packets at NS Level  ( In): 5
+         Packets at NS Level  (Out): 5
+         Bytes at NS Level    ( In): 21
+         Bytes at NS Level    (Out): 37
          NS-VC Block count         : 1
 
 Gbproxy global:
