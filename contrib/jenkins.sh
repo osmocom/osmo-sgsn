@@ -26,10 +26,10 @@ export LD_LIBRARY_PATH="$inst/lib"
 
 osmo-build-dep.sh libosmo-abis
 osmo-build-dep.sh libosmo-netif
-osmo-build-dep.sh libosmo-sccp
 osmo-build-dep.sh osmo-ggsn
 
 if [ "x$IU" = "x--enable-iu" ]; then
+    	osmo-build-dep.sh libosmo-sccp
 	osmo-build-dep.sh libasn1c
 	#osmo-build-dep.sh asn1c aper-prefix # only needed for make regen in osmo-iuh
 	osmo-build-dep.sh osmo-iuh
