@@ -39,13 +39,15 @@
 #include <osmocom/vty/telnet_interface.h>
 #include <osmocom/vty/ports.h>
 
-#include <osmocom/sigtran/osmo_ss7.h>
-
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/gtphub.h>
 #include <osmocom/sgsn/vty.h>
 
 #include "../../bscconfig.h"
+
+#if BUILD_IU
+#include <osmocom/sigtran/osmo_ss7.h>
+#endif
 
 extern void *osmo_gtphub_ctx;
 void *tall_bsc_ctx;
