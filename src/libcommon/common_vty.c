@@ -33,7 +33,6 @@
 #include <osmocom/vty/command.h>
 #include <osmocom/vty/buffer.h>
 #include <osmocom/vty/vty.h>
-#include <osmocom/sigtran/osmo_ss7.h>
 
 
 int bsc_vty_go_parent(struct vty *vty)
