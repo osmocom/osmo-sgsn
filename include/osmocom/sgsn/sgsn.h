@@ -10,6 +10,7 @@
 #include <osmocom/sgsn/common.h>
 
 #include <ares.h>
+#include <gtp.h>
 
 struct gprs_gsup_client;
 struct hostent;
@@ -147,6 +148,7 @@ extern struct sgsn_instance *sgsn;
 
 int sgsn_vty_init(struct sgsn_config *cfg);
 int sgsn_parse_config(const char *config_file);
+char *sgsn_gtp_ntoa(struct ul16_t *ul);
 
 /* sgsn.c */
 

@@ -120,6 +120,8 @@ static void mmctx_change_gtpu_endpoints_to_sgsn(struct sgsn_mm_ctx *mm_ctx)
 {
 	struct sgsn_pdp_ctx *pdp;
 	llist_for_each_entry(pdp, &mm_ctx->pdp_list, list) {
+		LOGMMCTXP(LOGL_INFO, mm_ctx, "Changing GTP-U endpoints %s -> %s\n",
+			  sgsn_gtp_ntoa(&pdp->lib->gsnlu), inet_ntoa(sgsn->cfg.gtp_listenaddr.sin_addr));
 		sgsn_pdp_upd_gtp_u(pdp,
 				   &sgsn->cfg.gtp_listenaddr.sin_addr,
 				   sizeof(sgsn->cfg.gtp_listenaddr.sin_addr));
