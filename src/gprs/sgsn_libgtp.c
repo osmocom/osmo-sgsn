@@ -836,6 +836,8 @@ int sgsn_gtp_init(struct sgsn_instance *sgi)
 		LOGP(DGPRS, LOGL_ERROR, "Failed to create GTP: %d\n", rc);
 		return rc;
 	}
+	LOGP(DGPRS, LOGL_NOTICE, "Created GTP on %s\n", inet_ntoa(sgi->cfg.gtp_listenaddr.sin_addr));
+
 	gsn = sgi->gsn;
 
 	if (gsn->mode != GTP_MODE_SGSN)
