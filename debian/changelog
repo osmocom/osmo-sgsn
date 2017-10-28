@@ -1,3 +1,55 @@
+osmo-sgsn (1.2.0) unstable; urgency=medium
+
+  [ Neels Hofmeyr ]
+  * jenkins: fix build: remove unused dependencies
+  * debian: fix osmo-sgsn.install, tweak VCS link and descriptions
+  * drop files unrelated to osmo-sgsn
+  * rewrite README
+  * configure.ac: set name to osmo-sgsn, fix ML addr
+  * move openbsc.pc to osmo-sgsn.pc
+  * move include/openbsc to include/osmocom/sgsn
+  * jenkins.sh: fix echo string to say osmo-sgsn, not msc
+  * jenkins: use osmo-clean-workspace.sh before and after build
+
+  [ Alexander Couzens ]
+  * debian: fix paths of examples
+  * debian/rules: show testsuite.log when tests are failing
+
+  [ Max ]
+  * Remove rest_octets.h
+  * gbproxy: ensure peer allocation result
+  * jenkins: use osmo-ggsn for tests
+  * Cleanup configure checks
+  * Use extended logging for PDP contexts
+  * deb: fix copyright file issues
+  * Move P-TMSI alloc/update into separate function
+  * Check for correct P-TMSI allocation
+  * Use new FSF address in license header
+  * SGSN: uncomment BSSGP vty tests
+  * SGSN: print additional GTP-related info
+  * SGSN: check that GSN is created in proper mode
+  * Fix APN printing
+  * Fix build after recent rate_ctr patches
+  * gbproxy: don't link unnecessary
+  * Fix libosmo-sigtran dependency
+  * jenkins: check for IU properly
+  * Log GTP-U endpoints update
+  * Log address on GTP creation
+
+  [ Pau Espin Pedrol ]
+  * Remove unneeded dep libdbi
+
+  [ Philipp Maier ]
+  * log: fix default loglevels
+  * non-iu-build: guard vty libosmo-sigtran function calls.
+  * configure: fix libosmo-sigtran dependency
+
+  [ Harald Welte ]
+  * Debian: Add systemd service files for osmo-sgsn and osmo-gbproxy
+  * Debian: fix dh_strip rules for creating one -dbg per program
+
+ -- Harald Welte <laforge@gnumonks.org>  Sat, 28 Oct 2017 19:07:48 +0200
+
 osmo-sgsn (0.1.0) unstable; urgency=low
 
   * Initial release.
