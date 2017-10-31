@@ -85,8 +85,11 @@ const char *openbsc_copyright =
 	"This is free software: you are free to change and redistribute it.\r\n"
 	"There is NO WARRANTY, to the extent permitted by law.\r\n";
 
+#define CONFIG_FILE_DEFAULT "osmo-sgsn.cfg"
+#define CONFIG_FILE_LEGACY "osmo_sgsn.cfg"
+
 static struct sgsn_instance sgsn_inst = {
-	.config_file = "osmo_sgsn.cfg",
+	.config_file = NULL,
 	.cfg = {
 		.gtp_statedir = "./",
 		.auth_policy = SGSN_AUTH_POLICY_CLOSED,
@@ -216,7 +219,7 @@ static void print_help(void)
 	printf("  -D --daemonize\tFork the process into a background daemon\n");
 	printf("  -d option --debug\tenable Debugging\n");
 	printf("  -s --disable-color\n");
-	printf("  -c --config-file\tThe config file to use [%s]\n", sgsn->config_file);
+	printf("  -c --config-file\tThe config file to use [%s]\n", CONFIG_FILE_DEFAULT);
 	printf("  -e --log-level number\tSet a global log level\n");
 }
 
@@ -356,6 +359,12 @@ static const struct log_info gprs_log_info = {
 int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type type, void *data);
 #endif
 
+static bool file_exists(const char *path)
+{
+	struct stat sb;
+	return stat(path, &sb) ? false : true;
+}
+
 int main(int argc, char **argv)
 {
 	struct ctrl_handle *ctrl;
@@ -391,6 +400,21 @@ int main(int argc, char **argv)
 #endif
 
 	handle_options(argc, argv);
+
+	/* Backwards compatibility: for years, the default config file name was
+	 * osmo_sgsn.cfg. All other Osmocom programs use osmo-*.cfg with a
+	 * dash. To be able to use the new config file name without breaking
+	 * previous setups that might rely on the legacy default config file
+	 * name, we need to look for the old config file if no -c option was
+	 * passed AND no file exists with the new default file name. */
+	if (!sgsn_inst.config_file) {
+		/* No -c option was passed */
+		if (file_exists(CONFIG_FILE_LEGACY)
+		    && !file_exists(CONFIG_FILE_DEFAULT))
+			sgsn_inst.config_file = CONFIG_FILE_LEGACY;
+		else
+			sgsn_inst.config_file = CONFIG_FILE_DEFAULT;
+	}
 
 	rate_ctr_init(tall_bsc_ctx);
 
