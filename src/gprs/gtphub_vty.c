@@ -583,7 +583,6 @@ int gtphub_vty_init(struct gtphub *global_hub, struct gtphub_cfg *global_cfg)
 
 	install_element(CONFIG_NODE, &cfg_gtphub_cmd);
 	install_node(&gtphub_node, config_write_gtphub);
-	vty_install_default(GTPHUB_NODE);
 
 	install_element(GTPHUB_NODE, &cfg_gtphub_bind_to_sgsns_short_cmd);
 	install_element(GTPHUB_NODE, &cfg_gtphub_bind_to_sgsns_cmd);
