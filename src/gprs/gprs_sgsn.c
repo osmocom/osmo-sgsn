@@ -46,8 +46,6 @@
 
 #include <time.h>
 
-#include <openssl/rand.h>
-
 #include "../../bscconfig.h"
 
 #if BUILD_IU
@@ -643,10 +641,11 @@ uint32_t sgsn_alloc_ptmsi(void)
 {
 	struct sgsn_mm_ctx *mm;
 	uint32_t ptmsi = 0xdeadbeef;
-	int max_retries = 100;
+	int max_retries = 100, rc = 0;
 
 restart:
-	if (RAND_bytes((uint8_t *) &ptmsi, sizeof(ptmsi)) != 1)
+	rc = osmo_get_rand_id((uint8_t *) &ptmsi, sizeof(ptmsi));
+	if (rc < 0)
 		goto failed;
 
 	/* Enforce that the 2 MSB are set without loosing the distance between
@@ -684,7 +683,7 @@ restart:
 	return ptmsi;
 
 failed:
-	LOGP(DGPRS, LOGL_ERROR, "Failed to allocate a P-TMSI\n");
+	LOGP(DGPRS, LOGL_ERROR, "Failed to allocate a P-TMSI: %d (%s)\n", rc, strerror(-rc));
 	return GSM_RESERVED_TMSI;
 }
 

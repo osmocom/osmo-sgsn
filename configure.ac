@@ -46,7 +46,6 @@ PKG_CHECK_MODULES(LIBOSMOGSM, libosmogsm >= 0.9.5)
 PKG_CHECK_MODULES(LIBOSMOABIS, libosmoabis >= 0.2.0)
 PKG_CHECK_MODULES(LIBOSMOGB, libosmogb >= 0.6.4)
 PKG_CHECK_MODULES(LIBOSMONETIF, libosmo-netif >= 0.0.1)
-PKG_CHECK_MODULES(LIBCRYPTO, libcrypto >= 0.9.5)
 
 # Enable/disable 3G aka IuPS + IuCS support?
 AC_ARG_ENABLE([iu], [AS_HELP_STRING([--enable-iu], [Build 3G support, aka IuPS and IuCS interfaces])],

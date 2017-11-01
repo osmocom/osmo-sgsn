@@ -100,21 +100,21 @@ int bssgp_tx_dl_ud(struct msgb *msg, uint16_t pdu_lifetime,
 	return 0;
 }
 
-/* override, requires '-Wl,--wrap=RAND_bytes' */
-int __real_RAND_bytes(unsigned char *buf, int num);
-int mock_RAND_bytes(unsigned char *buf, int num);
-int (*RAND_bytes_cb)(unsigned char *, int) =
-  &mock_RAND_bytes;
+/* override, requires '-Wl,--wrap=osmo_get_rand_id' */
+int __real_osmo_get_rand_id(uint8_t *data, size_t len);
+int mock_osmo_get_rand_id(uint8_t *data, size_t len);
+int (*osmo_get_rand_id_cb)(uint8_t *, size_t) =
+  &mock_osmo_get_rand_id;
 
-int __wrap_RAND_bytes(unsigned char *buf, int num)
+int __wrap_osmo_get_rand_id(uint8_t *buf, size_t num)
 {
-	return (*RAND_bytes_cb)(buf, num);
+	return (*osmo_get_rand_id_cb)(buf, num);
 }
 /* make results of A&C ref predictable */
-int mock_RAND_bytes(unsigned char *buf, int num)
+int mock_osmo_get_rand_id(uint8_t *buf, size_t num)
 {
 	if (num > 1)
-		return __real_RAND_bytes(buf, num);
+		return __real_osmo_get_rand_id(buf, num);
 	buf[0] = 0;
 	return 1;
 }

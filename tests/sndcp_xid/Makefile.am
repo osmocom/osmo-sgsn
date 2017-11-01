@@ -14,7 +14,6 @@ sndcp_xid_test_LDADD = \
 	$(LIBOSMOGSM_LIBS) \
 	$(LIBOSMOGB_LIBS) \
 	$(LIBCARES_LIBS) \
-	$(LIBCRYPTO_LIBS) \
 	$(LIBGTP_LIBS) \
 	-lrt -lm
 

@@ -31,8 +31,6 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-#include <openssl/rand.h>
-
 #include "bscconfig.h"
 
 #include <osmocom/core/msgb.h>
@@ -587,6 +585,7 @@ static int gsm48_tx_gmm_auth_ciph_req(struct sgsn_mm_ctx *mm,
 	struct gsm48_hdr *gh;
 	struct gsm48_auth_ciph_req *acreq;
 	uint8_t *m_rand, *m_cksn, rbyte;
+	int rc;
 
 	LOGMMCTXP(LOGL_INFO, mm, "<- GPRS AUTH AND CIPHERING REQ (rand = %s",
 		  osmo_hexdump(vec->rand, sizeof(vec->rand)));
@@ -610,12 +609,13 @@ static int gsm48_tx_gmm_auth_ciph_req(struct sgsn_mm_ctx *mm,
 	/* § 10.5.5.7: */
 	acreq->force_stby = force_standby;
 	/* 3GPP TS 24.008 § 10.5.5.19: */
-	if (RAND_bytes(&rbyte, 1) != 1) {
-		LOGP(DMM, LOGL_NOTICE, "RAND_bytes failed for A&C ref, falling "
-		     "back to rand()\n");
-		acreq->ac_ref_nr = rand();
-	} else
-		acreq->ac_ref_nr = rbyte;
+	rc = osmo_get_rand_id(&rbyte, 1);
+	if (rc < 0) {
+		LOGP(DMM, LOGL_ERROR, "osmo_get_rand_id() failed for A&C ref: %s\n", strerror(-rc));
+		return rc;
+	}
+
+	acreq->ac_ref_nr = rbyte;
 	mm->ac_ref_nr_used = acreq->ac_ref_nr;
 
 	/* Only if authentication is requested we need to set RAND + CKSN */
@@ -2086,6 +2086,7 @@ static void mmctx_timer_cb(void *_mm)
 {
 	struct sgsn_mm_ctx *mm = _mm;
 	struct gsm_auth_tuple *at;
+	int rc;
 
 	mm->num_T_exp++;
 
@@ -2130,8 +2131,11 @@ static void mmctx_timer_cb(void *_mm)
 		}
 		at = &mm->auth_triplet;
 
-		gsm48_tx_gmm_auth_ciph_req(mm, &at->vec, at->key_seq, false);
-		osmo_timer_schedule(&mm->timer, sgsn->cfg.timers.T3360, 0);
+		rc = gsm48_tx_gmm_auth_ciph_req(mm, &at->vec, at->key_seq, false);
+		if (rc < 0)
+			LOGMMCTXP(LOGL_ERROR, mm, "failed sending Auth. & Ciph. Reuqest: %s \n", strerror(-rc));
+		else
+			osmo_timer_schedule(&mm->timer, sgsn->cfg.timers.T3360, 0);
 		break;
 	case 3370:	/* waiting for IDENTITY RESPONSE */
 		if (mm->num_T_exp >= 5) {

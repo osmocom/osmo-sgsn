@@ -50,8 +50,6 @@
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 #include <osmocom/sgsn/gprs_utils.h>
 
-#include <openssl/rand.h>
-
 extern void *tall_bsc_ctx;
 
 static const struct rate_ctr_desc global_ctr_description[] = {
@@ -232,12 +230,13 @@ uint32_t gbproxy_make_bss_ptmsi(struct gbproxy_peer *peer,
 				uint32_t sgsn_ptmsi)
 {
 	uint32_t bss_ptmsi;
-	int max_retries = 23;
+	int max_retries = 23, rc = 0;
 	if (!peer->cfg->patch_ptmsi) {
 		bss_ptmsi = sgsn_ptmsi;
 	} else {
 		do {
-			if (RAND_bytes((uint8_t *) &bss_ptmsi, sizeof(bss_ptmsi)) != 1) {
+			rc = osmo_get_rand_id((uint8_t *) &bss_ptmsi, sizeof(bss_ptmsi));
+			if (rc < 0) {
 				bss_ptmsi = GSM_RESERVED_TMSI;
 				break;
 			}
@@ -250,7 +249,7 @@ uint32_t gbproxy_make_bss_ptmsi(struct gbproxy_peer *peer,
 	}
 
 	if (bss_ptmsi == GSM_RESERVED_TMSI)
-		LOGP(DGPRS, LOGL_ERROR, "Failed to allocate a BSS P-TMSI\n");
+		LOGP(DGPRS, LOGL_ERROR, "Failed to allocate a BSS P-TMSI: %d (%s)\n", rc, strerror(-rc));
 
 	return bss_ptmsi;
 }
@@ -260,7 +259,7 @@ uint32_t gbproxy_make_sgsn_tlli(struct gbproxy_peer *peer,
 				uint32_t bss_tlli)
 {
 	uint32_t sgsn_tlli;
-	int max_retries = 23;
+	int max_retries = 23, rc = 0;
 	if (!peer->cfg->patch_ptmsi) {
 		sgsn_tlli = bss_tlli;
 	} else if (link_info->sgsn_tlli.ptmsi != GSM_RESERVED_TMSI &&
@@ -274,7 +273,8 @@ uint32_t gbproxy_make_sgsn_tlli(struct gbproxy_peer *peer,
 	} else {
 		do {
 			/* create random TLLI, 0b01111xxx... */
-			if (RAND_bytes((uint8_t *) &sgsn_tlli, sizeof(sgsn_tlli)) != 1) {
+			rc = osmo_get_rand_id((uint8_t *) &sgsn_tlli, sizeof(sgsn_tlli));
+			if (rc < 0) {
 				sgsn_tlli = 0;
 				break;
 			}
@@ -287,7 +287,7 @@ uint32_t gbproxy_make_sgsn_tlli(struct gbproxy_peer *peer,
 	}
 
 	if (!sgsn_tlli)
-		LOGP(DGPRS, LOGL_ERROR, "Failed to allocate an SGSN TLLI\n");
+		LOGP(DGPRS, LOGL_ERROR, "Failed to allocate an SGSN TLLI: %d (%s)\n", rc, strerror(-rc));
 
 	return sgsn_tlli;
 }

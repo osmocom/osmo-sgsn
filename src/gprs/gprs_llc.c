@@ -23,8 +23,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include <openssl/rand.h>
-
 #include <osmocom/core/msgb.h>
 #include <osmocom/core/linuxlist.h>
 #include <osmocom/core/timer.h>
@@ -1065,14 +1063,15 @@ int gprs_llgmm_reset(struct gprs_llc_llme *llme)
 	struct msgb *msg = msgb_alloc_headroom(4096, 1024, "LLC_XID");
 	struct gprs_llc_lle *lle = &llme->lle[1];
 	uint8_t xid_bytes[1024];
-	int xid_bytes_len;
+	int xid_bytes_len, rc;
 	uint8_t *xid;
 
 	LOGP(DLLC, LOGL_NOTICE, "LLGM Reset\n");
-	if (RAND_bytes((uint8_t *) &llme->iov_ui, 4) != 1) {
-		LOGP(DLLC, LOGL_NOTICE, "RAND_bytes failed for LLC XID reset, "
-		     "falling back to rand()\n");
-		llme->iov_ui = rand();
+
+	rc = osmo_get_rand_id((uint8_t *) &llme->iov_ui, 4);
+	if (rc < 0) {
+		LOGP(DLLC, LOGL_ERROR, "osmo_get_rand_id() failed for LLC XID reset: %s\n", strerror(-rc));
+		return rc;
 	}
 
 	/* Generate XID message */
@@ -1098,14 +1097,15 @@ int gprs_llgmm_reset_oldmsg(struct msgb* oldmsg, uint8_t sapi,
 {
 	struct msgb *msg = msgb_alloc_headroom(4096, 1024, "LLC_XID");
 	uint8_t xid_bytes[1024];
-	int xid_bytes_len;
+	int xid_bytes_len, rc;
 	uint8_t *xid;
 
 	LOGP(DLLC, LOGL_NOTICE, "LLGM Reset\n");
-	if (RAND_bytes((uint8_t *) &llme->iov_ui, 4) != 1) {
-		LOGP(DLLC, LOGL_NOTICE, "RAND_bytes failed for LLC XID reset, "
-		     "falling back to rand()\n");
-		llme->iov_ui = rand();
+
+	rc = osmo_get_rand_id((uint8_t *) &llme->iov_ui, 4);
+	if (rc < 0) {
+		LOGP(DLLC, LOGL_ERROR, "osmo_get_rand_id() failed for LLC XID reset: %s\n", strerror(-rc));
+		return rc;
 	}
 
 	/* Generate XID message */

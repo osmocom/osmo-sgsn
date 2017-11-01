@@ -15,7 +15,6 @@ AM_CFLAGS = \
 	$(LIBOSMOGB_CFLAGS) \
 	$(COVERAGE_CFLAGS) \
 	$(LIBCARES_CFLAGS) \
-	$(LIBCRYPTO_CFLAGS) \
 	$(LIBGTP_CFLAGS) \
 	$(NULL)
 if BUILD_IU
@@ -61,7 +60,6 @@ osmo_gbproxy_SOURCES = \
 	$(NULL)
 osmo_gbproxy_LDADD = \
 	$(OSMO_LIBS) \
-	$(LIBCRYPTO_LIBS) \
 	-lrt \
 	$(NULL)
 
@@ -97,7 +95,6 @@ osmo_sgsn_LDADD = \
 	$(OSMO_LIBS) \
 	$(LIBOSMOABIS_LIBS) \
 	$(LIBCARES_LIBS) \
-	$(LIBCRYPTO_LIBS) \
 	$(LIBGTP_LIBS) \
 	-lrt \
 	-lm \

@@ -32,7 +32,7 @@ sgsn_test_SOURCES = \
 	$(NULL)
 
 sgsn_test_LDFLAGS = \
-	-Wl,--wrap=RAND_bytes \
+	-Wl,--wrap=osmo_get_rand_id \
 	-Wl,--wrap=sgsn_update_subscriber_data \
 	-Wl,--wrap=gprs_subscr_request_update_location \
 	-Wl,--wrap=gprs_subscr_request_auth_info \
@@ -67,7 +67,6 @@ sgsn_test_LDADD = \
 	$(LIBOSMOGSM_LIBS) \
 	$(LIBOSMOGB_LIBS) \
 	$(LIBCARES_LIBS) \
-	$(LIBCRYPTO_LIBS) \
 	$(LIBGTP_LIBS) \
 	-lrt \
 	-lm \

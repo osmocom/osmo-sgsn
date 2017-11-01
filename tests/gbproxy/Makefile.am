@@ -28,7 +28,7 @@ gbproxy_test_SOURCES = \
 	$(NULL)
 
 gbproxy_test_LDFLAGS = \
-	-Wl,--wrap=RAND_bytes \
+	-Wl,--wrap=osmo_get_rand_id \
 	$(NULL)
 
 gbproxy_test_LDADD = \
@@ -46,6 +46,5 @@ gbproxy_test_LDADD = \
 	$(LIBOSMOVTY_LIBS) \
 	$(LIBOSMOABIS_LIBS) \
 	$(LIBRARY_DL) \
-	$(LIBCRYPTO_LIBS) \
 	-lrt \
 	$(NULL)
