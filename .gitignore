@@ -7,10 +7,6 @@ Makefile
 Makefile.in
 bscconfig.h
 bscconfig.h.in
-openbsc.pc
-src/osmo-nitb/osmo-nitb
-src/osmo-bsc_mgcp/osmo-bsc_mgcp
-src/osmo-bsc/osmo-bsc
 src/utils/meas_vis
 src/utils/meas_json
 src/utils/osmo-meas-pcap2db
@@ -45,30 +41,14 @@ ltmain.sh
 
 
 # apps and app data
-hlr.sqlite3
-src/utils/bs11_config
-src/ipaccess/ipaccess-config
-src/ipaccess/abisip-find
-src/ipaccess/ipaccess-firmware
-src/ipaccess/ipaccess-proxy
-src/utils/isdnsync
-src/nat/bsc_nat
 src/gprs/osmo-sgsn
 src/gprs/osmo-gbproxy
 src/gprs/osmo-gtphub
-src/osmo-bsc_nat/osmo-bsc_nat
 src/libcommon/gsup_test_client
-src/osmo-msc/osmo-msc
 
 #tests
 tests/testsuite.dir
 tests/*/*_test
-# ignore compiled binaries like msc_vlr_test_foo; do not ignore
-# msc_vlr_test_foo.{c,ok,err}, but do still ignore the corresponding .o object
-# files:
-tests/msc_vlr/msc_vlr_test_*
-!tests/msc_vlr/msc_vlr_test_*.*
-tests/msc_vlr/msc_vlr_test_*.o
 
 
 tests/atconfig
@@ -78,6 +58,5 @@ tests/testsuite
 tests/testsuite.log
 
 gsn_restart
-src/openbsc.cfg*
 writtenconfig/
 gtphub_restart_count
