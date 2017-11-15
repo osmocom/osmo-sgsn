@@ -1,2 +1,3 @@
 usr/bin/osmo-gtphub
-usr/share/doc/osmo-sgsn/examples/osmo-gtphub
+usr/share/doc/osmo-sgsn/examples/osmo-gtphub/osmo-gtphub-1iface.cfg usr/share/doc/osmo-gtphub/examples
+usr/share/doc/osmo-sgsn/examples/osmo-gtphub/osmo-gtphub.cfg usr/share/doc/osmo-gtphub/examples

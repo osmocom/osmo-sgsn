@@ -1,2 +1,3 @@
 usr/bin/osmo-sgsn
-usr/share/doc/osmo-sgsn/examples/osmo-sgsn
+usr/share/doc/osmo-sgsn/examples/osmo-sgsn/osmo-sgsn.cfg usr/share/doc/osmo-sgsn/examples
+usr/share/doc/osmo-sgsn/examples/osmo-sgsn/osmo-sgsn-accept-all.cfg usr/share/doc/osmo-sgsn/examples

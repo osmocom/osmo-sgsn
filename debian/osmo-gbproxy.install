@@ -1,2 +1,3 @@
 usr/bin/osmo-gbproxy
-usr/share/doc/osmo-sgsn/examples/osmo-gbproxy
+usr/share/doc/osmo-sgsn/examples/osmo-gbproxy/osmo-gbproxy-legacy.cfg usr/share/doc/osmo-gbproxy/examples
+usr/share/doc/osmo-sgsn/examples/osmo-gbproxy/osmo-gbproxy.cfg usr/share/doc/osmo-gbproxy/examples
