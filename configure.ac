@@ -80,11 +80,6 @@ AC_SUBST(found_libgtp_and_libcares)
 dnl checks for header files
 AC_HEADER_STDC
 
-found_cdk=yes
-AC_CHECK_HEADERS(cdk/cdk.h,,found_cdk=no)
-AM_CONDITIONAL(HAVE_LIBCDK, test "$found_cdk" = yes)
-
-
 dnl Checks for typedefs, structures and compiler characteristics
 
 AC_ARG_ENABLE(sanitize,
