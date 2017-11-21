@@ -7,11 +7,6 @@ Makefile
 Makefile.in
 bscconfig.h
 bscconfig.h.in
-src/utils/meas_vis
-src/utils/meas_json
-src/utils/osmo-meas-pcap2db
-src/utils/osmo-meas-udp2db
-src/utils/smpp_mirror
 *.*~
 *.sw?
 .libs
