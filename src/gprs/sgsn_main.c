@@ -502,8 +502,9 @@ int main(int argc, char **argv)
 	}
 
 #if BUILD_IU
+	/* Note that these are mostly defaults and can be overriden from the VTY */
 	sccp = osmo_sccp_simple_client(tall_bsc_ctx, "OsmoSGSN",
-				       2 /* FIXME: configurable */,
+				       (23 << 3) + 4,
 				       OSMO_SS7_ASP_PROT_M3UA,
 				       0, NULL,
 				       0, "127.0.0.1");
