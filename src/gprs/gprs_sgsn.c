@@ -65,21 +65,21 @@ LLIST_HEAD(sgsn_apn_ctxts);
 LLIST_HEAD(sgsn_pdp_ctxts);
 
 static const struct rate_ctr_desc mmctx_ctr_description[] = {
-	{ "sign.packets.in",	"Signalling Messages ( In)" },
-	{ "sign.packets.out",	"Signalling Messages (Out)" },
-	{ "udata.packets.in",	"User Data  Messages ( In)" },
-	{ "udata.packets.out",	"User Data  Messages (Out)" },
-	{ "udata.bytes.in",	"User Data  Bytes    ( In)" },
-	{ "udata.bytes.out",	"User Data  Bytes    (Out)" },
+	{ "sign:packets:in",	"Signalling Messages ( In)" },
+	{ "sign:packets:out",	"Signalling Messages (Out)" },
+	{ "udata:packets:in",	"User Data  Messages ( In)" },
+	{ "udata:packets:out",	"User Data  Messages (Out)" },
+	{ "udata:bytes:in",	"User Data  Bytes    ( In)" },
+	{ "udata:bytes:out",	"User Data  Bytes    (Out)" },
 	{ "pdp_ctx_act",	"PDP Context Activations  " },
 	{ "suspend",		"SUSPEND Count            " },
-	{ "paging.ps",		"Paging Packet Switched   " },
-	{ "paging.cs",		"Paging Circuit Switched  " },
+	{ "paging:ps",		"Paging Packet Switched   " },
+	{ "paging:cs",		"Paging Circuit Switched  " },
 	{ "ra_update",		"Routing Area Update      " },
 };
 
 static const struct rate_ctr_group_desc mmctx_ctrg_desc = {
-	.group_name_prefix = "sgsn.mmctx",
+	.group_name_prefix = "sgsn:mmctx",
 	.group_description = "SGSN MM Context Statistics",
 	.num_ctr = ARRAY_SIZE(mmctx_ctr_description),
 	.ctr_desc = mmctx_ctr_description,
@@ -87,14 +87,14 @@ static const struct rate_ctr_group_desc mmctx_ctrg_desc = {
 };
 
 static const struct rate_ctr_desc pdpctx_ctr_description[] = {
-	{ "udata.packets.in",	"User Data  Messages ( In)" },
-	{ "udata.packets.out",	"User Data  Messages (Out)" },
-	{ "udata.bytes.in",	"User Data  Bytes    ( In)" },
-	{ "udata.bytes.out",	"User Data  Bytes    (Out)" },
+	{ "udata:packets:in",	"User Data  Messages ( In)" },
+	{ "udata:packets:out",	"User Data  Messages (Out)" },
+	{ "udata:bytes:in",	"User Data  Bytes    ( In)" },
+	{ "udata:bytes:out",	"User Data  Bytes    (Out)" },
 };
 
 static const struct rate_ctr_group_desc pdpctx_ctrg_desc = {
-	.group_name_prefix = "sgsn.pdpctx",
+	.group_name_prefix = "sgsn:pdpctx",
 	.group_description = "SGSN PDP Context Statistics",
 	.num_ctr = ARRAY_SIZE(pdpctx_ctr_description),
 	.ctr_desc = pdpctx_ctr_description,
