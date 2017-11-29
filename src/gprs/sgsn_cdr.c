@@ -18,6 +18,8 @@
  *
  */
 
+#include <osmocom/ctrl/control_if.h>
+
 #include <osmocom/sgsn/sgsn.h>
 #include <osmocom/sgsn/signal.h>
 #include <osmocom/sgsn/gprs_utils.h>
@@ -38,6 +40,7 @@
 
 /* TODO...avoid going through a global */
 extern struct sgsn_instance *sgsn;
+extern struct ctrl_handle *g_ctrlh;
 
 /**
  * The CDR module will generate an entry like:
@@ -59,6 +62,11 @@ extern struct sgsn_instance *sgsn;
  * CAUSE_FOR_TERM, # CAUSE_FOR_TERM
  */
 
+static void send_cdr_trap(char *value)
+{
+	if (ctrl_cmd_send_trap(g_ctrlh, "cdr-v1", value) < 0)
+		LOGP(DGPRS, LOGL_ERROR, "Failed to create and send TRAP cdr-v1\n");
+}
 
 static void maybe_print_header(FILE *cdr_file)
 {
@@ -97,21 +105,27 @@ static void cdr_log_mm(struct sgsn_instance *inst, const char *ev,
 	FILE *cdr_file;
 	char buf[1024];
 
-	if (!inst->cfg.cdr.filename)
+	if (!inst->cfg.cdr.filename && !inst->cfg.cdr.trap)
 		return;
 
-	cdr_file = fopen(inst->cfg.cdr.filename, "a");
-	if (!cdr_file) {
-		LOGP(DGPRS, LOGL_ERROR, "Failed to open %s\n",
-			inst->cfg.cdr.filename);
-		return;
-	}
-
-	maybe_print_header(cdr_file);
 	cdr_snprintf_mm(buf, sizeof(buf), ev, mmctx);
-	fprintf(cdr_file, "%s\n", buf);
 
-	fclose(cdr_file);
+	if (inst->cfg.cdr.trap)
+		send_cdr_trap(buf);
+
+	if (inst->cfg.cdr.filename) {
+		cdr_file = fopen(inst->cfg.cdr.filename, "a");
+		if (!cdr_file) {
+			LOGP(DGPRS, LOGL_ERROR, "Failed to open %s\n",
+				inst->cfg.cdr.filename);
+			return;
+		}
+
+		maybe_print_header(cdr_file);
+		fprintf(cdr_file, "%s\n", buf);
+
+		fclose(cdr_file);
+	}
 }
 
 static void extract_eua(struct ul66_t *eua, char *eua_addr)
@@ -200,20 +214,26 @@ static void cdr_log_pdp(struct sgsn_instance *inst, const char *ev,
 	FILE *cdr_file;
 	char buf[1024];
 
-	if (!inst->cfg.cdr.filename)
+	if (!inst->cfg.cdr.filename && !inst->cfg.cdr.trap)
 		return;
 
-	cdr_file = fopen(inst->cfg.cdr.filename, "a");
-	if (!cdr_file) {
-		LOGP(DGPRS, LOGL_ERROR, "Failed to open %s\n",
-			inst->cfg.cdr.filename);
-		return;
-	}
-
-	maybe_print_header(cdr_file);
 	cdr_snprintf_pdp(buf, sizeof(buf), ev, pdp);
-	fprintf(cdr_file, "%s\n", buf);
-	fclose(cdr_file);
+
+	if (inst->cfg.cdr.trap)
+		send_cdr_trap(buf);
+
+	if (inst->cfg.cdr.filename) {
+		cdr_file = fopen(inst->cfg.cdr.filename, "a");
+		if (!cdr_file) {
+			LOGP(DGPRS, LOGL_ERROR, "Failed to open %s\n",
+				inst->cfg.cdr.filename);
+			return;
+		}
+
+		maybe_print_header(cdr_file);
+		fprintf(cdr_file, "%s\n", buf);
+		fclose(cdr_file);
+	}
 }
 
 static void cdr_pdp_timeout(void *_data)

@@ -76,6 +76,7 @@
 #include <getopt.h>
 
 void *tall_bsc_ctx;
+struct ctrl_handle *g_ctrlh;
 
 struct gprs_ns_inst *sgsn_nsi;
 static int daemonize = 0;
@@ -367,7 +368,6 @@ static bool file_exists(const char *path)
 
 int main(int argc, char **argv)
 {
-	struct ctrl_handle *ctrl;
 	int rc;
 #if BUILD_IU
 	struct osmo_sccp_instance *sccp;
@@ -454,9 +454,9 @@ int main(int argc, char **argv)
 
 	/* start control interface after reading config for
 	 * ctrl_vty_get_bind_addr() */
-	ctrl = sgsn_controlif_setup(NULL, ctrl_vty_get_bind_addr(),
+	g_ctrlh = sgsn_controlif_setup(NULL, ctrl_vty_get_bind_addr(),
 				    OSMO_CTRL_PORT_SGSN);
-	if (!ctrl) {
+	if (!g_ctrlh) {
 		LOGP(DGPRS, LOGL_ERROR, "Failed to create CTRL interface.\n");
 		exit(1);
 	}

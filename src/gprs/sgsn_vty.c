@@ -233,6 +233,10 @@ static int config_write_sgsn(struct vty *vty)
 		vty_out(vty, " cdr filename %s%s", g_cfg->cdr.filename, VTY_NEWLINE);
 	else
 		vty_out(vty, " no cdr filename%s", VTY_NEWLINE);
+	if (g_cfg->cdr.trap)
+		vty_out(vty, " cdr trap%s", VTY_NEWLINE);
+	else
+		vty_out(vty, " no cdr trap%s", VTY_NEWLINE);
 	vty_out(vty, " cdr interval %d%s", g_cfg->cdr.interval, VTY_NEWLINE);
 
 	vty_out(vty, " timer t3312 %d%s", g_cfg->timers.T3312, VTY_NEWLINE);
@@ -1100,7 +1104,7 @@ DEFUN(cfg_no_apn_name, cfg_no_apn_name_cmd,
 
 DEFUN(cfg_cdr_filename, cfg_cdr_filename_cmd,
 	"cdr filename NAME",
-	"CDR\nSet filename\nname\n")
+	"CDR\nEnable saving CDR to filename\nname\n")
 {
 	talloc_free(g_cfg->cdr.filename);
 	g_cfg->cdr.filename = talloc_strdup(tall_vty_ctx, argv[0]);
@@ -1109,10 +1113,26 @@ DEFUN(cfg_cdr_filename, cfg_cdr_filename_cmd,
 
 DEFUN(cfg_no_cdr_filename, cfg_no_cdr_filename_cmd,
 	"no cdr filename",
-	NO_STR "CDR\nDisable CDR generation\n")
+	NO_STR "CDR\nDisable saving CDR to file\n")
 {
 	talloc_free(g_cfg->cdr.filename);
 	g_cfg->cdr.filename = NULL;
+	return CMD_SUCCESS;
+}
+
+DEFUN(cfg_cdr_trap, cfg_cdr_trap_cmd,
+	"cdr trap",
+	"CDR\nEnable sending CDR via TRAP CTRL messages\n")
+{
+	g_cfg->cdr.trap = true;
+	return CMD_SUCCESS;
+}
+
+DEFUN(cfg_no_cdr_trap, cfg_no_cdr_trap_cmd,
+	"no cdr trap",
+	NO_STR "CDR\nDisable sending CDR via TRAP CTRL messages\n")
+{
+	g_cfg->cdr.trap = false;
 	return CMD_SUCCESS;
 }
 
@@ -1250,6 +1270,8 @@ int sgsn_vty_init(struct sgsn_config *cfg)
 	install_element(SGSN_NODE, &cfg_no_apn_name_cmd);
 	install_element(SGSN_NODE, &cfg_cdr_filename_cmd);
 	install_element(SGSN_NODE, &cfg_no_cdr_filename_cmd);
+	install_element(SGSN_NODE, &cfg_cdr_trap_cmd);
+	install_element(SGSN_NODE, &cfg_no_cdr_trap_cmd);
 	install_element(SGSN_NODE, &cfg_cdr_interval_cmd);
 	install_element(SGSN_NODE, &cfg_ggsn_dynamic_lookup_cmd);
 	install_element(SGSN_NODE, &cfg_grx_ggsn_cmd);

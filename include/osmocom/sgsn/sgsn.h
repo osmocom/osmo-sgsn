@@ -52,6 +52,7 @@ enum sgsn_rate_ctr_keys {
 
 struct sgsn_cdr {
 	char *filename;
+	bool trap;
 	int interval;
 };
 
