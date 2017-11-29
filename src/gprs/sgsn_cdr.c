@@ -68,12 +68,34 @@ static void maybe_print_header(FILE *cdr_file)
 	fprintf(cdr_file, "timestamp,imsi,imei,msisdn,cell_id,lac,hlr,event,pdp_duration,ggsn_addr,sgsn_addr,apni,eua_addr,vol_in,vol_out,charging_id\n");
 }
 
+static int cdr_snprintf_mm(char *buf, size_t size, const char *ev,
+			struct sgsn_mm_ctx *mmctx)
+{
+	struct tm tm;
+	struct timeval tv;
+	int ret;
+
+	gettimeofday(&tv, NULL);
+	gmtime_r(&tv.tv_sec, &tm);
+	ret = snprintf(buf, size, "%04d%02d%02d%02d%02d%02d%03d,%s,%s,%s,%d,%d,%s,%s",
+		tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
+		tm.tm_hour, tm.tm_min, tm.tm_sec,
+		(int)(tv.tv_usec / 1000),
+		mmctx->imsi,
+		mmctx->imei,
+		mmctx->msisdn,
+		mmctx->gb.cell_id,
+		mmctx->ra.lac,
+		mmctx->hlr,
+		ev);
+	return ret;
+}
+
 static void cdr_log_mm(struct sgsn_instance *inst, const char *ev,
 			struct sgsn_mm_ctx *mmctx)
 {
 	FILE *cdr_file;
-	struct tm tm;
-	struct timeval tv;
+	char buf[1024];
 
 	if (!inst->cfg.cdr.filename)
 		return;
@@ -86,19 +108,8 @@ static void cdr_log_mm(struct sgsn_instance *inst, const char *ev,
 	}
 
 	maybe_print_header(cdr_file);
-	gettimeofday(&tv, NULL);
-	gmtime_r(&tv.tv_sec, &tm);
-	fprintf(cdr_file, "%04d%02d%02d%02d%02d%02d%03d,%s,%s,%s,%d,%d,%s,%s\n",
-		tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
-		tm.tm_hour, tm.tm_min, tm.tm_sec,
-		(int)(tv.tv_usec / 1000),
-		mmctx->imsi,
-		mmctx->imei,
-		mmctx->msisdn,
-		mmctx->gb.cell_id,
-		mmctx->ra.lac,
-		mmctx->hlr,
-		ev);
+	cdr_snprintf_mm(buf, sizeof(buf), ev, mmctx);
+	fprintf(cdr_file, "%s\n", buf);
 
 	fclose(cdr_file);
 }
@@ -124,10 +135,9 @@ static void extract_eua(struct ul66_t *eua, char *eua_addr)
 	}
 }
 
-static void cdr_log_pdp(struct sgsn_instance *inst, const char *ev,
+static int cdr_snprintf_pdp(char *buf, size_t size, const char *ev,
 			struct sgsn_pdp_ctx *pdp)
 {
-	FILE *cdr_file;
 	char apni[(pdp->lib ? pdp->lib->apn_use.l : 0) + 1];
 	char ggsn_addr[INET_ADDRSTRLEN + 1];
 	char sgsn_addr[INET_ADDRSTRLEN + 1];
@@ -136,9 +146,7 @@ static void cdr_log_pdp(struct sgsn_instance *inst, const char *ev,
 	struct timeval tv;
 	time_t duration;
 	struct timespec tp;
-
-	if (!inst->cfg.cdr.filename)
-		return;
+	int ret;
 
 	memset(apni, 0, sizeof(apni));
 	memset(ggsn_addr, 0, sizeof(ggsn_addr));
@@ -154,15 +162,6 @@ static void cdr_log_pdp(struct sgsn_instance *inst, const char *ev,
 	if (pdp->ggsn)
 		inet_ntop(AF_INET, &pdp->ggsn->gsn->gsnc.s_addr, sgsn_addr, sizeof(sgsn_addr));
 
-	cdr_file = fopen(inst->cfg.cdr.filename, "a");
-	if (!cdr_file) {
-		LOGP(DGPRS, LOGL_ERROR, "Failed to open %s\n",
-			inst->cfg.cdr.filename);
-		return;
-	}
-
-	maybe_print_header(cdr_file);
-
 	clock_gettime(CLOCK_MONOTONIC, &tp);
 	gettimeofday(&tv, NULL);
 
@@ -172,8 +171,8 @@ static void cdr_log_pdp(struct sgsn_instance *inst, const char *ev,
 	/* Check the duration of the PDP context */
 	duration = tp.tv_sec - pdp->cdr_start.tv_sec;
 
-	fprintf(cdr_file,
-		"%04d%02d%02d%02d%02d%02d%03d,%s,%s,%s,%d,%d,%s,%s,%ld,%s,%s,%s,%s,%" PRIu64 ",%" PRIu64 ",%u\n",
+	ret = snprintf(buf, size,
+		"%04d%02d%02d%02d%02d%02d%03d,%s,%s,%s,%d,%d,%s,%s,%ld,%s,%s,%s,%s,%" PRIu64 ",%" PRIu64 ",%u",
 		tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
 		tm.tm_hour, tm.tm_min, tm.tm_sec,
 		(int)(tv.tv_usec / 1000),
@@ -192,6 +191,28 @@ static void cdr_log_pdp(struct sgsn_instance *inst, const char *ev,
 		pdp->cdr_bytes_in,
 		pdp->cdr_bytes_out,
 		pdp->cdr_charging_id);
+	return ret;
+}
+
+static void cdr_log_pdp(struct sgsn_instance *inst, const char *ev,
+			struct sgsn_pdp_ctx *pdp)
+{
+	FILE *cdr_file;
+	char buf[1024];
+
+	if (!inst->cfg.cdr.filename)
+		return;
+
+	cdr_file = fopen(inst->cfg.cdr.filename, "a");
+	if (!cdr_file) {
+		LOGP(DGPRS, LOGL_ERROR, "Failed to open %s\n",
+			inst->cfg.cdr.filename);
+		return;
+	}
+
+	maybe_print_header(cdr_file);
+	cdr_snprintf_pdp(buf, sizeof(buf), ev, pdp);
+	fprintf(cdr_file, "%s\n", buf);
 	fclose(cdr_file);
 }
 
