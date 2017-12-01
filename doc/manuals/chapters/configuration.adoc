@@ -175,7 +175,7 @@ OsmoSGSN(config-sgsn)# gsup oap-opc 101112131415161718191a1b1c1d1e1f <4>
 OsmoSGSN can write a text log file containing CDR (call data records),
 which are commonly used for accounting/billing purpose.
 
-.Example: CDR configuration
+.Example: CDR log file configuration
 ----
 OsmoSGSN(config-sgsn)# cdr filename /var/log/osmosgsn.cdr
 OsmoSGSN(config-sgsn)# cdr interval 600 <1>
@@ -184,6 +184,20 @@ OsmoSGSN(config-sgsn)# cdr interval 600 <1>
 
 The CDR file is a simple CSV file including a header line naming the
 individual fields of each CSV line.
+
+==== CDR CTRL interface
+
+Independently of whether logging CDR to a file is enabled or not, OsmoSGSN can
+also provide delivery of CDR through the CTRL interface. CDR are sent by means
+of TRAP messages with variable name _cdr-v1_, and its value is filled using the
+same CSV line format as in the log file, but without CSV header line.
+
+.Example: CDR delivery through CTRL TRAP messages
+----
+OsmoSGSN(config-sgsn)# cdr trap
+----
+
+==== CDR Format
 
 [[sgsn-cdr]]
 .Description of CSV fields in OsmoSGSN CDR file
