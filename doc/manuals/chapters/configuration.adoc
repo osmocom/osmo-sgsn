@@ -198,7 +198,16 @@ individual fields of each CSV line.
 |lac|Location Area Code in which the MS was registered last
 |hlr|HLR of the subscriber
 |event|Possible events are explained below in <<sgsn-cdr-event>>
-|pdp|
+|===
+
+If the _event_ field describes a pdp context related action (starts with
+_pdp-_), then the following extra CSV fields are appended to the line:
+
+[[sgsn-cdr-pdp]]
+.Description of extra CSV fields for pdp context related events
+[options="header",cols="15%,85%"]
+|===
+|Field Name|Description
 |pdp_duration|duration of the PDP context so far
 |ggsn_addr|GGSN related to the PDP context
 |sgsn_addr|SGSN related to the PDP context
