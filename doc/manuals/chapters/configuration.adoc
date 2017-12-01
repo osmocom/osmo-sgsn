@@ -231,6 +231,7 @@ _pdp-_), then the following extra CSV fields are appended to the line:
 |pdp-deact|GTP DELETE PDP CONTEXT CONFIRM received from GGSN
 |pdp-terminate|Forced PDP context termination during MM context release
 |pdp-free|Release of the PDP context memory
+|pdp-periodic|Triggered by periodic timer, see VTY cmd _cdr interval_
 |===
 
 
