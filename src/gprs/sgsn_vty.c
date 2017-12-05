@@ -453,11 +453,11 @@ static void vty_dump_pdp(struct vty *vty, const char *pfx,
 		vty_out(vty, "%s  PDP Address: %s%s", pfx,
 			gprs_pdpaddr2str(pdp->lib->eua.v, pdp->lib->eua.l),
 			VTY_NEWLINE);
-		vty_out(vty, "%s  GTP Local Control(%s / TEIC: 0x%08x) ", pfx,
+		vty_out(vty, "%s  GTPv%d Local Control(%s / TEIC: 0x%08x) ", pfx, pdp->lib->version,
 			sgsn_gtp_ntoa(&pdp->lib->gsnlc), pdp->lib->teic_own);
 		vty_out(vty, "Data(%s / TEID: 0x%08x)%s",
 			sgsn_gtp_ntoa(&pdp->lib->gsnlu), pdp->lib->teid_own, VTY_NEWLINE);
-		vty_out(vty, "%s  GTP Remote Control(%s / TEIC: 0x%08x) ", pfx,
+		vty_out(vty, "%s  GTPv%d Remote Control(%s / TEIC: 0x%08x) ", pfx, pdp->lib->version,
 			sgsn_gtp_ntoa(&pdp->lib->gsnrc), pdp->lib->teic_gn);
 		vty_out(vty, "Data(%s / TEID: 0x%08x)%s",
 			sgsn_gtp_ntoa(&pdp->lib->gsnru), pdp->lib->teid_gn, VTY_NEWLINE);
