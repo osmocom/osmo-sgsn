@@ -431,12 +431,12 @@ const struct value_string gprs_mm_st_strs[] = {
 
 char *sgsn_gtp_ntoa(struct ul16_t *ul)
 {
-	if (ul->l == 4) {
-		struct in_addr *ia = (struct in_addr *) ul;
-		return inet_ntoa(*ia);
-	} else {
+	struct in_addr ia;
+
+	if (gsna2in_addr(&ia, ul) != 0)
 		return "UNKNOWN";
-	}
+
+	return inet_ntoa(ia);
 }
 
 static void vty_dump_pdp(struct vty *vty, const char *pfx,
