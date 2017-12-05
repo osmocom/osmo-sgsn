@@ -27,6 +27,8 @@ include::../common/chapters/oap.adoc[]
 
 include::chapters/gsup.adoc[]
 
+include::chapters/counters.adoc[]
+
 include::../common/chapters/port_numbers.adoc[]
 
 include::../common/chapters/bibliography.adoc[]
