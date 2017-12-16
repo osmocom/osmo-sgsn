@@ -1,5 +1,5 @@
 [Unit]
-Description=OpenBSC SGSN
+Description=Osmocom SGSN (Serving GPRS Support Node)
 Wants=osmo-hlr.service
 After=osmo-hlr.service
 After=osmo-hnbgw.service
