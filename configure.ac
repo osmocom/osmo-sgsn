@@ -197,5 +197,4 @@ AC_OUTPUT(
     tests/v42bis/Makefile
     doc/Makefile
     doc/examples/Makefile
-    contrib/Makefile
     Makefile)

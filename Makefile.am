@@ -13,7 +13,6 @@ SUBDIRS = \
 	include \
 	src \
 	tests \
-	contrib \
 	$(NULL)
 
 pkgconfigdir = $(libdir)/pkgconfig
