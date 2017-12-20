@@ -255,21 +255,23 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_iu(void *uectx)
 {
 #if BUILD_IU
 	struct sgsn_mm_ctx *ctx;
+	struct ranap_ue_conn_ctx *ue_ctx = uectx;
 
 	ctx = talloc_zero(tall_bsc_ctx, struct sgsn_mm_ctx);
 	if (!ctx)
 		return NULL;
 
 	ctx->ran_type = MM_CTX_T_UTRAN_Iu;
-	ctx->iu.ue_ctx = uectx;
+	ctx->iu.ue_ctx = ue_ctx;
 	ctx->iu.ue_ctx->rab_assign_addr_enc = sgsn->cfg.iu.rab_assign_addr_enc;
 	ctx->iu.new_key = 1;
 	ctx->gmm_state = GMM_DEREGISTERED;
 	ctx->pmm_state = PMM_DETACHED;
 	ctx->auth_triplet.key_seq = GSM_KEY_SEQ_INVAL;
-	ctx->ctrg = rate_ctr_group_alloc(ctx, &mmctx_ctrg_desc, 0);
+	ctx->ctrg = rate_ctr_group_alloc(ctx, &mmctx_ctrg_desc, ue_ctx->conn_id);
 	if (!ctx->ctrg) {
-		LOGMMCTXP(LOGL_ERROR, ctx, "Cannot allocate counter group\n");
+		LOGMMCTXP(LOGL_ERROR, ctx, "Cannot allocate counter group for %s.%u\n",
+			  mmctx_ctrg_desc.group_name_prefix, ue_ctx->conn_id);
 		talloc_free(ctx);
 		return NULL;
 	}
