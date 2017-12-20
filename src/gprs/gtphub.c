@@ -1583,7 +1583,9 @@ static int gtphub_handle_create_pdp_ctx(struct gtphub *hub,
 		 * gtphub_handle_buf(), we'd be creating a peer port just to
 		 * expire it right away. */
 		if (hub->sgsn_use_sender && (side_idx == GTPH_SIDE_SGSN)) {
-			gsn_addr_from_sockaddr(&use_addr, &use_port, &from_ctrl->sa);
+			int rc = gsn_addr_from_sockaddr(&use_addr, &use_port, &from_ctrl->sa);
+			if (rc < 0)
+				LOG(LOGL_ERROR, "%s(): failed to obtain GSN address\n", __func__);
 		} else {
 			use_port = gtphub_plane_idx_default_port[plane_idx];
 
@@ -2765,7 +2767,9 @@ struct gtphub_peer_port *gtphub_known_addr_have_port(const struct gtphub_bind *b
 
 	struct gsn_addr gsna;
 	uint16_t port;
-	gsn_addr_from_sockaddr(&gsna, &port, addr);
+	int rc = gsn_addr_from_sockaddr(&gsna, &port, addr);
+	if (rc < 0)
+		LOG(LOGL_ERROR, "%s(): failed to obtain GSN address\n", __func__);
 
 	pa = gtphub_addr_find(bind, &gsna);
 	if (!pa)
