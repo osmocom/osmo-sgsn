@@ -879,14 +879,14 @@ static void gtphub_sock_close(struct osmo_fd *ofd)
 	ofd->cb = NULL;
 }
 
-static void gtphub_bind_init(struct gtphub_bind *b)
+static void gtphub_bind_init(struct gtphub_bind *b, uint32_t idx)
 {
 	ZERO_STRUCT(b);
 
 	INIT_LLIST_HEAD(&b->peers);
 
 	b->counters_io = rate_ctr_group_alloc(osmo_gtphub_ctx,
-					      &gtphub_ctrg_io_desc, 0);
+					      &gtphub_ctrg_io_desc, idx);
 	OSMO_ASSERT(b->counters_io);
 }
 
@@ -913,7 +913,8 @@ static int gtphub_bind_start(struct gtphub_bind *b,
 static void gtphub_bind_free(struct gtphub_bind *b)
 {
 	OSMO_ASSERT(llist_empty(&b->peers));
-	rate_ctr_group_free(b->counters_io);
+	if (b->counters_io)
+		rate_ctr_group_free(b->counters_io);
 }
 
 static void gtphub_bind_stop(struct gtphub_bind *b) {
@@ -1107,6 +1108,14 @@ static void gtphub_tunnel_del_cb(struct expiring_item *expi)
 	talloc_free(tun);
 }
 
+#define CTR_IDX(s, p, a, b) (a + s + (p + b) * 2)
+
+/* rate counter index for tunnels: [3; 6] */
+#define CTR_IDX_TUN(s, p) CTR_IDX(s, p, 1, 1)
+
+/* rate counter index for hubs: [7; 10] */
+#define CTR_IDX_HUB(s, p) CTR_IDX(s, p, 3, 2)
+
 static struct gtphub_tunnel *gtphub_tunnel_new()
 {
 	struct gtphub_tunnel *tun;
@@ -1121,8 +1130,9 @@ static struct gtphub_tunnel *gtphub_tunnel_new()
 		struct gtphub_tunnel_endpoint *te = &tun->endpoint[side_idx][plane_idx];
 		te->counters_io = rate_ctr_group_alloc(osmo_gtphub_ctx,
 						       &gtphub_ctrg_io_desc,
-						       0);
-		OSMO_ASSERT(te->counters_io);
+						       CTR_IDX_TUN(side_idx, plane_idx));
+		if (!te->counters_io)
+			return NULL;
 	}
 
 	tun->expiry_entry.del_cb = gtphub_tunnel_del_cb;
@@ -1486,7 +1496,13 @@ static int gtphub_handle_create_pdp_ctx(struct gtphub *hub,
 		}
 
 		/* A new tunnel. */
-		p->tun = tun = gtphub_tunnel_new();
+		tun = gtphub_tunnel_new();
+		if (!tun) {
+			LOG(LOGL_ERROR, "Failed to allocate new tunnel %s <-> %s\n",
+			    gtphub_port_str(from_ctrl), gtphub_port_str(to_ctrl));
+			return -1;
+		}
+		p->tun = tun;
 
 		/* Create TEI mapping */
 		tun->tei_repl = nr_pool_next(&hub->tei_pool);
@@ -2460,7 +2476,7 @@ void gtphub_init(struct gtphub *hub)
 	int side_idx;
 	int plane_idx;
 	for_each_side_and_plane(side_idx, plane_idx) {
-		gtphub_bind_init(&hub->to_gsns[side_idx][plane_idx]);
+		gtphub_bind_init(&hub->to_gsns[side_idx][plane_idx], CTR_IDX_HUB(side_idx, plane_idx));
 	}
 
 	hub->to_gsns[GTPH_SIDE_SGSN][GTPH_PLANE_CTRL].label = "SGSN Ctrl";
@@ -2709,8 +2725,9 @@ static struct gtphub_peer_port *gtphub_addr_add_port(struct gtphub_peer_addr *a,
 	}
 
 	pp->counters_io = rate_ctr_group_alloc(osmo_gtphub_ctx,
-					       &gtphub_ctrg_io_desc, 0);
+					       &gtphub_ctrg_io_desc, port);
 	if (!pp->counters_io) {
+		LOG(LOGL_ERROR, "Failed to allocate rate counters for %s:%u\n", gsn_addr_to_str(&a->addr), port);
 		talloc_free(pp);
 		return NULL;
 	}
