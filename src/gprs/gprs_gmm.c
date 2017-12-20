@@ -1339,9 +1339,6 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 		if (!ctx)
 			ctx = sgsn_mm_ctx_by_imsi(mi_string);
 		if (!ctx) {
-#if 0
-			return gsm48_tx_gmm_att_rej(msg, GMM_CAUSE_IMSI_UNKNOWN);
-#else
 			if (msg->dst)
 				ctx = sgsn_mm_ctx_alloc_iu(msg->dst);
 			else
@@ -1351,7 +1348,6 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 				goto rejected;
 			}
 			osmo_strlcpy(ctx->imsi, mi_string, sizeof(ctx->imsi));
-#endif
 		}
 		if (ctx->ran_type == MM_CTX_T_GERAN_Gb) {
 			ctx->gb.tlli = msgb_tlli(msg);
