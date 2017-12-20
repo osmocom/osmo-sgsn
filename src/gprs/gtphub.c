@@ -1517,7 +1517,7 @@ static int gtphub_handle_create_pdp_ctx(struct gtphub *hub,
 	int ie_mandatory = (p->type == GTP_CREATE_PDP_REQ);
 	unsigned int side_idx = p->side_idx;
 
-	for (plane_idx = 0; plane_idx < 2; plane_idx++) {
+	for_each_plane(plane_idx) {
 		int rc;
 		struct gsn_addr use_addr;
 		uint16_t use_port;
