@@ -1443,7 +1443,7 @@ rejected:
 	rc = gsm48_tx_gmm_att_rej_oldmsg(msg, reject_cause);
 	if (ctx)
 		mm_ctx_cleanup_free(ctx, "GPRS ATTACH REJ");
-	else
+	else if (llme)
 		gprs_llgmm_unassign(llme);
 
 	return rc;
