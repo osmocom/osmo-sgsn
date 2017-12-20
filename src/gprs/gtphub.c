@@ -125,7 +125,7 @@ static const struct rate_ctr_desc gtphub_counters_io_desc[] = {
 };
 
 static const struct rate_ctr_group_desc gtphub_ctrg_io_desc = {
-	.group_name_prefix = "gtphub.bind",
+	.group_name_prefix = "gtphub:bind",
 	.group_description = "I/O Statistics",
 	.num_ctr = ARRAY_SIZE(gtphub_counters_io_desc),
 	.ctr_desc = gtphub_counters_io_desc,

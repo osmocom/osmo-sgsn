@@ -73,7 +73,7 @@ static const struct rate_ctr_desc peer_ctr_description[] = {
 osmo_static_assert(ARRAY_SIZE(peer_ctr_description) == GBPROX_PEER_CTR_LAST, everything_described);
 
 static const struct rate_ctr_group_desc peer_ctrg_desc = {
-	.group_name_prefix = "gbproxy.peer",
+	.group_name_prefix = "gbproxy:peer",
 	.group_description = "GBProxy Peer Statistics",
 	.num_ctr = ARRAY_SIZE(peer_ctr_description),
 	.ctr_desc = peer_ctr_description,

@@ -70,7 +70,7 @@ static const struct rate_ctr_desc global_ctr_description[] = {
 };
 
 static const struct rate_ctr_group_desc global_ctrg_desc = {
-	.group_name_prefix = "gbproxy.global",
+	.group_name_prefix = "gbproxy:global",
 	.group_description = "GBProxy Global Statistics",
 	.num_ctr = ARRAY_SIZE(global_ctr_description),
 	.ctr_desc = global_ctr_description,
