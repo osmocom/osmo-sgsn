@@ -46,7 +46,7 @@ set -x
 
 cd "$base"
 autoreconf --install --force
-./configure --enable-osmo-bsc --enable-nat $SMPP $MGCP $IU --enable-vty-tests --enable-external-tests
+./configure --enable-sanitize $SMPP $MGCP $IU --enable-vty-tests --enable-external-tests
 $MAKE $PARALLEL_MAKE
 LD_LIBRARY_PATH="$inst/lib" $MAKE check \
   || cat-testlogs.sh
