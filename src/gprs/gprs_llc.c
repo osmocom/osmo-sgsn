@@ -372,8 +372,15 @@ static int _bssgp_tx_dl_ud(struct msgb *msg, struct sgsn_mm_ctx *mmctx)
 		dup.ms_ra_cap.v = mmctx->ms_radio_access_capa.buf;
 
 		/* make sure we only send it to the right llme */
-		OSMO_ASSERT(msgb_tlli(msg) == mmctx->gb.llme->tlli
-				|| msgb_tlli(msg) == mmctx->gb.llme->old_tlli);
+		if (!(msgb_tlli(msg) == mmctx->gb.llme->tlli
+		      || msgb_tlli(msg) == mmctx->gb.llme->old_tlli)) {
+			LOGP(DLLC, LOGL_ERROR,
+			     "_bssgp_tx_dl_ud(): Attempt to send Downlink Unitdata to wrong LLME:"
+			     " msgb_tlli=0x%x mmctx->gb.llme->tlli=0x%x ->old_tlli=0x%x\n",
+			     msgb_tlli(msg), mmctx->gb.llme->tlli, mmctx->gb.llme->old_tlli);
+			msgb_free(msg);
+			return -EINVAL;
+		}
 	}
 	memcpy(&dup.qos_profile, qos_profile_default,
 		sizeof(qos_profile_default));
