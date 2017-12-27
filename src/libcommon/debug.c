@@ -34,6 +34,13 @@
 #include <osmocom/sgsn/gsm_data.h>
 #include <osmocom/sgsn/debug.h>
 
+osmo_static_assert(_LOG_CTX_COUNT_SGSN <= ARRAY_SIZE(((struct log_context*)NULL)->ctx),
+		   enum_logging_ctx_items_fit_in_struct_log_context);
+osmo_static_assert(_LOG_FLT_COUNT_SGSN <= ARRAY_SIZE(((struct log_target*)NULL)->filter_data),
+		   enum_sgsn_log_flt_fit_in_log_target_filter_data);
+osmo_static_assert(_LOG_FLT_COUNT_SGSN <= 8*sizeof(((struct log_target*)NULL)->filter_map),
+		   enum_sgsn_log_flt_fit_in_log_target_filter_map);
+
 /* default categories */
 static const struct log_info_cat default_categories[] = {
 	[DRLL] = {
@@ -203,6 +210,7 @@ static int filter_fn(const struct log_context *ctx, struct log_target *tar)
 	const struct bsc_subscr *bsub = ctx->ctx[LOG_CTX_BSC_SUBSCR];
 	const struct gprs_nsvc *nsvc = ctx->ctx[LOG_CTX_GB_NSVC];
 	const struct gprs_nsvc *bvc = ctx->ctx[LOG_CTX_GB_BVC];
+	const struct gprs_subscr *gsub = ctx->ctx[LOG_CTX_GPRS_SUBSCR];
 
 	if ((tar->filter_map & (1 << LOG_FLT_VLR_SUBSCR)) != 0
 	    && vsub && vsub == tar->filter_data[LOG_FLT_VLR_SUBSCR])
@@ -220,6 +228,10 @@ static int filter_fn(const struct log_context *ctx, struct log_target *tar)
 	/* Filter on the NS Virtual Connection */
 	if ((tar->filter_map & (1 << LOG_FLT_GB_BVC)) != 0
 	    && bvc && (bvc == tar->filter_data[LOG_FLT_GB_BVC]))
+		return 1;
+
+	if ((tar->filter_map & (1 << LOG_FLT_GPRS_SUBSCR))
+	    && gsub && (gsub == tar->filter_data[LOG_CTX_GPRS_SUBSCR]))
 		return 1;
 
 	return 0;

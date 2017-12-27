@@ -182,6 +182,8 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 		return rc; \
 	}
 
+	log_set_context(LOG_CTX_GPRS_SUBSCR, mm->subscr);
+
 	switch (type) {
 	case RANAP_IU_EVENT_RAB_ASSIGN:
 		REQUIRE_MM
@@ -211,6 +213,8 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 		rc = -1;
 		break;
 	}
+
+	log_set_context(LOG_CTX_GPRS_SUBSCR, NULL);
 	return rc;
 }
 #endif
@@ -1386,6 +1390,9 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 		reject_cause = GMM_CAUSE_MS_ID_NOT_DERIVED;
 		goto rejected;
 	}
+
+	log_set_context(LOG_CTX_GPRS_SUBSCR, ctx->subscr);
+
 	/* Update MM Context with currient RA and Cell ID */
 	ctx->ra = ra_id;
 	if (ctx->ran_type == MM_CTX_T_GERAN_Gb)
@@ -1425,7 +1432,8 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 	}
 
 	ctx->pending_req = GSM48_MT_GMM_ATTACH_REQ;
-	return gsm48_gmm_authorize(ctx);
+	rc = gsm48_gmm_authorize(ctx);
+	goto out;
 
 err_inval:
 	LOGPC(DMM, LOGL_INFO, "\n");
@@ -1441,7 +1449,8 @@ rejected:
 		mm_ctx_cleanup_free(ctx, "GPRS ATTACH REJ");
 	else if (llme)
 		gprs_llgmm_unassign(llme);
-
+out:
+	log_set_context(LOG_CTX_GPRS_SUBSCR, NULL);
 	return rc;
 
 }
@@ -1707,6 +1716,8 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		goto rejected;
 	}
 
+	log_set_context(LOG_CTX_GPRS_SUBSCR, mmctx->subscr);
+
 	/* Store new BVCI/NSEI in MM context (FIXME: delay until we ack?) */
 	msgid2mmctx(mmctx, msg);
 	/* Bump the statistics of received signalling msgs for this MM context */
@@ -1758,7 +1769,8 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	 * a new Iu connection, so we might need to re-authenticate the
 	 * connection as well as turn on integrity protection. */
 	mmctx->pending_req = GSM48_MT_GMM_RA_UPD_REQ;
-	return gsm48_gmm_authorize(mmctx);
+	rc = gsm48_gmm_authorize(mmctx);
+	goto out;
 
 rejected:
 	/* Send RA UPDATE REJECT */
@@ -1773,6 +1785,8 @@ rejected:
 			gprs_llgmm_unassign(llme);
 	}
 
+out:
+	log_set_context(LOG_CTX_GPRS_SUBSCR, NULL);
 	return rc;
 }
 
@@ -1854,6 +1868,8 @@ static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 		goto rejected;
 	}
 
+	log_set_context(LOG_CTX_GPRS_SUBSCR, ctx->subscr);
+
 	ctx->gmm_state = GMM_COMMON_PROC_INIT;
 
 	ctx->iu.service.type = service_type;
@@ -1868,7 +1884,8 @@ static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 
 
 	ctx->pending_req = GSM48_MT_GMM_SERVICE_REQ;
-	return gsm48_gmm_authorize(ctx);
+	rc = gsm48_gmm_authorize(ctx);
+	goto out;
 
 err_inval:
 	LOGPC(DMM, LOGL_INFO, "\n");
@@ -1881,6 +1898,8 @@ rejected:
 		  get_value_string(gsm48_gmm_cause_names, reject_cause), reject_cause);
 	rc = gsm48_tx_gmm_service_rej_oldmsg(msg, reject_cause);
 
+out:
+	log_set_context(LOG_CTX_GPRS_SUBSCR, NULL);
 	return rc;
 
 }
@@ -2801,6 +2820,8 @@ int gsm0408_gprs_rcvmsg_iu(struct msgb *msg, struct gprs_ra_id *ra_id,
 		rate_ctr_inc(&mmctx->ctrg->ctr[GMM_CTR_PKTS_SIG_IN]);
 		if (ra_id)
 			memcpy(&mmctx->ra, ra_id, sizeof(mmctx->ra));
+
+		log_set_context(LOG_CTX_GPRS_SUBSCR, mmctx->subscr);
 	}
 
 	/* MMCTX can be NULL */
@@ -2823,6 +2844,7 @@ int gsm0408_gprs_rcvmsg_iu(struct msgb *msg, struct gprs_ra_id *ra_id,
 
 	/* MMCTX can be invalid */
 
+	log_set_context(LOG_CTX_GPRS_SUBSCR, NULL);
 	return rc;
 }
 
@@ -2842,6 +2864,7 @@ int gsm0408_gprs_rcvmsg_gb(struct msgb *msg, struct gprs_llc_llme *llme,
 		msgid2mmctx(mmctx, msg);
 		rate_ctr_inc(&mmctx->ctrg->ctr[GMM_CTR_PKTS_SIG_IN]);
 		mmctx->gb.llme = llme;
+		log_set_context(LOG_CTX_GPRS_SUBSCR, mmctx->subscr);
 	}
 
 	/* MMCTX can be NULL */
@@ -2863,6 +2886,7 @@ int gsm0408_gprs_rcvmsg_gb(struct msgb *msg, struct gprs_llc_llme *llme,
 
 	/* MMCTX can be invalid */
 
+	log_set_context(LOG_CTX_GPRS_SUBSCR, NULL);
 	return rc;
 }
 

@@ -6,6 +6,8 @@
 #define DEBUG
 #include <osmocom/core/logging.h>
 
+struct gprs_subscr;
+
 /* Debug Areas of the code */
 enum {
 	DRLL,
@@ -44,4 +46,17 @@ enum {
 	Debug_LastEntry,
 };
 
+enum sgsn_log_flt {
+	LOG_FLT_GPRS_SUBSCR = _LOG_FLT_COUNT,
+	_LOG_FLT_COUNT_SGSN
+};
+
+enum sgsn_log_ctx_index {
+	LOG_CTX_GPRS_SUBSCR = _LOG_CTX_COUNT,
+	_LOG_CTX_COUNT_SGSN
+};
+
 extern const struct log_info log_info;
+
+void log_set_filter_gprs_subscriber(struct log_target *target,
+				    struct gprs_subscr *gsub);

@@ -746,6 +746,7 @@ int sgsn_rx_sndcp_ud_ind(struct gprs_ra_id *ra_id, int32_t tlli, uint8_t nsapi,
 {
 	struct sgsn_mm_ctx *mmctx;
 	struct sgsn_pdp_ctx *pdp;
+	int rc = 0;
 
 	/* look-up the MM context for this message */
 	mmctx = sgsn_mm_ctx_by_tlli(tlli, ra_id);
@@ -754,16 +755,20 @@ int sgsn_rx_sndcp_ud_ind(struct gprs_ra_id *ra_id, int32_t tlli, uint8_t nsapi,
 			"Cannot find MM CTX for TLLI %08x\n", tlli);
 		return -EIO;
 	}
+
+	log_set_context(LOG_CTX_GPRS_SUBSCR, mmctx->subscr);
+
 	/* look-up the PDP context for this message */
 	pdp = sgsn_pdp_ctx_by_nsapi(mmctx, nsapi);
 	if (!pdp) {
 		LOGP(DGPRS, LOGL_ERROR, "Cannot find PDP CTX for "
 			"TLLI=%08x, NSAPI=%u\n", tlli, nsapi);
-		return -EIO;
+		rc = -EIO;
 	}
 	if (!pdp->lib) {
 		LOGP(DGPRS, LOGL_ERROR, "PDP CTX without libgtp\n");
-		return -EIO;
+		rc = -EIO;
+		goto out;
 	}
 
 	rate_ctr_inc(&pdp->ctrg->ctr[PDP_CTR_PKTS_UDATA_IN]);
@@ -774,7 +779,10 @@ int sgsn_rx_sndcp_ud_ind(struct gprs_ra_id *ra_id, int32_t tlli, uint8_t nsapi,
 	/* It is easier to have a global count */
 	pdp->cdr_bytes_in += npdu_len;
 
-	return gtp_data_req(pdp->ggsn->gsn, pdp->lib, npdu, npdu_len);
+	rc = gtp_data_req(pdp->ggsn->gsn, pdp->lib, npdu, npdu_len);
+out:
+	log_set_context(LOG_CTX_GPRS_SUBSCR, NULL);
+	return rc;
 }
 
 /* libgtp select loop integration */

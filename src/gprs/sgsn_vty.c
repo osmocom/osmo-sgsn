@@ -40,6 +40,7 @@
 #include <osmocom/vty/command.h>
 #include <osmocom/vty/vty.h>
 #include <osmocom/vty/misc.h>
+#include <osmocom/vty/logging.h>
 #include <osmocom/crypt/gprs_cipher.h>
 #include <osmocom/abis/ipa.h>
 
@@ -1232,6 +1233,45 @@ DEFUN(cfg_comp_v42bisp, cfg_comp_v42bisp_cmd,
 	return CMD_SUCCESS;
 }
 
+void log_set_filter_gprs_subscriber(struct log_target *target,
+				    struct gprs_subscr *gsub)
+{
+	struct gprs_subscr **gsub_p = (void*)&target->filter_data[LOG_FLT_GPRS_SUBSCR];
+
+	/* free the old data */
+	if (*gsub_p) {
+		gprs_subscr_put(*gsub_p);
+		*gsub_p = NULL;
+	}
+
+	if (gsub) {
+		target->filter_map |= (1 << LOG_FLT_GPRS_SUBSCR);
+		*gsub_p = gprs_subscr_get(gsub);
+	} else
+		target->filter_map &= ~(1 << LOG_FLT_GPRS_SUBSCR);
+}
+
+DEFUN(logging_fltr_gprs_subscr,
+      logging_fltr_gprs_subscr_cmd,
+      "logging filter imsi IMSI",
+      LOGGING_STR FILTER_STR
+      "Filter by IMSI\n"
+      "IMSI to filter by\n")
+{
+	struct log_target *tgt = osmo_log_vty2tgt(vty);
+	struct gprs_subscr *gsub;
+	const char *imsi = argv[0];
+
+	if (!tgt)
+		return CMD_WARNING;
+
+	gsub = gprs_subscr_get_by_imsi(imsi);
+
+	log_set_filter_gprs_subscriber(tgt, gsub);
+	return CMD_SUCCESS;
+}
+
+
 int sgsn_vty_init(struct sgsn_config *cfg)
 {
 	g_cfg = cfg;
@@ -1242,6 +1282,9 @@ int sgsn_vty_init(struct sgsn_config *cfg)
 	install_element_ve(&show_mmctx_all_cmd);
 	install_element_ve(&show_pdpctx_all_cmd);
 	install_element_ve(&show_subscr_cache_cmd);
+
+	install_element_ve(&logging_fltr_gprs_subscr_cmd);
+	install_element(CFG_LOG_NODE, &logging_fltr_gprs_subscr_cmd);
 
 	install_element(ENABLE_NODE, &update_subscr_insert_auth_triplet_cmd);
 	install_element(ENABLE_NODE, &update_subscr_create_cmd);
