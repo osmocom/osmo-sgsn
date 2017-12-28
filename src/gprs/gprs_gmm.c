@@ -182,7 +182,8 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 		return rc; \
 	}
 
-	log_set_context(LOG_CTX_GPRS_SUBSCR, mm->subscr);
+	if (mm)
+		log_set_context(LOG_CTX_GPRS_SUBSCR, mm->subscr);
 
 	switch (type) {
 	case RANAP_IU_EVENT_RAB_ASSIGN:
