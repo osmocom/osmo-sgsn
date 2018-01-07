@@ -1783,7 +1783,7 @@ static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 {
 	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
 	uint8_t *cur = gh->data, *mi;
-	uint8_t ciph_seq_nr, service_type, mi_len, mi_type;
+	uint8_t service_type, mi_len, mi_type;
 	uint32_t tmsi;
 	struct tlv_parsed tp;
 	char mi_string[GSM48_MI_SIZE];
@@ -1799,7 +1799,7 @@ static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 	}
 
 	/* Skip Ciphering key sequence number 10.5.1.2 */
-	ciph_seq_nr = *cur & 0x07;
+	/* uint8_t ciph_seq_nr = *cur & 0x07; */
 
 	/* Service type 10.5.5.20 */
 	service_type = (*cur++ >> 4) & 0x07;
