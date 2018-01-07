@@ -2808,7 +2808,7 @@ int gsm0408_gprs_rcvmsg_iu(struct msgb *msg, struct gprs_ra_id *ra_id,
 	switch (pdisc) {
 	case GSM48_PDISC_MM_GPRS:
 		rc = gsm0408_rcv_gmm(mmctx, msg, NULL, false);
-#warning "set drop_cipherable arg for gsm0408_rcv_gmm() from IuPS?"
+#pragma message "set drop_cipherable arg for gsm0408_rcv_gmm() from IuPS?"
 		break;
 	case GSM48_PDISC_SM_GPRS:
 		rc = gsm0408_rcv_gsm(mmctx, msg, NULL);
