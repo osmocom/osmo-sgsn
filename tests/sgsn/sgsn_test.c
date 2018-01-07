@@ -1095,7 +1095,9 @@ int my_subscr_request_update_location(struct sgsn_mm_ctx *mmctx) {
 	return rc;
 };
 
-int my_subscr_request_auth_info(struct sgsn_mm_ctx *mmctx) {
+int my_subscr_request_auth_info(struct sgsn_mm_ctx *mmctx, const uint8_t *auts,
+				const uint8_t *auts_rand)
+{
 	gprs_subscr_update(mmctx->subscr);
 	return 0;
 };
@@ -1124,7 +1126,8 @@ static void test_gmm_attach_subscr(void)
 	cleanup_test();
 }
 
-int my_subscr_request_auth_info_fake_auth(struct sgsn_mm_ctx *mmctx)
+int my_subscr_request_auth_info_fake_auth(struct sgsn_mm_ctx *mmctx, const uint8_t *auts,
+						const uint8_t *auts_rand)
 {
 	/* Fake an authentication */
 	OSMO_ASSERT(mmctx->subscr);
@@ -1210,7 +1213,8 @@ static void test_gmm_attach_subscr_real_auth(void)
 static int auth_info_skip = 0;
 static int upd_loc_skip = 0;
 
-int my_subscr_request_auth_info_gsup_auth(struct sgsn_mm_ctx *mmctx)
+int my_subscr_request_auth_info_gsup_auth(struct sgsn_mm_ctx *mmctx, const uint8_t *auts,
+						const uint8_t *auts_rand)
 {
 	static const uint8_t send_auth_info_res[] = {
 		0x0a,
@@ -1320,7 +1324,7 @@ int my_gsup_client_send(struct gsup_client *gsupc, struct msgb *msg)
 
 	case OSMO_GSUP_MSGT_SEND_AUTH_INFO_REQUEST:
 		/* Send SEND_AUTH_INFO_RESULT */
-		return my_subscr_request_auth_info_gsup_auth(NULL);
+		return my_subscr_request_auth_info_gsup_auth(NULL, NULL, NULL);
 
 	case OSMO_GSUP_MSGT_PURGE_MS_REQUEST:
 		from_peer.message_type = OSMO_GSUP_MSGT_PURGE_MS_RESULT;
