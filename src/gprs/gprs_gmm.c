@@ -688,7 +688,7 @@ static bool check_auth_resp(struct sgsn_mm_ctx *ctx,
 		expect_res = vec->sres;
 		expect_res_len = sizeof(vec->sres);
 	}
-	
+
 	if (!(vec->auth_types & expect_type)) {
 		LOGMMCTXP(LOGL_ERROR, ctx, "Auth error: auth vector does"
 			  " not provide the expected auth type:"
@@ -2477,7 +2477,7 @@ static int do_act_pdp_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg, bool *del
 			/* FIXME: print IPv6 address */
 		}
 		break;
-	default:	
+	default:
 		DEBUGPC(DMM, "0x%02x ", req_pdpa[1]);
 		break;
 	}
