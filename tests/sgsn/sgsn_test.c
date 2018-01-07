@@ -165,7 +165,7 @@ static int count(struct llist_head *head)
 	llist_for_each(cur, head)
 		count += 1;
 
-	return count;		
+	return count;
 }
 
 static struct msgb *create_msg(const uint8_t *data, size_t len)
@@ -1085,7 +1085,8 @@ static void test_gmm_attach_acl(void)
 	cleanup_test();
 }
 
-int my_subscr_request_update_location(struct sgsn_mm_ctx *mmctx) {
+int my_subscr_request_update_location(struct sgsn_mm_ctx *mmctx)
+{
 	int rc;
 	rc = __real_gprs_subscr_request_update_location(mmctx);
 	if (rc == -ENOTSUP) {
@@ -1093,14 +1094,14 @@ int my_subscr_request_update_location(struct sgsn_mm_ctx *mmctx) {
 		gprs_subscr_update(mmctx->subscr);
 	}
 	return rc;
-};
+}
 
 int my_subscr_request_auth_info(struct sgsn_mm_ctx *mmctx, const uint8_t *auts,
 				const uint8_t *auts_rand)
 {
 	gprs_subscr_update(mmctx->subscr);
 	return 0;
-};
+}
 
 static void test_gmm_attach_subscr(void)
 {
@@ -1135,7 +1136,7 @@ int my_subscr_request_auth_info_fake_auth(struct sgsn_mm_ctx *mmctx, const uint8
 	gprs_subscr_update_auth_info(mmctx->subscr);
 
 	return 0;
-};
+}
 
 static void test_gmm_attach_subscr_fake_auth(void)
 {
@@ -1178,7 +1179,7 @@ int my_subscr_request_auth_info_real_auth(struct sgsn_mm_ctx *mmctx, const uint8
 	gprs_subscr_update_auth_info(mmctx->subscr);
 
 	return 0;
-};
+}
 
 static void test_gmm_attach_subscr_real_auth(void)
 {
