@@ -222,9 +222,9 @@ static int dump_peers(FILE *stream, int indent, time_t now,
 
 const uint8_t *convert_ra(struct gprs_ra_id *raid)
 {
-	static uint8_t buf[6];
-	gsm48_construct_ra(buf, raid);
-	return buf;
+	static struct gsm48_ra_id r;
+	gsm48_encode_ra(&r, raid);
+	return (const uint8_t *)&r;
 }
 
 /* DTAP - Attach Request */
@@ -582,7 +582,7 @@ static void send_bssgp_ul_unitdata(
 
 	OSMO_ASSERT(bssgp_msg_size <= sizeof(msg));
 
-	gsm48_construct_ra(msg + 10, raid);
+	gsm48_encode_ra((struct gsm48_ra_id *)(msg + 10), raid);
 	msg[1] = (uint8_t)(tlli >> 24);
 	msg[2] = (uint8_t)(tlli >> 16);
 	msg[3] = (uint8_t)(tlli >> 8);
@@ -713,7 +713,7 @@ static void send_bssgp_suspend(struct gprs_ns_inst *nsi,
 	msg[5] = (uint8_t)(tlli >> 8);
 	msg[6] = (uint8_t)(tlli >> 0);
 
-	gsm48_construct_ra(msg + 9, raid);
+	gsm48_encode_ra((struct gsm48_ra_id *)(msg + 9), raid);
 
 	send_ns_unitdata(nsi, "BVC_SUSPEND", src_addr, 0, msg, sizeof(msg));
 }
@@ -735,7 +735,7 @@ static void send_bssgp_suspend_ack(struct gprs_ns_inst *nsi,
 	msg[5] = (uint8_t)(tlli >> 8);
 	msg[6] = (uint8_t)(tlli >> 0);
 
-	gsm48_construct_ra(msg + 9, raid);
+	gsm48_encode_ra((struct gsm48_ra_id *)(msg + 9), raid);
 
 	send_ns_unitdata(nsi, "BVC_SUSPEND_ACK", src_addr, 0, msg, sizeof(msg));
 }
@@ -795,7 +795,7 @@ static void send_bssgp_paging(struct gprs_ns_inst *nsi,
 	if (raid) {
 		msg[bssgp_msg_size] = BSSGP_IE_ROUTEING_AREA;
 		msg[bssgp_msg_size+1] = 0x86;
-		gsm48_construct_ra(msg + bssgp_msg_size + 2, raid);
+		gsm48_encode_ra((struct gsm48_ra_id *)(msg + bssgp_msg_size + 2), raid);
 		bssgp_msg_size += 8;
 	}
 

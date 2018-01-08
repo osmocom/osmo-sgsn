@@ -32,7 +32,7 @@
 extern void *tall_bsc_ctx;
 
 /* patch RA identifier in place */
-static void gbproxy_patch_raid(uint8_t *raid_enc, struct gbproxy_peer *peer,
+static void gbproxy_patch_raid(struct gsm48_ra_id *raid_enc, struct gbproxy_peer *peer,
 			       int to_bss, const char *log_text)
 {
 	struct gbproxy_patch_state *state = &peer->patch_state;
@@ -47,7 +47,7 @@ static void gbproxy_patch_raid(uint8_t *raid_enc, struct gbproxy_peer *peer,
 	if (!state->local_mcc || !state->local_mnc)
 		return;
 
-	gsm48_parse_ra(&raid, raid_enc);
+	gsm48_parse_ra(&raid, (uint8_t *)raid_enc);
 
 	old_mcc = raid.mcc;
 	old_mnc = raid.mnc;
@@ -76,7 +76,7 @@ static void gbproxy_patch_raid(uint8_t *raid_enc, struct gbproxy_peer *peer,
 	     old_mcc, old_mnc, raid.lac, raid.rac,
 	     raid.mcc, raid.mnc, raid.lac, raid.rac);
 
-	gsm48_construct_ra(raid_enc, &raid);
+	gsm48_encode_ra(raid_enc, &raid);
 	rate_ctr_inc(&peer->ctrg->ctr[counter]);
 }
 
@@ -233,14 +233,14 @@ int gbproxy_patch_llc(struct msgb *msg, uint8_t *llc, size_t llc_len,
 	}
 
 	if (parse_ctx->raid_enc) {
-		gbproxy_patch_raid(parse_ctx->raid_enc, peer, parse_ctx->to_bss,
+		gbproxy_patch_raid((struct gsm48_ra_id *)parse_ctx->raid_enc, peer, parse_ctx->to_bss,
 				   parse_ctx->llc_msg_name);
 		have_patched = 1;
 	}
 
 	if (parse_ctx->old_raid_enc && !parse_ctx->old_raid_is_foreign) {
 		/* TODO: Patch to invalid if P-TMSI unknown. */
-		gbproxy_patch_raid(parse_ctx->old_raid_enc, peer, parse_ctx->to_bss,
+		gbproxy_patch_raid((struct gsm48_ra_id *)parse_ctx->old_raid_enc, peer, parse_ctx->to_bss,
 				   parse_ctx->llc_msg_name);
 		have_patched = 1;
 	}
@@ -286,7 +286,7 @@ void gbproxy_patch_bssgp(struct msgb *msg, uint8_t *bssgp, size_t bssgp_len,
 	int err_ctr = -1;
 
 	if (parse_ctx->bssgp_raid_enc)
-		gbproxy_patch_raid(parse_ctx->bssgp_raid_enc, peer,
+		gbproxy_patch_raid((struct gsm48_ra_id *)parse_ctx->bssgp_raid_enc, peer,
 				   parse_ctx->to_bss, "BSSGP");
 
 	if (parse_ctx->need_decryption &&

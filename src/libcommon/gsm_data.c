@@ -311,15 +311,6 @@ void gprs_ra_id_by_bts(struct gprs_ra_id *raid, struct gsm_bts *bts)
 	raid->rac = bts->gprs.rac;
 }
 
-int gsm48_ra_id_by_bts(uint8_t *buf, struct gsm_bts *bts)
-{
-	struct gprs_ra_id raid;
-
-	gprs_ra_id_by_bts(&raid, bts);
-
-	return gsm48_construct_ra(buf, &raid);
-}
-
 int gsm_parse_reg(void *ctx, regex_t *reg, char **str, int argc, const char **argv)
 {
 	int ret;

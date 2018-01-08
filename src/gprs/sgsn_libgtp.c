@@ -268,7 +268,7 @@ struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
 	raid = mmctx->ra;
 	raid.lac = 0xFFFE;
 	raid.rac = 0xFF;
-	gsm48_construct_ra(pdp->rai.v, &raid);
+	gsm48_encode_ra((struct gsm48_ra_id *)pdp->rai.v, &raid);
 
 	/* Encode User Location Information accordint to TS 29.060 7.7.51 */
 	pdp->userloc_given = 1;

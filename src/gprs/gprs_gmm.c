@@ -448,7 +448,7 @@ static int gsm48_tx_gmm_att_ack(struct sgsn_mm_ctx *mm)
 	aa->att_result = 1;	/* GPRS only */
 	aa->ra_upd_timer = gprs_secs_to_tmr_floor(sgsn->cfg.timers.T3312);
 	aa->radio_prio = 4;	/* lowest */
-	gsm48_construct_ra((uint8_t *)&aa->ra_id, &mm->ra);
+	gsm48_encode_ra(&aa->ra_id, &mm->ra);
 
 #if 0
 	/* Optional: P-TMSI signature */
@@ -1505,7 +1505,7 @@ static int gsm48_tx_gmm_ra_upd_ack(struct sgsn_mm_ctx *mm)
 	rua->upd_result = 0;	/* RA updated */
 	rua->ra_upd_timer = gprs_secs_to_tmr_floor(sgsn->cfg.timers.T3312);
 
-	gsm48_construct_ra((uint8_t *)&rua->ra_id, &mm->ra);
+	gsm48_encode_ra(&rua->ra_id, &mm->ra);
 
 #if 0
 	/* Optional: P-TMSI signature */
