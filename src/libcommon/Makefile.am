@@ -18,7 +18,6 @@ noinst_LIBRARIES = \
 	$(NULL)
 
 libcommon_a_SOURCES = \
-	bsc_version.c \
 	common_vty.c \
 	debug.c \
 	gsm_data.c \
