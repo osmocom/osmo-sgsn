@@ -634,19 +634,21 @@ DEFUN(imsi_acl, cfg_imsi_acl_cmd,
 	"Remove IMSI from ACL\n"
 	"IMSI of subscriber\n")
 {
-	char imsi_sanitized[GSM23003_IMSI_MAX_DIGITS+1];
+	char imsi_sanitized[GSM23003_IMSI_MAX_DIGITS + 1] = { '0' };
 	const char *op = argv[0];
 	const char *imsi = imsi_sanitized;
+	size_t len = strnlen(argv[1], GSM23003_IMSI_MAX_DIGITS + 1);
 	int rc;
 
 	/* Sanitize IMSI */
-	if (strlen(argv[1]) > GSM23003_IMSI_MAX_DIGITS) {
-		vty_out(vty, "%% IMSI (%s) too long -- ignored!%s",
-			argv[1], VTY_NEWLINE);
+	if (len > GSM23003_IMSI_MAX_DIGITS) {
+		vty_out(vty, "%% IMSI (%s) too long (max %u digits) -- ignored!%s",
+			argv[1], GSM23003_IMSI_MAX_DIGITS, VTY_NEWLINE);
 		return CMD_WARNING;
 	}
-	memset(imsi_sanitized, '0', sizeof(imsi_sanitized));
-	strcpy(imsi_sanitized+GSM23003_IMSI_MAX_DIGITS-strlen(argv[1]),argv[1]);
+
+	osmo_strlcpy(imsi_sanitized + GSM23003_IMSI_MAX_DIGITS - len, argv[1],
+		     sizeof(imsi_sanitized) - (GSM23003_IMSI_MAX_DIGITS - len));
 
 	if (!strcmp(op, "add"))
 		rc = sgsn_acl_add(imsi, g_cfg);
