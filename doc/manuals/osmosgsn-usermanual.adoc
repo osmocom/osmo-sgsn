@@ -25,7 +25,7 @@ include::../common/chapters/control_if.adoc[]
 
 include::../common/chapters/oap.adoc[]
 
-include::chapters/gsup.adoc[]
+include::../common/chapters/gsup.adoc[]
 
 include::chapters/counters.adoc[]
 
