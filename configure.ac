@@ -60,21 +60,8 @@ AM_CONDITIONAL(BUILD_IU, test "x$osmo_ac_iu" = "xyes")
 AC_SUBST(osmo_ac_iu)
 
 
-found_libgtp=yes
-PKG_CHECK_MODULES(LIBGTP, libgtp >= 1.0.0, , found_libgtp=no)
-AM_CONDITIONAL(HAVE_LIBGTP, test "$found_libgtp" = yes)
-AC_SUBST(found_libgtp)
-
-found_libcares=yes
-PKG_CHECK_MODULES([LIBCARES], [libcares], [], [found_libcares=no])
-AM_CONDITIONAL(HAVE_LIBCARES, test "$found_libcares" = yes)
-AC_SUBST(found_libcares)
-
-found_libgtp_and_libcares=no
-if test "$found_libgtp" = "yes" -a "$found_libcares" = "yes"; then
-    found_libgtp_and_libcares=yes
-fi
-AC_SUBST(found_libgtp_and_libcares)
+PKG_CHECK_MODULES(LIBGTP, libgtp >= 1.0.0)
+PKG_CHECK_MODULES(LIBCARES, libcares)
 
 dnl checks for header files
 AC_HEADER_STDC

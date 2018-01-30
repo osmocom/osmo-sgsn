@@ -36,15 +36,9 @@ OSMO_LIBS = \
 
 bin_PROGRAMS = \
 	osmo-gbproxy \
-	$(NULL)
-if HAVE_LIBGTP
-if HAVE_LIBCARES
-bin_PROGRAMS += \
 	osmo-sgsn \
 	osmo-gtphub \
 	$(NULL)
-endif
-endif
 
 osmo_gbproxy_SOURCES = \
 	gb_proxy.c \

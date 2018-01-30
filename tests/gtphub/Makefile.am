@@ -16,13 +16,9 @@ EXTRA_DIST = \
 	gtphub_test.ok \
 	$(NULL)
 
-if HAVE_LIBGTP
-if HAVE_LIBCARES
 noinst_PROGRAMS = \
 	gtphub_test \
 	$(NULL)
-endif
-endif
 
 gtphub_test_SOURCES = \
 	gtphub_test.c \

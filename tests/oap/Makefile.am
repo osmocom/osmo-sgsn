@@ -15,13 +15,9 @@ EXTRA_DIST = \
 	oap_client_test.err \
 	$(NULL)
 
-if HAVE_LIBGTP
-if HAVE_LIBCARES
 noinst_PROGRAMS = \
 	oap_client_test \
 	$(NULL)
-endif
-endif
 
 oap_client_test_SOURCES = \
 	oap_client_test.c \
