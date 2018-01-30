@@ -2649,7 +2649,9 @@ struct gtphub_peer_port *gtphub_port_find_sa(const struct gtphub_bind *bind,
 {
 	struct gsn_addr gsna;
 	uint16_t port;
-	gsn_addr_from_sockaddr(&gsna, &port, addr);
+	if (gsn_addr_from_sockaddr(&gsna, &port, addr) != 0)
+		return NULL;
+
 	return gtphub_port_find(bind, &gsna, port);
 }
 
