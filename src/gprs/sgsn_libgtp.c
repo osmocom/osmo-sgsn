@@ -587,7 +587,7 @@ static int echo_conf(struct pdp_t *pdp, void *cbp, int recovery)
 static int cb_recovery(struct sockaddr_in *peer, uint8_t recovery)
 {
 	struct sgsn_ggsn_ctx *ggsn;
-	
+
 	ggsn = sgsn_ggsn_ctx_by_addr(&peer->sin_addr);
 	if (!ggsn) {
 		LOGP(DGPRS, LOGL_NOTICE, "Received Recovery IE for unknown GGSN\n");
@@ -635,7 +635,7 @@ static int cb_conf(int type, int cause, struct pdp_t *pdp, void *cbp)
 /* Called whenever a PDP context is deleted for any reason */
 static int cb_delete_context(struct pdp_t *pdp)
 {
-	LOGPDPX(DGPRS, LOGL_INFO, pdp, "Context was deleted\n")   ;
+	LOGPDPX(DGPRS, LOGL_INFO, pdp, "Context was deleted\n");
 
 	return 0;
 }
@@ -652,13 +652,13 @@ static int cb_unsup_ind(struct sockaddr_in *peer)
 /* Called when we receive a Supported Ext Headers Notification */
 static int cb_extheader_ind(struct sockaddr_in *peer)
 {
-	LOGP(DGPRS, LOGL_INFO, "GTP Supported Ext Headers Noficiation "
+	LOGP(DGPRS, LOGL_INFO, "GTP Supported Ext Headers Notification "
 		"from %s:%u\n", inet_ntoa(peer->sin_addr),
 		ntohs(peer->sin_port));
 	return 0;
 }
 
-/* Called whenever we recive a DATA packet */
+/* Called whenever we receive a DATA packet */
 static int cb_data_ind(struct pdp_t *lib, void *packet, unsigned int len)
 {
 	struct bssgp_paging_info pinfo;
