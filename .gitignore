@@ -17,6 +17,8 @@ bscconfig.h.in
 #configure
 aclocal.m4
 autom4te.cache/
+m4/*.m4
+!m4/ax_*.m4
 config.log
 config.status
 config.guess
