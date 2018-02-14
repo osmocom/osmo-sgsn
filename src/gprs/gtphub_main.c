@@ -38,6 +38,7 @@
 #include <osmocom/vty/logging.h>
 #include <osmocom/vty/telnet_interface.h>
 #include <osmocom/vty/ports.h>
+#include <osmocom/vty/misc.h>
 
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/gtphub.h>
@@ -336,6 +337,7 @@ int main(int argc, char **argv)
 
 	osmo_gtphub_ctx = talloc_named_const(NULL, 0, "osmo_gtphub");
 	msgb_talloc_ctx_init(osmo_gtphub_ctx, 0);
+	vty_info.tall_ctx = osmo_gtphub_ctx;
 
 	signal(SIGINT, &signal_handler);
 	signal(SIGTERM, &signal_handler);
@@ -349,6 +351,7 @@ int main(int argc, char **argv)
 	vty_info.copyright = gtphub_copyright;
 	vty_init(&vty_info);
 	logging_vty_add_cmds(NULL);
+	osmo_talloc_vty_add_cmds();
         gtphub_vty_init(hub, cfg);
 
 	rate_ctr_init(osmo_gtphub_ctx);

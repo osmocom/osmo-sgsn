@@ -49,6 +49,7 @@
 #include <osmocom/vty/logging.h>
 #include <osmocom/vty/stats.h>
 #include <osmocom/vty/ports.h>
+#include <osmocom/vty/misc.h>
 
 #include <osmocom/ctrl/control_vty.h>
 
@@ -376,6 +377,7 @@ int main(int argc, char **argv)
 	srand(time(NULL));
 	tall_bsc_ctx = talloc_named_const(NULL, 0, "osmo_sgsn");
 	msgb_talloc_ctx_init(tall_bsc_ctx, 0);
+	vty_info.tall_ctx = tall_bsc_ctx;
 
 	signal(SIGINT, &signal_handler);
 	signal(SIGTERM, &signal_handler);
@@ -390,6 +392,7 @@ int main(int argc, char **argv)
 	vty_info.copyright = openbsc_copyright;
 	vty_init(&vty_info);
 	logging_vty_add_cmds(NULL);
+	osmo_talloc_vty_add_cmds();
 	osmo_stats_vty_add_cmds(&gprs_log_info);
 	sgsn_vty_init(&sgsn_inst.cfg);
 	ctrl_vty_init(tall_bsc_ctx);
