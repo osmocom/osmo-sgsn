@@ -131,12 +131,11 @@ static int dump_peers(FILE *stream, int indent, time_t now,
 		struct gbproxy_patch_state *state = &peer->patch_state;
 		gsm48_parse_ra(&raid, peer->ra);
 
-		rc = fprintf(stream, "%*s  NSEI %u, BVCI %u, %sblocked, "
-			     "RAI %u-%u-%u-%u\n",
+		rc = fprintf(stream, "%*s  NSEI %u, BVCI %u, %sblocked, RAI %s\n",
 			     indent, "",
 			     peer->nsei, peer->bvci,
 			     peer->blocked ? "" : "not ",
-			     raid.mcc, raid.mnc, raid.lac, raid.rac);
+			     osmo_rai_name(&raid));
 
 		if (rc < 0)
 			return rc;
@@ -1657,8 +1656,7 @@ static void test_gbproxy_ra_patching()
 	bssgp_nsi = nsi;
 	gbcfg.nsi = bssgp_nsi;
 	gbcfg.nsip_sgsn_nsei = SGSN_NSEI;
-	gbcfg.core_mcc = 123;
-	gbcfg.core_mnc = 456;
+	gbcfg.core_plmn = (struct osmo_plmn_id){ .mcc = 123, .mnc = 456 };
 	gbcfg.core_apn = talloc_zero_size(NULL, 100);
 	gbcfg.core_apn_size = gprs_str_to_apn(gbcfg.core_apn, 100, "foo.bar");
 	gbcfg.patch_ptmsi = 0;
@@ -1998,8 +1996,7 @@ static void test_gbproxy_ptmsi_assignment()
 	bssgp_nsi = nsi;
 	gbcfg.nsi = bssgp_nsi;
 	gbcfg.nsip_sgsn_nsei = SGSN_NSEI;
-	gbcfg.core_mcc = 0;
-	gbcfg.core_mnc = 0;
+	gbcfg.core_plmn = (struct osmo_plmn_id){};
 	gbcfg.core_apn = talloc_zero_size(NULL, 100);
 	gbcfg.core_apn_size = gprs_str_to_apn(gbcfg.core_apn, 100, "foo.bar");
 	gbcfg.patch_ptmsi = 0;
@@ -2232,8 +2229,7 @@ static void test_gbproxy_ptmsi_patching()
 	bssgp_nsi = nsi;
 	gbcfg.nsi = bssgp_nsi;
 	gbcfg.nsip_sgsn_nsei = SGSN_NSEI;
-	gbcfg.core_mcc = 123;
-	gbcfg.core_mnc = 456;
+	gbcfg.core_plmn = (struct osmo_plmn_id){ .mcc = 123, .mnc = 456 };
 	gbcfg.core_apn = talloc_zero_size(NULL, 100);
 	gbcfg.core_apn_size = gprs_str_to_apn(gbcfg.core_apn, 100, "foo.bar");
 	gbcfg.patch_ptmsi = 1;
@@ -2551,8 +2547,7 @@ static void test_gbproxy_ptmsi_patching_bad_cases()
 	bssgp_nsi = nsi;
 	gbcfg.nsi = bssgp_nsi;
 	gbcfg.nsip_sgsn_nsei = SGSN_NSEI;
-	gbcfg.core_mcc = 123;
-	gbcfg.core_mnc = 456;
+	gbcfg.core_plmn = (struct osmo_plmn_id){ .mcc = 123, .mnc = 456 };
 	gbcfg.core_apn = talloc_zero_size(NULL, 100);
 	gbcfg.core_apn_size = gprs_str_to_apn(gbcfg.core_apn, 100, "foo.bar");
 	gbcfg.patch_ptmsi = 1;
@@ -2735,8 +2730,7 @@ static void test_gbproxy_imsi_acquisition()
 	bssgp_nsi = nsi;
 	gbcfg.nsi = bssgp_nsi;
 	gbcfg.nsip_sgsn_nsei = SGSN_NSEI;
-	gbcfg.core_mcc = 123;
-	gbcfg.core_mnc = 456;
+	gbcfg.core_plmn = (struct osmo_plmn_id){ .mcc = 123, .mnc = 456 };
 	gbcfg.core_apn = talloc_zero_size(NULL, 100);
 	gbcfg.core_apn_size = gprs_str_to_apn(gbcfg.core_apn, 100, "foo.bar");
 	gbcfg.patch_ptmsi = 1;
@@ -3061,8 +3055,7 @@ static void test_gbproxy_secondary_sgsn()
 	bssgp_nsi = nsi;
 	gbcfg.nsi = bssgp_nsi;
 	gbcfg.nsip_sgsn_nsei = SGSN_NSEI;
-	gbcfg.core_mcc = 123;
-	gbcfg.core_mnc = 456;
+	gbcfg.core_plmn = (struct osmo_plmn_id){ .mcc = 123, .mnc = 456 };
 	gbcfg.core_apn = talloc_zero_size(NULL, 100);
 	gbcfg.core_apn_size = gprs_str_to_apn(gbcfg.core_apn, 100, "foo.bar");
 	gbcfg.patch_ptmsi = 1;
@@ -3540,8 +3533,7 @@ static void test_gbproxy_keep_info()
 	gbcfg.nsip_sgsn_nsei = SGSN_NSEI;
 	gbcfg.patch_ptmsi = 0;
 	gbcfg.acquire_imsi = 1;
-	gbcfg.core_mcc = 0;
-	gbcfg.core_mnc = 0;
+	gbcfg.core_plmn = (struct osmo_plmn_id){};
 	gbcfg.core_apn = NULL;
 	gbcfg.core_apn_size = 0;
 	gbcfg.route_to_sgsn2 = 0;
@@ -4841,8 +4833,7 @@ static void test_gbproxy_stored_messages()
 	bssgp_nsi = nsi;
 	gbcfg.nsi = bssgp_nsi;
 	gbcfg.nsip_sgsn_nsei = SGSN_NSEI;
-	gbcfg.core_mcc = 0;
-	gbcfg.core_mnc = 0;
+	gbcfg.core_plmn = (struct osmo_plmn_id){};
 	gbcfg.core_apn = talloc_zero_size(NULL, 100);
 	gbcfg.core_apn_size = gprs_str_to_apn(gbcfg.core_apn, 100, "foo.bar");
 	gbcfg.patch_ptmsi = 0;

@@ -484,11 +484,9 @@ static void vty_dump_mmctx(struct vty *vty, const char *pfx,
 		pfx, mm->imsi, mm->imei, mm->p_tmsi, VTY_NEWLINE);
 	vty_out(vty, "%s  MSISDN: %s, TLLI: %08x%s HLR: %s",
 		pfx, mm->msisdn, mm->gb.tlli, mm->hlr, VTY_NEWLINE);
-	vty_out(vty, "%s  MM State: %s, Routeing Area: %u-%u-%u-%u, "
-		"Cell ID: %u%s", pfx,
-		get_value_string(gprs_mm_st_strs, mm->gmm_state),
-		mm->ra.mcc, mm->ra.mnc, mm->ra.lac, mm->ra.rac,
-		mm->gb.cell_id, VTY_NEWLINE);
+	vty_out(vty, "%s  MM State: %s, Routeing Area: %s, Cell ID: %u%s",
+		pfx, get_value_string(gprs_mm_st_strs, mm->gmm_state),
+		osmo_rai_name(&mm->ra), mm->gb.cell_id, VTY_NEWLINE);
 
 	vty_out_rate_ctr_group(vty, " ", mm->ctrg);
 

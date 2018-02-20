@@ -3,6 +3,7 @@
 
 
 #include <osmocom/core/msgb.h>
+#include <osmocom/gsm/gsm23003.h>
 
 #include <osmocom/gprs/gprs_ns.h>
 #include <osmocom/vty/command.h>
@@ -101,8 +102,7 @@ struct gbproxy_config {
 	struct rate_ctr_group *ctrg;
 
 	/* force mcc/mnc */
-	int core_mnc;
-	int core_mcc;
+	struct osmo_plmn_id core_plmn;
 	uint8_t* core_apn;
 	size_t core_apn_size;
 	int tlli_max_age;
@@ -120,8 +120,7 @@ struct gbproxy_config {
 };
 
 struct gbproxy_patch_state {
-	int local_mnc;
-	int local_mcc;
+	struct osmo_plmn_id local_plmn;
 
 	/* List of TLLIs for which patching is enabled */
 	struct llist_head logical_links;

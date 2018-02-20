@@ -192,8 +192,7 @@ static void gbprox_update_current_raid(uint8_t *raid_enc,
 				       const char *log_text)
 {
 	struct gbproxy_patch_state *state = &peer->patch_state;
-	const int old_local_mcc = state->local_mcc;
-	const int old_local_mnc = state->local_mnc;
+	const struct osmo_plmn_id old_plmn = state->local_plmn;
 	struct gprs_ra_id raid;
 
 	if (!raid_enc)
@@ -202,28 +201,31 @@ static void gbprox_update_current_raid(uint8_t *raid_enc,
 	gsm48_parse_ra(&raid, raid_enc);
 
 	/* save source side MCC/MNC */
-	if (!peer->cfg->core_mcc || raid.mcc == peer->cfg->core_mcc) {
-		state->local_mcc = 0;
+	if (!peer->cfg->core_plmn.mcc || raid.mcc == peer->cfg->core_plmn.mcc) {
+		state->local_plmn.mcc = 0;
 	} else {
-		state->local_mcc = raid.mcc;
+		state->local_plmn.mcc = raid.mcc;
 	}
 
-	if (!peer->cfg->core_mnc || raid.mnc == peer->cfg->core_mnc) {
-		state->local_mnc = 0;
+	if (!peer->cfg->core_plmn.mnc
+	    || !osmo_mnc_cmp(raid.mnc, raid.mnc_3_digits,
+			     peer->cfg->core_plmn.mnc, peer->cfg->core_plmn.mnc_3_digits)) {
+		state->local_plmn.mnc = 0;
+		state->local_plmn.mnc_3_digits = false;
 	} else {
-		state->local_mnc = raid.mnc;
+		state->local_plmn.mnc = raid.mnc;
+		state->local_plmn.mnc_3_digits = raid.mnc_3_digits;
 	}
 
-	if (old_local_mcc != state->local_mcc ||
-	    old_local_mnc != state->local_mnc)
+	if (osmo_plmn_cmp(&old_plmn, &state->local_plmn))
 		LOGP(DGPRS, LOGL_NOTICE,
 		     "Patching RAID %sactivated, msg: %s, "
-		     "local: %d-%d, core: %d-%d\n",
-		     state->local_mcc || state->local_mnc ?
+		     "local: %s, core: %s\n",
+		     state->local_plmn.mcc || state->local_plmn.mnc ?
 		     "" : "de",
 		     log_text,
-		     state->local_mcc, state->local_mnc,
-		     peer->cfg->core_mcc, peer->cfg->core_mnc);
+		     osmo_plmn_name(&state->local_plmn),
+		     osmo_plmn_name2(&peer->cfg->core_plmn));
 }
 
 uint32_t gbproxy_make_bss_ptmsi(struct gbproxy_peer *peer,
@@ -559,7 +561,7 @@ static int gbprox_process_bssgp_ul(struct gbproxy_config *cfg,
 	struct gbproxy_link_info *link_info = NULL;
 	uint32_t sgsn_nsei = cfg->nsip_sgsn_nsei;
 
-	if (!cfg->core_mcc && !cfg->core_mnc && !cfg->core_apn &&
+	if (!cfg->core_plmn.mcc && !cfg->core_plmn.mnc && !cfg->core_apn &&
 	    !cfg->acquire_imsi && !cfg->patch_ptmsi && !cfg->route_to_sgsn2)
 		return 1;
 
@@ -665,7 +667,7 @@ static int gbprox_process_bssgp_ul(struct gbproxy_config *cfg,
 	return 1;
 }
 
-/* patch BSSGP message to use core_mcc/mnc on the SGSN side */
+/* patch BSSGP message to use core_plmn.mcc/mnc on the SGSN side */
 static void gbprox_process_bssgp_dl(struct gbproxy_config *cfg,
 				    struct msgb *msg,
 				    struct gbproxy_peer *peer)
@@ -677,7 +679,7 @@ static void gbprox_process_bssgp_dl(struct gbproxy_config *cfg,
 	struct timespec ts = {0,};
 	struct gbproxy_link_info *link_info = NULL;
 
-	if (!cfg->core_mcc && !cfg->core_mnc && !cfg->core_apn &&
+	if (!cfg->core_plmn.mcc && !cfg->core_plmn.mnc && !cfg->core_apn &&
 	    !cfg->acquire_imsi && !cfg->patch_ptmsi && !cfg->route_to_sgsn2)
 		return;
 
@@ -994,9 +996,8 @@ static int gbprox_rx_sig_from_bss(struct gbproxy_config *cfg,
 			sizeof(from_peer->ra));
 		gsm48_parse_ra(&raid, from_peer->ra);
 		LOGP(DGPRS, LOGL_INFO, "NSEI=%u BSSGP SUSPEND/RESUME "
-			"RAI snooping: RAI %u-%u-%u-%u behind BVCI=%u\n",
-			nsei, raid.mcc, raid.mnc, raid.lac,
-			raid.rac , from_peer->bvci);
+			"RAI snooping: RAI %s behind BVCI=%u\n",
+			nsei, osmo_rai_name(&raid), from_peer->bvci);
 		/* FIXME: This only supports one BSS per RA */
 		break;
 	case BSSGP_PDUT_BVC_RESET:
@@ -1037,10 +1038,8 @@ static int gbprox_rx_sig_from_bss(struct gbproxy_config *cfg,
 					TLVP_VAL(&tp, BSSGP_IE_CELL_ID),
 					sizeof(from_peer->ra));
 				gsm48_parse_ra(&raid, from_peer->ra);
-				LOGP(DGPRS, LOGL_INFO, "NSEI=%u/BVCI=%u "
-				     "Cell ID %u-%u-%u-%u\n", nsei,
-				     bvci, raid.mcc, raid.mnc, raid.lac,
-				     raid.rac);
+				LOGP(DGPRS, LOGL_INFO, "NSEI=%u/BVCI=%u Cell ID %s\n",
+				     nsei, bvci, osmo_rai_name(&raid));
 			}
 			if (cfg->route_to_sgsn2)
 				copy_to_sgsn2 = 1;

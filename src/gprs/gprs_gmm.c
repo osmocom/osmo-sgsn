@@ -1673,12 +1673,11 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 			LOGMMCTXP(LOGL_INFO, mmctx,
 				"Looked up by matching TLLI and P_TMSI. "
 				"BSSGP TLLI: %08x, P-TMSI: %08x (%08x), "
-				"TLLI: %08x (%08x), RA: %d-%d-%d-%d\n",
+				"TLLI: %08x (%08x), RA: %s\n",
 				msgb_tlli(msg),
 				mmctx->p_tmsi, mmctx->p_tmsi_old,
 				mmctx->gb.tlli, mmctx->gb.tlli_new,
-				mmctx->ra.mcc, mmctx->ra.mnc,
-				mmctx->ra.lac, mmctx->ra.rac);
+				osmo_rai_name(&mmctx->ra));
 
 			mmctx->gmm_state = GMM_COMMON_PROC_INIT;
 		}
@@ -1687,8 +1686,8 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	{
 		/* We cannot use the mmctx */
 		LOGMMCTXP(LOGL_INFO, mmctx,
-			"The MM context cannot be used, RA: %d-%d-%d-%d\n",
-			mmctx->ra.mcc, mmctx->ra.mnc,
+			"The MM context cannot be used, RA: %03d-%0*d-%d-%d\n",
+			mmctx->ra.mcc, mmctx->ra.mnc_3_digits, mmctx->ra.mnc,
 			mmctx->ra.lac, mmctx->ra.rac);
 		mmctx = NULL;
 	}

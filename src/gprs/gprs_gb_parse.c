@@ -551,24 +551,21 @@ void gprs_gb_log_parse_context(int log_level,
 	if (parse_ctx->bssgp_raid_enc) {
 		struct gprs_ra_id raid;
 		gsm48_parse_ra(&raid, parse_ctx->bssgp_raid_enc);
-		LOGPC(DGPRS, log_level, "%s BSSGP RAID %u-%u-%u-%u", sep,
-		     raid.mcc, raid.mnc, raid.lac, raid.rac);
+		LOGPC(DGPRS, log_level, "%s BSSGP RAID %s", sep, osmo_rai_name(&raid));
 		sep = ",";
 	}
 
 	if (parse_ctx->raid_enc) {
 		struct gprs_ra_id raid;
 		gsm48_parse_ra(&raid, parse_ctx->raid_enc);
-		LOGPC(DGPRS, log_level, "%s RAID %u-%u-%u-%u", sep,
-		     raid.mcc, raid.mnc, raid.lac, raid.rac);
+		LOGPC(DGPRS, log_level, "%s RAID %s", sep, osmo_rai_name(&raid));
 		sep = ",";
 	}
 
 	if (parse_ctx->old_raid_enc) {
 		struct gprs_ra_id raid;
 		gsm48_parse_ra(&raid, parse_ctx->old_raid_enc);
-		LOGPC(DGPRS, log_level, "%s old RAID %u-%u-%u-%u", sep,
-		     raid.mcc, raid.mnc, raid.lac, raid.rac);
+		LOGPC(DGPRS, log_level, "%s old RAID %s", sep, osmo_rai_name(&raid));
 		sep = ",";
 	}
 

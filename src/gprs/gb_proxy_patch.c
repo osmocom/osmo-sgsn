@@ -36,45 +36,51 @@ static void gbproxy_patch_raid(struct gsm48_ra_id *raid_enc, struct gbproxy_peer
 			       int to_bss, const char *log_text)
 {
 	struct gbproxy_patch_state *state = &peer->patch_state;
-	int old_mcc;
-	int old_mnc;
+	struct osmo_plmn_id old_plmn;
 	struct gprs_ra_id raid;
 	enum gbproxy_peer_ctr counter =
 		to_bss ?
 		GBPROX_PEER_CTR_RAID_PATCHED_SGSN :
 		GBPROX_PEER_CTR_RAID_PATCHED_BSS;
 
-	if (!state->local_mcc || !state->local_mnc)
+	if (!state->local_plmn.mcc || !state->local_plmn.mnc)
 		return;
 
 	gsm48_parse_ra(&raid, (uint8_t *)raid_enc);
 
-	old_mcc = raid.mcc;
-	old_mnc = raid.mnc;
+	old_plmn = (struct osmo_plmn_id){
+		.mcc = raid.mcc,
+		.mnc = raid.mnc,
+		.mnc_3_digits = raid.mnc_3_digits,
+	};
 
 	if (!to_bss) {
 		/* BSS -> SGSN */
-		if (state->local_mcc)
-			raid.mcc = peer->cfg->core_mcc;
+		if (state->local_plmn.mcc)
+			raid.mcc = peer->cfg->core_plmn.mcc;
 
-		if (state->local_mnc)
-			raid.mnc = peer->cfg->core_mnc;
+		if (state->local_plmn.mnc) {
+			raid.mnc = peer->cfg->core_plmn.mnc;
+			raid.mnc_3_digits = peer->cfg->core_plmn.mnc_3_digits;
+		}
 	} else {
 		/* SGSN -> BSS */
-		if (state->local_mcc)
-			raid.mcc = state->local_mcc;
+		if (state->local_plmn.mcc)
+			raid.mcc = state->local_plmn.mcc;
 
-		if (state->local_mnc)
-			raid.mnc = state->local_mnc;
+		if (state->local_plmn.mnc) {
+			raid.mnc = state->local_plmn.mnc;
+			raid.mnc_3_digits = state->local_plmn.mnc_3_digits;
+		}
 	}
 
 	LOGP(DGPRS, LOGL_DEBUG,
 	     "Patching %s to %s: "
-	     "%d-%d-%d-%d -> %d-%d-%d-%d\n",
+	     "%s-%d-%d -> %s\n",
 	     log_text,
 	     to_bss ? "BSS" : "SGSN",
-	     old_mcc, old_mnc, raid.lac, raid.rac,
-	     raid.mcc, raid.mnc, raid.lac, raid.rac);
+	     osmo_plmn_name(&old_plmn), raid.lac, raid.rac,
+	     osmo_rai_name(&raid));
 
 	gsm48_encode_ra(raid_enc, &raid);
 	rate_ctr_inc(&peer->ctrg->ctr[counter]);
@@ -276,7 +282,7 @@ int gbproxy_patch_llc(struct msgb *msg, uint8_t *llc, size_t llc_len,
 	return have_patched;
 }
 
-/* patch BSSGP message to use core_mcc/mnc on the SGSN side */
+/* patch BSSGP message to use core_plmn.mcc/mnc on the SGSN side */
 void gbproxy_patch_bssgp(struct msgb *msg, uint8_t *bssgp, size_t bssgp_len,
 			 struct gbproxy_peer *peer,
 			 struct gbproxy_link_info *link_info, int *len_change,

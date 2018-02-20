@@ -239,8 +239,10 @@ void gprs_parse_tmsi(const uint8_t *value, uint32_t *tmsi)
 }
 
 int gprs_ra_id_equals(const struct gprs_ra_id *id1,
-			const struct gprs_ra_id *id2)
+		      const struct gprs_ra_id *id2)
 {
-	return (id1->mcc == id2->mcc && id1->mnc == id2->mnc &&
-		id1->lac == id2->lac && id1->rac == id2->rac);
+	return (id1->mcc == id2->mcc
+		&& !osmo_mnc_cmp(id1->mnc, id1->mnc_3_digits,
+				 id2->mnc, id2->mnc_3_digits)
+		&& id1->lac == id2->lac && id1->rac == id2->rac);
 }

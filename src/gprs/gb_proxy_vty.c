@@ -71,9 +71,7 @@ static void gbprox_vty_print_peer(struct vty *vty, struct gbproxy_peer *peer)
 	gsm48_parse_ra(&raid, peer->ra);
 
 	vty_out(vty, "NSEI %5u, PTP-BVCI %5u, "
-		"RAI %u-%u-%u-%u",
-		peer->nsei, peer->bvci,
-		raid.mcc, raid.mnc, raid.lac, raid.rac);
+		"RAI %s", peer->nsei, peer->bvci, osmo_rai_name(&raid));
 	if (peer->blocked)
 		vty_out(vty, " [BVC-BLOCKED]");
 
@@ -89,12 +87,12 @@ static int config_write_gbproxy(struct vty *vty)
 	vty_out(vty, " sgsn nsei %u%s", g_cfg->nsip_sgsn_nsei,
 		VTY_NEWLINE);
 
-	if (g_cfg->core_mcc > 0)
-		vty_out(vty, " core-mobile-country-code %d%s",
-			g_cfg->core_mcc, VTY_NEWLINE);
-	if (g_cfg->core_mnc > 0)
-		vty_out(vty, " core-mobile-network-code %d%s",
-			g_cfg->core_mnc, VTY_NEWLINE);
+	if (g_cfg->core_plmn.mcc > 0)
+		vty_out(vty, " core-mobile-country-code %s%s",
+			osmo_mcc_name(g_cfg->core_plmn.mcc), VTY_NEWLINE);
+	if (g_cfg->core_plmn.mnc > 0)
+		vty_out(vty, " core-mobile-network-code %s%s",
+			osmo_mnc_name(g_cfg->core_plmn.mnc, g_cfg->core_plmn.mnc_3_digits), VTY_NEWLINE);
 
 	for (match_id = 0; match_id < ARRAY_SIZE(g_cfg->matches); ++match_id) {
 		struct gbproxy_match *match = &g_cfg->matches[match_id];
@@ -170,7 +168,14 @@ DEFUN(cfg_gbproxy_core_mnc,
       "core-mobile-network-code <1-999>",
       GBPROXY_CORE_MNC_STR "NCC value\n")
 {
-	g_cfg->core_mnc = atoi(argv[0]);
+	uint16_t mnc;
+	bool mnc_3_digits;
+	if (osmo_mnc_from_str(argv[0], &mnc, &mnc_3_digits)) {
+		vty_out(vty, "%% Invalid MNC: %s%s", argv[0], VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	g_cfg->core_plmn.mnc = mnc;
+	g_cfg->core_plmn.mnc_3_digits = mnc_3_digits;
 	return CMD_SUCCESS;
 }
 
@@ -179,7 +184,8 @@ DEFUN(cfg_gbproxy_no_core_mnc,
       "no core-mobile-network-code",
       NO_STR GBPROXY_CORE_MNC_STR)
 {
-	g_cfg->core_mnc = 0;
+	g_cfg->core_plmn.mnc = 0;
+	g_cfg->core_plmn.mnc_3_digits = false;
 	return CMD_SUCCESS;
 }
 
@@ -190,7 +196,7 @@ DEFUN(cfg_gbproxy_core_mcc,
       "core-mobile-country-code <1-999>",
       GBPROXY_CORE_MCC_STR "MCC value\n")
 {
-	g_cfg->core_mcc = atoi(argv[0]);
+	g_cfg->core_plmn.mcc = atoi(argv[0]);
 	return CMD_SUCCESS;
 }
 
@@ -199,7 +205,7 @@ DEFUN(cfg_gbproxy_no_core_mcc,
       "no core-mobile-country-code",
       NO_STR GBPROXY_CORE_MCC_STR)
 {
-	g_cfg->core_mcc = 0;
+	g_cfg->core_plmn.mcc = 0;
 	return CMD_SUCCESS;
 }
 
