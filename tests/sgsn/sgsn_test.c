@@ -1644,7 +1644,7 @@ static void test_gmm_cancel(void)
  */
 static void test_gmm_ptmsi_allocation(void)
 {
-	struct gprs_ra_id raid = {332, 112, 16464, 96};
+	struct gprs_ra_id raid = { .mnc=332, .mcc=112, .lac=16464, .rac=96};
 	struct sgsn_mm_ctx *ctx = NULL;
 	struct sgsn_mm_ctx *ictx;
 	uint32_t foreign_tlli;
@@ -1847,8 +1847,8 @@ static void test_gmm_ptmsi_allocation(void)
  */
 static void test_gmm_routing_areas(void)
 {
-	struct gprs_ra_id raid1 = {332, 112, 16464, 96};
-	struct gprs_ra_id raid2 = {332, 112, 16464, 97};
+	struct gprs_ra_id raid1 = { .mnc=332, .mcc=112, .lac=16464, .rac=96};
+	struct gprs_ra_id raid2 = { .mnc=332, .mcc=112, .lac=16464, .rac=97};
 	struct sgsn_mm_ctx *ctx = NULL;
 	struct sgsn_mm_ctx *ictx;
 	uint32_t ptmsi1;
