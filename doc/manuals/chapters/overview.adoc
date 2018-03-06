@@ -38,7 +38,7 @@ digraph G {
 
 === Software Components
 
-OsmoNITB contains a variety of different software components, which
+OsmoSGSN contains a variety of different software components, which
 we'll quickly describe in this section.
 
 ==== Gb Implementation
@@ -58,7 +58,7 @@ OsmoSGSN.
 
 ==== GTP Implementation
 
-OsmoSGSN uses the libgtp implementation originating from OpenGGSN. It
+OsmoSGSN uses the libgtp implementation originating from OsmoGGSN. It
 supports both GTPv0 and GTPv1.
 
 
