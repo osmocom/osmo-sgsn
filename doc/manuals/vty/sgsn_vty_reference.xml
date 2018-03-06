@@ -1,7 +1,59 @@
 <vtydoc xmlns='urn:osmocom:xml:libosmocore:vty:doc:1.0'>
-  <node id='0'>
+  <node id='_common_cmds_'>
+    <name>Common Commands</name>
+    <description>These commands are available on all VTY nodes. They are listed here only once, to unclutter the VTY reference.</description>
+    <command id='help'>
+      <params>
+        <param name='help' doc='Description of the interactive help system' />
+      </params>
+    </command>
+    <command id='list'>
+      <params>
+        <param name='list' doc='Print command list' />
+      </params>
+    </command>
+    <command id='write terminal'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+        <param name='terminal' doc='Write to terminal' />
+      </params>
+    </command>
+    <command id='write file'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+        <param name='file' doc='Write to configuration file' />
+      </params>
+    </command>
+    <command id='write memory'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+        <param name='memory' doc='Write configuration to the file (same as write file)' />
+      </params>
+    </command>
+    <command id='write'>
+      <params>
+        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+      </params>
+    </command>
+    <command id='show running-config'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='running-config' doc='running configuration' />
+      </params>
+    </command>
+    <command id='exit'>
+      <params>
+        <param name='exit' doc='Exit current mode and down to previous mode' />
+      </params>
+    </command>
+    <command id='end'>
+      <params>
+        <param name='end' doc='End current mode and change to enable mode.' />
+      </params>
+    </command>
   </node>
-  <node id='1'>
+  <node id='view'>
+    <name>view</name>
     <command id='show version'>
       <params>
         <param name='show' doc='Show running system information' />
@@ -12,21 +64,6 @@
       <params>
         <param name='show' doc='Show running system information' />
         <param name='online-help' doc='Online help' />
-      </params>
-    </command>
-    <command id='list'>
-      <params>
-        <param name='list' doc='Print command list' />
-      </params>
-    </command>
-    <command id='exit'>
-      <params>
-        <param name='exit' doc='Exit current mode and down to previous mode' />
-      </params>
-    </command>
-    <command id='help'>
-      <params>
-        <param name='help' doc='Description of the interactive help system' />
       </params>
     </command>
     <command id='enable'>
@@ -67,19 +104,19 @@
     </command>
     <command id='logging enable'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='enable' doc='Enables logging to this vty' />
       </params>
     </command>
     <command id='logging disable'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='disable' doc='Disables logging to this vty' />
       </params>
     </command>
     <command id='logging filter all (0|1)'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='filter' doc='Filter log messages' />
         <param name='all' doc='Do you want to log all messages?' />
         <param name='0' doc='Only print messages matched by other filters' />
@@ -88,7 +125,7 @@
     </command>
     <command id='logging color (0|1)'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='color' doc='Configure color-printing for log messages' />
         <param name='0' doc='Don&apos;t use color for printing messages' />
         <param name='1' doc='Use color for printing messages' />
@@ -96,7 +133,7 @@
     </command>
     <command id='logging timestamp (0|1)'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='timestamp' doc='Configure log message timestamping' />
         <param name='0' doc='Don&apos;t prefix each log message' />
         <param name='1' doc='Prefix each log message with current timestamp' />
@@ -104,7 +141,7 @@
     </command>
     <command id='logging print extended-timestamp (0|1)'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='print' doc='Log output settings' />
         <param name='extended-timestamp' doc='Configure log message timestamping' />
         <param name='0' doc='Don&apos;t prefix each log message' />
@@ -113,32 +150,60 @@
     </command>
     <command id='logging print category (0|1)'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='print' doc='Log output settings' />
         <param name='category' doc='Configure log message' />
         <param name='0' doc='Don&apos;t prefix each log message' />
         <param name='1' doc='Prefix each log message with category/subsystem name' />
       </params>
     </command>
+    <command id='logging print category-hex (0|1)'>
+      <params>
+        <param name='logging' doc='Configure logging' />
+        <param name='print' doc='Log output settings' />
+        <param name='category-hex' doc='Configure log message' />
+        <param name='0' doc='Don&apos;t prefix each log message' />
+        <param name='1' doc='Prefix each log message with category/subsystem nr in hex (&apos;&lt;000b&gt;&apos;)' />
+      </params>
+    </command>
+    <command id='logging print level (0|1)'>
+      <params>
+        <param name='logging' doc='Configure logging' />
+        <param name='print' doc='Log output settings' />
+        <param name='level' doc='Configure log message' />
+        <param name='0' doc='Don&apos;t prefix each log message' />
+        <param name='1' doc='Prefix each log message with the log level name' />
+      </params>
+    </command>
+    <command id='logging print file (0|1|basename)'>
+      <params>
+        <param name='logging' doc='Configure logging' />
+        <param name='print' doc='Log output settings' />
+        <param name='file' doc='Configure log message' />
+        <param name='0' doc='Don&apos;t prefix each log message' />
+        <param name='1' doc='Prefix each log message with the source file and line' />
+        <param name='basename' doc='Prefix each log message with the source file&apos;s basename (strip leading paths) and line' />
+      </params>
+    </command>
     <command id='logging set-log-mask MASK'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='set-log-mask' doc='Set the logmask of this logging target' />
-        <param name='MASK' doc='The logmask to use' />
+        <param name='MASK' doc='List of logging categories to log, e.g. &apos;abc:mno:xyz&apos;. Available log categories depend on the specific application, refer to the &apos;logging level&apos; command. Optionally add individual log levels like &apos;abc,1:mno,3:xyz,5&apos;, where the level numbers are LOGL_DEBUG=1 LOGL_INFO=3 LOGL_NOTICE=5 LOGL_ERROR=7 LOGL_FATAL=8' />
       </params>
     </command>
     <command id='logging set log mask MASK'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='set' doc='Decide which categories to output.' />
         <param name='log' doc='Log commands' />
         <param name='mask' doc='Mask commands' />
-        <param name='MASK' doc='The logmask to use' />
+        <param name='MASK' doc='&apos;set log mask&apos; is deprecated, please refer to the docs of &apos;set-log-mask&apos; instead' />
       </params>
     </command>
-    <command id='logging level (all|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|slhc|ranap|sua|v42bis|lglobal|llapd|linp|lmux|lmi|lmib|lsms|lctrl|lgtp|lstats) (everything|debug|info|notice|error|fatal)'>
+    <command id='logging level (all|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|slhc|ranap|sua|v42bis|lglobal|llapd|linp|lmux|lmi|lmib|lsms|lctrl|lgtp|lstats|lgsup|loap|lss7|lsccp|lsua|lm3ua|lmgcp|ljibuf) (everything|debug|info|notice|error|fatal)'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='level' doc='Set the log level for a specified category' />
         <param name='all' doc='Global setting for all subsystems' />
         <param name='mm' doc='Layer3 Mobility Management (MM)' />
@@ -164,6 +229,14 @@
         <param name='lctrl' doc='Control Interface' />
         <param name='lgtp' doc='GPRS GTP library' />
         <param name='lstats' doc='Statistics messages and logging' />
+        <param name='lgsup' doc='Generic Subscriber Update Protocol' />
+        <param name='loap' doc='Osmocom Authentication Protocol' />
+        <param name='lss7' doc='libosmo-sigtran Signalling System 7' />
+        <param name='lsccp' doc='libosmo-sigtran SCCP Implementation' />
+        <param name='lsua' doc='libosmo-sigtran SCCP User Adaptation' />
+        <param name='lm3ua' doc='libosmo-sigtran MTP3 User Adaptation' />
+        <param name='lmgcp' doc='libosmo-mgcp Media Gateway Control Protocol' />
+        <param name='ljibuf' doc='libosmo-netif Jitter Buffer' />
         <param name='everything' doc='Don&apos;t use. It doesn&apos;t log anything' />
         <param name='debug' doc='Log debug messages and higher levels' />
         <param name='info' doc='Log informational messages and higher levels' />
@@ -183,6 +256,43 @@
       <params>
         <param name='show' doc='Show running system information' />
         <param name='alarms' doc='Show current logging configuration' />
+      </params>
+    </command>
+    <command id='show talloc-context (application|all) (full|brief|DEPTH)'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='talloc-context' doc='Show talloc memory hierarchy' />
+        <param name='application' doc='Application&apos;s context' />
+        <param name='all' doc='All contexts, if NULL-context tracking is enabled' />
+        <param name='full' doc='Display a full talloc memory hierarchy' />
+        <param name='brief' doc='Display a brief talloc memory hierarchy' />
+        <param name='DEPTH' doc='Specify required maximal depth value' />
+      </params>
+    </command>
+    <command id='show talloc-context (application|all) (full|brief|DEPTH) tree ADDRESS'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='talloc-context' doc='Show talloc memory hierarchy' />
+        <param name='application' doc='Application&apos;s context' />
+        <param name='all' doc='All contexts, if NULL-context tracking is enabled' />
+        <param name='full' doc='Display a full talloc memory hierarchy' />
+        <param name='brief' doc='Display a brief talloc memory hierarchy' />
+        <param name='DEPTH' doc='Specify required maximal depth value' />
+        <param name='tree' doc='Display only a specific memory chunk' />
+        <param name='ADDRESS' doc='Chunk address (e.g. 0xdeadbeef)' />
+      </params>
+    </command>
+    <command id='show talloc-context (application|all) (full|brief|DEPTH) filter REGEXP'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='talloc-context' doc='Show talloc memory hierarchy' />
+        <param name='application' doc='Application&apos;s context' />
+        <param name='all' doc='All contexts, if NULL-context tracking is enabled' />
+        <param name='full' doc='Display a full talloc memory hierarchy' />
+        <param name='brief' doc='Display a brief talloc memory hierarchy' />
+        <param name='DEPTH' doc='Specify required maximal depth value' />
+        <param name='filter' doc='Filter chunks using regular expression' />
+        <param name='REGEXP' doc='Regular expression' />
       </params>
     </command>
     <command id='show stats'>
@@ -245,6 +355,47 @@
         <param name='cache' doc='Display contents of subscriber cache' />
       </params>
     </command>
+    <command id='show cs7 instance &lt;0-15&gt; users'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='cs7' doc='ITU-T Signaling System 7' />
+        <param name='instance' doc='An instance of the SS7 stack' />
+        <param name='&lt;0-15&gt;' doc='An instance of the SS7 stack' />
+        <param name='users' doc='User Table' />
+      </params>
+    </command>
+    <command id='show cs7 (sua|m3ua|ipa) [&lt;0-65534&gt;]'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='cs7' doc='ITU-T Signaling System 7' />
+        <param name='sua' doc='SCCP User Adaptation' />
+        <param name='m3ua' doc='MTP3 User Adaptation' />
+        <param name='ipa' doc='IPA Multiplex (SCCP Lite)' />
+        <param name='[&lt;0-65534&gt;]' doc='Port Number' />
+      </params>
+    </command>
+    <command id='show cs7 instance &lt;0-15&gt; asp'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='cs7' doc='ITU-T Signaling System 7' />
+        <param name='instance' doc='An instance of the SS7 stack' />
+        <param name='&lt;0-15&gt;' doc='An instance of the SS7 stack' />
+        <param name='asp' doc='Application Server Process (ASP)' />
+      </params>
+    </command>
+    <command id='show cs7 instance &lt;0-15&gt; as (active|all|m3ua|sua)'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='cs7' doc='ITU-T Signaling System 7' />
+        <param name='instance' doc='An instance of the SS7 stack' />
+        <param name='&lt;0-15&gt;' doc='An instance of the SS7 stack' />
+        <param name='as' doc='Application Server (AS)' />
+        <param name='active' doc='Display all active ASs' />
+        <param name='all' doc='Display all ASs (default)' />
+        <param name='m3ua' doc='Display all m3ua ASs' />
+        <param name='sua' doc='Display all SUA ASs' />
+      </params>
+    </command>
     <command id='show ns'>
       <params>
         <param name='show' doc='Show running system information' />
@@ -256,6 +407,13 @@
         <param name='show' doc='Show running system information' />
         <param name='ns' doc='Display information about the NS protocol' />
         <param name='stats' doc='Include statistics' />
+      </params>
+    </command>
+    <command id='show ns persistent'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='ns' doc='Display information about the NS protocol' />
+        <param name='persistent' doc='Show only persistent NS' />
       </params>
     </command>
     <command id='show ns (nsei|nsvc) &lt;0-65535&gt; [stats]'>
@@ -270,7 +428,7 @@
     </command>
     <command id='logging filter nsvc (nsei|nsvci) &lt;0-65535&gt;'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='filter' doc='Filter log messages' />
         <param name='nsvc' doc='Filter based on NS Virtual Connection' />
         <param name='nsei' doc='Identify NS-VC by NSEI' />
@@ -302,7 +460,7 @@
     </command>
     <command id='logging filter bvc nsei &lt;0-65535&gt; bvci &lt;0-65535&gt;'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='filter' doc='Filter log messages' />
         <param name='bvc' doc='Filter based on BSSGP Virtual Connection' />
         <param name='nsei' doc='NSEI of the BVC to be filtered' />
@@ -335,53 +493,8 @@
       </params>
     </command>
   </node>
-  <node id='2'>
-  </node>
-  <node id='3'>
-    <command id='help'>
-      <params>
-        <param name='help' doc='Description of the interactive help system' />
-      </params>
-    </command>
-    <command id='list'>
-      <params>
-        <param name='list' doc='Print command list' />
-      </params>
-    </command>
-    <command id='write terminal'>
-      <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-        <param name='terminal' doc='Write to terminal' />
-      </params>
-    </command>
-    <command id='write file'>
-      <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-        <param name='file' doc='Write to configuration file' />
-      </params>
-    </command>
-    <command id='write memory'>
-      <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-        <param name='memory' doc='Write configuration to the file (same as write file)' />
-      </params>
-    </command>
-    <command id='write'>
-      <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-      </params>
-    </command>
-    <command id='show running-config'>
-      <params>
-        <param name='show' doc='Show running system information' />
-        <param name='running-config' doc='running configuration' />
-      </params>
-    </command>
-    <command id='exit'>
-      <params>
-        <param name='exit' doc='Exit current mode and down to previous mode' />
-      </params>
-    </command>
+  <node id='enable'>
+    <name>enable</name>
     <command id='disable'>
       <params>
         <param name='disable' doc='Turn off privileged mode command' />
@@ -464,19 +577,19 @@
     </command>
     <command id='logging enable'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='enable' doc='Enables logging to this vty' />
       </params>
     </command>
     <command id='logging disable'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='disable' doc='Disables logging to this vty' />
       </params>
     </command>
     <command id='logging filter all (0|1)'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='filter' doc='Filter log messages' />
         <param name='all' doc='Do you want to log all messages?' />
         <param name='0' doc='Only print messages matched by other filters' />
@@ -485,7 +598,7 @@
     </command>
     <command id='logging color (0|1)'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='color' doc='Configure color-printing for log messages' />
         <param name='0' doc='Don&apos;t use color for printing messages' />
         <param name='1' doc='Use color for printing messages' />
@@ -493,7 +606,7 @@
     </command>
     <command id='logging timestamp (0|1)'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='timestamp' doc='Configure log message timestamping' />
         <param name='0' doc='Don&apos;t prefix each log message' />
         <param name='1' doc='Prefix each log message with current timestamp' />
@@ -501,7 +614,7 @@
     </command>
     <command id='logging print extended-timestamp (0|1)'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='print' doc='Log output settings' />
         <param name='extended-timestamp' doc='Configure log message timestamping' />
         <param name='0' doc='Don&apos;t prefix each log message' />
@@ -510,32 +623,60 @@
     </command>
     <command id='logging print category (0|1)'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='print' doc='Log output settings' />
         <param name='category' doc='Configure log message' />
         <param name='0' doc='Don&apos;t prefix each log message' />
         <param name='1' doc='Prefix each log message with category/subsystem name' />
       </params>
     </command>
+    <command id='logging print category-hex (0|1)'>
+      <params>
+        <param name='logging' doc='Configure logging' />
+        <param name='print' doc='Log output settings' />
+        <param name='category-hex' doc='Configure log message' />
+        <param name='0' doc='Don&apos;t prefix each log message' />
+        <param name='1' doc='Prefix each log message with category/subsystem nr in hex (&apos;&lt;000b&gt;&apos;)' />
+      </params>
+    </command>
+    <command id='logging print level (0|1)'>
+      <params>
+        <param name='logging' doc='Configure logging' />
+        <param name='print' doc='Log output settings' />
+        <param name='level' doc='Configure log message' />
+        <param name='0' doc='Don&apos;t prefix each log message' />
+        <param name='1' doc='Prefix each log message with the log level name' />
+      </params>
+    </command>
+    <command id='logging print file (0|1|basename)'>
+      <params>
+        <param name='logging' doc='Configure logging' />
+        <param name='print' doc='Log output settings' />
+        <param name='file' doc='Configure log message' />
+        <param name='0' doc='Don&apos;t prefix each log message' />
+        <param name='1' doc='Prefix each log message with the source file and line' />
+        <param name='basename' doc='Prefix each log message with the source file&apos;s basename (strip leading paths) and line' />
+      </params>
+    </command>
     <command id='logging set-log-mask MASK'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='set-log-mask' doc='Set the logmask of this logging target' />
-        <param name='MASK' doc='The logmask to use' />
+        <param name='MASK' doc='List of logging categories to log, e.g. &apos;abc:mno:xyz&apos;. Available log categories depend on the specific application, refer to the &apos;logging level&apos; command. Optionally add individual log levels like &apos;abc,1:mno,3:xyz,5&apos;, where the level numbers are LOGL_DEBUG=1 LOGL_INFO=3 LOGL_NOTICE=5 LOGL_ERROR=7 LOGL_FATAL=8' />
       </params>
     </command>
     <command id='logging set log mask MASK'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='set' doc='Decide which categories to output.' />
         <param name='log' doc='Log commands' />
         <param name='mask' doc='Mask commands' />
-        <param name='MASK' doc='The logmask to use' />
+        <param name='MASK' doc='&apos;set log mask&apos; is deprecated, please refer to the docs of &apos;set-log-mask&apos; instead' />
       </params>
     </command>
-    <command id='logging level (all|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|slhc|ranap|sua|v42bis|lglobal|llapd|linp|lmux|lmi|lmib|lsms|lctrl|lgtp|lstats) (everything|debug|info|notice|error|fatal)'>
+    <command id='logging level (all|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|slhc|ranap|sua|v42bis|lglobal|llapd|linp|lmux|lmi|lmib|lsms|lctrl|lgtp|lstats|lgsup|loap|lss7|lsccp|lsua|lm3ua|lmgcp|ljibuf) (everything|debug|info|notice|error|fatal)'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='level' doc='Set the log level for a specified category' />
         <param name='all' doc='Global setting for all subsystems' />
         <param name='mm' doc='Layer3 Mobility Management (MM)' />
@@ -561,6 +702,14 @@
         <param name='lctrl' doc='Control Interface' />
         <param name='lgtp' doc='GPRS GTP library' />
         <param name='lstats' doc='Statistics messages and logging' />
+        <param name='lgsup' doc='Generic Subscriber Update Protocol' />
+        <param name='loap' doc='Osmocom Authentication Protocol' />
+        <param name='lss7' doc='libosmo-sigtran Signalling System 7' />
+        <param name='lsccp' doc='libosmo-sigtran SCCP Implementation' />
+        <param name='lsua' doc='libosmo-sigtran SCCP User Adaptation' />
+        <param name='lm3ua' doc='libosmo-sigtran MTP3 User Adaptation' />
+        <param name='lmgcp' doc='libosmo-mgcp Media Gateway Control Protocol' />
+        <param name='ljibuf' doc='libosmo-netif Jitter Buffer' />
         <param name='everything' doc='Don&apos;t use. It doesn&apos;t log anything' />
         <param name='debug' doc='Log debug messages and higher levels' />
         <param name='info' doc='Log informational messages and higher levels' />
@@ -580,6 +729,43 @@
       <params>
         <param name='show' doc='Show running system information' />
         <param name='alarms' doc='Show current logging configuration' />
+      </params>
+    </command>
+    <command id='show talloc-context (application|all) (full|brief|DEPTH)'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='talloc-context' doc='Show talloc memory hierarchy' />
+        <param name='application' doc='Application&apos;s context' />
+        <param name='all' doc='All contexts, if NULL-context tracking is enabled' />
+        <param name='full' doc='Display a full talloc memory hierarchy' />
+        <param name='brief' doc='Display a brief talloc memory hierarchy' />
+        <param name='DEPTH' doc='Specify required maximal depth value' />
+      </params>
+    </command>
+    <command id='show talloc-context (application|all) (full|brief|DEPTH) tree ADDRESS'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='talloc-context' doc='Show talloc memory hierarchy' />
+        <param name='application' doc='Application&apos;s context' />
+        <param name='all' doc='All contexts, if NULL-context tracking is enabled' />
+        <param name='full' doc='Display a full talloc memory hierarchy' />
+        <param name='brief' doc='Display a brief talloc memory hierarchy' />
+        <param name='DEPTH' doc='Specify required maximal depth value' />
+        <param name='tree' doc='Display only a specific memory chunk' />
+        <param name='ADDRESS' doc='Chunk address (e.g. 0xdeadbeef)' />
+      </params>
+    </command>
+    <command id='show talloc-context (application|all) (full|brief|DEPTH) filter REGEXP'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='talloc-context' doc='Show talloc memory hierarchy' />
+        <param name='application' doc='Application&apos;s context' />
+        <param name='all' doc='All contexts, if NULL-context tracking is enabled' />
+        <param name='full' doc='Display a full talloc memory hierarchy' />
+        <param name='brief' doc='Display a brief talloc memory hierarchy' />
+        <param name='DEPTH' doc='Specify required maximal depth value' />
+        <param name='filter' doc='Filter chunks using regular expression' />
+        <param name='REGEXP' doc='Regular expression' />
       </params>
     </command>
     <command id='show stats'>
@@ -706,6 +892,47 @@
         <param name='update-auth-info' doc='Complete the send authentication info procedure' />
       </params>
     </command>
+    <command id='show cs7 instance &lt;0-15&gt; users'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='cs7' doc='ITU-T Signaling System 7' />
+        <param name='instance' doc='An instance of the SS7 stack' />
+        <param name='&lt;0-15&gt;' doc='An instance of the SS7 stack' />
+        <param name='users' doc='User Table' />
+      </params>
+    </command>
+    <command id='show cs7 (sua|m3ua|ipa) [&lt;0-65534&gt;]'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='cs7' doc='ITU-T Signaling System 7' />
+        <param name='sua' doc='SCCP User Adaptation' />
+        <param name='m3ua' doc='MTP3 User Adaptation' />
+        <param name='ipa' doc='IPA Multiplex (SCCP Lite)' />
+        <param name='[&lt;0-65534&gt;]' doc='Port Number' />
+      </params>
+    </command>
+    <command id='show cs7 instance &lt;0-15&gt; asp'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='cs7' doc='ITU-T Signaling System 7' />
+        <param name='instance' doc='An instance of the SS7 stack' />
+        <param name='&lt;0-15&gt;' doc='An instance of the SS7 stack' />
+        <param name='asp' doc='Application Server Process (ASP)' />
+      </params>
+    </command>
+    <command id='show cs7 instance &lt;0-15&gt; as (active|all|m3ua|sua)'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='cs7' doc='ITU-T Signaling System 7' />
+        <param name='instance' doc='An instance of the SS7 stack' />
+        <param name='&lt;0-15&gt;' doc='An instance of the SS7 stack' />
+        <param name='as' doc='Application Server (AS)' />
+        <param name='active' doc='Display all active ASs' />
+        <param name='all' doc='Display all ASs (default)' />
+        <param name='m3ua' doc='Display all m3ua ASs' />
+        <param name='sua' doc='Display all SUA ASs' />
+      </params>
+    </command>
     <command id='show ns'>
       <params>
         <param name='show' doc='Show running system information' />
@@ -717,6 +944,13 @@
         <param name='show' doc='Show running system information' />
         <param name='ns' doc='Display information about the NS protocol' />
         <param name='stats' doc='Include statistics' />
+      </params>
+    </command>
+    <command id='show ns persistent'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='ns' doc='Display information about the NS protocol' />
+        <param name='persistent' doc='Show only persistent NS' />
       </params>
     </command>
     <command id='show ns (nsei|nsvc) &lt;0-65535&gt; [stats]'>
@@ -731,7 +965,7 @@
     </command>
     <command id='logging filter nsvc (nsei|nsvci) &lt;0-65535&gt;'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='filter' doc='Filter log messages' />
         <param name='nsvc' doc='Filter based on NS Virtual Connection' />
         <param name='nsei' doc='Identify NS-VC by NSEI' />
@@ -774,7 +1008,7 @@
     </command>
     <command id='logging filter bvc nsei &lt;0-65535&gt; bvci &lt;0-65535&gt;'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='filter' doc='Filter log messages' />
         <param name='bvc' doc='Filter based on BSSGP Virtual Connection' />
         <param name='nsei' doc='NSEI of the BVC to be filtered' />
@@ -807,56 +1041,8 @@
       </params>
     </command>
   </node>
-  <node id='4'>
-    <command id='help'>
-      <params>
-        <param name='help' doc='Description of the interactive help system' />
-      </params>
-    </command>
-    <command id='list'>
-      <params>
-        <param name='list' doc='Print command list' />
-      </params>
-    </command>
-    <command id='write terminal'>
-      <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-        <param name='terminal' doc='Write to terminal' />
-      </params>
-    </command>
-    <command id='write file'>
-      <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-        <param name='file' doc='Write to configuration file' />
-      </params>
-    </command>
-    <command id='write memory'>
-      <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-        <param name='memory' doc='Write configuration to the file (same as write file)' />
-      </params>
-    </command>
-    <command id='write'>
-      <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-      </params>
-    </command>
-    <command id='show running-config'>
-      <params>
-        <param name='show' doc='Show running system information' />
-        <param name='running-config' doc='running configuration' />
-      </params>
-    </command>
-    <command id='exit'>
-      <params>
-        <param name='exit' doc='Exit current mode and down to previous mode' />
-      </params>
-    </command>
-    <command id='end'>
-      <params>
-        <param name='end' doc='End current mode and change to enable mode.' />
-      </params>
-    </command>
+  <node id='config'>
+    <name>config</name>
     <command id='hostname WORD'>
       <params>
         <param name='hostname' doc='Set system&apos;s network name' />
@@ -1095,6 +1281,13 @@
         <param name='ctrl' doc='Configure the Control Interface' />
       </params>
     </command>
+    <command id='cs7 instance &lt;0-15&gt;'>
+      <params>
+        <param name='cs7' doc='ITU-T Signaling System 7' />
+        <param name='instance' doc='Configure a SS7 Instance' />
+        <param name='&lt;0-15&gt;' doc='An instance of the SS7 stack' />
+      </params>
+    </command>
     <command id='ns'>
       <params>
         <param name='ns' doc='Configure the GPRS Network Service' />
@@ -1106,59 +1299,11 @@
       </params>
     </command>
   </node>
-  <node id='7'>
-    <command id='help'>
-      <params>
-        <param name='help' doc='Description of the interactive help system' />
-      </params>
-    </command>
-    <command id='list'>
-      <params>
-        <param name='list' doc='Print command list' />
-      </params>
-    </command>
-    <command id='write terminal'>
-      <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-        <param name='terminal' doc='Write to terminal' />
-      </params>
-    </command>
-    <command id='write file'>
-      <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-        <param name='file' doc='Write to configuration file' />
-      </params>
-    </command>
-    <command id='write memory'>
-      <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-        <param name='memory' doc='Write configuration to the file (same as write file)' />
-      </params>
-    </command>
-    <command id='write'>
-      <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-      </params>
-    </command>
-    <command id='show running-config'>
-      <params>
-        <param name='show' doc='Show running system information' />
-        <param name='running-config' doc='running configuration' />
-      </params>
-    </command>
-    <command id='exit'>
-      <params>
-        <param name='exit' doc='Exit current mode and down to previous mode' />
-      </params>
-    </command>
-    <command id='end'>
-      <params>
-        <param name='end' doc='End current mode and change to enable mode.' />
-      </params>
-    </command>
+  <node id='config-log'>
+    <name>config-log</name>
     <command id='logging filter all (0|1)'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='filter' doc='Filter log messages' />
         <param name='all' doc='Do you want to log all messages?' />
         <param name='0' doc='Only print messages matched by other filters' />
@@ -1167,7 +1312,7 @@
     </command>
     <command id='logging color (0|1)'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='color' doc='Configure color-printing for log messages' />
         <param name='0' doc='Don&apos;t use color for printing messages' />
         <param name='1' doc='Use color for printing messages' />
@@ -1175,7 +1320,7 @@
     </command>
     <command id='logging timestamp (0|1)'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='timestamp' doc='Configure log message timestamping' />
         <param name='0' doc='Don&apos;t prefix each log message' />
         <param name='1' doc='Prefix each log message with current timestamp' />
@@ -1183,7 +1328,7 @@
     </command>
     <command id='logging print extended-timestamp (0|1)'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='print' doc='Log output settings' />
         <param name='extended-timestamp' doc='Configure log message timestamping' />
         <param name='0' doc='Don&apos;t prefix each log message' />
@@ -1192,16 +1337,44 @@
     </command>
     <command id='logging print category (0|1)'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='print' doc='Log output settings' />
         <param name='category' doc='Configure log message' />
         <param name='0' doc='Don&apos;t prefix each log message' />
         <param name='1' doc='Prefix each log message with category/subsystem name' />
       </params>
     </command>
-    <command id='logging level (all|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|slhc|ranap|sua|v42bis|lglobal|llapd|linp|lmux|lmi|lmib|lsms|lctrl|lgtp|lstats) (everything|debug|info|notice|error|fatal)'>
+    <command id='logging print category-hex (0|1)'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
+        <param name='print' doc='Log output settings' />
+        <param name='category-hex' doc='Configure log message' />
+        <param name='0' doc='Don&apos;t prefix each log message' />
+        <param name='1' doc='Prefix each log message with category/subsystem nr in hex (&apos;&lt;000b&gt;&apos;)' />
+      </params>
+    </command>
+    <command id='logging print level (0|1)'>
+      <params>
+        <param name='logging' doc='Configure logging' />
+        <param name='print' doc='Log output settings' />
+        <param name='level' doc='Configure log message' />
+        <param name='0' doc='Don&apos;t prefix each log message' />
+        <param name='1' doc='Prefix each log message with the log level name' />
+      </params>
+    </command>
+    <command id='logging print file (0|1|basename)'>
+      <params>
+        <param name='logging' doc='Configure logging' />
+        <param name='print' doc='Log output settings' />
+        <param name='file' doc='Configure log message' />
+        <param name='0' doc='Don&apos;t prefix each log message' />
+        <param name='1' doc='Prefix each log message with the source file and line' />
+        <param name='basename' doc='Prefix each log message with the source file&apos;s basename (strip leading paths) and line' />
+      </params>
+    </command>
+    <command id='logging level (all|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|slhc|ranap|sua|v42bis|lglobal|llapd|linp|lmux|lmi|lmib|lsms|lctrl|lgtp|lstats|lgsup|loap|lss7|lsccp|lsua|lm3ua|lmgcp|ljibuf) (everything|debug|info|notice|error|fatal)'>
+      <params>
+        <param name='logging' doc='Configure logging' />
         <param name='level' doc='Set the log level for a specified category' />
         <param name='all' doc='Global setting for all subsystems' />
         <param name='mm' doc='Layer3 Mobility Management (MM)' />
@@ -1227,6 +1400,14 @@
         <param name='lctrl' doc='Control Interface' />
         <param name='lgtp' doc='GPRS GTP library' />
         <param name='lstats' doc='Statistics messages and logging' />
+        <param name='lgsup' doc='Generic Subscriber Update Protocol' />
+        <param name='loap' doc='Osmocom Authentication Protocol' />
+        <param name='lss7' doc='libosmo-sigtran Signalling System 7' />
+        <param name='lsccp' doc='libosmo-sigtran SCCP Implementation' />
+        <param name='lsua' doc='libosmo-sigtran SCCP User Adaptation' />
+        <param name='lm3ua' doc='libosmo-sigtran MTP3 User Adaptation' />
+        <param name='lmgcp' doc='libosmo-mgcp Media Gateway Control Protocol' />
+        <param name='ljibuf' doc='libosmo-netif Jitter Buffer' />
         <param name='everything' doc='Don&apos;t use. It doesn&apos;t log anything' />
         <param name='debug' doc='Log debug messages and higher levels' />
         <param name='info' doc='Log informational messages and higher levels' />
@@ -1237,7 +1418,7 @@
     </command>
     <command id='logging filter nsvc (nsei|nsvci) &lt;0-65535&gt;'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='filter' doc='Filter log messages' />
         <param name='nsvc' doc='Filter based on NS Virtual Connection' />
         <param name='nsei' doc='Identify NS-VC by NSEI' />
@@ -1247,7 +1428,7 @@
     </command>
     <command id='logging filter bvc nsei &lt;0-65535&gt; bvci &lt;0-65535&gt;'>
       <params>
-        <param name='logging' doc='Configure log message to this terminal' />
+        <param name='logging' doc='Configure logging' />
         <param name='filter' doc='Filter log messages' />
         <param name='bvc' doc='Filter based on BSSGP Virtual Connection' />
         <param name='nsei' doc='NSEI of the BVC to be filtered' />
@@ -1257,56 +1438,8 @@
       </params>
     </command>
   </node>
-  <node id='8'>
-    <command id='help'>
-      <params>
-        <param name='help' doc='Description of the interactive help system' />
-      </params>
-    </command>
-    <command id='list'>
-      <params>
-        <param name='list' doc='Print command list' />
-      </params>
-    </command>
-    <command id='write terminal'>
-      <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-        <param name='terminal' doc='Write to terminal' />
-      </params>
-    </command>
-    <command id='write file'>
-      <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-        <param name='file' doc='Write to configuration file' />
-      </params>
-    </command>
-    <command id='write memory'>
-      <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-        <param name='memory' doc='Write configuration to the file (same as write file)' />
-      </params>
-    </command>
-    <command id='write'>
-      <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-      </params>
-    </command>
-    <command id='show running-config'>
-      <params>
-        <param name='show' doc='Show running system information' />
-        <param name='running-config' doc='running configuration' />
-      </params>
-    </command>
-    <command id='exit'>
-      <params>
-        <param name='exit' doc='Exit current mode and down to previous mode' />
-      </params>
-    </command>
-    <command id='end'>
-      <params>
-        <param name='end' doc='End current mode and change to enable mode.' />
-      </params>
-    </command>
+  <node id='config-stats'>
+    <name>config-stats</name>
     <command id='local-ip ADDR'>
       <params>
         <param name='local-ip' doc='Set the IP address to which we bind locally' />
@@ -1374,56 +1507,8 @@
       </params>
     </command>
   </node>
-  <node id='9'>
-    <command id='help'>
-      <params>
-        <param name='help' doc='Description of the interactive help system' />
-      </params>
-    </command>
-    <command id='list'>
-      <params>
-        <param name='list' doc='Print command list' />
-      </params>
-    </command>
-    <command id='write terminal'>
-      <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-        <param name='terminal' doc='Write to terminal' />
-      </params>
-    </command>
-    <command id='write file'>
-      <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-        <param name='file' doc='Write to configuration file' />
-      </params>
-    </command>
-    <command id='write memory'>
-      <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-        <param name='memory' doc='Write configuration to the file (same as write file)' />
-      </params>
-    </command>
-    <command id='write'>
-      <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-      </params>
-    </command>
-    <command id='show running-config'>
-      <params>
-        <param name='show' doc='Show running system information' />
-        <param name='running-config' doc='running configuration' />
-      </params>
-    </command>
-    <command id='exit'>
-      <params>
-        <param name='exit' doc='Exit current mode and down to previous mode' />
-      </params>
-    </command>
-    <command id='end'>
-      <params>
-        <param name='end' doc='End current mode and change to enable mode.' />
-      </params>
-    </command>
+  <node id='config-line'>
+    <name>config-line</name>
     <command id='login'>
       <params>
         <param name='login' doc='Enable password checking' />
@@ -1442,56 +1527,8 @@
       </params>
     </command>
   </node>
-  <node id='12'>
-    <command id='help'>
-      <params>
-        <param name='help' doc='Description of the interactive help system' />
-      </params>
-    </command>
-    <command id='list'>
-      <params>
-        <param name='list' doc='Print command list' />
-      </params>
-    </command>
-    <command id='write terminal'>
-      <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-        <param name='terminal' doc='Write to terminal' />
-      </params>
-    </command>
-    <command id='write file'>
-      <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-        <param name='file' doc='Write to configuration file' />
-      </params>
-    </command>
-    <command id='write memory'>
-      <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-        <param name='memory' doc='Write configuration to the file (same as write file)' />
-      </params>
-    </command>
-    <command id='write'>
-      <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-      </params>
-    </command>
-    <command id='show running-config'>
-      <params>
-        <param name='show' doc='Show running system information' />
-        <param name='running-config' doc='running configuration' />
-      </params>
-    </command>
-    <command id='exit'>
-      <params>
-        <param name='exit' doc='Exit current mode and down to previous mode' />
-      </params>
-    </command>
-    <command id='end'>
-      <params>
-        <param name='end' doc='End current mode and change to enable mode.' />
-      </params>
-    </command>
+  <node id='config-ns'>
+    <name>config-ns</name>
     <command id='nse &lt;0-65535&gt; nsvci &lt;0-65534&gt;'>
       <params>
         <param name='nse' doc='Persistent NS Entity' />
@@ -1604,58 +1641,11 @@
       </params>
     </command>
   </node>
-  <node id='13'>
-    <command id='help'>
-      <params>
-        <param name='help' doc='Description of the interactive help system' />
-      </params>
-    </command>
-    <command id='list'>
-      <params>
-        <param name='list' doc='Print command list' />
-      </params>
-    </command>
-    <command id='write terminal'>
-      <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-        <param name='terminal' doc='Write to terminal' />
-      </params>
-    </command>
-    <command id='write file'>
-      <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-        <param name='file' doc='Write to configuration file' />
-      </params>
-    </command>
-    <command id='write memory'>
-      <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-        <param name='memory' doc='Write configuration to the file (same as write file)' />
-      </params>
-    </command>
-    <command id='write'>
-      <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-      </params>
-    </command>
-    <command id='show running-config'>
-      <params>
-        <param name='show' doc='Show running system information' />
-        <param name='running-config' doc='running configuration' />
-      </params>
-    </command>
-    <command id='exit'>
-      <params>
-        <param name='exit' doc='Exit current mode and down to previous mode' />
-      </params>
-    </command>
-    <command id='end'>
-      <params>
-        <param name='end' doc='End current mode and change to enable mode.' />
-      </params>
-    </command>
+  <node id='config-bssgp'>
+    <name>config-bssgp</name>
   </node>
-  <node id='14'>
+  <node id='config-ctrl'>
+    <name>config-ctrl</name>
     <command id='bind A.B.C.D'>
       <params>
         <param name='bind' doc='Set bind address to listen for Control connections' />
@@ -1663,60 +1653,342 @@
       </params>
     </command>
   </node>
-  <node id='26'>
-    <command id='help'>
+  <node id='config-cs7'>
+    <name>config-cs7</name>
+    <command id='description .TEXT'>
       <params>
-        <param name='help' doc='Description of the interactive help system' />
+        <param name='description' doc='Save human-readable description of the object' />
+        <param name='.TEXT' doc='Text until the end of the line' />
       </params>
     </command>
-    <command id='list'>
+    <command id='network-indicator (international | national | reserved | spare)'>
       <params>
-        <param name='list' doc='Print command list' />
+        <param name='network-indicator' doc='Configure the Network Indicator' />
+        <param name='international' doc='International Network' />
+        <param name='national' doc='National Network' />
+        <param name='reserved' doc='Reserved Network' />
+        <param name='spare' doc='Spare Network' />
       </params>
     </command>
-    <command id='write terminal'>
+    <command id='point-code POINT_CODE'>
       <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-        <param name='terminal' doc='Write to terminal' />
+        <param name='point-code' doc='Configure the local Point Code' />
+        <param name='POINT_CODE' doc='Point Code' />
       </params>
     </command>
-    <command id='write file'>
+    <command id='point-code format &lt;1-24&gt; [&lt;1-23&gt;] [&lt;1-22&gt;]'>
       <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-        <param name='file' doc='Write to configuration file' />
+        <param name='point-code' doc='Point Code' />
+        <param name='format' doc='Configure Point Code Format' />
+        <param name='&lt;1-24&gt;' doc='Length of first PC component' />
+        <param name='[&lt;1-23&gt;]' doc='Length of second PC component' />
+        <param name='[&lt;1-22&gt;]' doc='Length of third PC component' />
       </params>
     </command>
-    <command id='write memory'>
+    <command id='point-code format default'>
       <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
-        <param name='memory' doc='Write configuration to the file (same as write file)' />
+        <param name='point-code' doc='Point Code' />
+        <param name='format' doc='Configure Point Code Format' />
+        <param name='default' doc='Default Point Code Format (3.8.3)' />
       </params>
     </command>
-    <command id='write'>
+    <command id='point-code delimiter (default|dash)'>
       <params>
-        <param name='write' doc='Write running configuration to memory, network, or terminal' />
+        <param name='point-code' doc='Point Code' />
+        <param name='delimiter' doc='Configure Point Code Delimiter' />
+        <param name='default' doc='Use dot as delimiter' />
+        <param name='dash' doc='User dash as delimiter' />
       </params>
     </command>
-    <command id='show running-config'>
+    <command id='xua rkm routing-key-allocation (static-only|dynamic-permitted)'>
+      <params>
+        <param name='xua' doc='SIGTRAN xxxUA related' />
+        <param name='rkm' doc='Routing Key Management' />
+        <param name='routing-key-allocation' doc='Routing Key Management Allocation Policy' />
+        <param name='static-only' doc='Only static (pre-confgured) Routing Keys permitted' />
+        <param name='dynamic-permitted' doc='Dynamically allocate Routing Keys for what ASPs request' />
+      </params>
+    </command>
+    <command id='asp NAME &lt;0-65535&gt; &lt;0-65535&gt; (sua|m3ua|ipa)'>
+      <params>
+        <param name='asp' doc='Configure Application Server Process' />
+        <param name='NAME' doc='Name of ASP' />
+        <param name='&lt;0-65535&gt;' doc='Remote SCTP port number' />
+        <param name='&lt;0-65535&gt;' doc='Local SCTP port number' />
+        <param name='sua' doc='SCCP User Adaptation' />
+        <param name='m3ua' doc='MTP3 User Adaptation' />
+        <param name='ipa' doc='IPA Multiplex (SCCP Lite)' />
+      </params>
+    </command>
+    <command id='no asp NAME'>
+      <params>
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='asp' doc='Disable Application Server Process' />
+        <param name='NAME' doc='Name of ASP' />
+      </params>
+    </command>
+    <command id='as NAME (sua|m3ua|ipa)'>
+      <params>
+        <param name='as' doc='Configure an Application Server' />
+        <param name='NAME' doc='Name of the Application Server' />
+        <param name='sua' doc='SCCP User Adaptation' />
+        <param name='m3ua' doc='MTP3 User Adaptation' />
+        <param name='ipa' doc='IPA Multiplex (SCCP Lite)' />
+      </params>
+    </command>
+    <command id='no as NAME'>
+      <params>
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='as' doc='Disable Application Server' />
+        <param name='NAME' doc='Name of AS' />
+      </params>
+    </command>
+    <command id='show cs7 instance &lt;0-15&gt; sccp-addressbook'>
       <params>
         <param name='show' doc='Show running system information' />
-        <param name='running-config' doc='running configuration' />
+        <param name='cs7' doc='ITU-T Signaling System 7' />
+        <param name='instance' doc='An instance of the SS7 stack' />
+        <param name='&lt;0-15&gt;' doc='An instance of the SS7 stack' />
+        <param name='sccp-addressbook' doc='List all SCCP addressbook entries' />
       </params>
     </command>
-    <command id='exit'>
+    <command id='sccp-address NAME'>
       <params>
-        <param name='exit' doc='Exit current mode and down to previous mode' />
+        <param name='sccp-address' doc='Create/Modify an SCCP addressbook entry' />
+        <param name='NAME' doc='Name of the SCCP Address' />
       </params>
     </command>
-    <command id='end'>
+    <command id='no sccp-address NAME'>
       <params>
-        <param name='end' doc='End current mode and change to enable mode.' />
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='sccp-address' doc='Delete an SCCP addressbook entry' />
+        <param name='NAME' doc='Name of the SCCP Address' />
       </params>
     </command>
+  </node>
+  <node id='config-cs7-as'>
+    <name>config-cs7-as</name>
+    <command id='description .TEXT'>
+      <params>
+        <param name='description' doc='Save human-readable description of the object' />
+        <param name='.TEXT' doc='Text until the end of the line' />
+      </params>
+    </command>
+    <command id='asp NAME'>
+      <params>
+        <param name='asp' doc='Specify that a given ASP is part of this AS' />
+        <param name='NAME' doc='Name of ASP to be added to AS' />
+      </params>
+    </command>
+    <command id='no asp NAME'>
+      <params>
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='asp' doc='Specify ASP to be removed from this AS' />
+        <param name='NAME' doc='Name of ASP to be removed' />
+      </params>
+    </command>
+    <command id='traffic-mode (broadcast | loadshare | roundrobin | override)'>
+      <params>
+        <param name='traffic-mode' doc='Specifies traffic mode of operation of the ASP within the AS' />
+        <param name='broadcast' doc='Broadcast to all ASP within AS' />
+        <param name='loadshare' doc='Share Load among all ASP within AS' />
+        <param name='roundrobin' doc='Round-Robin between all ASP within AS' />
+        <param name='override' doc='Override' />
+      </params>
+    </command>
+    <command id='recovery-timeout &lt;1-2000&gt;'>
+      <params>
+        <param name='recovery-timeout' doc='Specifies the recovery timeout value in milliseconds' />
+        <param name='&lt;1-2000&gt;' doc='Recovery Timeout in Milliseconds' />
+      </params>
+    </command>
+    <command id='qos-class &lt;0-255&gt;'>
+      <params>
+        <param name='qos-class' doc='Specity QoS Class of AS' />
+        <param name='&lt;0-255&gt;' doc='QoS Class of AS' />
+      </params>
+    </command>
+    <command id='routing-key RCONTEXT DPC'>
+      <params>
+        <param name='routing-key' doc='Define a routing key' />
+        <param name='RCONTEXT' doc='Routing context number' />
+        <param name='DPC' doc='Destination Point Code' />
+      </params>
+    </command>
+    <command id='routing-key RCONTEXT DPC si (aal2|bicc|b-isup|h248|isup|sat-isup|sccp|tup)'>
+      <params>
+        <param name='routing-key' doc='Define a routing key' />
+        <param name='RCONTEXT' doc='Routing context number' />
+        <param name='DPC' doc='Destination Point Code' />
+        <param name='si' doc='Match on Service Indicator' />
+        <param name='aal2' doc='ATM Adaption Layer 2' />
+        <param name='bicc' doc='Bearer Independent Call Control' />
+        <param name='b-isup' doc='Broadband ISDN User Part' />
+        <param name='h248' doc='H.248' />
+        <param name='isup' doc='ISDN User Part' />
+        <param name='sat-isup' doc='Sattelite ISDN User Part' />
+        <param name='sccp' doc='Signalling Connection Control Part' />
+        <param name='tup' doc='Telephony User Part' />
+      </params>
+    </command>
+    <command id='routing-key RCONTEXT DPC ssn SSN'>
+      <params>
+        <param name='routing-key' doc='Define a routing key' />
+        <param name='RCONTEXT' doc='Routing context number' />
+        <param name='DPC' doc='Destination Point Code' />
+        <param name='ssn' doc='Match on Sub-System Number' />
+        <param name='SSN' doc='Sub-System Number to match on' />
+      </params>
+    </command>
+    <command id='routing-key RCONTEXT DPC si (aal2|bicc|b-isup|h248|isup|sat-isup|sccp|tup) ssn SSN'>
+      <params>
+        <param name='routing-key' doc='Define a routing key' />
+        <param name='RCONTEXT' doc='Routing context number' />
+        <param name='DPC' doc='Destination Point Code' />
+        <param name='si' doc='Match on Service Indicator' />
+        <param name='aal2' doc='ATM Adaption Layer 2' />
+        <param name='bicc' doc='Bearer Independent Call Control' />
+        <param name='b-isup' doc='Broadband ISDN User Part' />
+        <param name='h248' doc='H.248' />
+        <param name='isup' doc='ISDN User Part' />
+        <param name='sat-isup' doc='Sattelite ISDN User Part' />
+        <param name='sccp' doc='Signalling Connection Control Part' />
+        <param name='tup' doc='Telephony User Part' />
+        <param name='ssn' doc='Match on Sub-System Number' />
+        <param name='SSN' doc='Sub-System Number to match on' />
+      </params>
+    </command>
+    <command id='point-code override dpc PC'>
+      <params>
+        <param name='point-code' doc='Point Code Specific Features' />
+        <param name='override' doc='Override (force) a point-code to hard-coded value' />
+        <param name='dpc' doc='Override Source Point Code' />
+        <param name='PC' doc='Override Destination Point Code' />
+      </params>
+    </command>
+  </node>
+  <node id='config-cs7-asp'>
+    <name>config-cs7-asp</name>
+    <command id='description .TEXT'>
+      <params>
+        <param name='description' doc='Save human-readable description of the object' />
+        <param name='.TEXT' doc='Text until the end of the line' />
+      </params>
+    </command>
+    <command id='remote-ip A.B.C.D'>
+      <params>
+        <param name='remote-ip' doc='Specify Remote IP Address of ASP' />
+        <param name='A.B.C.D' doc='Remote IP Address of ASP' />
+      </params>
+    </command>
+    <command id='local-ip A.B.C.D'>
+      <params>
+        <param name='local-ip' doc='Specify Local IP Address from which to contact ASP' />
+        <param name='A.B.C.D' doc='Local IP Address from which to contact of ASP' />
+      </params>
+    </command>
+    <command id='qos-class &lt;0-255&gt;'>
+      <params>
+        <param name='qos-class' doc='Specify QoS Class of ASP' />
+        <param name='&lt;0-255&gt;' doc='QoS Class of ASP' />
+      </params>
+    </command>
+    <command id='block'>
+      <params>
+        <param name='block' doc='Allows a SCTP Association with ASP, but doesn&apos;t let it become active' />
+      </params>
+    </command>
+    <command id='shutdown'>
+      <params>
+        <param name='shutdown' doc='Terminates SCTP association; New associations will be rejected' />
+      </params>
+    </command>
+  </node>
+  <node id='config-cs7-sccpaddr'>
+    <name>config-cs7-sccpaddr</name>
+    <command id='no point-code'>
+      <params>
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='point-code' doc='Remove point-code Number' />
+      </params>
+    </command>
+    <command id='no subsystem-number'>
+      <params>
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='subsystem-number' doc='Remove Subsystem Number' />
+      </params>
+    </command>
+    <command id='no global-title'>
+      <params>
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='global-title' doc='Remove Global Title' />
+      </params>
+    </command>
+    <command id='routing-indicator (GT|PC|IP)'>
+      <params>
+        <param name='routing-indicator' doc='Add Routing Indicator' />
+        <param name='GT' doc='by global-title' />
+        <param name='PC' doc='by point-code' />
+        <param name='IP' doc='by ip-address' />
+      </params>
+    </command>
+    <command id='point-code POINT_CODE'>
+      <params>
+        <param name='point-code' doc='Add point-code Number' />
+        <param name='POINT_CODE' doc='PC' />
+      </params>
+    </command>
+    <command id='subsystem-number &lt;0-4294967295&gt;'>
+      <params>
+        <param name='subsystem-number' doc='Add Subsystem Number' />
+        <param name='&lt;0-4294967295&gt;' doc='SSN' />
+      </params>
+    </command>
+    <command id='global-title'>
+      <params>
+        <param name='global-title' doc='Add/Modify Global Title' />
+      </params>
+    </command>
+  </node>
+  <node id='config-cs7-sccpaddr-gt'>
+    <name>config-cs7-sccpaddr-gt</name>
+    <command id='global-title-indicator &lt;0-15&gt;'>
+      <params>
+        <param name='global-title-indicator' doc='Set Global Title Indicator' />
+        <param name='&lt;0-15&gt;' doc='GTI' />
+      </params>
+    </command>
+    <command id='translation-type &lt;0-255&gt;'>
+      <params>
+        <param name='translation-type' doc='Set Global Title Translation Type' />
+        <param name='&lt;0-255&gt;' doc='TT' />
+      </params>
+    </command>
+    <command id='numbering-plan-indicator &lt;0-15&gt;'>
+      <params>
+        <param name='numbering-plan-indicator' doc='Set Global Title Numbering Plan Indicator' />
+        <param name='&lt;0-15&gt;' doc='NPI' />
+      </params>
+    </command>
+    <command id='nature-of-address-indicator &lt;0-127&gt;'>
+      <params>
+        <param name='nature-of-address-indicator' doc='Set Global Title Nature of Address Indicator' />
+        <param name='&lt;0-127&gt;' doc='NAI' />
+      </params>
+    </command>
+    <command id='digits DIGITS'>
+      <params>
+        <param name='digits' doc='Set Global Title Digits' />
+        <param name='DIGITS' doc='Number digits' />
+      </params>
+    </command>
+  </node>
+  <node id='config-sgsn'>
+    <name>config-sgsn</name>
     <command id='gtp local-ip A.B.C.D'>
       <params>
         <param name='gtp' doc='GTP Parameters' />
-        <param name='local-ip' doc='Set the IP address for the local GTP bind' />
+        <param name='local-ip' doc='Set the IP address for the local GTP bind for the Gp interface (towards the GGSNs). Note: in case you would like to run the GGSN on the same machine as the SGSN, you can not run both on the same IP address, since both sides are specified to use the same GTP port numbers (2123 and 2152). For example, you could use 127.0.0.1 for the SGSN and 127.0.0.2 for the GGSN in such situations.' />
         <param name='A.B.C.D' doc='IPv4 Address' />
       </params>
     </command>
@@ -1724,7 +1996,7 @@
       <params>
         <param name='ggsn' doc='Configure the GGSN information' />
         <param name='&lt;0-255&gt;' doc='GGSN Number' />
-        <param name='remote-ip' doc='IP information' />
+        <param name='remote-ip' doc='Configure this static GGSN to use the specified remote IP address.' />
         <param name='A.B.C.D' doc='IPv4 Address' />
       </params>
     </command>
@@ -1747,7 +2019,7 @@
     </command>
     <command id='auth-policy (accept-all|closed|acl-only|remote)'>
       <params>
-        <param name='auth-policy' doc='Autorization Policy of SGSN' />
+        <param name='auth-policy' doc='Configure the Authorization policy of the SGSN. This setting determines which subscribers are permitted to register to the network.' />
         <param name='accept-all' doc='Accept all IMSIs (DANGEROUS)' />
         <param name='closed' doc='Accept only home network subscribers or those in the ACL' />
         <param name='acl-only' doc='Accept only subscribers in the ACL' />
@@ -1767,35 +2039,35 @@
     <command id='gsup remote-ip A.B.C.D'>
       <params>
         <param name='gsup' doc='GSUP Parameters' />
-        <param name='remote-ip' doc='Set the IP address of the remote GSUP server' />
+        <param name='remote-ip' doc='Set the IP address of the remote GSUP server (e.g. OsmoHLR). This setting only applies if &apos;auth-policy remote&apos; is used.' />
         <param name='A.B.C.D' doc='IPv4 Address' />
       </params>
     </command>
     <command id='gsup remote-port &lt;0-65535&gt;'>
       <params>
         <param name='gsup' doc='GSUP Parameters' />
-        <param name='remote-port' doc='Set the TCP port of the remote GSUP server' />
+        <param name='remote-port' doc='Set the TCP port of the remote GSUP server, see also &apos;gsup remote-ip&apos;' />
         <param name='&lt;0-65535&gt;' doc='Remote TCP port' />
       </params>
     </command>
     <command id='gsup oap-id &lt;0-65535&gt;'>
       <params>
         <param name='gsup' doc='GSUP Parameters' />
-        <param name='oap-id' doc='Set the SGSN&apos;s OAP client ID' />
+        <param name='oap-id' doc='Set the OAP client ID for authentication on the GSUP protocol. This setting only applies if &apos;auth-policy remote&apos; is used.' />
         <param name='&lt;0-65535&gt;' doc='OAP client ID (0 == disabled)' />
       </params>
     </command>
     <command id='gsup oap-k K'>
       <params>
         <param name='gsup' doc='GSUP Parameters' />
-        <param name='oap-k' doc='Set the OAP shared secret K' />
+        <param name='oap-k' doc='Set the OAP shared secret key K for authentication on the GSUP protocol. This setting only applies if auth-policy remote is used.' />
         <param name='K' doc='K value (16 byte) hex' />
       </params>
     </command>
     <command id='gsup oap-opc OPC'>
       <params>
         <param name='gsup' doc='GSUP Parameters' />
-        <param name='oap-opc' doc='Set the OAP shared secret OPC' />
+        <param name='oap-opc' doc='Set the OAP shared secret OPC for authentication on the GSUP protocol. This setting only applies if auth-policy remote is used.' />
         <param name='OPC' doc='OPC value (16 byte) hex' />
       </params>
     </command>
@@ -1803,7 +2075,7 @@
       <params>
         <param name='apn' doc='Configure the information per APN' />
         <param name='APNAME' doc='The APN gateway name optionally prefixed by &apos;*&apos; (wildcard)' />
-        <param name='ggsn' doc='Select the GGSN to use when the APN gateway prefix matches' />
+        <param name='ggsn' doc='Select the GGSN to use for the given APN gateway prefix' />
         <param name='&lt;0-255&gt;' doc='The GGSN id' />
       </params>
     </command>
@@ -1811,7 +2083,7 @@
       <params>
         <param name='apn' doc='Configure the information per APN' />
         <param name='APNAME' doc='The APN gateway name optionally prefixed by &apos;*&apos; (wildcard)' />
-        <param name='imsi-prefix' doc='Restrict rule to a certain IMSI prefix' />
+        <param name='imsi-prefix' doc='Select the GGSN to use for the given APN gateway prefix if and only if the IMSI matches the given prefix.' />
         <param name='IMSIPRE' doc='An IMSI prefix' />
         <param name='ggsn' doc='Select the GGSN to use when APN gateway and IMSI prefix match' />
         <param name='&lt;0-255&gt;' doc='The GGSN id' />
@@ -1819,7 +2091,7 @@
     </command>
     <command id='access-point-name NAME'>
       <params>
-        <param name='access-point-name' doc='Configure a global list of allowed APNs' />
+        <param name='access-point-name' doc='Globally allow the given APN name for all subscribers.' />
         <param name='NAME' doc='Add this NAME to the list' />
       </params>
     </command>
@@ -1833,33 +2105,46 @@
     <command id='cdr filename NAME'>
       <params>
         <param name='cdr' doc='CDR' />
-        <param name='filename' doc='Set filename' />
-        <param name='NAME' doc='name' />
+        <param name='filename' doc='Set the file name for the call-data-record file, logging the data usage of each subscriber.' />
+        <param name='NAME' doc='filename' />
       </params>
     </command>
     <command id='no cdr filename'>
       <params>
         <param name='no' doc='Negate a command or set its defaults' />
         <param name='cdr' doc='CDR' />
-        <param name='filename' doc='Disable CDR generation' />
+        <param name='filename' doc='Disable saving CDR to file' />
+      </params>
+    </command>
+    <command id='cdr trap'>
+      <params>
+        <param name='cdr' doc='CDR' />
+        <param name='trap' doc='Enable sending CDR via TRAP CTRL messages' />
+      </params>
+    </command>
+    <command id='no cdr trap'>
+      <params>
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='cdr' doc='CDR' />
+        <param name='trap' doc='Disable sending CDR via TRAP CTRL messages' />
       </params>
     </command>
     <command id='cdr interval &lt;1-2147483647&gt;'>
       <params>
         <param name='cdr' doc='CDR' />
-        <param name='interval' doc='PDP periodic log interval' />
-        <param name='&lt;1-2147483647&gt;' doc='Seconds' />
+        <param name='interval' doc='Set the interval for the call-data-record file' />
+        <param name='&lt;1-2147483647&gt;' doc='interval in seconds' />
       </params>
     </command>
     <command id='ggsn dynamic'>
       <params>
         <param name='ggsn' doc='Configure the GGSN information' />
-        <param name='dynamic' doc='Enable dynamic GRX based look-up (requires restart)' />
+        <param name='dynamic' doc='Enable dynamic resolving of GGSNs based on DNS resolving the APN name like in a GRX-style setup. Changing this setting requires a restart.' />
       </params>
     </command>
     <command id='grx-dns-add A.B.C.D'>
       <params>
-        <param name='grx-dns-add' doc='Add DNS server' />
+        <param name='grx-dns-add' doc='Use the specified IP address for DNS-resolving the AP names to GGSN IP addresses' />
         <param name='A.B.C.D' doc='IPv4 address' />
       </params>
     </command>
@@ -1997,6 +2282,30 @@
         <param name='compression' doc='Configure compression' />
         <param name='v42bis' doc='V.42bis data compresion scheme' />
         <param name='passive' doc='Compression is available on request' />
+      </params>
+    </command>
+    <command id='iu rab-assign-addr-enc (x213|v4raw)'>
+      <params>
+        <param name='iu' doc='Iu interface protocol options' />
+        <param name='rab-assign-addr-enc' doc='Choose RAB Assignment&apos;s Transport Layer Address encoding' />
+        <param name='x213' doc='ITU-T X.213 compliant address encoding (default)' />
+        <param name='v4raw' doc='32bit length raw IPv4 address (for ip.access nano3G)' />
+      </params>
+    </command>
+    <command id='asn1 debug (1|0)'>
+      <params>
+        <param name='asn1' doc='ASN.1 settings' />
+        <param name='debug' doc='Enable ASN.1 debug messages' />
+        <param name='1' doc='Log ASN.1 debug messages to stderr' />
+        <param name='0' doc='Do not log ASN.1 debug messages to stderr' />
+      </params>
+    </command>
+    <command id='asn1 xer-print (1|0)'>
+      <params>
+        <param name='asn1' doc='ASN.1 settings' />
+        <param name='xer-print' doc='Log human readable representations of all ASN.1 messages to stderr' />
+        <param name='1' doc='Log XML representation of all ASN.1 messages to stderr' />
+        <param name='0' doc='Do not log decoded ASN.1 messages to stderr' />
       </params>
     </command>
   </node>
