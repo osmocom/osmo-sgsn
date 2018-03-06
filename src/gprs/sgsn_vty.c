@@ -301,7 +301,12 @@ DEFUN(cfg_sgsn, cfg_sgsn_cmd,
 DEFUN(cfg_sgsn_bind_addr, cfg_sgsn_bind_addr_cmd,
 	"gtp local-ip A.B.C.D",
 	"GTP Parameters\n"
-	"Set the IP address for the local GTP bind\n"
+	"Set the IP address for the local GTP bind for the Gp interface (towards the GGSNs)."
+	" Note: in case you would like to run the GGSN on the same machine as the SGSN, you can not run"
+	" both on the same IP address, since both sides are specified to use the same GTP port numbers"
+	" (" OSMO_STRINGIFY_VAL(GTP1C_PORT) " and " OSMO_STRINGIFY_VAL(GTP1U_PORT) ")."
+	" For example, you could use 127.0.0.1 for the SGSN and 127.0.0.2 for the GGSN in such"
+	" situations.\n"
 	"IPv4 Address\n")
 {
 	inet_aton(argv[0], &g_cfg->gtp_listenaddr.sin_addr);
@@ -311,7 +316,9 @@ DEFUN(cfg_sgsn_bind_addr, cfg_sgsn_bind_addr_cmd,
 
 DEFUN(cfg_ggsn_remote_ip, cfg_ggsn_remote_ip_cmd,
 	"ggsn <0-255> remote-ip A.B.C.D",
-	GGSN_STR "GGSN Number\n" IP_STR "IPv4 Address\n")
+	GGSN_STR "GGSN Number\n"
+	"Configure this static GGSN to use the specified remote IP address.\n"
+	"IPv4 Address\n")
 {
 	uint32_t id = atoi(argv[0]);
 	struct sgsn_ggsn_ctx *ggc = sgsn_ggsn_ctx_find_alloc(id);
@@ -351,7 +358,9 @@ DEFUN(cfg_ggsn_gtp_version, cfg_ggsn_gtp_version_cmd,
 
 DEFUN(cfg_ggsn_dynamic_lookup, cfg_ggsn_dynamic_lookup_cmd,
 	"ggsn dynamic",
-	GGSN_STR "Enable dynamic GRX based look-up (requires restart)\n")
+	GGSN_STR
+	"Enable dynamic resolving of GGSNs based on DNS resolving the APN name like in a GRX-style setup."
+	" Changing this setting requires a restart.\n")
 {
 	sgsn->cfg.dynamic_lookup = 1;
 	return CMD_SUCCESS;
@@ -359,7 +368,8 @@ DEFUN(cfg_ggsn_dynamic_lookup, cfg_ggsn_dynamic_lookup_cmd,
 
 DEFUN(cfg_grx_ggsn, cfg_grx_ggsn_cmd,
 	"grx-dns-add A.B.C.D",
-	"Add DNS server\nIPv4 address\n")
+	"Use the specified IP address for DNS-resolving the AP names to GGSN IP addresses\n"
+	"IPv4 address\n")
 {
 	struct ares_addr_node *node = talloc_zero(tall_bsc_ctx, struct ares_addr_node);
 	node->family = AF_INET;
@@ -401,7 +411,7 @@ static int add_apn_ggsn_mapping(struct vty *vty, const char *apn_str,
 DEFUN(cfg_apn_ggsn, cfg_apn_ggsn_cmd,
 	"apn APNAME ggsn <0-255>",
 	APN_STR APN_GW_STR
-	"Select the GGSN to use when the APN gateway prefix matches\n"
+	"Select the GGSN to use for the given APN gateway prefix\n"
 	"The GGSN id")
 {
 
@@ -411,7 +421,8 @@ DEFUN(cfg_apn_ggsn, cfg_apn_ggsn_cmd,
 DEFUN(cfg_apn_imsi_ggsn, cfg_apn_imsi_ggsn_cmd,
 	"apn APNAME imsi-prefix IMSIPRE ggsn <0-255>",
 	APN_STR APN_GW_STR
-	"Restrict rule to a certain IMSI prefix\n"
+	"Select the GGSN to use for the given APN gateway prefix if and only if the IMSI matches the"
+	" given prefix.\n"
 	"An IMSI prefix\n"
 	"Select the GGSN to use when APN gateway and IMSI prefix match\n"
 	"The GGSN id")
@@ -634,7 +645,8 @@ DEFUN(cfg_encrypt, cfg_encrypt_cmd,
 
 DEFUN(cfg_auth_policy, cfg_auth_policy_cmd,
 	"auth-policy (accept-all|closed|acl-only|remote)",
-	"Autorization Policy of SGSN\n"
+	"Configure the Authorization policy of the SGSN. This setting determines which subscribers are"
+	" permitted to register to the network.\n"
 	"Accept all IMSIs (DANGEROUS)\n"
 	"Accept only home network subscribers or those in the ACL\n"
 	"Accept only subscribers in the ACL\n"
@@ -986,7 +998,8 @@ DEFUN(update_subscr_update_auth_info, update_subscr_update_auth_info_cmd,
 DEFUN(cfg_gsup_remote_ip, cfg_gsup_remote_ip_cmd,
 	"gsup remote-ip A.B.C.D",
 	"GSUP Parameters\n"
-	"Set the IP address of the remote GSUP server\n"
+	"Set the IP address of the remote GSUP server (e.g. OsmoHLR)."
+	" This setting only applies if 'auth-policy remote' is used.\n"
 	"IPv4 Address\n")
 {
 	inet_aton(argv[0], &g_cfg->gsup_server_addr.sin_addr);
@@ -997,7 +1010,7 @@ DEFUN(cfg_gsup_remote_ip, cfg_gsup_remote_ip_cmd,
 DEFUN(cfg_gsup_remote_port, cfg_gsup_remote_port_cmd,
 	"gsup remote-port <0-65535>",
 	"GSUP Parameters\n"
-	"Set the TCP port of the remote GSUP server\n"
+	"Set the TCP port of the remote GSUP server, see also 'gsup remote-ip'\n"
 	"Remote TCP port\n")
 {
 	g_cfg->gsup_server_port = atoi(argv[0]);
@@ -1008,7 +1021,9 @@ DEFUN(cfg_gsup_remote_port, cfg_gsup_remote_port_cmd,
 DEFUN(cfg_gsup_oap_id, cfg_gsup_oap_id_cmd,
 	"gsup oap-id <0-65535>",
 	"GSUP Parameters\n"
-	"Set the SGSN's OAP client ID\nOAP client ID (0 == disabled)\n")
+	"Set the OAP client ID for authentication on the GSUP protocol."
+	" This setting only applies if 'auth-policy remote' is used.\n"
+	"OAP client ID (0 == disabled)\n")
 {
 	/* VTY ensures range */
 	g_cfg->oap.client_id = (uint16_t)atoi(argv[0]);
@@ -1018,7 +1033,9 @@ DEFUN(cfg_gsup_oap_id, cfg_gsup_oap_id_cmd,
 DEFUN(cfg_gsup_oap_k, cfg_gsup_oap_k_cmd,
 	"gsup oap-k K",
 	"GSUP Parameters\n"
-	"Set the OAP shared secret K\nK value (16 byte) hex\n")
+	"Set the OAP shared secret key K for authentication on the GSUP protocol."
+	" This setting only applies if auth-policy remote is used.\n"
+	"K value (16 byte) hex\n")
 {
 	const char *k = argv[0];
 
@@ -1051,7 +1068,9 @@ disable:
 DEFUN(cfg_gsup_oap_opc, cfg_gsup_oap_opc_cmd,
 	"gsup oap-opc OPC",
 	"GSUP Parameters\n"
-	"Set the OAP shared secret OPC\nOPC value (16 byte) hex\n")
+	"Set the OAP shared secret OPC for authentication on the GSUP protocol."
+	" This setting only applies if auth-policy remote is used.\n"
+	"OPC value (16 byte) hex\n")
 {
 	const char *opc = argv[0];
 
@@ -1083,7 +1102,7 @@ disable:
 
 DEFUN(cfg_apn_name, cfg_apn_name_cmd,
 	"access-point-name NAME",
-	"Configure a global list of allowed APNs\n"
+	"Globally allow the given APN name for all subscribers.\n"
 	"Add this NAME to the list\n")
 {
 	return add_apn_ggsn_mapping(vty, argv[0], "", 0);
@@ -1104,7 +1123,9 @@ DEFUN(cfg_no_apn_name, cfg_no_apn_name_cmd,
 
 DEFUN(cfg_cdr_filename, cfg_cdr_filename_cmd,
 	"cdr filename NAME",
-	"CDR\nEnable saving CDR to filename\nname\n")
+	"CDR\n"
+	"Set the file name for the call-data-record file, logging the data usage of each subscriber.\n"
+	"filename\n")
 {
 	talloc_free(g_cfg->cdr.filename);
 	g_cfg->cdr.filename = talloc_strdup(tall_vty_ctx, argv[0]);
@@ -1138,7 +1159,9 @@ DEFUN(cfg_no_cdr_trap, cfg_no_cdr_trap_cmd,
 
 DEFUN(cfg_cdr_interval, cfg_cdr_interval_cmd,
 	"cdr interval <1-2147483647>",
-	"CDR\nPDP periodic log interval\nSeconds\n")
+	"CDR\n"
+	"Set the interval for the call-data-record file\n"
+	"interval in seconds\n")
 {
 	g_cfg->cdr.interval = atoi(argv[0]);
 	return CMD_SUCCESS;
