@@ -1654,7 +1654,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 			/* In Iu mode search only for ptmsi */
 			char mi_string[GSM48_MI_SIZE];
 			uint8_t mi_len = TLVP_LEN(&tp, GSM48_IE_GMM_ALLOC_PTMSI);
-			uint8_t *mi = TLVP_VAL(&tp, GSM48_IE_GMM_ALLOC_PTMSI);
+			const uint8_t *mi = TLVP_VAL(&tp, GSM48_IE_GMM_ALLOC_PTMSI);
 			uint8_t mi_type = *mi & GSM_MI_TYPE_MASK;
 			uint32_t tmsi;
 

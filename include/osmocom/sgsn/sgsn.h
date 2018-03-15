@@ -9,6 +9,12 @@
 #include <osmocom/sgsn/oap_client.h>
 #include <osmocom/sgsn/common.h>
 
+#include "../../bscconfig.h"
+
+#if BUILD_IU
+#include <osmocom/ranap/iu_client.h>
+#endif
+
 #include <ares.h>
 #include <gtp.h>
 
@@ -113,9 +119,11 @@ struct sgsn_config {
 		int p2;
 	} dcomp_v42bis;
 
+#if BUILD_IU
 	struct {
-		int rab_assign_addr_enc;
+		enum ranap_nsap_addr_enc rab_assign_addr_enc;
 	} iu;
+#endif
 };
 
 struct sgsn_instance {
