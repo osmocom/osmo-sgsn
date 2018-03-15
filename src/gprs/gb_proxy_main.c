@@ -66,7 +66,10 @@ const char *openbsc_copyright =
 	"This is free software: you are free to change and redistribute it.\r\n"
 	"There is NO WARRANTY, to the extent permitted by law.\r\n";
 
-static char *config_file = "osmo_gbproxy.cfg";
+#define CONFIG_FILE_DEFAULT "osmo-gbproxy.cfg"
+#define CONFIG_FILE_LEGACY "osmo_gbproxy.cfg"
+
+static char *config_file = NULL;
 struct gbproxy_config gbcfg = {0};
 static int daemonize = 0;
 
@@ -130,7 +133,7 @@ static void print_help()
 	printf("  -h --help this text\n");
 	printf("  -d option --debug=DNS:DGPRS,0:0 enable debugging\n");
 	printf("  -D --daemonize Fork the process into a background daemon\n");
-	printf("  -c --config-file filename The config file to use.\n");
+	printf("  -c --config-file filename The config file to use [%s]\n", CONFIG_FILE_DEFAULT);
 	printf("  -s --disable-color\n");
 	printf("  -T --timestamp Prefix every log line with a timestamp\n");
 	printf("  -V --version. Print the version of OpenBSC.\n");
@@ -251,6 +254,12 @@ static const struct log_info gprs_log_info = {
 	.num_cat = ARRAY_SIZE(gprs_categories),
 };
 
+static bool file_exists(const char *path)
+{
+	struct stat sb;
+	return stat(path, &sb) ? false : true;
+}
+
 int main(int argc, char **argv)
 {
 	int rc;
@@ -277,6 +286,21 @@ int main(int argc, char **argv)
 
 	handle_options(argc, argv);
 
+	/* Backwards compatibility: for years, the default config file name was
+	 * osmo_gbproxy.cfg. All other Osmocom programs use osmo-*.cfg with a
+	 * dash. To be able to use the new config file name without breaking
+	 * previous setups that might rely on the legacy default config file
+	 * name, we need to look for the old config file if no -c option was
+	 * passed AND no file exists with the new default file name. */
+	if (!config_file) {
+		/* No -c option was passed */
+		if (file_exists(CONFIG_FILE_LEGACY)
+		    && !file_exists(CONFIG_FILE_DEFAULT))
+			config_file = CONFIG_FILE_LEGACY;
+		else
+			config_file = CONFIG_FILE_DEFAULT;
+	}
+
 	rate_ctr_init(tall_bsc_ctx);
 	osmo_stats_init(tall_bsc_ctx);
 
@@ -294,7 +318,7 @@ int main(int argc, char **argv)
 
 	rc = gbproxy_parse_config(config_file, &gbcfg);
 	if (rc < 0) {
-		LOGP(DGPRS, LOGL_FATAL, "Cannot parse config file\n");
+		LOGP(DGPRS, LOGL_FATAL, "Cannot parse config file '%s'\n", config_file);
 		exit(2);
 	}
 
