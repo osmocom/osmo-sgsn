@@ -2444,8 +2444,8 @@ int main(int argc, char **argv)
 	void *osmo_sgsn_ctx;
 	void *msgb_ctx;
 
-	osmo_init_logging(&info);
 	osmo_sgsn_ctx = talloc_named_const(NULL, 0, "osmo_sgsn");
+	osmo_init_logging2(osmo_sgsn_ctx, &info);
 	tall_bsc_ctx = talloc_named_const(osmo_sgsn_ctx, 0, "bsc");
 	msgb_ctx = msgb_talloc_ctx_init(osmo_sgsn_ctx, 0);
 

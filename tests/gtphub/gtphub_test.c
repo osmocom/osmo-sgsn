@@ -1762,8 +1762,9 @@ static struct log_info info = {
 
 int main(int argc, char **argv)
 {
-	osmo_init_logging(&info);
 	osmo_gtphub_ctx = talloc_named_const(NULL, 0, "osmo_gtphub");
+	void *log_ctx = talloc_named_const(osmo_gtphub_ctx, 0, "log");
+	osmo_init_logging2(log_ctx, &info);
 
 	test_nr_map_basic();
 	test_nr_map_wrap();
@@ -1780,7 +1781,9 @@ int main(int argc, char **argv)
 	printf("Done\n");
 
 	talloc_report_full(osmo_gtphub_ctx, stderr);
+	talloc_free(log_ctx);
 	OSMO_ASSERT(talloc_total_blocks(osmo_gtphub_ctx) == 1);
+	talloc_free(osmo_gtphub_ctx);
 	return 0;
 }
 

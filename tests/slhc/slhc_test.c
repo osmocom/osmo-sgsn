@@ -250,17 +250,20 @@ static struct log_info info = {
 int main(int argc, char **argv)
 {
 	void *ctx;
-
-	osmo_init_logging(&info);
+	void *log_ctx;
 
 	ctx = talloc_named_const(NULL, 0, "slhc_ctx");
+	log_ctx = talloc_named_const(ctx, 0, "log");
+	osmo_init_logging2(log_ctx, &info);
 
 	test_slhc(ctx);
 
 	printf("Done\n");
 
 	talloc_report_full(ctx, stderr);
+	talloc_free(log_ctx);
 	OSMO_ASSERT(talloc_total_blocks(ctx) == 1);
+	talloc_free(ctx);
 	return 0;
 }
 

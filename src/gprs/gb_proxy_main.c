@@ -275,7 +275,7 @@ int main(int argc, char **argv)
 	signal(SIGUSR2, &signal_handler);
 	osmo_init_ignore_signals();
 
-	osmo_init_logging(&gprs_log_info);
+	osmo_init_logging2(tall_bsc_ctx, &gprs_log_info);
 
 	vty_info.copyright = openbsc_copyright;
 	vty_init(&vty_info);

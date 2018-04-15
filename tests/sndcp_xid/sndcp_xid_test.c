@@ -261,10 +261,11 @@ static struct log_info info = {
 int main(int argc, char **argv)
 {
 	void *xid_ctx;
-
-	osmo_init_logging(&info);
+	void *log_ctx;
 
 	xid_ctx = talloc_named_const(NULL, 0, "xid_ctx");
+	log_ctx = talloc_named_const(xid_ctx, 0, "log");
+	osmo_init_logging2(log_ctx, &info);
 
 	test_xid_decode_realworld(xid_ctx);
 	test_xid_encode_decode(xid_ctx);
@@ -272,7 +273,9 @@ int main(int argc, char **argv)
 	printf("Done\n");
 
 	talloc_report_full(xid_ctx, stderr);
+	talloc_free(log_ctx);
 	OSMO_ASSERT(talloc_total_blocks(xid_ctx) == 1);
+	talloc_free(xid_ctx);
 	return 0;
 }
 

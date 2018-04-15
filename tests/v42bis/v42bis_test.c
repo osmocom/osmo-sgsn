@@ -407,11 +407,12 @@ static struct log_info info = {
 int main(int argc, char **argv)
 {
 	void *v42bis_ctx;
+	void *log_ctx;
 	int i;
 
-	osmo_init_logging(&info);
-
 	v42bis_ctx = talloc_named_const(NULL, 0, "v42bis_ctx");
+	log_ctx = talloc_named_const(v42bis_ctx, 0, "log");
+	osmo_init_logging2(log_ctx, &info);
 
 	test_v42bis(v42bis_ctx);
 
@@ -423,7 +424,9 @@ int main(int argc, char **argv)
 
 	printf("Done\n");
 	talloc_report_full(v42bis_ctx, stderr);
+	talloc_free(log_ctx);
 	OSMO_ASSERT(talloc_total_blocks(v42bis_ctx) == 1);
+	talloc_free(v42bis_ctx);
 	return 0;
 }
 

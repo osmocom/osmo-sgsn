@@ -252,8 +252,9 @@ static struct log_info info = {
 
 int main(int argc, char **argv)
 {
-	msgb_talloc_ctx_init(NULL, 0);
-	osmo_init_logging(&info);
+	void *ctx = talloc_named_const(NULL, 0, "oap_client_test");
+	msgb_talloc_ctx_init(ctx, 0);
+	osmo_init_logging2(ctx, &info);
 
 	OSMO_ASSERT(osmo_stderr_target);
 	log_set_use_color(osmo_stderr_target, 0);

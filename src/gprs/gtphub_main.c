@@ -346,7 +346,7 @@ int main(int argc, char **argv)
 	signal(SIGUSR2, &signal_handler);
 	osmo_init_ignore_signals();
 
-	osmo_init_logging(&gtphub_log_info);
+	osmo_init_logging2(osmo_gtphub_ctx, &gtphub_log_info);
 
 	vty_info.copyright = gtphub_copyright;
 	vty_init(&vty_info);
