@@ -1132,7 +1132,7 @@ int my_subscr_request_auth_info_fake_auth(struct sgsn_mm_ctx *mmctx, const uint8
 {
 	/* Fake an authentication */
 	OSMO_ASSERT(mmctx->subscr);
-	mmctx->is_authenticated = 1;
+	mmctx->sec_ctx = OSMO_AUTH_TYPE_GSM;
 	gprs_subscr_update_auth_info(mmctx->subscr);
 
 	return 0;

@@ -224,7 +224,7 @@ struct sgsn_mm_ctx {
 	 * whether one of them can be dropped. */
 
 	enum sgsn_auth_state	auth_state;
-	int			is_authenticated;
+	enum osmo_sub_auth_type sec_ctx;
 
 	/* the string representation of the current hlr */
 	char 			hlr[GSM_EXTENSION_LENGTH];
@@ -234,6 +234,17 @@ struct sgsn_mm_ctx {
 
 	struct gprs_subscr	*subscr;
 };
+
+static inline bool sgsn_mm_ctx_is_authenticated(struct sgsn_mm_ctx *ctx)
+{
+	switch (ctx->sec_ctx) {
+	case OSMO_AUTH_TYPE_GSM:
+	case OSMO_AUTH_TYPE_UMTS:
+		return true;
+	default:
+		return false;
+	}
+}
 
 #define LOGMMCTXP(level, mm, fmt, args...) \
 	LOGP(DMM, level, "MM(%s/%08x) " fmt, (mm) ? (mm)->imsi : "---", \
