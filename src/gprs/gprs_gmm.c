@@ -660,24 +660,24 @@ static int gsm48_tx_gmm_auth_ciph_rej(struct sgsn_mm_ctx *mm)
 }
 
 /* check if the received authentication response matches */
-static bool check_auth_resp(struct sgsn_mm_ctx *ctx,
-			    bool is_utran,
-			    const struct osmo_auth_vector *vec,
-			    const uint8_t *res, uint8_t res_len)
+static enum osmo_sub_auth_type check_auth_resp(struct sgsn_mm_ctx *ctx,
+					       bool is_utran,
+					       const struct osmo_auth_vector *vec,
+					       const uint8_t *res, uint8_t res_len)
 {
 	const uint8_t *expect_res;
 	uint8_t expect_res_len;
 	enum osmo_sub_auth_type expect_type;
 	const char *expect_str;
 
-	if (!vec)
-		return true; /* really!? */
-
 	/* On UTRAN (3G) we always expect UMTS AKA. On GERAN (2G) we sent AUTN
 	 * and expect UMTS AKA if there is R99 capability and our vector
-	 * supports UMTS AKA, otherwise we expect GSM AKA. */
+	 * supports UMTS AKA, otherwise we expect GSM AKA.
+	 * However, on GERAN, even if we sent a UMTS AKA Authentication Request, the MS may decide to
+	 * instead reply with a GSM AKA SRES response. */
 	if (is_utran
-	    || (mmctx_is_r99(ctx) && (vec->auth_types & OSMO_AUTH_TYPE_UMTS))) {
+	    || (mmctx_is_r99(ctx) && (vec->auth_types & OSMO_AUTH_TYPE_UMTS)
+		&& (res_len > sizeof(vec->sres)))) {
 		expect_type = OSMO_AUTH_TYPE_UMTS;
 		expect_str = "UMTS RES";
 		expect_res = vec->res;
@@ -694,7 +694,7 @@ static bool check_auth_resp(struct sgsn_mm_ctx *ctx,
 			  " not provide the expected auth type:"
 			  " expected %s = 0x%x, auth_types are 0x%x\n",
 			  expect_str, expect_type, vec->auth_types);
-		return false;
+		return OSMO_AUTH_TYPE_NONE;
 	}
 
 	if (!res)
@@ -707,12 +707,12 @@ static bool check_auth_resp(struct sgsn_mm_ctx *ctx,
 		goto auth_mismatch;
 
 	/* Authorized! */
-	return true;
+	return expect_type;
 
 auth_mismatch:
 	LOGMMCTXP(LOGL_ERROR, ctx, "Auth mismatch: expected %s = %s\n",
 		  expect_str, osmo_hexdump_nospc(expect_res, expect_res_len));
-	return false;
+	return OSMO_AUTH_TYPE_NONE;
 }
 
 /* Section 9.4.10: Authentication and Ciphering Response */
@@ -776,14 +776,12 @@ static int gsm48_rx_gmm_auth_ciph_resp(struct sgsn_mm_ctx *ctx,
 
 	LOGMMCTXP(LOGL_DEBUG, ctx, "checking auth: received %s = %s\n",
 		  res_name, osmo_hexdump(res, res_len));
-	rc = check_auth_resp(ctx, false, &at->vec, res, res_len);
-	if (!rc) {
+	ctx->sec_ctx = check_auth_resp(ctx, false, &at->vec, res, res_len);
+	if (!sgsn_mm_ctx_is_authenticated(ctx)) {
 		rc = gsm48_tx_gmm_auth_ciph_rej(ctx);
 		mm_ctx_cleanup_free(ctx, "GPRS AUTH AND CIPH REJECT");
 		return rc;
 	}
-
-	ctx->is_authenticated = 1;
 
 	if (ctx->ran_type == MM_CTX_T_UTRAN_Iu)
 		ctx->iu.new_key = 1;
@@ -1024,7 +1022,8 @@ static int gsm48_gmm_authorize(struct sgsn_mm_ctx *ctx)
 		return 0;
 	}
 
-	if (ctx->auth_state == SGSN_AUTH_AUTHENTICATE && !ctx->is_authenticated) {
+	if (ctx->auth_state == SGSN_AUTH_AUTHENTICATE
+	    && !sgsn_mm_ctx_is_authenticated(ctx)) {
 		struct gsm_auth_tuple *at = &ctx->auth_triplet;
 
 		mmctx_timer_start(ctx, 3360, sgsn->cfg.timers.T3360);
@@ -1032,7 +1031,7 @@ static int gsm48_gmm_authorize(struct sgsn_mm_ctx *ctx)
 						  false);
 	}
 
-	if (ctx->auth_state == SGSN_AUTH_AUTHENTICATE && ctx->is_authenticated &&
+	if (ctx->auth_state == SGSN_AUTH_AUTHENTICATE && sgsn_mm_ctx_is_authenticated(ctx) &&
 	    ctx->auth_triplet.key_seq != GSM_KEY_SEQ_INVAL) {
 		/* Check again for authorization */
 		sgsn_auth_request(ctx);
@@ -1104,7 +1103,7 @@ static int gsm48_gmm_authorize(struct sgsn_mm_ctx *ctx)
 
 void gsm0408_gprs_authenticate(struct sgsn_mm_ctx *ctx)
 {
-	ctx->is_authenticated = 0;
+	ctx->sec_ctx = OSMO_AUTH_TYPE_NONE;
 
 	gsm48_gmm_authorize(ctx);
 }
@@ -1418,7 +1417,7 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 		ctx->gb.tlli_new = gprs_tmsi2tlli(ctx->p_tmsi, TLLI_LOCAL);
 
 		/* Inform LLC layer about new TLLI but keep old active */
-		if (ctx->is_authenticated)
+		if (sgsn_mm_ctx_is_authenticated(ctx))
 			gprs_llme_copy_key(ctx, ctx->gb.llme);
 
 		gprs_llgmm_assign(ctx->gb.llme, ctx->gb.tlli, ctx->gb.tlli_new);
