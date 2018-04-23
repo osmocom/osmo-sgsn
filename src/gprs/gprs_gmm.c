@@ -1613,6 +1613,9 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	/* MS Radio Access Capability 10.5.5.12a */
 	ms_ra_acc_cap_len = *cur++;
 	if (ms_ra_acc_cap_len > 52) {
+		LOGP(DMM, LOGL_ERROR,
+		     "Rejecting GMM RA Update Request: MS Radio Access Capability too long"
+		     " (ms_ra_acc_cap_len = %u > 52)\n", ms_ra_acc_cap_len);
 		reject_cause = GMM_CAUSE_PROTO_ERR_UNSPEC;
 		goto rejected;
 	}
@@ -1665,6 +1668,8 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 				mmctx = sgsn_mm_ctx_by_ptmsi(tmsi);
 			}
 #else
+			LOGP(DMM, LOGL_ERROR, "%s: Rejecting GMM RA Update Request: No Iu support\n",
+			     mi_string);
 			goto rejected;
 #endif
 		}
@@ -1701,6 +1706,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		/* The MS has to perform GPRS attach */
 		/* Device is still IMSI attached for CS but initiate GPRS ATTACH,
 		 * see GSM 04.08, 4.7.5.1.4 and G.6 */
+		LOGMMCTXP(LOGL_ERROR, mmctx, "Rejecting GMM RA Update Request: MS should GMM Attach first\n");
 		reject_cause = GMM_CAUSE_IMPL_DETACHED;
 		goto rejected;
 	}
