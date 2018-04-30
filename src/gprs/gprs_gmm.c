@@ -587,8 +587,10 @@ static int gsm48_tx_gmm_auth_ciph_req(struct sgsn_mm_ctx *mm,
 	uint8_t *m_rand, *m_cksn, rbyte;
 	int rc;
 
-	LOGMMCTXP(LOGL_INFO, mm, "<- GPRS AUTH AND CIPHERING REQ (rand = %s",
-		  osmo_hexdump(vec->rand, sizeof(vec->rand)));
+	LOGMMCTXP(LOGL_INFO, mm, "<- GPRS AUTH AND CIPHERING REQ (rand = %s,"
+		  " mmctx_is_r99=%d, vec->auth_types=0x%x",
+		  osmo_hexdump(vec->rand, sizeof(vec->rand)),
+		  mmctx_is_r99(mm), vec->auth_types);
 	if (mmctx_is_r99(mm) && vec
 	    && (vec->auth_types & OSMO_AUTH_TYPE_UMTS)) {
 		LOGPC(DMM, LOGL_INFO, ", autn = %s)\n",
