@@ -1933,6 +1933,13 @@ static int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		if (gh->msg_type == GSM48_MT_GMM_DETACH_ACK)
 			return gprs_llgmm_unassign(llme);
 
+		/* Don't reply to deatch requests, reason power off */
+		if (gh->msg_type == GSM48_MT_GMM_DETACH_REQ &&
+			gh->data[0] & 0x8) {
+			return 0;
+		}
+
+
 		gprs_llgmm_reset(llme);
 
 		/* Don't force it into re-attachment */
