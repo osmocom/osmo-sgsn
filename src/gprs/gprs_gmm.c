@@ -424,7 +424,7 @@ static struct gsm48_qos default_qos = {
 };
 
 /* Chapter 9.4.2: Attach accept */
-static int gsm48_tx_gmm_att_ack(struct sgsn_mm_ctx *mm)
+int gsm48_tx_gmm_att_ack(struct sgsn_mm_ctx *mm)
 {
 	struct msgb *msg = gsm48_msgb_alloc_name("GSM 04.08 ATT ACK");
 	struct gsm48_hdr *gh;
@@ -503,7 +503,7 @@ static int gsm48_tx_gmm_att_rej_oldmsg(const struct msgb *old_msg,
 	gmm_copy_id(msg, old_msg);
 	return _tx_gmm_att_rej(msg, gmm_cause, NULL);
 }
-static int gsm48_tx_gmm_att_rej(struct sgsn_mm_ctx *mm,
+int gsm48_tx_gmm_att_rej(struct sgsn_mm_ctx *mm,
 				uint8_t gmm_cause)
 {
 	struct msgb *msg = gsm48_msgb_alloc_name("GSM 04.08 ATT REJ");
@@ -547,7 +547,7 @@ static int gsm48_tx_gmm_det_ack_oldmsg(struct msgb *oldmsg, uint8_t force_stby)
 }
 
 /* Transmit Chapter 9.4.12 Identity Request */
-static int gsm48_tx_gmm_id_req(struct sgsn_mm_ctx *mm, uint8_t id_type)
+int gsm48_tx_gmm_id_req(struct sgsn_mm_ctx *mm, uint8_t id_type)
 {
 	struct msgb *msg = gsm48_msgb_alloc_name("GSM 04.08 ID REQ");
 	struct gsm48_hdr *gh;
@@ -577,7 +577,7 @@ static bool mmctx_is_r99(const struct sgsn_mm_ctx *mm)
 }
 
 /* 3GPP TS 24.008 Section 9.4.9: Authentication and Ciphering Request */
-static int gsm48_tx_gmm_auth_ciph_req(struct sgsn_mm_ctx *mm,
+int gsm48_tx_gmm_auth_ciph_req(struct sgsn_mm_ctx *mm,
 				      const struct osmo_auth_vector *vec,
 				      uint8_t key_seq, bool force_standby)
 {
@@ -1533,7 +1533,7 @@ static int gsm48_tx_gmm_ra_upd_ack(struct sgsn_mm_ctx *mm)
 }
 
 /* Chapter 9.4.17: Routing area update reject */
-static int gsm48_tx_gmm_ra_upd_rej(struct msgb *old_msg, uint8_t cause)
+int gsm48_tx_gmm_ra_upd_rej(struct msgb *old_msg, uint8_t cause)
 {
 	struct msgb *msg = gsm48_msgb_alloc_name("GSM 04.08 RA UPD REJ");
 	struct gsm48_hdr *gh;
