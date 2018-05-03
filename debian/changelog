@@ -1,3 +1,75 @@
+osmo-sgsn (1.3.0) unstable; urgency=medium
+
+  [ Neels Hofmeyr ]
+  * drop osmo_sgsn.cfg from src/gprs dir
+  * change default config filename to osmo-sgsn.cfg, not osmo_sgsn.cfg
+  * vty: skip installing cmds now always installed by default
+  * add --enable-sanitize config option
+  * use default point-code as listed on Point_Codes wiki page
+  * gprs_gmm: segfault: gracefully handle failure to alloc context
+  * gsm48_rx_gmm_att_req: fix error handling: don't clean up NULL llme
+  * gprs_llc: tx dl ud: make mismatching LLE not crash osmo-sgsn
+  * fix build: missing LIBGTP_CFLAGS in sgsn_test
+  * sgsn_test: guard against struct gprs_ra_id changing
+  * vty: absorb command explanations from osmo-gsm-manuals
+  * configure: add --enable-werror
+  * implement support for 3-digit MNC with leading zeros
+  * osmo-gbproxy: use 'osmo-gbproxy.cfg' as default config name
+  * compiler warnings: use enum ranap_nsap_addr_enc, constify local var
+  * use osmo_init_logging2(), fix regression test memleaks
+  * auth+ciph: log is_r99 and auth types
+  * log two RA Update Request failure causes
+  * GERAN: allow GSM SRES on UMTS AKA challenge
+
+  [ Alexander Couzens ]
+  * .gitignore: remove unneeded ignores of bsc/msc/nitb files
+  * tests/ctrl_test_runner.py: remove BSC/NAT TestRunner
+  * debian: remove doublicated project name in example files
+  * .gitignore: remove non-existent /src/utils exludes
+  * configure.ac: remove pcap check
+  * configure.ac: remove unused libcdk check
+  * .service: remove OpenBSC from service desription
+  * mandatory depend on libc-ares and libgtp
+  * GMM: dont reply to GMM_DETACH_REQ with POWER OFF when MS is unknown
+
+  [ Harald Welte ]
+  * Replace '.' in counter names with ':'
+  * Add talloc context introspection via VTY
+
+  [ Pau Espin Pedrol ]
+  * Replace '.' in counter names with ':'
+  * tests: Fix selection of python version
+  * sgsn_cdr: Split log formatting into a snprintf function
+  * Add vty cmd 'cdr trap' to send CDR through CTRL iface
+  * tests: sgsn_test: Define wrap APIs with correct parameters
+  * cosmetic: tests: sgsn_test: Use proper formatting and remove uneeded semicolons
+  * gprs_gmm: Remove unused variable
+  * cosmetic: gprs_gmm: Remove trailing whitespace
+  * gprs_gmm: Convert warning message to pragma message
+  * configure.ac: Enable Wall in CFLAGS
+  * .gitignore: Add m4 files
+  * sgsn_libgtp.c: Fix typos and whitespace
+
+  [ Max ]
+  * Fix display of GTP addresses
+  * Show GTP version for PDP context in vty
+  * Remove unneeded .py scripts
+  * Replace '.' in counter names with ':'
+  * Remove dead code
+  * Enable sanitize for CI tests
+  * cosmetic: use macro for gtphub plane iteration
+  * Use connection id when allocating rate counters
+  * Migrate from OpenSSL to osmo_get_rand_id()
+  * Remove obsolete ./configure option
+  * Fix RAI construction
+  * gtphub: make rate_ctr unique
+  * Remove unused bsc_version.c
+  * Use gsm48_encode_ra() for RAI encoding
+  * gtphub: check for gsn_addr_from_sockaddr() errors
+  * gtphub: check for gsn_addr_from_sockaddr() error
+
+ -- Pau Espin Pedrol <pespin@sysmocom.de>  Thu, 03 May 2018 19:01:44 +0200
+
 osmo-sgsn (1.2.0) unstable; urgency=medium
 
   [ Neels Hofmeyr ]
