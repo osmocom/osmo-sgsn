@@ -848,7 +848,7 @@ static int gsm48_rx_gmm_auth_ciph_fail(struct sgsn_mm_ctx *ctx,
 	return rc;
 }
 
-static void extract_subscr_msisdn(struct sgsn_mm_ctx *ctx)
+void extract_subscr_msisdn(struct sgsn_mm_ctx *ctx)
 {
 	struct gsm_mncc_number called;
 	uint8_t msisdn[sizeof(ctx->subscr->sgsn_data->msisdn) + 1];
@@ -879,7 +879,7 @@ static void extract_subscr_msisdn(struct sgsn_mm_ctx *ctx)
 	}
 }
 
-static void extract_subscr_hlr(struct sgsn_mm_ctx *ctx)
+void extract_subscr_hlr(struct sgsn_mm_ctx *ctx)
 {
 	struct gsm_mncc_number called;
 	uint8_t hlr_number[sizeof(ctx->subscr->sgsn_data->hlr) + 1];
