@@ -502,6 +502,7 @@ static int gprs_subscr_handle_gsup_auth_err(struct gprs_subscr *subscr,
 			"GSUP protocol remote error, GMM cause = '%s' (%d)\n",
 			get_value_string(gsm48_gmm_cause_names, gsup_msg->cause),
 			gsup_msg->cause);
+		sdata->error_cause = gsup_msg->cause;
 		break;
 	}
 
