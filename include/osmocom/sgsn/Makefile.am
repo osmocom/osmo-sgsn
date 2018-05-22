@@ -5,6 +5,7 @@ noinst_HEADERS = \
 	gb_proxy.h \
 	gprs_gb_parse.h \
 	gprs_gmm.h \
+	gprs_gmm_attach.h \
 	gprs_llc.h \
 	gprs_llc_xid.h \
 	gprs_sgsn.h \

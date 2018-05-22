@@ -40,6 +40,7 @@
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/gprs_utils.h>
 #include <osmocom/sgsn/signal.h>
+#include <osmocom/sgsn/gprs_gmm_attach.h>
 #include <osmocom/sgsn/gprs_llc.h>
 
 #include <pdp.h>
@@ -241,6 +242,7 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_gb(uint32_t tlli,
 		talloc_free(ctx);
 		return NULL;
 	}
+	ctx->gmm_att_req.fsm = osmo_fsm_inst_alloc(&gmm_attach_req_fsm, ctx, ctx, LOGL_DEBUG, "gb_gmm_req");
 	INIT_LLIST_HEAD(&ctx->pdp_list);
 
 	llist_add(&ctx->list, &sgsn_mm_ctxts);
@@ -273,6 +275,7 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_iu(void *uectx)
 		talloc_free(ctx);
 		return NULL;
 	}
+	ctx->gmm_att_req.fsm = osmo_fsm_inst_alloc(&gmm_attach_req_fsm, ctx, ctx, LOGL_DEBUG, "gb_gmm_req");
 
 	/* Need to get RAID from IU conn */
 	ctx->ra = ctx->iu.ue_ctx->ra_id;
@@ -349,6 +352,9 @@ void sgsn_mm_ctx_cleanup_free(struct sgsn_mm_ctx *mm)
 		gprs_subscr_cleanup(subscr);
 		gprs_subscr_put(subscr);
 	}
+
+	if (mm->gmm_att_req.fsm)
+		gmm_att_req_free(mm);
 
 	sgsn_mm_ctx_free(mm);
 	mm = NULL;

@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <netinet/in.h>
 
+#include <osmocom/core/fsm.h>
 #include <osmocom/core/timer.h>
 
 #include <osmocom/gsm/gsm48.h>
@@ -168,6 +169,15 @@ struct sgsn_mm_ctx {
 		struct ranap_ue_conn_ctx	*ue_ctx;
 		struct service_info	service;
 	} iu;
+	struct {
+		struct osmo_fsm_inst *fsm;
+
+		/* when a second attach req arrives while in this procedure,
+		 * the fsm needs to compare it against old to decide what to do */
+		struct msgb *attach_req;
+		uint32_t id_type;
+		bool auth_reattempt;
+	} gmm_att_req;
 	/* VLR number */
 	uint32_t		new_sgsn_addr;
 	/* Authentication Triplet */

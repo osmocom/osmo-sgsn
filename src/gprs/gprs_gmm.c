@@ -59,6 +59,7 @@
 #include <osmocom/sgsn/gprs_utils.h>
 #include <osmocom/sgsn/gprs_subscriber.h>
 #include <osmocom/sgsn/sgsn.h>
+#include <osmocom/sgsn/gprs_gmm_attach.h>
 #include <osmocom/sgsn/signal.h>
 #include <osmocom/sgsn/gprs_sndcp.h>
 
@@ -791,7 +792,7 @@ static int gsm48_rx_gmm_auth_ciph_resp(struct sgsn_mm_ctx *ctx,
 	/* FIXME: enable LLC cipheirng */
 
 	/* Check if we can let the mobile station enter */
-	return gsm48_gmm_authorize(ctx);
+	return osmo_fsm_inst_dispatch(ctx->gmm_att_req.fsm, E_AUTH_RESP_RECV_SUCCESS, NULL);
 }
 
 /* Section 9.4.10: Authentication and Ciphering Failure */
@@ -836,7 +837,7 @@ static int gsm48_rx_gmm_auth_ciph_fail(struct sgsn_mm_ctx *ctx,
 		rc = gprs_subscr_request_auth_info(ctx, auts,
 						   ctx->auth_triplet.vec.rand);
 		if (!rc)
-			return 0;
+			return osmo_fsm_inst_dispatch(ctx->gmm_att_req.fsm, E_AUTH_RESP_RECV_RESYNC, NULL);
 		/* on error, fall through to send a reject */
 		LOGMMCTXP(LOGL_ERROR, ctx,
 			  "Sending AUTS to HLR failed (rc = %d)\n", rc);
@@ -1107,7 +1108,10 @@ void gsm0408_gprs_authenticate(struct sgsn_mm_ctx *ctx)
 {
 	ctx->sec_ctx = OSMO_AUTH_TYPE_NONE;
 
-	gsm48_gmm_authorize(ctx);
+	if (ctx->gmm_att_req.fsm->state != ST_INIT)
+		osmo_fsm_inst_dispatch(ctx->gmm_att_req.fsm, E_VLR_ANSWERED, (void *) 0);
+	else
+		gsm48_gmm_authorize(ctx);
 }
 
 void gsm0408_gprs_access_granted(struct sgsn_mm_ctx *ctx)
@@ -1118,7 +1122,8 @@ void gsm0408_gprs_access_granted(struct sgsn_mm_ctx *ctx)
 		     "Authorized, continuing procedure, IMSI=%s\n",
 		     ctx->imsi);
 		/* Continue with the authorization */
-		gsm48_gmm_authorize(ctx);
+		if (ctx->gmm_att_req.fsm->state != ST_INIT)
+			osmo_fsm_inst_dispatch(ctx->gmm_att_req.fsm, E_VLR_ANSWERED, (void *) 0);
 		break;
 	default:
 		LOGMMCTXP(LOGL_INFO, ctx,
@@ -1139,8 +1144,8 @@ void gsm0408_gprs_access_denied(struct sgsn_mm_ctx *ctx, int gmm_cause)
 			  "with cause '%s' (%d)\n",
 			  get_value_string(gsm48_gmm_cause_names, gmm_cause),
 			  gmm_cause);
-		gsm48_tx_gmm_att_rej(ctx, gmm_cause);
-		mm_ctx_cleanup_free(ctx, "GPRS ATTACH REJECT");
+		if (ctx->gmm_att_req.fsm->state != ST_INIT)
+			osmo_fsm_inst_dispatch(ctx->gmm_att_req.fsm, E_REJECT, (void *) (long) gmm_cause);
 		break;
 	case GMM_REGISTERED_NORMAL:
 	case GMM_REGISTERED_SUSPENDED:
@@ -1183,6 +1188,7 @@ static int gsm48_rx_gmm_id_resp(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 {
 	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
 	uint8_t mi_type = gh->data[1] & GSM_MI_TYPE_MASK;
+	long mi_typel = mi_type;
 	char mi_string[GSM48_MI_SIZE];
 
 	gsm48_mi_to_string(mi_string, sizeof(mi_string), &gh->data[1], gh->data[0]);
@@ -1235,7 +1241,7 @@ static int gsm48_rx_gmm_id_resp(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 	}
 
 	/* Check if we can let the mobile station enter */
-	return gsm48_gmm_authorize(ctx);
+	return osmo_fsm_inst_dispatch(ctx->gmm_att_req.fsm, E_IDEN_RESP_RECV, (void *)mi_typel);
 }
 
 /* Allocate a new P-TMSI and change context state */
@@ -1425,8 +1431,8 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 		gprs_llgmm_assign(ctx->gb.llme, ctx->gb.tlli, ctx->gb.tlli_new);
 	}
 
-	ctx->pending_req = GSM48_MT_GMM_ATTACH_REQ;
-	return gsm48_gmm_authorize(ctx);
+	osmo_fsm_inst_dispatch(ctx->gmm_att_req.fsm, E_ATTACH_REQ_RECV, msg);
+	return 0;
 
 err_inval:
 	LOGPC(DMM, LOGL_INFO, "\n");
@@ -1445,6 +1451,28 @@ rejected:
 
 	return rc;
 
+}
+
+
+/* Checks if two attach request contain the IEs and IE values
+ * return 0 if equal
+ * return -1 if error
+ * return 1 if unequal
+ *
+ * Only do a simple memcmp for now.
+ */
+int gprs_gmm_attach_req_ies(struct msgb *a, struct msgb *b)
+{
+	struct gsm48_hdr *gh_a = (struct gsm48_hdr *) msgb_gmmh(a);
+	struct gsm48_hdr *gh_b = (struct gsm48_hdr *) msgb_gmmh(b);
+
+#define GMM_ATTACH_REQ_LEN 26
+
+	/* there is the LLC FCS behind */
+	if (msgb_l3len(a) < GMM_ATTACH_REQ_LEN || msgb_l3len(b) < GMM_ATTACH_REQ_LEN)
+		return -1;
+
+	return !!memcmp(gh_a, gh_b, GMM_ATTACH_REQ_LEN);
 }
 
 /* Section 4.7.4.1 / 9.4.5.2 MO Detach request */
@@ -2023,6 +2051,7 @@ static int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		mmctx_set_mm_state(mmctx, MM_READY);
 		rc = 0;
 
+		osmo_fsm_inst_dispatch(mmctx->gmm_att_req.fsm, E_ATTACH_COMPLETE_RECV, 0);
 		memset(&sig_data, 0, sizeof(sig_data));
 		sig_data.mm = mmctx;
 		osmo_signal_dispatch(SS_SGSN, S_SGSN_ATTACH, &sig_data);
