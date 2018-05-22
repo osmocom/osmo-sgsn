@@ -1150,7 +1150,7 @@ void gsm0408_gprs_access_denied(struct sgsn_mm_ctx *ctx, int gmm_cause)
 			  get_value_string(gsm48_gmm_cause_names, gmm_cause),
 			  gmm_cause);
 		gsm48_tx_gmm_detach_req(
-			ctx, GPRS_DET_T_MT_REATT_NOTREQ, gmm_cause);
+			ctx, GPRS_DET_T_MT_IMSI, gmm_cause);
 
 		mm_ctx_cleanup_free(ctx, "auth lost");
 		break;
