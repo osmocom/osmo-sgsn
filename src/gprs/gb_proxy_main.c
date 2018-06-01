@@ -70,7 +70,7 @@ const char *openbsc_copyright =
 #define CONFIG_FILE_LEGACY "osmo_gbproxy.cfg"
 
 static char *config_file = NULL;
-struct gbproxy_config gbcfg = {0};
+struct gbproxy_config *gbcfg;
 static int daemonize = 0;
 
 /* Pointer to the SGSN peer */
@@ -84,7 +84,7 @@ static int proxy_ns_cb(enum gprs_ns_evt event, struct gprs_nsvc *nsvc,
 
 	switch (event) {
 	case GPRS_NS_EVT_UNIT_DATA:
-		rc = gbprox_rcvmsg(&gbcfg, msg, nsvc->nsei, bvci, nsvc->nsvci);
+		rc = gbprox_rcvmsg(gbcfg, msg, nsvc->nsei, bvci, nsvc->nsvci);
 		break;
 	default:
 		LOGP(DGPRS, LOGL_ERROR, "SGSN: Unknown event %u from NS\n", event);
@@ -309,14 +309,20 @@ int main(int argc, char **argv)
 		LOGP(DGPRS, LOGL_ERROR, "Unable to instantiate NS\n");
 		exit(1);
 	}
-	gbproxy_init_config(&gbcfg);
-	gbcfg.nsi = bssgp_nsi;
+
+	gbcfg = talloc_zero(tall_bsc_ctx, struct gbproxy_config);
+	if (!gbcfg) {
+		LOGP(DGPRS, LOGL_FATAL, "Unable to allocate config\n");
+		exit(1);
+	}
+	gbproxy_init_config(gbcfg);
+	gbcfg->nsi = bssgp_nsi;
 	gprs_ns_vty_init(bssgp_nsi);
 	gprs_ns_set_log_ss(DNS);
 	bssgp_set_log_ss(DBSSGP);
-	osmo_signal_register_handler(SS_L_NS, &gbprox_signal, &gbcfg);
+	osmo_signal_register_handler(SS_L_NS, &gbprox_signal, gbcfg);
 
-	rc = gbproxy_parse_config(config_file, &gbcfg);
+	rc = gbproxy_parse_config(config_file, gbcfg);
 	if (rc < 0) {
 		LOGP(DGPRS, LOGL_FATAL, "Cannot parse config file '%s'\n", config_file);
 		exit(2);
@@ -328,10 +334,10 @@ int main(int argc, char **argv)
 	if (rc < 0)
 		exit(1);
 
-	if (!gprs_nsvc_by_nsei(gbcfg.nsi, gbcfg.nsip_sgsn_nsei)) {
+	if (!gprs_nsvc_by_nsei(gbcfg->nsi, gbcfg->nsip_sgsn_nsei)) {
 		LOGP(DGPRS, LOGL_FATAL, "You cannot proxy to NSEI %u "
 			"without creating that NSEI before\n",
-			gbcfg.nsip_sgsn_nsei);
+			gbcfg->nsip_sgsn_nsei);
 		exit(2);
 	}
 
