@@ -46,6 +46,10 @@
 #include <osmocom/sgsn/vty.h>
 #include <osmocom/sgsn/gb_proxy.h>
 
+#include <osmocom/ctrl/control_vty.h>
+#include <osmocom/ctrl/control_if.h>
+#include <osmocom/ctrl/ports.h>
+
 #include <osmocom/vty/command.h>
 #include <osmocom/vty/telnet_interface.h>
 #include <osmocom/vty/logging.h>
@@ -263,6 +267,7 @@ static bool file_exists(const char *path)
 int main(int argc, char **argv)
 {
 	int rc;
+	struct ctrl_handle *ctrl;
 
 	tall_bsc_ctx = talloc_named_const(NULL, 0, "nsip_proxy");
 	msgb_talloc_ctx_init(tall_bsc_ctx, 0);
@@ -333,6 +338,19 @@ int main(int argc, char **argv)
 			       vty_get_bind_addr(), OSMO_VTY_PORT_GBPROXY);
 	if (rc < 0)
 		exit(1);
+
+	/* Start control interface after getting config for
+	 * ctrl_vty_get_bind_addr() */
+	ctrl = ctrl_interface_setup_dynip(gbcfg, ctrl_vty_get_bind_addr(), OSMO_CTRL_PORT_GBPROXY, NULL);
+	if (!ctrl) {
+		LOGP(DGPRS, LOGL_FATAL, "Failed to create CTRL interface.\n");
+		exit(1);
+	}
+
+	if (gb_ctrl_cmds_install() != 0) {
+		LOGP(DGPRS, LOGL_FATAL, "Failed to install CTRL commands.\n");
+		exit(1);
+	}
 
 	if (!gprs_nsvc_by_nsei(gbcfg->nsi, gbcfg->nsip_sgsn_nsei)) {
 		LOGP(DGPRS, LOGL_FATAL, "You cannot proxy to NSEI %u "

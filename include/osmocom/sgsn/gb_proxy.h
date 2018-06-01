@@ -184,6 +184,9 @@ struct gbproxy_link_info {
 int gbproxy_vty_init(void);
 int gbproxy_parse_config(const char *config_file, struct gbproxy_config *cfg);
 
+/* gb_proxy_ctrl.c */
+int gb_ctrl_cmds_install(void);
+
 
 /* gb_proxy.c */
 int gbproxy_init_config(struct gbproxy_config *cfg);
