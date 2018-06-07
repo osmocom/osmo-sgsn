@@ -4927,6 +4927,33 @@ static void test_gbproxy_stored_messages()
 	cleanup_test();
 }
 
+/* See OS#3178 "gbproxy: failed to parse invalid BSSGP-UNITDATA message" */
+static void test_gbproxy_parse_bssgp_unitdata()
+{
+	const char *hex = "0000239401e155cfea000004088872f4801018009c4000800e000601c0416c4338";
+	struct msgb *msg = msgb_alloc(1034, "bssgp_unitdata");
+	struct gprs_gb_parse_context parse_ctx;
+	int rc;
+
+	memset(&parse_ctx, 0, sizeof(parse_ctx));
+
+	OSMO_ASSERT(msg);
+	msgb_bssgph(msg) = msg->head;
+	msgb_put(msg, osmo_hexparse(hex, msg->head, msgb_tailroom(msg)));
+
+	parse_ctx.to_bss = 0;
+	parse_ctx.peer_nsei = msgb_nsei(msg);
+
+	/* TODO: Determine whether our parser or the message is wrong. */
+
+	rc = gprs_gb_parse_bssgp(msg->data, msg->len, &parse_ctx);
+	if (!rc) {
+		fprintf(stderr, "%s: Failed to parse message %s\n", __func__, msgb_hexdump(msg));
+	}
+
+	msgb_free(msg);
+}
+
 static struct log_info_cat gprs_categories[] = {
 	[DGPRS] = {
 		.name = "DGPRS",
@@ -4985,6 +5012,7 @@ int main(int argc, char **argv)
 	test_gbproxy_keep_info();
 	test_gbproxy_tlli_expire();
 	test_gbproxy_stored_messages();
+	test_gbproxy_parse_bssgp_unitdata();
 	gbprox_reset(&gbcfg);
 	/* gbprox_reset() frees the rate_ctr, but re-allocates it again. */
 	rate_ctr_group_free(gbcfg.ctrg);
