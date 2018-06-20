@@ -49,12 +49,12 @@ set -x
 
 cd "$base"
 autoreconf --install --force
-./configure --enable-sanitize $enable_werror $MGCP $IU --enable-external-tests
+./configure --enable-sanitize $enable_werror $IU --enable-external-tests
 $MAKE $PARALLEL_MAKE
 LD_LIBRARY_PATH="$inst/lib" $MAKE check \
   || cat-testlogs.sh
 LD_LIBRARY_PATH="$inst/lib" \
-  DISTCHECK_CONFIGURE_FLAGS="$enable_werror $MGCP $IU --enable-external-tests" \
+  DISTCHECK_CONFIGURE_FLAGS="$enable_werror $IU --enable-external-tests" \
   $MAKE distcheck \
   || cat-testlogs.sh
 

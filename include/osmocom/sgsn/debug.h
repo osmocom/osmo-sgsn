@@ -19,7 +19,6 @@ enum {
 	DMEAS,
 	DSCCP,
 	DMSC,
-	DMGCP,
 	DHO,
 	DDB,
 	DREF,

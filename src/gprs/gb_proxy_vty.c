@@ -43,7 +43,7 @@
 static struct gbproxy_config *g_cfg = NULL;
 
 /*
- * vty code for mgcp below
+ * vty code for gbproxy below
  */
 static struct cmd_node gbproxy_node = {
 	GBPROXY_NODE,
@@ -855,4 +855,3 @@ int gbproxy_parse_config(const char *config_file, struct gbproxy_config *cfg)
 
 	return 0;
 }
-

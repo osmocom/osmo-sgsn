@@ -99,11 +99,6 @@ static const struct log_info_cat default_categories[] = {
 		.description = "Mobile Switching Center",
 		.enabled = 1, .loglevel = LOGL_NOTICE,
 	},
-	[DMGCP] = {
-		.name = "DMGCP",
-		.description = "Media Gateway Control Protocol",
-		.enabled = 1, .loglevel = LOGL_NOTICE,
-	},
 	[DHO] = {
 		.name = "DHO",
 		.description = "Hand-Over",

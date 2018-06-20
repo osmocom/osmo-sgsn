@@ -99,11 +99,6 @@ int bsc_vty_go_parent(struct vty *vty)
 		vty->node = NAT_NODE;
 		vty->index = NULL;
 		break;
-	case TRUNK_NODE:
-		vty->node = MGCP_NODE;
-		vty->index = NULL;
-		break;
-	case MGCP_NODE:
 	case GBPROXY_NODE:
 	case SGSN_NODE:
 	case NAT_NODE:
