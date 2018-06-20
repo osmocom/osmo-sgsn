@@ -103,11 +103,6 @@ int bsc_vty_go_parent(struct vty *vty)
 		vty->node = MGCP_NODE;
 		vty->index = NULL;
 		break;
-	case SMPP_ESME_NODE:
-		vty->node = SMPP_NODE;
-		vty->index = NULL;
-		break;
-	case SMPP_NODE:
 	case MGCP_NODE:
 	case GBPROXY_NODE:
 	case SGSN_NODE:

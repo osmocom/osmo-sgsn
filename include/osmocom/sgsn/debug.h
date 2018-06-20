@@ -31,7 +31,6 @@ enum {
 	DSLHC,
 	DNAT,
 	DCTRL,
-	DSMPP,
 	DFILTER,
 	DGTPHUB,
 	DRANAP,
