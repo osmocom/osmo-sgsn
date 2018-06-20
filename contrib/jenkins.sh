@@ -29,11 +29,14 @@ osmo-build-dep.sh libosmo-abis
 osmo-build-dep.sh libosmo-netif
 osmo-build-dep.sh osmo-ggsn
 
+enable_werror=""
 if [ "x$IU" = "x--enable-iu" ]; then
     	osmo-build-dep.sh libosmo-sccp
 	osmo-build-dep.sh libasn1c
 	#osmo-build-dep.sh asn1c aper-prefix # only needed for make regen in osmo-iuh
 	osmo-build-dep.sh osmo-iuh
+else
+	enable_werror="--enable-werror"
 fi
 
 set +x
@@ -46,12 +49,12 @@ set -x
 
 cd "$base"
 autoreconf --install --force
-./configure --enable-sanitize $SMPP $MGCP $IU --enable-external-tests
+./configure --enable-sanitize $enable_werror $SMPP $MGCP $IU --enable-external-tests
 $MAKE $PARALLEL_MAKE
 LD_LIBRARY_PATH="$inst/lib" $MAKE check \
   || cat-testlogs.sh
 LD_LIBRARY_PATH="$inst/lib" \
-  DISTCHECK_CONFIGURE_FLAGS="--enable-osmo-bsc --enable-nat $SMPP $MGCP $IU --enable-external-tests" \
+  DISTCHECK_CONFIGURE_FLAGS="$enable_werror --enable-osmo-bsc --enable-nat $SMPP $MGCP $IU --enable-external-tests" \
   $MAKE distcheck \
   || cat-testlogs.sh
 
