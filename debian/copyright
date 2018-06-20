@@ -123,7 +123,6 @@ Files:     include/osmocom/sgsn/a_reset.h
            src/gprs/sgsn_libgtp.c
            src/gprs/sgsn_main.c
            src/gprs/sgsn_vty.c
-           src/libcommon/common_vty.c
            src/libcommon/debug.c
            src/libcommon/gsm_data.c
            src/libcommon/gsm_data_shared.c
