@@ -54,7 +54,7 @@ $MAKE $PARALLEL_MAKE
 LD_LIBRARY_PATH="$inst/lib" $MAKE check \
   || cat-testlogs.sh
 LD_LIBRARY_PATH="$inst/lib" \
-  DISTCHECK_CONFIGURE_FLAGS="$enable_werror --enable-osmo-bsc --enable-nat $SMPP $MGCP $IU --enable-external-tests" \
+  DISTCHECK_CONFIGURE_FLAGS="$enable_werror $SMPP $MGCP $IU --enable-external-tests" \
   $MAKE distcheck \
   || cat-testlogs.sh
 
