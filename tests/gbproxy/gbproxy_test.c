@@ -4944,14 +4944,64 @@ static void test_gbproxy_parse_bssgp_unitdata()
 	parse_ctx.to_bss = 0;
 	parse_ctx.peer_nsei = msgb_nsei(msg);
 
-	/* TODO: Determine whether our parser or the message is wrong. */
-
 	rc = gprs_gb_parse_bssgp(msg->data, msg->len, &parse_ctx);
-	if (!rc) {
-		fprintf(stderr, "%s: Failed to parse message %s\n", __func__, msgb_hexdump(msg));
-	}
+	if (!rc)
+		fprintf(stderr, "%s: Test passed; Failed to parse invalid message %s\n", __func__, msgb_hexdump(msg));
+	else
+		fprintf(stderr, "%s: Test failed; invalid message was accepted by parser: %s\n", __func__, msgb_hexdump(msg));
+
+	OSMO_ASSERT(!rc);
+
+	/* Manually decoded message according to:
+	   ETSI TS 148 018 V10.6.0 (2012 07) 96
+	   3GPP TS 48.018 version 10.6.0 Release 10
+	   Table 10.2.2: UL-UNITDATA PDU content
+
+	00	- PDU type UL-UNITDATA (ok)
+
+		11.3.35 Temporary logical link Identity (TLLI)
+	00	- TLLI[0]
+	23	- TLLI[1]
+	94	- TLLI[2]
+	01	- TLLI[3]
+		  TLLI == "00239401"
+
+	e1	- QOS[0] (bit rate MSB)
+	55	- QOS[1] (bit rate LSB)
+		  bit rate = "57685" (57685*100000 bit/s per PBRG)
+	cf	- QOS[2] PBRG = 11 (bit rate is expressed in 100000 bit/s increments),
+			C/R 0 (contains LLC ACK/SACK),
+			T 0 (contains signalling),
+			A 1 (radio if uses MAC/UNITDATA,
+			Precedence 111 (reserved value)
+
+	ea	- CELL_ID[0] (TLV IEI: wrong, should be 0x08)
+	00	- CELL_ID[1] (length 1)
+	00	- CELL_ID[2] (length 2)
+		lenth == 0
+	04	-- CELL_ID[3]
+	08	-- CELL_ID[4]
+	88	-- CELL_ID[5]
+	72	-- CELL_ID[6]
+	f4	-- CELL_ID[7]
+	80	-- CELL_ID[8]
+	10	-- CELL_DI[9]
+
+	18	-- QOSP[0] OoS Profile IEI
+		not allowed in BSSGP Userdata
+	00	-- QOSP[1]
+	9c	-- QOSP[2]
+	40	-- QOSP[3]
+	00	-- QOSP[4]
+
+	80	-- IEI for "E-UTRAN Inter RAT Handover Info"
+		not allowed in BSSGP Userdata
+	0e	-- length (14 bytes -- only 8 bytes remain)
+	00 06 01 c0 41 6c 43 38 */
 
 	msgb_free(msg);
+
+	cleanup_test();
 }
 
 static struct log_info_cat gprs_categories[] = {
