@@ -635,7 +635,7 @@ static int cb_conf(int type, int cause, struct pdp_t *pdp, void *cbp)
 /* Called whenever a PDP context is deleted for any reason */
 static int cb_delete_context(struct pdp_t *pdp)
 {
-	LOGPDPX(DGPRS, LOGL_INFO, pdp, "Context was deleted\n");
+	LOGPDPX(DGPRS, LOGL_INFO, pdp, "Context %p was deleted\n", pdp);
 
 	return 0;
 }
