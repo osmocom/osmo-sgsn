@@ -145,7 +145,7 @@ struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
 	const uint8_t *qos;
 	int rc;
 
-	pctx = sgsn_pdp_ctx_alloc(mmctx, nsapi);
+	pctx = sgsn_pdp_ctx_alloc(mmctx, ggsn, nsapi);
 	if (!pctx) {
 		LOGP(DGPRS, LOGL_ERROR, "Couldn't allocate PDP Ctx\n");
 		return NULL;
@@ -160,7 +160,6 @@ struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
 	}
 	pdp->priv = pctx;
 	pctx->lib = pdp;
-	pctx->ggsn = ggsn;
 
 	//pdp->peer =	/* sockaddr_in of GGSN (receive) */
 	//pdp->ipif =	/* not used by library */
@@ -603,7 +602,7 @@ static int cb_recovery(struct sockaddr_in *peer, uint8_t recovery)
 		     "releasing all PDP contexts\n",
 		     ggsn->remote_restart_ctr, recovery);
 		ggsn->remote_restart_ctr = recovery;
-		drop_all_pdp_for_ggsn(ggsn);
+		sgsn_ggsn_ctx_drop_all_pdp(ggsn);
 	}
 	return 0;
 }

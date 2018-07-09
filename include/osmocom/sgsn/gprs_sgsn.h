@@ -296,6 +296,7 @@ struct sgsn_pdp_ctx {
 	struct sgsn_mm_ctx	*mm;	/* back pointer to MM CTX */
 	int			destroy_ggsn; /* destroy it on destruction */
 	struct sgsn_ggsn_ctx	*ggsn;	/* which GGSN serves this PDP */
+	struct llist_head	ggsn_list;	/* list_head for ggsn->pdp_list */
 	struct rate_ctr_group	*ctrg;
 
 	//unsigned int		id;
@@ -338,6 +339,7 @@ struct sgsn_pdp_ctx *sgsn_pdp_ctx_by_tid(const struct sgsn_mm_ctx *mm,
 					 uint8_t tid);
 
 struct sgsn_pdp_ctx *sgsn_pdp_ctx_alloc(struct sgsn_mm_ctx *mm,
+					struct sgsn_ggsn_ctx *ggsn,
 					uint8_t nsapi);
 void sgsn_pdp_ctx_terminate(struct sgsn_pdp_ctx *pdp);
 void sgsn_pdp_ctx_free(struct sgsn_pdp_ctx *pdp);
@@ -350,12 +352,14 @@ struct sgsn_ggsn_ctx {
 	struct in_addr remote_addr;
 	int remote_restart_ctr;
 	struct gsn_t *gsn;
+	struct llist_head pdp_list;	/* list of associated pdp ctx (struct sgsn_pdp_ctx*) */
 };
 struct sgsn_ggsn_ctx *sgsn_ggsn_ctx_alloc(uint32_t id);
 void sgsn_ggsn_ctx_free(struct sgsn_ggsn_ctx *ggc);
 struct sgsn_ggsn_ctx *sgsn_ggsn_ctx_by_id(uint32_t id);
 struct sgsn_ggsn_ctx *sgsn_ggsn_ctx_by_addr(struct in_addr *addr);
 struct sgsn_ggsn_ctx *sgsn_ggsn_ctx_find_alloc(uint32_t id);
+int sgsn_ggsn_ctx_drop_all_pdp(struct sgsn_ggsn_ctx *ggsn);
 
 struct apn_ctx {
 	struct llist_head list;
@@ -377,10 +381,6 @@ extern struct llist_head sgsn_pdp_ctxts;
 
 uint32_t sgsn_alloc_ptmsi(void);
 void sgsn_inst_init(void);
-
-/* High-level function to be called in case a GGSN has disappeared or
- * ottherwise lost state (recovery procedure) */
-int drop_all_pdp_for_ggsn(struct sgsn_ggsn_ctx *ggsn);
 
 char *gprs_pdpaddr2str(uint8_t *pdpa, uint8_t len);
 

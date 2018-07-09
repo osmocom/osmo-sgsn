@@ -388,6 +388,7 @@ struct sgsn_pdp_ctx *sgsn_pdp_ctx_by_tid(const struct sgsn_mm_ctx *mm,
 
 /* you don't want to use this directly, call sgsn_create_pdp_ctx() */
 struct sgsn_pdp_ctx *sgsn_pdp_ctx_alloc(struct sgsn_mm_ctx *mm,
+					struct sgsn_ggsn_ctx *ggsn,
 					uint8_t nsapi)
 {
 	struct sgsn_pdp_ctx *pdp;
@@ -401,6 +402,7 @@ struct sgsn_pdp_ctx *sgsn_pdp_ctx_alloc(struct sgsn_mm_ctx *mm,
 		return NULL;
 
 	pdp->mm = mm;
+	pdp->ggsn = ggsn;
 	pdp->nsapi = nsapi;
 	pdp->ctrg = rate_ctr_group_alloc(pdp, &pdpctx_ctrg_desc, nsapi);
 	if (!pdp->ctrg) {
@@ -409,6 +411,7 @@ struct sgsn_pdp_ctx *sgsn_pdp_ctx_alloc(struct sgsn_mm_ctx *mm,
 		return NULL;
 	}
 	llist_add(&pdp->list, &mm->pdp_list);
+	llist_add(&pdp->ggsn_list, &ggsn->pdp_list);
 	llist_add(&pdp->g_list, &sgsn_pdp_ctxts);
 
 	return pdp;
@@ -462,6 +465,8 @@ void sgsn_pdp_ctx_free(struct sgsn_pdp_ctx *pdp)
 	rate_ctr_group_free(pdp->ctrg);
 	if (pdp->mm)
 		llist_del(&pdp->list);
+	if (pdp->ggsn)
+		llist_del(&pdp->ggsn_list);
 	llist_del(&pdp->g_list);
 
 	/* _if_ we still have a library handle, at least set it to NULL
@@ -496,6 +501,7 @@ struct sgsn_ggsn_ctx *sgsn_ggsn_ctx_alloc(uint32_t id)
 	ggc->remote_restart_ctr = -1;
 	/* if we are called from config file parse, this gsn doesn't exist yet */
 	ggc->gsn = sgsn->gsn;
+	INIT_LLIST_HEAD(&ggc->pdp_list);
 	llist_add(&ggc->list, &sgsn_ggsn_ctxts);
 
 	return ggc;
@@ -503,6 +509,7 @@ struct sgsn_ggsn_ctx *sgsn_ggsn_ctx_alloc(uint32_t id)
 
 void sgsn_ggsn_ctx_free(struct sgsn_ggsn_ctx *ggc)
 {
+	OSMO_ASSERT(llist_empty(&ggc->pdp_list));
 	llist_del(&ggc->list);
 	talloc_free(ggc);
 }
@@ -702,19 +709,14 @@ static void drop_one_pdp(struct sgsn_pdp_ctx *pdp)
 
 /* High-level function to be called in case a GGSN has disappeared or
  * otherwise lost state (recovery procedure) */
-int drop_all_pdp_for_ggsn(struct sgsn_ggsn_ctx *ggsn)
+int sgsn_ggsn_ctx_drop_all_pdp(struct sgsn_ggsn_ctx *ggsn)
 {
-	struct sgsn_mm_ctx *mm;
 	int num = 0;
 
-	llist_for_each_entry(mm, &sgsn_mm_ctxts, list) {
-		struct sgsn_pdp_ctx *pdp;
-		llist_for_each_entry(pdp, &mm->pdp_list, list) {
-			if (pdp->ggsn == ggsn) {
-				drop_one_pdp(pdp);
-				num++;
-			}
-		}
+	struct sgsn_pdp_ctx *pdp, *pdp2;
+	llist_for_each_entry_safe(pdp, pdp2, &ggsn->pdp_list, ggsn_list) {
+		drop_one_pdp(pdp);
+		num++;
 	}
 
 	return num;
