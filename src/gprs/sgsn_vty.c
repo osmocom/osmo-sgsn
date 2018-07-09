@@ -23,6 +23,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <time.h>
+#include <inttypes.h>
 
 #include <osmocom/core/talloc.h>
 #include <osmocom/core/utils.h>
@@ -181,6 +182,9 @@ static int config_write_sgsn(struct vty *vty)
 			inet_ntoa(gctx->remote_addr), VTY_NEWLINE);
 		vty_out(vty, " ggsn %u gtp-version %u%s", gctx->id,
 			gctx->gtp_version, VTY_NEWLINE);
+		if (gctx->echo_interval != -1)
+			vty_out(vty, " ggsn %u echo-interval %"PRId32"%s",
+				gctx->id, gctx->echo_interval, VTY_NEWLINE);
 	}
 
 	if (sgsn->cfg.dynamic_lookup)
@@ -352,6 +356,26 @@ DEFUN(cfg_ggsn_gtp_version, cfg_ggsn_gtp_version_cmd,
 		ggc->gtp_version = 1;
 	else
 		ggc->gtp_version = 0;
+
+	return CMD_SUCCESS;
+}
+
+/* Seee 3GPP TS 29.060 section 7.2.1 */
+DEFUN(cfg_ggsn_echo_interval, cfg_ggsn_echo_interval_cmd,
+	"ggsn <0-255> echo-interval <1-36000>",
+	GGSN_STR "GGSN Number\n"
+	"Send an echo request to this static GGSN every interval.\n"
+	"Interval between echo requests in seconds.\n")
+{
+	uint32_t id = atoi(argv[0]);
+	struct sgsn_ggsn_ctx *ggc = sgsn_ggsn_ctx_find_alloc(id);
+
+	ggc->echo_interval = atoi(argv[1]);
+
+	if (ggc->echo_interval < 60)
+		vty_out(vty, "%% 3GPP TS 29.060 section states inteval should " \
+			     "not be lower than 60 seconds, use this value for " \
+			     "testing purposes only!%s", VTY_NEWLINE);
 
 	return CMD_SUCCESS;
 }
@@ -1277,6 +1301,7 @@ int sgsn_vty_init(struct sgsn_config *cfg)
 	install_element(SGSN_NODE, &cfg_ggsn_remote_ip_cmd);
 	//install_element(SGSN_NODE, &cfg_ggsn_remote_port_cmd);
 	install_element(SGSN_NODE, &cfg_ggsn_gtp_version_cmd);
+	install_element(SGSN_NODE, &cfg_ggsn_echo_interval_cmd);
 	install_element(SGSN_NODE, &cfg_imsi_acl_cmd);
 	install_element(SGSN_NODE, &cfg_auth_policy_cmd);
 	install_element(SGSN_NODE, &cfg_encrypt_cmd);

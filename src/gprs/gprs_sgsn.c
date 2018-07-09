@@ -411,7 +411,7 @@ struct sgsn_pdp_ctx *sgsn_pdp_ctx_alloc(struct sgsn_mm_ctx *mm,
 		return NULL;
 	}
 	llist_add(&pdp->list, &mm->pdp_list);
-	llist_add(&pdp->ggsn_list, &ggsn->pdp_list);
+	sgsn_ggsn_ctx_add_pdp(pdp->ggsn, pdp);
 	llist_add(&pdp->g_list, &sgsn_pdp_ctxts);
 
 	return pdp;
@@ -466,7 +466,7 @@ void sgsn_pdp_ctx_free(struct sgsn_pdp_ctx *pdp)
 	if (pdp->mm)
 		llist_del(&pdp->list);
 	if (pdp->ggsn)
-		llist_del(&pdp->ggsn_list);
+		sgsn_ggsn_ctx_remove_pdp(pdp->ggsn, pdp);
 	llist_del(&pdp->g_list);
 
 	/* _if_ we still have a library handle, at least set it to NULL
@@ -487,6 +487,12 @@ void sgsn_pdp_ctx_free(struct sgsn_pdp_ctx *pdp)
 }
 
 /* GGSN contexts */
+static void echo_timer_cb(void *data)
+{
+	struct sgsn_ggsn_ctx *ggc = (struct sgsn_ggsn_ctx *) data;
+	sgsn_ggsn_echo_req(ggc);
+	osmo_timer_schedule(&ggc->echo_timer, ggc->echo_interval, 0);
+}
 
 struct sgsn_ggsn_ctx *sgsn_ggsn_ctx_alloc(uint32_t id)
 {
@@ -499,9 +505,11 @@ struct sgsn_ggsn_ctx *sgsn_ggsn_ctx_alloc(uint32_t id)
 	ggc->id = id;
 	ggc->gtp_version = 1;
 	ggc->remote_restart_ctr = -1;
+	ggc->echo_interval = -1;
 	/* if we are called from config file parse, this gsn doesn't exist yet */
 	ggc->gsn = sgsn->gsn;
 	INIT_LLIST_HEAD(&ggc->pdp_list);
+	osmo_timer_setup(&ggc->echo_timer, echo_timer_cb, ggc);
 	llist_add(&ggc->list, &sgsn_ggsn_ctxts);
 
 	return ggc;
@@ -720,6 +728,19 @@ int sgsn_ggsn_ctx_drop_all_pdp(struct sgsn_ggsn_ctx *ggsn)
 	}
 
 	return num;
+}
+
+void sgsn_ggsn_ctx_add_pdp(struct sgsn_ggsn_ctx *ggc, struct sgsn_pdp_ctx *pdp)
+{
+	if (llist_empty(&ggc->pdp_list) && ggc->echo_interval > 0)
+		osmo_timer_schedule(&ggc->echo_timer, ggc->echo_interval, 0);
+	llist_add(&pdp->ggsn_list, &ggc->pdp_list);
+}
+void sgsn_ggsn_ctx_remove_pdp(struct sgsn_ggsn_ctx *ggc, struct sgsn_pdp_ctx *pdp)
+{
+	llist_del(&pdp->ggsn_list);
+	if (llist_empty(&ggc->pdp_list) && osmo_timer_pending(&ggc->echo_timer))
+		osmo_timer_del(&ggc->echo_timer);
 }
 
 void sgsn_update_subscriber_data(struct sgsn_mm_ctx *mmctx)

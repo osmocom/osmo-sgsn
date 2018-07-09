@@ -460,6 +460,11 @@ void sgsn_pdp_upd_gtp_u(struct sgsn_pdp_ctx *pdp, void *addr, size_t alen)
 	gtp_update_context(pdp->ggsn->gsn, pdp->lib, pdp, &pdp->lib->hisaddr0);
 }
 
+void sgsn_ggsn_echo_req(struct sgsn_ggsn_ctx *ggc)
+{
+	gtp_echo_req(ggc->gsn, ggc->gtp_version, NULL, &ggc->remote_addr);
+}
+
 #ifdef BUILD_IU
 /* Callback for RAB assignment response */
 int sgsn_ranap_rab_ass_resp(struct sgsn_mm_ctx *ctx, RANAP_RAB_SetupOrModifiedItemIEs_t *setup_ies)

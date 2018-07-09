@@ -171,6 +171,7 @@ struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
 					 struct tlv_parsed *tp);
 int sgsn_delete_pdp_ctx(struct sgsn_pdp_ctx *pctx);
 void sgsn_pdp_upd_gtp_u(struct sgsn_pdp_ctx *pdp, void *addr, size_t alen);
+void sgsn_ggsn_echo_req(struct sgsn_ggsn_ctx *ggc);
 
 /* gprs_sndcp.c */
 
