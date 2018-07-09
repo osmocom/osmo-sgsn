@@ -2192,6 +2192,16 @@ static void pdpctx_timer_stop(struct sgsn_pdp_ctx *pdp, unsigned int T)
 	osmo_timer_del(&pdp->timer);
 }
 
+void pdp_ctx_detach_mm_ctx(struct sgsn_pdp_ctx *pdp)
+{
+	/* Detach from MM context */
+	llist_del(&pdp->list);
+	pdp->mm = NULL;
+
+	/* stop timer 3395 */
+	pdpctx_timer_stop(pdp, 3395);
+}
+
 #if 0
 static void msgb_put_pdp_addr_ipv4(struct msgb *msg, uint32_t ipaddr)
 {

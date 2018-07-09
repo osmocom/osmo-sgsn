@@ -443,9 +443,7 @@ void sgsn_pdp_ctx_terminate(struct sgsn_pdp_ctx *pdp)
 	osmo_signal_dispatch(SS_SGSN, S_SGSN_PDP_TERMINATE, &sig_data);
 
 	/* Detach from MM context */
-	llist_del(&pdp->list);
-	pdp->mm = NULL;
-
+	pdp_ctx_detach_mm_ctx(pdp);
 	sgsn_delete_pdp_ctx(pdp);
 }
 

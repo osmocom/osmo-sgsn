@@ -43,4 +43,6 @@ int gsm48_tx_gmm_att_ack(struct sgsn_mm_ctx *mm);
 /* TODO: move extract_subscr_* when gsm48_gmm_authorize() got removed */
 void extract_subscr_msisdn(struct sgsn_mm_ctx *ctx);
 void extract_subscr_hlr(struct sgsn_mm_ctx *ctx);
+
+void pdp_ctx_detach_mm_ctx(struct sgsn_pdp_ctx *pdp);
 #endif /* _GPRS_GMM_H */
