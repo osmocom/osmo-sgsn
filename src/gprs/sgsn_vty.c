@@ -185,6 +185,9 @@ static int config_write_sgsn(struct vty *vty)
 		if (gctx->echo_interval != -1)
 			vty_out(vty, " ggsn %u echo-interval %"PRId32"%s",
 				gctx->id, gctx->echo_interval, VTY_NEWLINE);
+		else
+			vty_out(vty, " ggsn %u no echo-interval%s",
+				gctx->id, VTY_NEWLINE);
 	}
 
 	if (sgsn->cfg.dynamic_lookup)
@@ -376,6 +379,19 @@ DEFUN(cfg_ggsn_echo_interval, cfg_ggsn_echo_interval_cmd,
 		vty_out(vty, "%% 3GPP TS 29.060 section states inteval should " \
 			     "not be lower than 60 seconds, use this value for " \
 			     "testing purposes only!%s", VTY_NEWLINE);
+
+	return CMD_SUCCESS;
+}
+
+DEFUN(cfg_ggsn_no_echo_interval, cfg_ggsn_no_echo_interval_cmd,
+	"ggsn <0-255> no echo-interval",
+	GGSN_STR "GGSN Number\n"
+	NO_STR "Send an echo request to this static GGSN every interval.\n")
+{
+	uint32_t id = atoi(argv[0]);
+	struct sgsn_ggsn_ctx *ggc = sgsn_ggsn_ctx_find_alloc(id);
+
+	ggc->echo_interval = -1;
 
 	return CMD_SUCCESS;
 }
@@ -1302,6 +1318,7 @@ int sgsn_vty_init(struct sgsn_config *cfg)
 	//install_element(SGSN_NODE, &cfg_ggsn_remote_port_cmd);
 	install_element(SGSN_NODE, &cfg_ggsn_gtp_version_cmd);
 	install_element(SGSN_NODE, &cfg_ggsn_echo_interval_cmd);
+	install_element(SGSN_NODE, &cfg_ggsn_no_echo_interval_cmd);
 	install_element(SGSN_NODE, &cfg_imsi_acl_cmd);
 	install_element(SGSN_NODE, &cfg_auth_policy_cmd);
 	install_element(SGSN_NODE, &cfg_encrypt_cmd);
