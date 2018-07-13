@@ -2699,7 +2699,11 @@ static int gsm48_rx_gsm_deact_pdp_ack(struct sgsn_mm_ctx *mm, struct msgb *msg)
 	}
 	/* stop timer 3395 */
 	pdpctx_timer_stop(pdp, 3395);
-	return sgsn_delete_pdp_ctx(pdp);
+	if (pdp->ggsn)
+		return sgsn_delete_pdp_ctx(pdp);
+	/* GTP side already detached, freeing */
+	sgsn_pdp_ctx_free(pdp);
+	return 0;
 }
 
 static int gsm48_rx_gsm_status(struct sgsn_mm_ctx *ctx, struct msgb *msg)
@@ -2723,7 +2727,10 @@ static void pdpctx_timer_cb(void *_pdp)
 		if (pdp->num_T_exp >= 4) {
 			LOGPDPCTXP(LOGL_NOTICE, pdp, "T3395 expired >= 5 times\n");
 			pdp->state = PDP_STATE_INACTIVE;
-			sgsn_delete_pdp_ctx(pdp);
+			if (pdp->ggsn)
+				sgsn_delete_pdp_ctx(pdp);
+			else
+				sgsn_pdp_ctx_free(pdp);
 			break;
 		}
 		gsm48_tx_gsm_deact_pdp_req(pdp, GSM_CAUSE_NET_FAIL, true);

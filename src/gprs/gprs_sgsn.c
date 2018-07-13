@@ -444,7 +444,8 @@ void sgsn_pdp_ctx_terminate(struct sgsn_pdp_ctx *pdp)
 
 	/* Detach from MM context */
 	pdp_ctx_detach_mm_ctx(pdp);
-	sgsn_delete_pdp_ctx(pdp);
+	if (pdp->ggsn)
+		sgsn_delete_pdp_ctx(pdp);
 }
 
 /*
@@ -479,8 +480,6 @@ void sgsn_pdp_ctx_free(struct sgsn_pdp_ctx *pdp)
 		lib->priv = NULL;
 	}
 
-	if (pdp->destroy_ggsn)
-		sgsn_ggsn_ctx_free(pdp->ggsn);
 	talloc_free(pdp);
 }
 
@@ -702,9 +701,10 @@ failed:
 
 static void drop_one_pdp(struct sgsn_pdp_ctx *pdp)
 {
-	if (pdp->mm->gmm_state == GMM_REGISTERED_NORMAL)
+	if (pdp->mm->gmm_state == GMM_REGISTERED_NORMAL) {
 		gsm48_tx_gsm_deact_pdp_req(pdp, GSM_CAUSE_NET_FAIL, true);
-	else  {
+		sgsn_ggsn_ctx_remove_pdp(pdp->ggsn, pdp);
+	} else  {
 		/* FIXME: GPRS paging in case MS is SUSPENDED */
 		LOGPDPCTXP(LOGL_NOTICE, pdp, "Hard-dropping PDP ctx due to GGSN "
 			"recovery\n");
@@ -739,6 +739,13 @@ void sgsn_ggsn_ctx_remove_pdp(struct sgsn_ggsn_ctx *ggc, struct sgsn_pdp_ctx *pd
 	llist_del(&pdp->ggsn_list);
 	if (llist_empty(&ggc->pdp_list) && osmo_timer_pending(&ggc->echo_timer))
 		osmo_timer_del(&ggc->echo_timer);
+	if (pdp->destroy_ggsn)
+		sgsn_ggsn_ctx_free(pdp->ggsn);
+	pdp->ggsn = NULL;
+	/* Drop references to libgtp since the conn is down */
+	if (pdp->lib)
+		pdp_freepdp(pdp->lib);
+	pdp->lib = NULL;
 }
 
 void sgsn_update_subscriber_data(struct sgsn_mm_ctx *mmctx)
