@@ -6,7 +6,7 @@
 
 #include <stdbool.h>
 
-int gsm48_tx_gsm_deact_pdp_req(struct sgsn_pdp_ctx *pdp, uint8_t sm_cause);
+int gsm48_tx_gsm_deact_pdp_req(struct sgsn_pdp_ctx *pdp, uint8_t sm_cause, bool teardown);
 int gsm48_tx_gsm_act_pdp_rej(struct sgsn_mm_ctx *mm, uint8_t tid,
 			     uint8_t cause, uint8_t pco_len, uint8_t *pco_v);
 int gsm48_tx_gsm_act_pdp_acc(struct sgsn_pdp_ctx *pdp);

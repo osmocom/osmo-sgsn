@@ -2295,11 +2295,12 @@ int gsm48_tx_gsm_act_pdp_rej(struct sgsn_mm_ctx *mm, uint8_t tid,
 
 /* Section 9.5.8: Deactivate PDP Context Request */
 static int _gsm48_tx_gsm_deact_pdp_req(struct sgsn_mm_ctx *mm, uint8_t tid,
-					uint8_t sm_cause)
+					uint8_t sm_cause, bool teardown)
 {
 	struct msgb *msg = gsm48_msgb_alloc_name("GSM 04.08 PDP DET REQ");
 	struct gsm48_hdr *gh;
 	uint8_t transaction_id = tid ^ 0x8; /* flip */
+	uint8_t tear_down_ind = (0x9 << 4) | (!!teardown);
 
 	LOGMMCTXP(LOGL_INFO, mm, "<- DEACTIVATE PDP CONTEXT REQ\n");
 	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_PDP_DL_DEACTIVATE_REQUEST]);
@@ -2311,14 +2312,15 @@ static int _gsm48_tx_gsm_deact_pdp_req(struct sgsn_mm_ctx *mm, uint8_t tid,
 	gh->msg_type = GSM48_MT_GSM_DEACT_PDP_REQ;
 
 	msgb_v_put(msg, sm_cause);
+	msgb_v_put(msg, tear_down_ind);
 
 	return gsm48_gmm_sendmsg(msg, 0, mm, true);
 }
-int gsm48_tx_gsm_deact_pdp_req(struct sgsn_pdp_ctx *pdp, uint8_t sm_cause)
+int gsm48_tx_gsm_deact_pdp_req(struct sgsn_pdp_ctx *pdp, uint8_t sm_cause, bool teardown)
 {
 	pdpctx_timer_start(pdp, 3395, sgsn->cfg.timers.T3395);
 
-	return _gsm48_tx_gsm_deact_pdp_req(pdp->mm, pdp->ti, sm_cause);
+	return _gsm48_tx_gsm_deact_pdp_req(pdp->mm, pdp->ti, sm_cause, teardown);
 }
 
 /* Section 9.5.9: Deactivate PDP Context Accept */
@@ -2724,7 +2726,7 @@ static void pdpctx_timer_cb(void *_pdp)
 			sgsn_delete_pdp_ctx(pdp);
 			break;
 		}
-		gsm48_tx_gsm_deact_pdp_req(pdp, GSM_CAUSE_NET_FAIL);
+		gsm48_tx_gsm_deact_pdp_req(pdp, GSM_CAUSE_NET_FAIL, true);
 		break;
 	default:
 		LOGPDPCTXP(LOGL_ERROR, pdp, "timer expired in unknown mode %u\n",

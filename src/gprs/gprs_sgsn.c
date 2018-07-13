@@ -703,7 +703,7 @@ failed:
 static void drop_one_pdp(struct sgsn_pdp_ctx *pdp)
 {
 	if (pdp->mm->gmm_state == GMM_REGISTERED_NORMAL)
-		gsm48_tx_gsm_deact_pdp_req(pdp, GSM_CAUSE_NET_FAIL);
+		gsm48_tx_gsm_deact_pdp_req(pdp, GSM_CAUSE_NET_FAIL, true);
 	else  {
 		/* FIXME: GPRS paging in case MS is SUSPENDED */
 		LOGPDPCTXP(LOGL_NOTICE, pdp, "Hard-dropping PDP ctx due to GGSN "
@@ -954,4 +954,3 @@ void sgsn_inst_init()
 	osmo_timer_setup(&sgsn->llme_timer, sgsn_llme_check_cb, NULL);
 	osmo_timer_schedule(&sgsn->llme_timer, GPRS_LLME_CHECK_TICK, 0);
 }
-
