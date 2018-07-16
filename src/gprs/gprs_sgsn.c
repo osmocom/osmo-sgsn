@@ -699,17 +699,17 @@ failed:
 	return GSM_RESERVED_TMSI;
 }
 
-static void drop_one_pdp(struct sgsn_pdp_ctx *pdp)
+void sgsn_ggsn_ctx_drop_pdp(struct sgsn_pdp_ctx *pctx)
 {
-	if (pdp->mm->gmm_state == GMM_REGISTERED_NORMAL) {
-		gsm48_tx_gsm_deact_pdp_req(pdp, GSM_CAUSE_NET_FAIL, true);
-		sgsn_ggsn_ctx_remove_pdp(pdp->ggsn, pdp);
+	if (pctx->mm->gmm_state == GMM_REGISTERED_NORMAL) {
+		gsm48_tx_gsm_deact_pdp_req(pctx, GSM_CAUSE_NET_FAIL, true);
+		sgsn_ggsn_ctx_remove_pdp(pctx->ggsn, pctx);
 	} else  {
 		/* FIXME: GPRS paging in case MS is SUSPENDED */
-		LOGPDPCTXP(LOGL_NOTICE, pdp, "Hard-dropping PDP ctx due to GGSN "
+		LOGPDPCTXP(LOGL_NOTICE, pctx, "Hard-dropping PDP ctx due to GGSN "
 			"recovery\n");
 		/* FIXME: how to tell this to libgtp? */
-		sgsn_pdp_ctx_free(pdp);
+		sgsn_pdp_ctx_free(pctx);
 	}
 }
 
@@ -721,7 +721,7 @@ int sgsn_ggsn_ctx_drop_all_pdp(struct sgsn_ggsn_ctx *ggsn)
 
 	struct sgsn_pdp_ctx *pdp, *pdp2;
 	llist_for_each_entry_safe(pdp, pdp2, &ggsn->pdp_list, ggsn_list) {
-		drop_one_pdp(pdp);
+		sgsn_ggsn_ctx_drop_pdp(pdp);
 		num++;
 	}
 

@@ -639,8 +639,15 @@ static int cb_conf(int type, int cause, struct pdp_t *pdp, void *cbp)
 /* Called whenever a PDP context is deleted for any reason */
 static int cb_delete_context(struct pdp_t *pdp)
 {
+	struct sgsn_pdp_ctx *pctx = pdp->priv;
+
 	LOGPDPX(DGPRS, LOGL_INFO, pdp, "Context %p was deleted\n", pdp);
 
+	/* unlink the now non-existing library handle from the pdp
+	 * context */
+	pctx->lib = NULL;
+
+	sgsn_ggsn_ctx_drop_pdp(pctx);
 	return 0;
 }
 
