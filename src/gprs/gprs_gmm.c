@@ -2170,6 +2170,15 @@ static void mmctx_timer_cb(void *_mm)
 
 static void pdpctx_timer_cb(void *_mm);
 
+
+static void pdpctx_timer_rearm(struct sgsn_pdp_ctx *pdp, unsigned int T, unsigned int seconds)
+{
+	if (osmo_timer_pending(&pdp->timer))
+		LOGPDPCTXP(LOGL_ERROR, pdp, "Scheduling PDP timer %u while old "
+			"timer %u pending\n", T, pdp->T);
+	osmo_timer_schedule(&pdp->timer, seconds, 0);
+}
+
 static void pdpctx_timer_start(struct sgsn_pdp_ctx *pdp, unsigned int T,
 				unsigned int seconds)
 {
@@ -2179,9 +2188,8 @@ static void pdpctx_timer_start(struct sgsn_pdp_ctx *pdp, unsigned int T,
 	pdp->T = T;
 	pdp->num_T_exp = 0;
 
-	/* FIXME: we should do this only once ? */
 	osmo_timer_setup(&pdp->timer, pdpctx_timer_cb, pdp);
-	osmo_timer_schedule(&pdp->timer, seconds, 0);
+	pdpctx_timer_rearm(pdp, pdp->T, seconds);
 }
 
 static void pdpctx_timer_stop(struct sgsn_pdp_ctx *pdp, unsigned int T)
@@ -2724,7 +2732,7 @@ static void pdpctx_timer_cb(void *_pdp)
 
 	switch (pdp->T) {
 	case 3395:	/* waiting for PDP CTX DEACT ACK */
-		if (pdp->num_T_exp >= 4) {
+		if (pdp->num_T_exp >= 5) {
 			LOGPDPCTXP(LOGL_NOTICE, pdp, "T3395 expired >= 5 times\n");
 			pdp->state = PDP_STATE_INACTIVE;
 			if (pdp->ggsn)
@@ -2733,7 +2741,8 @@ static void pdpctx_timer_cb(void *_pdp)
 				sgsn_pdp_ctx_free(pdp);
 			break;
 		}
-		gsm48_tx_gsm_deact_pdp_req(pdp, GSM_CAUSE_NET_FAIL, true);
+		_gsm48_tx_gsm_deact_pdp_req(pdp->mm, pdp->ti, GSM_CAUSE_NET_FAIL, true);
+		pdpctx_timer_rearm(pdp, 3395, sgsn->cfg.timers.T3395);
 		break;
 	default:
 		LOGPDPCTXP(LOGL_ERROR, pdp, "timer expired in unknown mode %u\n",
