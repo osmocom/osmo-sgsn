@@ -591,9 +591,10 @@ static int echo_conf(struct pdp_t *pdp, void *cbp, int recovery)
 }
 
 /* Any message received by GGSN contains a recovery IE */
-static int cb_recovery(struct sockaddr_in *peer, uint8_t recovery)
+static int cb_recovery2(struct sockaddr_in *peer, struct pdp_t *pdp, uint8_t recovery)
 {
 	struct sgsn_ggsn_ctx *ggsn;
+	struct sgsn_pdp_ctx *pctx = NULL;
 
 	ggsn = sgsn_ggsn_ctx_by_addr(&peer->sin_addr);
 	if (!ggsn) {
@@ -606,11 +607,13 @@ static int cb_recovery(struct sockaddr_in *peer, uint8_t recovery)
 		ggsn->remote_restart_ctr = recovery;
 	} else if (ggsn->remote_restart_ctr != recovery) {
 		/* counter has changed (GGSN restart): release all PDP */
-		LOGP(DGPRS, LOGL_NOTICE, "GGSN recovery (%u->%u), "
-		     "releasing all PDP contexts\n",
-		     ggsn->remote_restart_ctr, recovery);
+		LOGP(DGPRS, LOGL_NOTICE, "GGSN recovery (%u->%u) pdp=%p, "
+		     "releasing all%s PDP contexts\n",
+		     ggsn->remote_restart_ctr, recovery, pdp, pdp ? " other" : "");
 		ggsn->remote_restart_ctr = recovery;
-		sgsn_ggsn_ctx_drop_all_pdp(ggsn);
+		if (pdp)
+			pctx = pdp->priv;
+		sgsn_ggsn_ctx_drop_all_pdp_except(ggsn, pctx);
 	}
 	return 0;
 }
@@ -896,7 +899,7 @@ int sgsn_gtp_init(struct sgsn_instance *sgi)
 	/* Register callbackcs with libgtp */
 	gtp_set_cb_delete_context(gsn, cb_delete_context);
 	gtp_set_cb_conf(gsn, cb_conf);
-	gtp_set_cb_recovery(gsn, cb_recovery);
+	gtp_set_cb_recovery2(gsn, cb_recovery2);
 	gtp_set_cb_data_ind(gsn, cb_data_ind);
 	gtp_set_cb_unsup_ind(gsn, cb_unsup_ind);
 	gtp_set_cb_extheader_ind(gsn, cb_extheader_ind);

@@ -362,7 +362,7 @@ struct sgsn_ggsn_ctx *sgsn_ggsn_ctx_by_id(uint32_t id);
 struct sgsn_ggsn_ctx *sgsn_ggsn_ctx_by_addr(struct in_addr *addr);
 struct sgsn_ggsn_ctx *sgsn_ggsn_ctx_find_alloc(uint32_t id);
 void sgsn_ggsn_ctx_drop_pdp(struct sgsn_pdp_ctx *pctx);
-int sgsn_ggsn_ctx_drop_all_pdp(struct sgsn_ggsn_ctx *ggsn);
+int sgsn_ggsn_ctx_drop_all_pdp_except(struct sgsn_ggsn_ctx *ggsn, struct sgsn_pdp_ctx *except);
 void sgsn_ggsn_ctx_add_pdp(struct sgsn_ggsn_ctx *ggc, struct sgsn_pdp_ctx *pdp);
 void sgsn_ggsn_ctx_remove_pdp(struct sgsn_ggsn_ctx *ggc, struct sgsn_pdp_ctx *pdp);
 

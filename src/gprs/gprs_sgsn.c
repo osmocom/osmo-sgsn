@@ -714,13 +714,17 @@ void sgsn_ggsn_ctx_drop_pdp(struct sgsn_pdp_ctx *pctx)
 }
 
 /* High-level function to be called in case a GGSN has disappeared or
- * otherwise lost state (recovery procedure) */
-int sgsn_ggsn_ctx_drop_all_pdp(struct sgsn_ggsn_ctx *ggsn)
+ * otherwise lost state (recovery procedure). It will detach all related pdp ctx
+ * from a ggsn and communicate deact to MS. Optionally (!NULL), one pdp ctx can
+ * be kept alive to allow handling later message which contained the Recovery IE. */
+int sgsn_ggsn_ctx_drop_all_pdp_except(struct sgsn_ggsn_ctx *ggsn, struct sgsn_pdp_ctx *except)
 {
 	int num = 0;
 
 	struct sgsn_pdp_ctx *pdp, *pdp2;
 	llist_for_each_entry_safe(pdp, pdp2, &ggsn->pdp_list, ggsn_list) {
+		if (pdp == except)
+			continue;
 		sgsn_ggsn_ctx_drop_pdp(pdp);
 		num++;
 	}
