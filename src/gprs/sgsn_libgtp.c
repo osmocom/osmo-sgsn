@@ -314,10 +314,10 @@ struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
 /* SGSN wants to delete a PDP context */
 int sgsn_delete_pdp_ctx(struct sgsn_pdp_ctx *pctx)
 {
-	LOGPDPCTXP(LOGL_ERROR, pctx, "Delete PDP Context\n");
+	LOGPDPCTXP(LOGL_INFO, pctx, "Delete PDP Context\n");
 
 	/* FIXME: decide if we need teardown or not ! */
-	return gtp_delete_context_req(pctx->ggsn->gsn, pctx->lib, pctx, 1);
+	return gtp_delete_context_req2(pctx->ggsn->gsn, pctx->lib, pctx, 1);
 }
 
 struct cause_map {
@@ -572,10 +572,6 @@ static int delete_pdp_conf(struct pdp_t *pdp, void *cbp, int cause)
 			   "Not deactivating SNDCP layer since the MM context "
 			   "is not available\n");
 	}
-
-	/* unlink the now non-existing library handle from the pdp
-	 * context */
-	pctx->lib = NULL;
 
 	sgsn_pdp_ctx_free(pctx);
 
