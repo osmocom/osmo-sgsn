@@ -1862,7 +1862,7 @@ static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 			ctx = sgsn_mm_ctx_by_imsi(mi_string);
 		if (!ctx) {
 			/* FIXME: We need to have a context for service request? */
-			reject_cause = GMM_CAUSE_NET_FAIL;
+			reject_cause = GMM_CAUSE_IMPL_DETACHED;
 			goto rejected;
 		}
 		msgid2mmctx(ctx, msg);
@@ -1875,7 +1875,7 @@ static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 			ctx = sgsn_mm_ctx_by_ptmsi(tmsi);
 		if (!ctx) {
 			/* FIXME: We need to have a context for service request? */
-			reject_cause = GMM_CAUSE_NET_FAIL;
+			reject_cause = GMM_CAUSE_IMPL_DETACHED;
 			goto rejected;
 		}
 		msgid2mmctx(ctx, msg);
