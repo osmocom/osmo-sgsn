@@ -164,6 +164,7 @@ static int cdr_snprintf_pdp(char *buf, size_t size, const char *ev,
 
 	memset(apni, 0, sizeof(apni));
 	memset(ggsn_addr, 0, sizeof(ggsn_addr));
+	memset(sgsn_addr, 0, sizeof(sgsn_addr));
 	memset(eua_addr, 0, sizeof(eua_addr));
 
 
