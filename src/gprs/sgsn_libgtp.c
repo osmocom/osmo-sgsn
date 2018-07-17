@@ -198,18 +198,25 @@ struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
 	pdp->eua.v[0] |= 0xf0;
 
 	/* APN name from GMM */
-	pdp->apn_use.l = TLVP_LEN(tp, GSM48_IE_GSM_APN);
-	if (pdp->apn_use.l > sizeof(pdp->apn_use.v))
-		pdp->apn_use.l = sizeof(pdp->apn_use.v);
-	memcpy(pdp->apn_use.v, TLVP_VAL(tp, GSM48_IE_GSM_APN),
-		pdp->apn_use.l);
+	if (TLVP_PRESENT(tp, GSM48_IE_GSM_APN)) {
+		pdp->apn_use.l = TLVP_LEN(tp, GSM48_IE_GSM_APN);
+		if (pdp->apn_use.l > sizeof(pdp->apn_use.v))
+			pdp->apn_use.l = sizeof(pdp->apn_use.v);
+		memcpy(pdp->apn_use.v, TLVP_VAL(tp, GSM48_IE_GSM_APN), pdp->apn_use.l);
+	} else {
+		pdp->apn_use.l = 0;
+	}
 
 	/* Protocol Configuration Options from GMM */
-	pdp->pco_req.l = TLVP_LEN(tp, GSM48_IE_GSM_PROTO_CONF_OPT);
-	if (pdp->pco_req.l > sizeof(pdp->pco_req.v))
-		pdp->pco_req.l = sizeof(pdp->pco_req.v);
-	memcpy(pdp->pco_req.v, TLVP_VAL(tp, GSM48_IE_GSM_PROTO_CONF_OPT),
-		pdp->pco_req.l);
+	if (TLVP_PRESENT(tp, GSM48_IE_GSM_PROTO_CONF_OPT)) {
+		pdp->pco_req.l = TLVP_LEN(tp, GSM48_IE_GSM_PROTO_CONF_OPT);
+		if (pdp->pco_req.l > sizeof(pdp->pco_req.v))
+			pdp->pco_req.l = sizeof(pdp->pco_req.v);
+		memcpy(pdp->pco_req.v, TLVP_VAL(tp, GSM48_IE_GSM_PROTO_CONF_OPT),
+		       pdp->pco_req.l);
+	} else {
+		pdp->pco_req.l = 0;
+	}
 
 	/* QoS options from GMM or remote */
 	if (TLVP_LEN(tp, OSMO_IE_GSM_SUB_QOS) > 0) {

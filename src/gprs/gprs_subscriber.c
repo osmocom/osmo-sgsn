@@ -374,7 +374,11 @@ static void gprs_subscr_gsup_insert_data(struct gprs_subscr *subscr,
 		pdp_data->pdp_type = pdp_info->pdp_type;
 		osmo_apn_to_str(pdp_data->apn_str,
 				pdp_info->apn_enc, pdp_info->apn_enc_len);
-		memcpy(pdp_data->qos_subscribed, pdp_info->qos_enc, pdp_info->qos_enc_len);
+
+		if (pdp_info->qos_enc) {
+			memcpy(&pdp_data->qos_subscribed[0], pdp_info->qos_enc,
+			       pdp_info->qos_enc_len);
+		}
 		pdp_data->qos_subscribed_len = pdp_info->qos_enc_len;
 
 		if (pdp_info->pdp_charg_enc && pdp_info->pdp_charg_enc_len >= sizeof(pdp_data->pdp_charg)) {
