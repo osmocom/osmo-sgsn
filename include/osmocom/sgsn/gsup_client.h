@@ -23,7 +23,7 @@
 
 #include <osmocom/core/timer.h>
 
-#include <osmocom/sgsn/oap_client.h>
+#include <osmocom/gsm/oap_client.h>
 
 #define GSUP_CLIENT_RECONNECT_INTERVAL 10
 #define GSUP_CLIENT_PING_INTERVAL 20
@@ -43,7 +43,7 @@ struct gsup_client {
 	gsup_client_read_cb_t read_cb;
 	void *data;
 
-	struct oap_client_state oap_state;
+	struct osmo_oap_client_state oap_state;
 
 	struct osmo_timer_list ping_timer;
 	struct osmo_timer_list connect_timer;
@@ -55,7 +55,7 @@ struct gsup_client *gsup_client_create(const char *unit_name,
 				       const char *ip_addr,
 				       unsigned int tcp_port,
 				       gsup_client_read_cb_t read_cb,
-				       struct oap_client_config *oapc_config);
+				       struct osmo_oap_client_config *oapc_config);
 
 void gsup_client_destroy(struct gsup_client *gsupc);
 int gsup_client_send(struct gsup_client *gsupc, struct msgb *msg);

@@ -6,7 +6,7 @@
 #include <osmocom/crypt/gprs_cipher.h>
 #include <osmocom/gprs/gprs_ns.h>
 #include <osmocom/sgsn/gprs_sgsn.h>
-#include <osmocom/sgsn/oap_client.h>
+#include <osmocom/gsm/oap_client.h>
 #include <osmocom/sgsn/common.h>
 
 #include "../../bscconfig.h"
@@ -101,7 +101,7 @@ struct sgsn_config {
 
 	int dynamic_lookup;
 
-	struct oap_client_config oap;
+	struct osmo_oap_client_config oap;
 
 	/* RFC1144 TCP/IP header compression */
 	struct {

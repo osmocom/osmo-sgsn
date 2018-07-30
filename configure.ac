@@ -194,7 +194,6 @@ AC_OUTPUT(
     tests/gprs/Makefile
     tests/gbproxy/Makefile
     tests/sgsn/Makefile
-    tests/oap/Makefile
     tests/gtphub/Makefile
     tests/xid/Makefile
     tests/sndcp_xid/Makefile

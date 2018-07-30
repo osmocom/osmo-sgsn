@@ -3,7 +3,6 @@ SUBDIRS = \
 	gbproxy \
 	gtphub \
 	sgsn \
-	oap \
 	xid \
 	sndcp_xid \
 	slhc \
