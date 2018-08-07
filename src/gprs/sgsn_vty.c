@@ -34,6 +34,7 @@
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/sgsn.h>
 #include <osmocom/gprs/gprs_ns.h>
+#include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/gprs_sgsn.h>
 #include <osmocom/sgsn/vty.h>
 #include <osmocom/sgsn/gsup_client.h>
@@ -43,6 +44,8 @@
 #include <osmocom/vty/misc.h>
 #include <osmocom/crypt/gprs_cipher.h>
 #include <osmocom/abis/ipa.h>
+
+#include <osmocom/gprs/gprs_bssgp.h>
 
 #include <pdp.h>
 #include <gtp.h>
@@ -796,6 +799,34 @@ static void subscr_dump_full_vty(struct vty *vty, struct gprs_subscr *gsub, int 
 	vty_out(vty, "    Use count: %u%s", gsub->use_count, VTY_NEWLINE);
 }
 
+DEFUN_HIDDEN(reset_sgsn_state,
+      reset_sgsn_state_cmd,
+      "reset sgsn state",
+      "Remove all known subscriber, MM ctx and flush BSSGP queues Useful when running tests against the SGSN")
+{
+	struct gprs_subscr *subscr, *tmp_subscr;
+	struct sgsn_mm_ctx *mm, *tmp_mm;
+
+	llist_for_each_entry_safe(mm, tmp_mm, &sgsn_mm_ctxts, list)
+	{
+		gsm0408_gprs_access_cancelled(mm, SGSN_ERROR_CAUSE_NONE);
+	}
+	vty_out(vty, "Cancelled MM Ctx. %s", VTY_NEWLINE);
+
+	llist_for_each_entry_safe(subscr, tmp_subscr, gprs_subscribers, entry) {
+		gprs_subscr_get(subscr);
+		gprs_subscr_cancel(subscr);
+		gprs_subscr_put(subscr);
+	}
+	vty_out(vty, "Removed all gprs subscribers.%s", VTY_NEWLINE);
+
+	bssgp_flush_all_queues();
+	vty_out(vty, "Flushed all BSSGPs queues.%s", VTY_NEWLINE);
+
+	/* remove all queues to bssgp */
+	return CMD_SUCCESS;
+}
+
 DEFUN(show_subscr_cache,
       show_subscr_cache_cmd,
       "show subscriber cache",
@@ -1310,6 +1341,7 @@ int sgsn_vty_init(struct sgsn_config *cfg)
 	install_element(ENABLE_NODE, &update_subscr_cancel_cmd);
 	install_element(ENABLE_NODE, &update_subscr_update_location_result_cmd);
 	install_element(ENABLE_NODE, &update_subscr_update_auth_info_cmd);
+	install_element(ENABLE_NODE, &reset_sgsn_state_cmd);
 
 	install_element(CONFIG_NODE, &cfg_sgsn_cmd);
 	install_node(&sgsn_node, config_write_sgsn);
