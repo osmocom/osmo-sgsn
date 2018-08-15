@@ -112,7 +112,7 @@ static void gbproxy_patch_apn_ie(struct msgb *msg,
 		     osmo_apn_to_str(str1, apn, apn_len));
 
 		*new_apn_ie_len = 0;
-		gprs_msgb_resize_area(msg, apn_ie, apn_ie_len, 0);
+		msgb_resize_area(msg, apn_ie, apn_ie_len, 0);
 	} else {
 		/* Resize the IE */
 		char str1[110];
@@ -129,7 +129,7 @@ static void gbproxy_patch_apn_ie(struct msgb *msg,
 				       peer->cfg->core_apn_size));
 
 		*new_apn_ie_len = peer->cfg->core_apn_size + 2;
-		gprs_msgb_resize_area(msg, apn, apn_len, peer->cfg->core_apn_size);
+		msgb_resize_area(msg, apn, apn_len, peer->cfg->core_apn_size);
 		memcpy(apn, peer->cfg->core_apn, peer->cfg->core_apn_size);
 		hdr->apn_len = peer->cfg->core_apn_size;
 	}
@@ -463,4 +463,3 @@ int gbproxy_check_imsi(struct gbproxy_match *match,
 
 	return 1;
 }
-

@@ -30,41 +30,6 @@
 
 #include <string.h>
 
-/* TODO: Move this to libosmocore/msgb.c */
-int gprs_msgb_resize_area(struct msgb *msg, uint8_t *area,
-			    size_t old_size, size_t new_size)
-{
-	int rc;
-	uint8_t *rest = area + old_size;
-	int rest_len = msg->len - old_size - (area - msg->data);
-	int delta_size = (int)new_size - (int)old_size;
-
-	if (delta_size == 0)
-		return 0;
-
-	if (delta_size > 0) {
-		rc = msgb_trim(msg, msg->len + delta_size);
-		if (rc < 0)
-			return rc;
-	}
-
-	memmove(area + new_size, area + old_size, rest_len);
-
-	if (msg->l1h >= rest)
-		msg->l1h += delta_size;
-	if (msg->l2h >= rest)
-		msg->l2h += delta_size;
-	if (msg->l3h >= rest)
-		msg->l3h += delta_size;
-	if (msg->l4h >= rest)
-		msg->l4h += delta_size;
-
-	if (delta_size < 0)
-		msgb_trim(msg, msg->len + delta_size);
-
-	return 0;
-}
-
 int gprs_str_to_apn(uint8_t *apn_enc, size_t max_len, const char *str)
 {
 	uint8_t *last_len_field;
