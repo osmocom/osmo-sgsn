@@ -1061,7 +1061,7 @@ int gprs_ns_sendmsg(struct gprs_ns_inst *nsi, struct msgb *msg)
 
 	if (received_messages) {
 		struct msgb *msg_copy;
-		msg_copy = gprs_msgb_copy(msg, "received_messages");
+		msg_copy = bssgp_msgb_copy(msg, "received_messages");
 		llist_add_tail(&msg_copy->list, received_messages);
 	}
 

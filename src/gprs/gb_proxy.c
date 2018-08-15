@@ -499,7 +499,7 @@ static int gbproxy_imsi_acquisition(struct gbproxy_peer *peer,
 	     msgb_nsei(msg),
 	     parse_ctx->llc_msg_name ? parse_ctx->llc_msg_name : "BSSGP");
 
-	stored_msg = gprs_msgb_copy(msg, "process_bssgp_ul");
+	stored_msg = bssgp_msgb_copy(msg, "process_bssgp_ul");
 	msgb_enqueue(&link_info->stored_msgs, stored_msg);
 
 	if (!link_info->imsi_acq_pending) {
@@ -763,7 +763,7 @@ static int gbprox_relay2sgsn(struct gbproxy_config *cfg, struct msgb *old_msg,
 {
 	/* create a copy of the message so the old one can
 	 * be free()d safely when we return from gbprox_rcvmsg() */
-	struct msgb *msg = gprs_msgb_copy(old_msg, "msgb_relay2sgsn");
+	struct msgb *msg = bssgp_msgb_copy(old_msg, "msgb_relay2sgsn");
 	int rc;
 
 	DEBUGP(DGPRS, "NSEI=%u proxying BTS->SGSN (NS_BVCI=%u, NSEI=%u)\n",
@@ -787,7 +787,7 @@ static int gbprox_relay2peer(struct msgb *old_msg, struct gbproxy_peer *peer,
 {
 	/* create a copy of the message so the old one can
 	 * be free()d safely when we return from gbprox_rcvmsg() */
-	struct msgb *msg = gprs_msgb_copy(old_msg, "msgb_relay2peer");
+	struct msgb *msg = bssgp_msgb_copy(old_msg, "msgb_relay2peer");
 	int rc;
 
 	DEBUGP(DGPRS, "NSEI=%u proxying SGSN->BSS (NS_BVCI=%u, NSEI=%u)\n",
@@ -1179,7 +1179,7 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_config *cfg,
 		return bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, NULL, orig_msg);
 	}
 
-	msg = gprs_msgb_copy(orig_msg, "rx_sig_from_sgsn");
+	msg = bssgp_msgb_copy(orig_msg, "rx_sig_from_sgsn");
 	gbprox_process_bssgp_dl(cfg, msg, NULL);
 	/* Update message info */
 	bgph = (struct bssgp_normal_hdr *) msgb_bssgph(msg);

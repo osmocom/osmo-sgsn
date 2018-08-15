@@ -29,7 +29,6 @@
 struct msgb;
 struct gprs_ra_id;
 
-struct msgb *gprs_msgb_copy(const struct msgb *msg, const char *name);
 int gprs_msgb_resize_area(struct msgb *msg, uint8_t *area,
 			    size_t old_size, size_t new_size);
 int gprs_str_to_apn(uint8_t *apn_enc, size_t max_len, const char *str);

@@ -30,55 +30,6 @@
 
 #include <string.h>
 
-/* FIXME: this needs to go to libosmocore/msgb.c */
-struct msgb *gprs_msgb_copy(const struct msgb *msg, const char *name)
-{
-	struct libgb_msgb_cb *old_cb, *new_cb;
-	struct msgb *new_msg;
-
-	new_msg = msgb_alloc(msg->data_len, name);
-	if (!new_msg)
-		return NULL;
-
-	/* copy data */
-	memcpy(new_msg->_data, msg->_data, new_msg->data_len);
-
-	/* copy header */
-	new_msg->len = msg->len;
-	new_msg->data += msg->data - msg->_data;
-	new_msg->head += msg->head - msg->_data;
-	new_msg->tail += msg->tail - msg->_data;
-
-	if (msg->l1h)
-		new_msg->l1h = new_msg->_data + (msg->l1h - msg->_data);
-	if (msg->l2h)
-		new_msg->l2h = new_msg->_data + (msg->l2h - msg->_data);
-	if (msg->l3h)
-		new_msg->l3h = new_msg->_data + (msg->l3h - msg->_data);
-	if (msg->l4h)
-		new_msg->l4h = new_msg->_data + (msg->l4h - msg->_data);
-
-	/* copy GB specific data */
-	old_cb = LIBGB_MSGB_CB(msg);
-	new_cb = LIBGB_MSGB_CB(new_msg);
-
-	if (old_cb->bssgph)
-		new_cb->bssgph = new_msg->_data + (old_cb->bssgph - msg->_data);
-	if (old_cb->llch)
-		new_cb->llch = new_msg->_data + (old_cb->llch - msg->_data);
-
-	/* bssgp_cell_id is a pointer into the old msgb, so we need to make
-	 * it a pointer into the new msgb */
-	if (old_cb->bssgp_cell_id)
-		new_cb->bssgp_cell_id = new_msg->_data +
-			(old_cb->bssgp_cell_id - msg->_data);
-	new_cb->nsei = old_cb->nsei;
-	new_cb->bvci = old_cb->bvci;
-	new_cb->tlli = old_cb->tlli;
-
-	return new_msg;
-}
-
 /* TODO: Move this to libosmocore/msgb.c */
 int gprs_msgb_resize_area(struct msgb *msg, uint8_t *area,
 			    size_t old_size, size_t new_size)

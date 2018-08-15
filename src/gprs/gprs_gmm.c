@@ -2648,7 +2648,7 @@ static int gsm48_rx_gsm_act_pdp_req(struct sgsn_mm_ctx *mmctx,
 	 * and the dynamic resolution will be the right thing
 	 * in the long run.
 	 */
-	msg = gprs_msgb_copy(_msg, __func__);
+	msg = bssgp_msgb_copy(_msg, __func__);
 	if (!msg) {
 		struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(_msg);
 		uint8_t transaction_id = gsm48_hdr_trans_id(gh);
