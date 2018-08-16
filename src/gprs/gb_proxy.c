@@ -338,7 +338,8 @@ static int gbproxy_flush_stored_messages(struct gbproxy_peer *peer,
 	     msgb_nsei(msg));
 
 	/* Patch and flush stored messages towards the SGSN */
-	while ((stored_msg = msgb_dequeue(&link_info->stored_msgs))) {
+	while ((stored_msg = msgb_dequeue_count(&link_info->stored_msgs,
+						&link_info->stored_msgs_len))) {
 		struct gprs_gb_parse_context tmp_parse_ctx = {0};
 		tmp_parse_ctx.to_bss = 0;
 		tmp_parse_ctx.peer_nsei = msgb_nsei(stored_msg);
@@ -492,6 +493,24 @@ static int gbproxy_imsi_acquisition(struct gbproxy_peer *peer,
 
 	/* The message cannot be processed since the IMSI is still missing */
 
+	/* If queue is getting too large, drop oldest msgb before adding new one */
+	if (peer->cfg->stored_msgs_max_len > 0) {
+		int exceeded_max_len = link_info->stored_msgs_len
+				   + 1 - peer->cfg->stored_msgs_max_len;
+
+		for (; exceeded_max_len > 0; exceeded_max_len--) {
+			struct msgb *msgb_drop;
+			msgb_drop = msgb_dequeue_count(&link_info->stored_msgs,
+						       &link_info->stored_msgs_len);
+			LOGP(DLLC, LOGL_INFO,
+			     "NSEI=%d(BSS) Dropping stored msgb from list "
+			     "(!acq imsi, length %d, max_len exceeded)\n",
+			     msgb_nsei(msgb_drop), link_info->stored_msgs_len);
+
+			msgb_free(msgb_drop);
+		}
+	}
+
 	/* Enqueue unpatched messages */
 	LOGP(DLLC, LOGL_INFO,
 	     "NSEI=%d(BSS) IMSI acquisition in progress, "
@@ -500,7 +519,8 @@ static int gbproxy_imsi_acquisition(struct gbproxy_peer *peer,
 	     parse_ctx->llc_msg_name ? parse_ctx->llc_msg_name : "BSSGP");
 
 	stored_msg = bssgp_msgb_copy(msg, "process_bssgp_ul");
-	msgb_enqueue(&link_info->stored_msgs, stored_msg);
+	msgb_enqueue_count(&link_info->stored_msgs, stored_msg,
+			   &link_info->stored_msgs_len);
 
 	if (!link_info->imsi_acq_pending) {
 		LOGP(DLLC, LOGL_INFO,

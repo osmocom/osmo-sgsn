@@ -23,6 +23,7 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <time.h>
+#include <inttypes.h>
 
 #include <osmocom/core/talloc.h>
 #include <osmocom/core/rate_ctr.h>
@@ -128,6 +129,9 @@ static int config_write_gbproxy(struct vty *vty)
 	vty_out(vty, " link-list keep-mode %s%s",
 		get_value_string(keep_modes, g_cfg->keep_link_infos),
 		VTY_NEWLINE);
+	if (g_cfg->stored_msgs_max_len > 0)
+		vty_out(vty, " link stored-msgs-max-length %"PRIu32"%s",
+			g_cfg->stored_msgs_max_len, VTY_NEWLINE);
 
 
 	return CMD_SUCCESS;
@@ -402,6 +406,7 @@ DEFUN(cfg_gbproxy_no_secondary_sgsn,
 }
 
 #define GBPROXY_LINK_LIST_STR "Set TLLI list parameters\n"
+#define GBPROXY_LINK_STR "Set TLLI parameters\n"
 #define GBPROXY_MAX_AGE_STR "Limit maximum age\n"
 
 DEFUN(cfg_gbproxy_link_list_max_age,
@@ -464,6 +469,27 @@ DEFUN(cfg_gbproxy_link_list_keep_mode,
 	return CMD_SUCCESS;
 }
 
+DEFUN(cfg_gbproxy_link_stored_msgs_max_len,
+      cfg_gbproxy_link_stored_msgs_max_len_cmd,
+      "link stored-msgs-max-length <1-99999>",
+      GBPROXY_LINK_STR GBPROXY_MAX_LEN_STR
+      "Maximum number of msgb stored in the logical link waiting to acquire its IMSI\n")
+{
+	g_cfg->stored_msgs_max_len = (uint32_t) atoi(argv[0]);
+
+	return CMD_SUCCESS;
+}
+
+DEFUN(cfg_gbproxy_link_no_stored_msgs_max_len,
+      cfg_gbproxy_link_no_stored_msgs_max_len_cmd,
+      "no link stored-msgs-max-length",
+      NO_STR GBPROXY_LINK_STR GBPROXY_MAX_LEN_STR)
+{
+	g_cfg->stored_msgs_max_len = 0;
+
+	return CMD_SUCCESS;
+}
+
 
 DEFUN(show_gbproxy, show_gbproxy_cmd, "show gbproxy [stats]",
        SHOW_STR "Display information about the Gb proxy\n" "Show statistics\n")
@@ -502,10 +528,6 @@ DEFUN(show_gbproxy_links, show_gbproxy_links_cmd, "show gbproxy links",
 
 		llist_for_each_entry(link_info, &state->logical_links, list) {
 			time_t age = now - link_info->timestamp;
-			int stored_msgs = 0;
-			struct llist_head *iter;
-			llist_for_each(iter, &link_info->stored_msgs)
-				stored_msgs++;
 
 			if (link_info->imsi > 0) {
 				snprintf(mi_buf, sizeof(mi_buf), "(invalid)");
@@ -518,8 +540,10 @@ DEFUN(show_gbproxy_links, show_gbproxy_links_cmd, "show gbproxy links",
 			vty_out(vty, "  TLLI %08x, IMSI %s, AGE %d",
 				link_info->tlli.current, mi_buf, (int)age);
 
-			if (stored_msgs)
-				vty_out(vty, ", STORED %d", stored_msgs);
+			if (link_info->stored_msgs_len)
+				vty_out(vty, ", STORED %"PRIu32"/%"PRIu32,
+					link_info->stored_msgs_len,
+					g_cfg->stored_msgs_max_len);
 
 			if (g_cfg->route_to_sgsn2)
 				vty_out(vty, ", SGSN NSEI %d",
@@ -825,6 +849,7 @@ int gbproxy_vty_init(void)
 	install_element(GBPROXY_NODE, &cfg_gbproxy_link_list_max_age_cmd);
 	install_element(GBPROXY_NODE, &cfg_gbproxy_link_list_max_len_cmd);
 	install_element(GBPROXY_NODE, &cfg_gbproxy_link_list_keep_mode_cmd);
+	install_element(GBPROXY_NODE, &cfg_gbproxy_link_stored_msgs_max_len_cmd);
 	install_element(GBPROXY_NODE, &cfg_gbproxy_no_core_mcc_cmd);
 	install_element(GBPROXY_NODE, &cfg_gbproxy_no_core_mnc_cmd);
 	install_element(GBPROXY_NODE, &cfg_gbproxy_no_match_imsi_cmd);
@@ -834,6 +859,7 @@ int gbproxy_vty_init(void)
 	install_element(GBPROXY_NODE, &cfg_gbproxy_no_acquire_imsi_cmd);
 	install_element(GBPROXY_NODE, &cfg_gbproxy_link_list_no_max_age_cmd);
 	install_element(GBPROXY_NODE, &cfg_gbproxy_link_list_no_max_len_cmd);
+	install_element(GBPROXY_NODE, &cfg_gbproxy_link_no_stored_msgs_max_len_cmd);
 
 	/* broken or deprecated to allow an upgrade path */
 	install_element(GBPROXY_NODE, &cfg_gbproxy_broken_apn_match_cmd);

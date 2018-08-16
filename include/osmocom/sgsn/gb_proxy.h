@@ -105,8 +105,12 @@ struct gbproxy_config {
 	struct osmo_plmn_id core_plmn;
 	uint8_t* core_apn;
 	size_t core_apn_size;
+	/* If !0, Max age to consider a struct gbproxy_link_info as stale */
 	int tlli_max_age;
+	/* If !0, Max len of gbproxy_peer->list (list of struct gbproxy_link_info) */
 	int tlli_max_len;
+	/* If !0, Max len of gbproxy_link_info->stored_msgs (list of msgb) */
+	uint32_t stored_msgs_max_len;
 
 	/* Experimental config */
 	int patch_ptmsi;
@@ -171,6 +175,7 @@ struct gbproxy_link_info {
 
 	int imsi_acq_pending;
 	struct llist_head stored_msgs;
+	uint32_t stored_msgs_len;
 	unsigned vu_gen_tx_bss;
 
 	int is_deregistered;
