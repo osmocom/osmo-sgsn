@@ -120,6 +120,9 @@ static int config_write_gbproxy(struct vty *vty)
 		vty_out(vty, " secondary-sgsn nsei %u%s", g_cfg->nsip_sgsn2_nsei,
 			VTY_NEWLINE);
 
+	if (g_cfg->clean_stale_timer_freq > 0)
+		vty_out(vty, " link-list clean-stale-timer %u%s",
+			g_cfg->clean_stale_timer_freq, VTY_NEWLINE);
 	if (g_cfg->tlli_max_age > 0)
 		vty_out(vty, " link-list max-age %d%s",
 			g_cfg->tlli_max_age, VTY_NEWLINE);
@@ -407,6 +410,44 @@ DEFUN(cfg_gbproxy_no_secondary_sgsn,
 
 #define GBPROXY_LINK_LIST_STR "Set TLLI list parameters\n"
 #define GBPROXY_LINK_STR "Set TLLI parameters\n"
+
+#define GBPROXY_CLEAN_STALE_TIMER_STR "Periodic timer to clean stale links\n"
+
+DEFUN(cfg_gbproxy_link_list_clean_stale_timer,
+      cfg_gbproxy_link_list_clean_stale_timer_cmd,
+      "link-list clean-stale-timer <1-999999>",
+      GBPROXY_LINK_LIST_STR GBPROXY_CLEAN_STALE_TIMER_STR
+      "Frequency at which the periodic timer is fired (in seconds)\n")
+{
+	struct gbproxy_peer *peer;
+	g_cfg->clean_stale_timer_freq = (unsigned int) atoi(argv[0]);
+
+	/* Re-schedule running timers soon in case prev frequency was really big
+	   and new frequency is desired to be lower. After initial run, periodic
+	   time is used. Use random() to avoid firing timers for all peers at
+	   the same time */
+	llist_for_each_entry(peer, &g_cfg->bts_peers, list)
+		osmo_timer_schedule(&peer->clean_stale_timer,
+					random() % 5, random() % 1000000);
+
+	return CMD_SUCCESS;
+}
+
+DEFUN(cfg_gbproxy_link_list_no_clean_stale_timer,
+      cfg_gbproxy_link_list_no_clean_stale_timer_cmd,
+      "no link-list clean-stale-timer",
+      NO_STR GBPROXY_LINK_LIST_STR GBPROXY_CLEAN_STALE_TIMER_STR)
+
+{
+	struct gbproxy_peer *peer;
+	g_cfg->clean_stale_timer_freq = 0;
+
+	llist_for_each_entry(peer, &g_cfg->bts_peers, list)
+		osmo_timer_del(&peer->clean_stale_timer);
+
+	return CMD_SUCCESS;
+}
+
 #define GBPROXY_MAX_AGE_STR "Limit maximum age\n"
 
 DEFUN(cfg_gbproxy_link_list_max_age,
@@ -846,6 +887,7 @@ int gbproxy_vty_init(void)
 	install_element(GBPROXY_NODE, &cfg_gbproxy_secondary_sgsn_cmd);
 	install_element(GBPROXY_NODE, &cfg_gbproxy_patch_ptmsi_cmd);
 	install_element(GBPROXY_NODE, &cfg_gbproxy_acquire_imsi_cmd);
+	install_element(GBPROXY_NODE, &cfg_gbproxy_link_list_clean_stale_timer_cmd);
 	install_element(GBPROXY_NODE, &cfg_gbproxy_link_list_max_age_cmd);
 	install_element(GBPROXY_NODE, &cfg_gbproxy_link_list_max_len_cmd);
 	install_element(GBPROXY_NODE, &cfg_gbproxy_link_list_keep_mode_cmd);
@@ -857,6 +899,7 @@ int gbproxy_vty_init(void)
 	install_element(GBPROXY_NODE, &cfg_gbproxy_no_secondary_sgsn_cmd);
 	install_element(GBPROXY_NODE, &cfg_gbproxy_no_patch_ptmsi_cmd);
 	install_element(GBPROXY_NODE, &cfg_gbproxy_no_acquire_imsi_cmd);
+	install_element(GBPROXY_NODE, &cfg_gbproxy_link_list_no_clean_stale_timer_cmd);
 	install_element(GBPROXY_NODE, &cfg_gbproxy_link_list_no_max_age_cmd);
 	install_element(GBPROXY_NODE, &cfg_gbproxy_link_list_no_max_len_cmd);
 	install_element(GBPROXY_NODE, &cfg_gbproxy_link_no_stored_msgs_max_len_cmd);

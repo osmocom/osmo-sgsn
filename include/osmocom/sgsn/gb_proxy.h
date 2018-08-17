@@ -105,6 +105,8 @@ struct gbproxy_config {
 	struct osmo_plmn_id core_plmn;
 	uint8_t* core_apn;
 	size_t core_apn_size;
+	/* Frequency (sec) at which timer to clean stale links is fired (0 disabled) */
+	unsigned int clean_stale_timer_freq;
 	/* If !0, Max age to consider a struct gbproxy_link_info as stale */
 	int tlli_max_age;
 	/* If !0, Max len of gbproxy_peer->list (list of struct gbproxy_link_info) */
@@ -151,6 +153,9 @@ struct gbproxy_peer {
 	struct rate_ctr_group *ctrg;
 
 	struct gbproxy_patch_state patch_state;
+
+	/* Fired periodically to clean up stale links from list */
+	struct osmo_timer_list clean_stale_timer;
 };
 
 struct gbproxy_tlli_state {

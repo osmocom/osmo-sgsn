@@ -167,6 +167,19 @@ struct gbproxy_peer *gbproxy_peer_by_bssgp_tlv(struct gbproxy_config *cfg,
 	return NULL;
 }
 
+static void clean_stale_timer_cb(void *data)
+{
+	time_t now;
+	struct timespec ts = {0,};
+	struct gbproxy_peer *peer = (struct gbproxy_peer *) data;
+
+	osmo_clock_gettime(CLOCK_MONOTONIC, &ts);
+	now = ts.tv_sec;
+	gbproxy_remove_stale_link_infos(peer, now);
+	if (peer->cfg->clean_stale_timer_freq != 0)
+		osmo_timer_schedule(&peer->clean_stale_timer,
+					peer->cfg->clean_stale_timer_freq, 0);
+}
 
 struct gbproxy_peer *gbproxy_peer_alloc(struct gbproxy_config *cfg, uint16_t bvci)
 {
@@ -188,13 +201,18 @@ struct gbproxy_peer *gbproxy_peer_alloc(struct gbproxy_config *cfg, uint16_t bvc
 
 	INIT_LLIST_HEAD(&peer->patch_state.logical_links);
 
+	osmo_timer_setup(&peer->clean_stale_timer, clean_stale_timer_cb, peer);
+	if (peer->cfg->clean_stale_timer_freq != 0)
+		osmo_timer_schedule(&peer->clean_stale_timer,
+					peer->cfg->clean_stale_timer_freq, 0);
+
 	return peer;
 }
 
 void gbproxy_peer_free(struct gbproxy_peer *peer)
 {
 	llist_del(&peer->list);
-
+	osmo_timer_del(&peer->clean_stale_timer);
 	gbproxy_delete_link_infos(peer);
 
 	rate_ctr_group_free(peer->ctrg);
@@ -220,4 +238,3 @@ int gbproxy_cleanup_peers(struct gbproxy_config *cfg, uint16_t nsei, uint16_t bv
 
 	return counter;
 }
-
