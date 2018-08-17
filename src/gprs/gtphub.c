@@ -791,7 +791,7 @@ const char* const gtphub_side_idx_names[GTPH_SIDE_N] = {
 time_t gtphub_now(void)
 {
 	struct timespec now_tp;
-	OSMO_ASSERT(clock_gettime(CLOCK_MONOTONIC, &now_tp) >= 0);
+	OSMO_ASSERT(osmo_clock_gettime(CLOCK_MONOTONIC, &now_tp) >= 0);
 	return now_tp.tv_sec;
 }
 

@@ -491,7 +491,7 @@ DEFUN(show_gbproxy_links, show_gbproxy_links_cmd, "show gbproxy links",
 	time_t now;
 	struct timespec ts = {0,};
 
-	clock_gettime(CLOCK_MONOTONIC, &ts);
+	osmo_clock_gettime(CLOCK_MONOTONIC, &ts);
 	now = ts.tv_sec;
 
 	llist_for_each_entry(peer, &g_cfg->bts_peers, list) {
@@ -727,7 +727,7 @@ DEFUN(delete_gb_link, delete_gb_link_cmd,
 
 	state = &peer->patch_state;
 
-	clock_gettime(CLOCK_MONOTONIC, &ts);
+	osmo_clock_gettime(CLOCK_MONOTONIC, &ts);
 	now = ts.tv_sec;
 
 	if (match == MATCH_STALE) {

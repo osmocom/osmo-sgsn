@@ -936,7 +936,7 @@ static void sgsn_llme_check_cb(void *data_)
 
 	int rc;
 
-	rc = clock_gettime(CLOCK_MONOTONIC, &now_tp);
+	rc = osmo_clock_gettime(CLOCK_MONOTONIC, &now_tp);
 	OSMO_ASSERT(rc >= 0);
 	now = now_tp.tv_sec;
 

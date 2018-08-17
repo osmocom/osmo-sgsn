@@ -591,7 +591,7 @@ static int gbprox_process_bssgp_ul(struct gbproxy_config *cfg,
 		return 0;
 
 
-	clock_gettime(CLOCK_MONOTONIC, &ts);
+	osmo_clock_gettime(CLOCK_MONOTONIC, &ts);
 	now = ts.tv_sec;
 
 	gbprox_update_current_raid(parse_ctx.bssgp_raid_enc, peer,
@@ -707,7 +707,7 @@ static void gbprox_process_bssgp_dl(struct gbproxy_config *cfg,
 	if (!peer)
 		return;
 
-	clock_gettime(CLOCK_MONOTONIC, &ts);
+	osmo_clock_gettime(CLOCK_MONOTONIC, &ts);
 	now = ts.tv_sec;
 
 	if (parse_ctx.g48_hdr) {
@@ -1432,7 +1432,7 @@ int gbproxy_init_config(struct gbproxy_config *cfg)
 		LOGP(DGPRS, LOGL_ERROR, "Cannot allocate global counter group!\n");
 		return -1;
 	}
-	clock_gettime(CLOCK_REALTIME, &tp);
+	osmo_clock_gettime(CLOCK_REALTIME, &tp);
 
 	return 0;
 }

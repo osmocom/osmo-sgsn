@@ -177,7 +177,7 @@ static int cdr_snprintf_pdp(char *buf, size_t size, const char *ev,
 	if (pdp->ggsn)
 		inet_ntop(AF_INET, &pdp->ggsn->gsn->gsnc.s_addr, sgsn_addr, sizeof(sgsn_addr));
 
-	clock_gettime(CLOCK_MONOTONIC, &tp);
+	osmo_clock_gettime(CLOCK_MONOTONIC, &tp);
 	gettimeofday(&tv, NULL);
 
 	/* convert the timestamp to UTC */
@@ -267,7 +267,7 @@ static int handle_sgsn_sig(unsigned int subsys, unsigned int signal,
 		cdr_log_mm(inst, "free", signal_data->mm);
 		break;
 	case S_SGSN_PDP_ACT:
-		clock_gettime(CLOCK_MONOTONIC, &signal_data->pdp->cdr_start);
+		osmo_clock_gettime(CLOCK_MONOTONIC, &signal_data->pdp->cdr_start);
 		signal_data->pdp->cdr_charging_id = signal_data->pdp->lib->cid;
 		cdr_log_pdp(inst, "pdp-act", signal_data->pdp);
 		osmo_timer_setup(&signal_data->pdp->cdr_timer, cdr_pdp_timeout,

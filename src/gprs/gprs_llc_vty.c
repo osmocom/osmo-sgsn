@@ -71,7 +71,7 @@ static void vty_dump_llme(struct vty *vty, struct gprs_llc_llme *llme)
 {
 	unsigned int i;
 	struct timespec now_tp = {0};
-	clock_gettime(CLOCK_MONOTONIC, &now_tp);
+	osmo_clock_gettime(CLOCK_MONOTONIC, &now_tp);
 
 	vty_out(vty, "TLLI %08x (Old TLLI %08x) BVCI=%u NSEI=%u %s: "
 		"IOV-UI=0x%06x CKSN=%d Age=%d: State %s%s", llme->tlli,
