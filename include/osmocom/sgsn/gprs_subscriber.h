@@ -27,5 +27,5 @@ struct gprs_subscr *_gprs_subscr_get(struct gprs_subscr *gsub,
 				     const char *file, int line);
 struct gprs_subscr *_gprs_subscr_put(struct gprs_subscr *gsub,
 				     const char *file, int line);
-#define gprs_subscr_get(gsub) _gprs_subscr_get(gsub, __BASE_FILE__, __LINE__)
-#define gprs_subscr_put(gsub) _gprs_subscr_put(gsub, __BASE_FILE__, __LINE__)
+#define gprs_subscr_get(gsub) _gprs_subscr_get(gsub, __FILE__, __LINE__)
+#define gprs_subscr_put(gsub) _gprs_subscr_put(gsub, __FILE__, __LINE__)
