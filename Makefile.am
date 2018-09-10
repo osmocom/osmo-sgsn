@@ -12,6 +12,7 @@ SUBDIRS = \
 	doc \
 	include \
 	src \
+	contrib \
 	tests \
 	$(NULL)
 
@@ -20,6 +21,9 @@ pkgconfig_DATA = osmo-sgsn.pc
 
 BUILT_SOURCES = $(top_srcdir)/.version
 EXTRA_DIST = git-version-gen osmoappdesc.py .version
+
+DISTCHECK_CONFIGURE_FLAGS = \
+	--with-systemdsystemunitdir=$$dc_install_base/$(systemdsystemunitdir)
 
 @RELMAKE@
 
