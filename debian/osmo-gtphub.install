@@ -1,3 +1,4 @@
+etc/osmocom/osmo-gtphub.cfg
 lib/systemd/system/osmo-gtphub.service
 usr/bin/osmo-gtphub
 usr/share/doc/osmo-sgsn/examples/osmo-gtphub/osmo-gtphub-1iface.cfg usr/share/doc/osmo-gtphub/examples
