@@ -10,6 +10,7 @@ Build-Depends: debhelper (>=9),
                automake,
                libtool,
                pkg-config,
+               libasn1c-dev,
                libtalloc-dev,
                libc-ares-dev,
                libgtp-dev,
@@ -17,6 +18,7 @@ Build-Depends: debhelper (>=9),
                libosmo-abis-dev,
                libosmo-ranap-dev,
                libosmo-sccp-dev,
+               libosmo-sigtran-dev,
                libosmo-netif-dev
 Standards-Version: 3.9.8
 Vcs-Git: git://git.osmocom.org/osmo-sgsn.git
