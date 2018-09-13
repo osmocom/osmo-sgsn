@@ -16,7 +16,10 @@ Build-Depends: debhelper (>=9),
                libosmo-abis-dev,
                libosmo-ranap-dev,
                libosmo-sccp-dev,
-               libosmo-netif-dev
+               libosmo-netif-dev,
+               libasn1c-dev (>= 0.9.28),
+               libosmo-sigtran-dev (>= 0.10.0),
+               libosmo-ranap-dev (>= 0.3.0)
 Standards-Version: 3.9.8
 Vcs-Git: git://git.osmocom.org/osmo-sgsn.git
 Vcs-Browser: https://git.osmocom.org/osmo-sgsn

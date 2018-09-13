@@ -47,7 +47,7 @@
 # debmake generated override targets
 # Set options for ./configure
 CONFIGURE_FLAGS += --enable-iu
-override_dh_configure:
+override_dh_auto_configure:
 	dh_auto_configure -- $(CONFIGURE_FLAGS)
 #
 # Do not install libtool archive, python .pyc .pyo
