@@ -37,7 +37,7 @@
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/gprs_sgsn.h>
 #include <osmocom/sgsn/vty.h>
-#include <osmocom/sgsn/gsup_client.h>
+#include <osmocom/gsupclient/gsup_client.h>
 
 #include <osmocom/vty/command.h>
 #include <osmocom/vty/vty.h>

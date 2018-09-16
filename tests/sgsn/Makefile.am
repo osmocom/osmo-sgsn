@@ -9,6 +9,7 @@ AM_CFLAGS = \
 	$(LIBOSMOCORE_CFLAGS) \
 	$(LIBOSMOABIS_CFLAGS) \
 	$(LIBOSMOGSM_CFLAGS) \
+	$(LIBOSMOGSUPCLIENT_CFLAGS) \
 	$(LIBCARES_CFLAGS) \
 	$(LIBGTP_CFLAGS) \
 	$(NULL)
@@ -37,7 +38,7 @@ sgsn_test_LDFLAGS = \
 	-Wl,--wrap=sgsn_update_subscriber_data \
 	-Wl,--wrap=gprs_subscr_request_update_location \
 	-Wl,--wrap=gprs_subscr_request_auth_info \
-	-Wl,--wrap=gsup_client_send \
+	-Wl,--wrap=osmo_gsup_client_send \
 	$(NULL)
 
 sgsn_test_LDADD = \
@@ -62,11 +63,11 @@ sgsn_test_LDADD = \
         $(top_builddir)/src/gprs/gprs_sndcp_pcomp.o \
         $(top_builddir)/src/gprs/v42bis.o \
         $(top_builddir)/src/gprs/gprs_sndcp_dcomp.o \
-        $(top_builddir)/src/gprs/gsup_client.o \
 	$(LIBOSMOABIS_LIBS) \
 	$(LIBOSMOCORE_LIBS) \
 	$(LIBOSMOGSM_LIBS) \
 	$(LIBOSMOGB_LIBS) \
+	$(LIBOSMOGSUPCLIENT_LIBS) \
 	$(LIBCARES_LIBS) \
 	$(LIBGTP_LIBS) \
 	-lrt \

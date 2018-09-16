@@ -13,6 +13,7 @@ AM_CFLAGS = \
 	$(LIBOSMOCTRL_CFLAGS) \
 	$(LIBOSMOABIS_CFLAGS) \
 	$(LIBOSMOGB_CFLAGS) \
+	$(LIBOSMOGSUPCLIENT_CFLAGS) \
 	$(COVERAGE_CFLAGS) \
 	$(LIBCARES_CFLAGS) \
 	$(LIBGTP_CFLAGS) \
@@ -84,11 +85,11 @@ osmo_sgsn_SOURCES = \
 	slhc.c \
 	gprs_llc_xid.c \
 	v42bis.c \
-	gsup_client.c \
 	$(NULL)
 osmo_sgsn_LDADD = \
 	$(OSMO_LIBS) \
 	$(LIBOSMOABIS_LIBS) \
+	$(LIBOSMOGSUPCLIENT_LIBS) \
 	$(LIBCARES_LIBS) \
 	$(LIBGTP_LIBS) \
 	-lrt \

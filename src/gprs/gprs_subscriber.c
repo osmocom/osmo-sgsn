@@ -26,7 +26,7 @@
 #include <osmocom/core/utils.h>
 #include <osmocom/core/logging.h>
 #include <osmocom/sgsn/gprs_subscriber.h>
-#include <osmocom/sgsn/gsup_client.h>
+#include <osmocom/gsupclient/gsup_client.h>
 
 #include <osmocom/sgsn/sgsn.h>
 #include <osmocom/sgsn/gprs_sgsn.h>
@@ -52,7 +52,7 @@ extern void *tall_sgsn_ctx;
 LLIST_HEAD(_gprs_subscribers);
 struct llist_head * const gprs_subscribers = &_gprs_subscribers;
 
-static int gsup_read_cb(struct gsup_client *gsupc, struct msgb *msg);
+static int gsup_read_cb(struct osmo_gsup_client *gsupc, struct msgb *msg);
 
 /* TODO: Some functions are specific to the SGSN, but this file is more general
  * (it has gprs_* name). Either move these functions elsewhere, split them and
@@ -69,7 +69,8 @@ int gprs_subscr_init(struct sgsn_instance *sgi)
 
 	addr_str = inet_ntoa(sgi->cfg.gsup_server_addr.sin_addr);
 
-	sgi->gsup_client = gsup_client_create(
+	sgi->gsup_client = osmo_gsup_client_create(
+		sgi,
 		"SGSN",
 		addr_str, sgi->cfg.gsup_server_port,
 		&gsup_read_cb,
@@ -81,7 +82,7 @@ int gprs_subscr_init(struct sgsn_instance *sgi)
 	return 1;
 }
 
-static int gsup_read_cb(struct gsup_client *gsupc, struct msgb *msg)
+static int gsup_read_cb(struct osmo_gsup_client *gsupc, struct msgb *msg)
 {
 	int rc;
 
@@ -194,7 +195,7 @@ void gprs_subscr_cancel(struct gprs_subscr *subscr)
 static int gprs_subscr_tx_gsup_message(struct gprs_subscr *subscr,
 				       struct osmo_gsup_message *gsup_msg)
 {
-	struct msgb *msg = gsup_client_msgb_alloc();
+	struct msgb *msg = osmo_gsup_client_msgb_alloc();
 
 	if (strlen(gsup_msg->imsi) == 0 && subscr)
 		osmo_strlcpy(gsup_msg->imsi, subscr->imsi,
@@ -210,7 +211,7 @@ static int gprs_subscr_tx_gsup_message(struct gprs_subscr *subscr,
 		return -ENOTSUP;
 	}
 
-	return gsup_client_send(sgsn->gsup_client, msg);
+	return osmo_gsup_client_send(sgsn->gsup_client, msg);
 }
 
 static int gprs_subscr_tx_gsup_error_reply(struct gprs_subscr *subscr,

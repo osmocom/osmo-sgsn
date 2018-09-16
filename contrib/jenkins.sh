@@ -28,6 +28,7 @@ export LD_LIBRARY_PATH="$inst/lib"
 osmo-build-dep.sh libosmo-abis
 osmo-build-dep.sh libosmo-netif
 osmo-build-dep.sh osmo-ggsn
+osmo-build-dep.sh osmo-hlr
 
 enable_werror=""
 if [ "x$IU" = "x--enable-iu" ]; then

@@ -7,6 +7,7 @@
 #include <osmocom/gprs/gprs_ns.h>
 #include <osmocom/sgsn/gprs_sgsn.h>
 #include <osmocom/gsm/oap_client.h>
+#include <osmocom/gsupclient/gsup_client.h>
 #include <osmocom/sgsn/common.h>
 
 #include "../../bscconfig.h"
@@ -18,7 +19,6 @@
 #include <ares.h>
 #include <gtp.h>
 
-struct gprs_gsup_client;
 struct hostent;
 
 enum sgsn_auth_policy {
@@ -138,7 +138,7 @@ struct sgsn_instance {
 	/* GSN instance for libgtp */
 	struct gsn_t *gsn;
 	/* Subscriber */
-	struct gsup_client *gsup_client;
+	struct osmo_gsup_client *gsup_client;
 	/* LLME inactivity timer */
 	struct osmo_timer_list llme_timer;
 
