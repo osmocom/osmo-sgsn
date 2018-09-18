@@ -176,7 +176,7 @@ struct sgsn_mm_ctx {
 		 * the fsm needs to compare it against old to decide what to do */
 		struct msgb *attach_req;
 		uint32_t id_type;
-		bool auth_reattempt;
+		unsigned int auth_reattempt; /* tracking UMTS resync auth attempts */
 	} gmm_att_req;
 	/* VLR number */
 	uint32_t		new_sgsn_addr;
