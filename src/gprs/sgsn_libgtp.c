@@ -390,15 +390,13 @@ static int send_act_pdp_cont_acc(struct sgsn_pdp_ctx *pctx)
 static int create_pdp_conf(struct pdp_t *pdp, void *cbp, int cause)
 {
 	struct sgsn_pdp_ctx *pctx = cbp;
-	uint8_t reject_cause;
+	uint8_t reject_cause = 0;
 
 	LOGPDPCTXP(LOGL_INFO, pctx, "Received CREATE PDP CTX CONF, cause=%d(%s)\n",
 		cause, get_value_string(gtp_cause_strs, cause));
 
 	if (!pctx->mm) {
-		LOGP(DGPRS, LOGL_INFO,
-		     "No MM context, aborting CREATE PDP CTX CONF\n");
-		return -EIO;
+		goto reject;
 	}
 
 	/* Check for cause value if it was really successful */
@@ -452,9 +450,11 @@ reject:
 
 	if (pdp)
 		pdp_freepdp(pdp);
+
 	/* Send PDP CTX ACT REJ to MS */
-	gsm48_tx_gsm_act_pdp_rej(pctx->mm, pctx->ti, reject_cause,
-					0, NULL);
+	if (pctx->mm)
+		gsm48_tx_gsm_act_pdp_rej(pctx->mm, pctx->ti, reject_cause,
+					 0, NULL);
 	sgsn_pdp_ctx_free(pctx);
 
 	return EOF;
