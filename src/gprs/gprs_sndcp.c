@@ -792,7 +792,7 @@ int sndcp_llunitdata_ind(struct msgb *msg, struct gprs_llc_lle *lle,
 
 	npdu_num = (suh->npdu_high << 8) | suh->npdu_low;
 	npdu = (uint8_t *)suh + sizeof(*suh);
-	npdu_len = (msg->data + msg->len) - npdu - 3;	/* -3 'removes' the FCS */
+	npdu_len = (msg->data + msg->len) - npdu;
 
 	if (npdu_len <= 0) {
 		LOGP(DSNDCP, LOGL_ERROR, "Short SNDCP N-PDU: %d\n", npdu_len);
