@@ -375,6 +375,7 @@ void sgsn_ggsn_ctx_drop_pdp(struct sgsn_pdp_ctx *pctx);
 int sgsn_ggsn_ctx_drop_all_pdp_except(struct sgsn_ggsn_ctx *ggsn, struct sgsn_pdp_ctx *except);
 void sgsn_ggsn_ctx_add_pdp(struct sgsn_ggsn_ctx *ggc, struct sgsn_pdp_ctx *pdp);
 void sgsn_ggsn_ctx_remove_pdp(struct sgsn_ggsn_ctx *ggc, struct sgsn_pdp_ctx *pdp);
+void sgsn_ggsn_ctx_check_echo_timer(struct sgsn_ggsn_ctx *ggc);
 
 struct apn_ctx {
 	struct llist_head list;

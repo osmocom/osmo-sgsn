@@ -489,12 +489,24 @@ void sgsn_pdp_ctx_free(struct sgsn_pdp_ctx *pdp)
 	talloc_free(pdp);
 }
 
+void sgsn_ggsn_ctx_check_echo_timer(struct sgsn_ggsn_ctx *ggc)
+{
+	if (llist_empty(&ggc->pdp_list) || ggc->echo_interval <= 0) {
+		/* stop timer */
+		if (osmo_timer_pending(&ggc->echo_timer))
+			osmo_timer_del(&ggc->echo_timer);
+	} else {
+		/* re-start timer */
+		sgsn_ggsn_echo_req(ggc);
+		osmo_timer_schedule(&ggc->echo_timer, ggc->echo_interval, 0);
+	}
+}
+
 /* GGSN contexts */
 static void echo_timer_cb(void *data)
 {
 	struct sgsn_ggsn_ctx *ggc = (struct sgsn_ggsn_ctx *) data;
-	sgsn_ggsn_echo_req(ggc);
-	osmo_timer_schedule(&ggc->echo_timer, ggc->echo_interval, 0);
+	sgsn_ggsn_ctx_check_echo_timer(ggc);
 }
 
 struct sgsn_ggsn_ctx *sgsn_ggsn_ctx_alloc(uint32_t id)
@@ -742,15 +754,14 @@ int sgsn_ggsn_ctx_drop_all_pdp_except(struct sgsn_ggsn_ctx *ggsn, struct sgsn_pd
 
 void sgsn_ggsn_ctx_add_pdp(struct sgsn_ggsn_ctx *ggc, struct sgsn_pdp_ctx *pdp)
 {
-	if (llist_empty(&ggc->pdp_list) && ggc->echo_interval > 0)
-		osmo_timer_schedule(&ggc->echo_timer, ggc->echo_interval, 0);
+	sgsn_ggsn_ctx_check_echo_timer(ggc);
+
 	llist_add(&pdp->ggsn_list, &ggc->pdp_list);
 }
 void sgsn_ggsn_ctx_remove_pdp(struct sgsn_ggsn_ctx *ggc, struct sgsn_pdp_ctx *pdp)
 {
 	llist_del(&pdp->ggsn_list);
-	if (llist_empty(&ggc->pdp_list) && osmo_timer_pending(&ggc->echo_timer))
-		osmo_timer_del(&ggc->echo_timer);
+	sgsn_ggsn_ctx_check_echo_timer(ggc);
 	if (pdp->destroy_ggsn)
 		sgsn_ggsn_ctx_free(pdp->ggsn);
 	pdp->ggsn = NULL;
