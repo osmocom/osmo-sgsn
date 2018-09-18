@@ -824,7 +824,7 @@ DEFUN_HIDDEN(reset_sgsn_state,
 	vty_out(vty, "Flushed all BSSGPs queues.%s", VTY_NEWLINE);
 
 	gtp_clear_queues(sgsn->gsn);
-	vty_out(vty, "Restarted connection to GGSN.%s", VTY_NEWLINE);
+	vty_out(vty, "Flushed rx & tx queus towards the GGSN.%s", VTY_NEWLINE);
 
 	/* remove all queues to bssgp */
 	return CMD_SUCCESS;
