@@ -383,6 +383,7 @@ DEFUN(cfg_ggsn_echo_interval, cfg_ggsn_echo_interval_cmd,
 			     "not be lower than 60 seconds, use this value for " \
 			     "testing purposes only!%s", VTY_NEWLINE);
 
+	sgsn_ggsn_ctx_check_echo_timer(ggc);
 	return CMD_SUCCESS;
 }
 
@@ -395,6 +396,7 @@ DEFUN(cfg_ggsn_no_echo_interval, cfg_ggsn_no_echo_interval_cmd,
 	struct sgsn_ggsn_ctx *ggc = sgsn_ggsn_ctx_find_alloc(id);
 
 	ggc->echo_interval = -1;
+	sgsn_ggsn_ctx_check_echo_timer(ggc);
 
 	return CMD_SUCCESS;
 }
