@@ -707,7 +707,9 @@ failed:
 
 void sgsn_ggsn_ctx_drop_pdp(struct sgsn_pdp_ctx *pctx)
 {
-	if (pctx->mm->gmm_state == GMM_REGISTERED_NORMAL) {
+	/* the MM context can be deleted while the GGSN is not reachable or
+	 * if has been crashed. */
+	if (pctx->mm && pctx->mm->gmm_state == GMM_REGISTERED_NORMAL) {
 		gsm48_tx_gsm_deact_pdp_req(pctx, GSM_CAUSE_NET_FAIL, true);
 		sgsn_ggsn_ctx_remove_pdp(pctx->ggsn, pctx);
 	} else  {
