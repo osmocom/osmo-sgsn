@@ -945,6 +945,9 @@ int gprs_llc_rcvmsg(struct msgb *msg, struct tlv_parsed *tv)
 		LOGP(DLLC, LOGL_INFO, "Dropping frame with invalid FCS\n");
 		return -EIO;
 	}
+	/* set l3 layer & remove the fcs */
+	msg->l3h = llhp.data;
+	msgb_l3trim(msg, llhp.data_len);
 
 	/* Update LLE's (BVCI, NSEI) tuple */
 	lle->llme->bvci = msgb_bvci(msg);
@@ -960,7 +963,6 @@ int gprs_llc_rcvmsg(struct msgb *msg, struct tlv_parsed *tv)
 
 	/* llhp.data is only set when we need to send LL_[UNIT]DATA_IND up */
 	if (llhp.cmd == GPRS_LLC_UI && llhp.data && llhp.data_len) {
-		msgb_gmmh(msg) = llhp.data;
 		switch (llhp.sapi) {
 		case GPRS_SAPI_GMM:
 			/* send LL_UNITDATA_IND to GMM */
