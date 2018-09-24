@@ -801,10 +801,14 @@ static void subscr_dump_full_vty(struct vty *vty, struct gprs_subscr *gsub, int 
 	vty_out(vty, "    Use count: %u%s", gsub->use_count, VTY_NEWLINE);
 }
 
+#define RESET_SGSN_STATE_STR \
+      "Remove all known subscribers, MM contexts and flush BSSGP queues." \
+      " Useful only when running tests against the SGSN\n"
+
 DEFUN_HIDDEN(reset_sgsn_state,
       reset_sgsn_state_cmd,
       "reset sgsn state",
-      "Remove all known subscriber, MM ctx and flush BSSGP queues Useful when running tests against the SGSN")
+      RESET_SGSN_STATE_STR RESET_SGSN_STATE_STR RESET_SGSN_STATE_STR)
 {
 	struct gprs_subscr *subscr, *tmp_subscr;
 	struct sgsn_mm_ctx *mm, *tmp_mm;
