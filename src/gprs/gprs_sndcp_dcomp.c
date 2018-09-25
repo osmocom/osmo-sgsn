@@ -94,7 +94,7 @@ int gprs_sndcp_dcomp_init(const void *ctx, struct gprs_sndcp_comp *comp_entity,
 				&rx_v42bis_data_handler, NULL,
 				V42BIS_MAX_OUTPUT_LENGTH);
 		LOGP(DSNDCP, LOGL_INFO,
-		     "V.42bis data compression initalized.\n");
+		     "V.42bis data compression initialized.\n");
 		return 0;
 	}
 

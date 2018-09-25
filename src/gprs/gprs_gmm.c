@@ -2213,7 +2213,7 @@ static void mmctx_timer_cb(void *_mm)
 
 		rc = gsm48_tx_gmm_auth_ciph_req(mm, &at->vec, at->key_seq, false);
 		if (rc < 0)
-			LOGMMCTXP(LOGL_ERROR, mm, "failed sending Auth. & Ciph. Reuqest: %s \n", strerror(-rc));
+			LOGMMCTXP(LOGL_ERROR, mm, "failed sending Auth. & Ciph. Request: %s \n", strerror(-rc));
 		else
 			osmo_timer_schedule(&mm->timer, sgsn->cfg.timers.T3360, 0);
 		break;

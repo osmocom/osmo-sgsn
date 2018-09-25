@@ -1309,7 +1309,7 @@ DEFUN(cfg_no_comp_rfc1144, cfg_no_comp_rfc1144_cmd,
 DEFUN(cfg_comp_rfc1144, cfg_comp_rfc1144_cmd,
       "compression rfc1144 active slots <1-256>",
       COMPRESSION_STR
-      "RFC1144 Header compresion scheme\n"
+      "RFC1144 Header compression scheme\n"
       "Compression is actively proposed\n"
       "Number of compression state slots\n"
       "Number of compression state slots\n")
@@ -1323,7 +1323,7 @@ DEFUN(cfg_comp_rfc1144, cfg_comp_rfc1144_cmd,
 DEFUN(cfg_comp_rfc1144p, cfg_comp_rfc1144p_cmd,
       "compression rfc1144 passive",
       COMPRESSION_STR
-      "RFC1144 Header compresion scheme\n"
+      "RFC1144 Header compression scheme\n"
       "Compression is available on request\n")
 {
 	g_cfg->pcomp_rfc1144.active = 0;
@@ -1343,7 +1343,7 @@ DEFUN(cfg_no_comp_v42bis, cfg_no_comp_v42bis_cmd,
 DEFUN(cfg_comp_v42bis, cfg_comp_v42bis_cmd,
       "compression v42bis active direction (ms|sgsn|both) codewords <512-65535> strlen <6-250>",
       COMPRESSION_STR
-      "V.42bis data compresion scheme\n"
+      "V.42bis data compression scheme\n"
       "Compression is actively proposed\n"
       "Direction in which the compression shall be active (p0)\n"
       "Compress ms->sgsn direction only\n"
@@ -1376,7 +1376,7 @@ DEFUN(cfg_comp_v42bis, cfg_comp_v42bis_cmd,
 DEFUN(cfg_comp_v42bisp, cfg_comp_v42bisp_cmd,
       "compression v42bis passive",
       COMPRESSION_STR
-      "V.42bis data compresion scheme\n"
+      "V.42bis data compression scheme\n"
       "Compression is available on request\n")
 {
 	g_cfg->dcomp_v42bis.active = 0;

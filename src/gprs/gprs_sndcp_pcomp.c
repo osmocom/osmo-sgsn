@@ -59,7 +59,7 @@ int gprs_sndcp_pcomp_init(const void *ctx, struct gprs_sndcp_comp *comp_entity,
 		    slhc_init(ctx, comp_field->rfc1144_params->s01 + 1,
 			      comp_field->rfc1144_params->s01 + 1);
 		LOGP(DSNDCP, LOGL_INFO,
-		     "RFC1144 header compression initalized.\n");
+		     "RFC1144 header compression initialized.\n");
 		return 0;
 	}
 

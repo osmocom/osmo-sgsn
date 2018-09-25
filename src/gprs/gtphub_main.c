@@ -243,7 +243,7 @@ static void print_help(struct cmdline_cfg *ccfg)
 
 static void list_categories(void)
 {
-	printf("Avaliable debug categories:\n");
+	printf("Available debug categories:\n");
 	int i;
 	for (i = 0; i < gtphub_log_info.num_cat; ++i) {
 		if (!gtphub_log_info.cat[i].name)
