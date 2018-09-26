@@ -400,6 +400,7 @@ int main(int argc, char **argv)
 #if BUILD_IU
 	osmo_ss7_init();
 	osmo_ss7_vty_init_asp(tall_bsc_ctx);
+	osmo_sccp_vty_init();
 #endif
 
 	handle_options(argc, argv);
