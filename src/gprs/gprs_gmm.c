@@ -205,7 +205,7 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 		REQUIRE_MM
 		/* Continue authentication here */
 		mm->iu.ue_ctx->integrity_active = 1;
-		rc = gsm48_gmm_authorize(mm);
+		osmo_fsm_inst_dispatch(mm->gmm_att_req.fsm, E_IU_SECURITY_CMD_COMPLETE, NULL);
 		break;
 	default:
 		LOGP(DRANAP, LOGL_NOTICE, "Unknown event received: %i\n", type);

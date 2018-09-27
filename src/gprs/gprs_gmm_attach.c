@@ -157,7 +157,12 @@ static void st_auth(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 	switch (event) {
 	case E_AUTH_RESP_RECV_SUCCESS:
 		sgsn_auth_request(ctx);
-		osmo_fsm_inst_state_chg(fi, ST_ACCEPT, sgsn->cfg.timers.T3350, 3350);
+#ifdef BUILD_IU
+		if (ctx->ran_type == MM_CTX_T_UTRAN_Iu && !ctx->iu.ue_ctx->integrity_active)
+			osmo_fsm_inst_state_chg(fi, ST_IU_SECURITY_CMD, sgsn->cfg.timers.T3350, 3350);
+		else
+#endif /* BUILD_IU */
+			osmo_fsm_inst_state_chg(fi, ST_ACCEPT, sgsn->cfg.timers.T3350, 3350);
 		break;
 	case E_AUTH_RESP_RECV_RESYNC:
 		if (ctx->gmm_att_req.auth_reattempt <= 1)
@@ -228,6 +233,32 @@ static void st_ask_vlr(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 	}
 }
 
+static void st_iu_security_cmd_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state)
+{
+#ifdef BUILD_IU
+	struct sgsn_mm_ctx *ctx = fi->priv;
+	int rc = 0;
+
+	/* TODO: shouldn't this set always? not only when the integrity_active? */
+	if (ctx->iu.ue_ctx->integrity_active) {
+		osmo_fsm_inst_state_chg(fi, ST_ACCEPT, sgsn->cfg.timers.T3350, 3350);
+		return;
+	}
+
+	ranap_iu_tx_sec_mode_cmd(ctx->iu.ue_ctx, &ctx->auth_triplet.vec, 0, ctx->iu.new_key);
+	ctx->iu.new_key = 0;
+#endif
+}
+
+static void st_iu_security_cmd(struct osmo_fsm_inst *fi, uint32_t event, void *data)
+{
+	switch(event) {
+	case E_IU_SECURITY_CMD_COMPLETE:
+		osmo_fsm_inst_state_chg(fi, ST_ACCEPT, sgsn->cfg.timers.T3350, 3350);
+		break;
+	}
+}
+
 static struct osmo_fsm_state gmm_attach_req_fsm_states[] = {
 	/* default state for non-DTX and DTX when SPEECH is in progress */
 	[ST_INIT] = {
@@ -252,10 +283,17 @@ static struct osmo_fsm_state gmm_attach_req_fsm_states[] = {
 	},
 	[ST_AUTH] = {
 		.in_event_mask = X(E_AUTH_RESP_RECV_SUCCESS) | X(E_AUTH_RESP_RECV_RESYNC),
-		.out_state_mask = X(ST_INIT) | X(ST_AUTH) | X(ST_ACCEPT) | X(ST_ASK_VLR) | X(ST_REJECT),
+		.out_state_mask = X(ST_INIT) | X(ST_AUTH) | X(ST_IU_SECURITY_CMD) | X(ST_ACCEPT) | X(ST_ASK_VLR) | X(ST_REJECT),
 		.name = "Authenticate",
 		.onenter = st_auth_on_enter,
 		.action = st_auth,
+	},
+	[ST_IU_SECURITY_CMD] = {
+		.in_event_mask = X(E_IU_SECURITY_CMD_COMPLETE),
+		.out_state_mask = X(ST_INIT) | X(ST_AUTH) | X(ST_ACCEPT) | X(ST_REJECT),
+		.name = "IuSecurityCommand",
+		.onenter = st_iu_security_cmd_on_enter,
+		.action = st_iu_security_cmd,
 	},
 	[ST_ACCEPT] = {
 		.in_event_mask = X(E_ATTACH_COMPLETE_RECV),
@@ -280,6 +318,7 @@ const struct value_string gmm_attach_req_fsm_event_names[] = {
 	{ E_ATTACH_ACCEPTED,		"Attach accepted" },
 	{ E_ATTACH_ACCEPT_SENT,		"Attach accept sent" },
 	{ E_ATTACH_COMPLETE_RECV, 	"Attach complete received." },
+	{ E_IU_SECURITY_CMD_COMPLETE,   "IU Security Command Complete received." },
 	{ E_REJECT,			"Reject the MS"},
 	{ E_VLR_ANSWERED,		"VLR answered"},
 	{ 0,				NULL }
