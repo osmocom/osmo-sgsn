@@ -237,7 +237,6 @@ static void st_iu_security_cmd_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_
 {
 #ifdef BUILD_IU
 	struct sgsn_mm_ctx *ctx = fi->priv;
-	int rc = 0;
 
 	/* TODO: shouldn't this set always? not only when the integrity_active? */
 	if (ctx->iu.ue_ctx->integrity_active) {
