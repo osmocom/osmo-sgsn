@@ -238,6 +238,7 @@ static void print_help(struct cmdline_cfg *ccfg)
 	printf("  -e,--log-level <nr>      Set a global log level.\n");
 	printf("  -r,--restart-file <path> File for counting restarts [%s].\n",
 	       ccfg->restart_counter_file);
+	printf("  -V,--version         Print the version number.\n");
 }
 
 static void list_categories(void)
@@ -265,10 +266,11 @@ static void handle_options(struct cmdline_cfg *ccfg, int argc, char **argv)
 			{"timestamp", 0, 0, 'T'},
 			{"log-level", 1, 0, 'e'},
 			{"restart-file", 1, 0, 'r'},
+			{ "version", 0, 0, 'V' },
 			{NULL, 0, 0, 0}
 		};
 
-		c = getopt_long(argc, argv, "hd:Dc:sTe:r:",
+		c = getopt_long(argc, argv, "hd:Dc:sTe:r:V",
 				long_options, &option_index);
 		if (c == -1) {
 			if (optind < argc) {
@@ -309,6 +311,10 @@ static void handle_options(struct cmdline_cfg *ccfg, int argc, char **argv)
 			break;
 		case 'r':
 			ccfg->restart_counter_file = optarg;
+			break;
+		case 'V':
+			print_version(1);
+			exit(EXIT_SUCCESS);
 			break;
 		default:
 			LOGP(DGTPHUB, LOGL_FATAL, "Invalid command line argument, abort.\n");
