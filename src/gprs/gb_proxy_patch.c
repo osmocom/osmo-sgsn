@@ -29,7 +29,7 @@
 #include <osmocom/core/rate_ctr.h>
 #include <osmocom/gsm/apn.h>
 
-extern void *tall_bsc_ctx;
+extern void *tall_sgsn_ctx;
 
 /* patch RA identifier in place */
 static void gbproxy_patch_raid(struct gsm48_ra_id *raid_enc, struct gbproxy_peer *peer,
@@ -420,7 +420,7 @@ int gbproxy_set_patch_filter(struct gbproxy_match *match, const char *filter,
 
 	if (rc == 0) {
 		match->enable = 1;
-		match->re_str = talloc_strdup(tall_bsc_ctx, filter);
+		match->re_str = talloc_strdup(tall_sgsn_ctx, filter);
 		return 0;
 	}
 

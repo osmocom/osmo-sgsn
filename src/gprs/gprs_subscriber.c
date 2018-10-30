@@ -47,7 +47,7 @@
 	     (gsup)->imsi, \
 	     ## args)
 
-extern void *tall_bsc_ctx;
+extern void *tall_sgsn_ctx;
 
 LLIST_HEAD(_gprs_subscribers);
 struct llist_head * const gprs_subscribers = &_gprs_subscribers;
@@ -141,7 +141,7 @@ struct gprs_subscr *gprs_subscr_get_by_imsi(const char *imsi)
 static struct gprs_subscr *gprs_subscr_alloc(void)
 {
 	struct gprs_subscr *gsub;
-	gsub = talloc_zero(tall_bsc_ctx, struct gprs_subscr);
+	gsub = talloc_zero(tall_sgsn_ctx, struct gprs_subscr);
 	if (!gsub)
 		return NULL;
 	llist_add_tail(&gsub->entry, gprs_subscribers);

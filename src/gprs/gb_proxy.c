@@ -50,7 +50,7 @@
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 #include <osmocom/sgsn/gprs_utils.h>
 
-extern void *tall_bsc_ctx;
+extern void *tall_sgsn_ctx;
 
 static const struct rate_ctr_desc global_ctr_description[] = {
 	{ "inv-bvci",	    "Invalid BVC Identifier          " },
@@ -1447,7 +1447,7 @@ int gbproxy_init_config(struct gbproxy_config *cfg)
 	struct timespec tp;
 
 	INIT_LLIST_HEAD(&cfg->bts_peers);
-	cfg->ctrg = rate_ctr_group_alloc(tall_bsc_ctx, &global_ctrg_desc, 0);
+	cfg->ctrg = rate_ctr_group_alloc(tall_sgsn_ctx, &global_ctrg_desc, 0);
 	if (!cfg->ctrg) {
 		LOGP(DGPRS, LOGL_ERROR, "Cannot allocate global counter group!\n");
 		return -1;

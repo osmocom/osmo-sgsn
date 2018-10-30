@@ -40,7 +40,7 @@
 
 #include <stdio.h>
 
-void *tall_bsc_ctx;
+void *tall_sgsn_ctx;
 static struct sgsn_instance sgsn_inst = {
 	.config_file = "osmo_sgsn.cfg",
 	.cfg = {
@@ -1637,7 +1637,7 @@ int main(int argc, char **argv)
 
 	osmo_sgsn_ctx = talloc_named_const(NULL, 0, "osmo_sgsn");
 	osmo_init_logging2(osmo_sgsn_ctx, &info);
-	tall_bsc_ctx = talloc_named_const(osmo_sgsn_ctx, 0, "bsc");
+	tall_sgsn_ctx = talloc_named_const(osmo_sgsn_ctx, 0, "sgsn");
 	msgb_ctx = msgb_talloc_ctx_init(osmo_sgsn_ctx, 0);
 
 	sgsn_rate_ctr_init();
@@ -1661,7 +1661,7 @@ int main(int argc, char **argv)
 
 	talloc_report_full(osmo_sgsn_ctx, stderr);
 	OSMO_ASSERT(talloc_total_blocks(msgb_ctx) == 1);
-	OSMO_ASSERT(talloc_total_blocks(tall_bsc_ctx) == 2);
+	OSMO_ASSERT(talloc_total_blocks(tall_sgsn_ctx) == 2);
 	return 0;
 }
 

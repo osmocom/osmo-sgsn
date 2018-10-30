@@ -76,7 +76,7 @@
 #define _GNU_SOURCE
 #include <getopt.h>
 
-void *tall_bsc_ctx;
+void *tall_sgsn_ctx;
 struct ctrl_handle *g_ctrlh;
 
 struct gprs_ns_inst *sgsn_nsi;
@@ -165,7 +165,7 @@ static void signal_handler(int signal)
 		 * and then return to the caller, who will abort the process */
 	case SIGUSR1:
 		talloc_report(tall_vty_ctx, stderr);
-		talloc_report_full(tall_bsc_ctx, stderr);
+		talloc_report_full(tall_sgsn_ctx, stderr);
 		break;
 	case SIGUSR2:
 		talloc_report_full(tall_vty_ctx, stderr);
@@ -375,9 +375,9 @@ int main(int argc, char **argv)
 #endif
 
 	srand(time(NULL));
-	tall_bsc_ctx = talloc_named_const(NULL, 0, "osmo_sgsn");
-	msgb_talloc_ctx_init(tall_bsc_ctx, 0);
-	vty_info.tall_ctx = tall_bsc_ctx;
+	tall_sgsn_ctx = talloc_named_const(NULL, 0, "osmo_sgsn");
+	msgb_talloc_ctx_init(tall_sgsn_ctx, 0);
+	vty_info.tall_ctx = tall_sgsn_ctx;
 
 	signal(SIGINT, &signal_handler);
 	signal(SIGTERM, &signal_handler);
@@ -386,8 +386,8 @@ int main(int argc, char **argv)
 	signal(SIGUSR2, &signal_handler);
 
 	osmo_init_ignore_signals();
-	osmo_init_logging2(tall_bsc_ctx, &gprs_log_info);
-	osmo_stats_init(tall_bsc_ctx);
+	osmo_init_logging2(tall_sgsn_ctx, &gprs_log_info);
+	osmo_stats_init(tall_sgsn_ctx);
 
 	vty_info.copyright = openbsc_copyright;
 	vty_init(&vty_info);
@@ -395,11 +395,11 @@ int main(int argc, char **argv)
 	osmo_talloc_vty_add_cmds();
 	osmo_stats_vty_add_cmds(&gprs_log_info);
 	sgsn_vty_init(&sgsn_inst.cfg);
-	ctrl_vty_init(tall_bsc_ctx);
+	ctrl_vty_init(tall_sgsn_ctx);
 
 #if BUILD_IU
 	osmo_ss7_init();
-	osmo_ss7_vty_init_asp(tall_bsc_ctx);
+	osmo_ss7_vty_init_asp(tall_sgsn_ctx);
 	osmo_sccp_vty_init();
 #endif
 
@@ -420,12 +420,12 @@ int main(int argc, char **argv)
 			sgsn_inst.config_file = CONFIG_FILE_DEFAULT;
 	}
 
-	rate_ctr_init(tall_bsc_ctx);
+	rate_ctr_init(tall_sgsn_ctx);
 
 	gprs_ns_set_log_ss(DNS);
 	bssgp_set_log_ss(DBSSGP);
 
-	sgsn_nsi = gprs_ns_instantiate(&sgsn_ns_cb, tall_bsc_ctx);
+	sgsn_nsi = gprs_ns_instantiate(&sgsn_ns_cb, tall_sgsn_ctx);
 	if (!sgsn_nsi) {
 		LOGP(DGPRS, LOGL_ERROR, "Unable to instantiate NS\n");
 		exit(1);
@@ -451,7 +451,7 @@ int main(int argc, char **argv)
 	}
 
 	/* start telnet after reading config for vty_get_bind_addr() */
-	rc = telnet_init_dynif(tall_bsc_ctx, NULL,
+	rc = telnet_init_dynif(tall_sgsn_ctx, NULL,
 			       vty_get_bind_addr(), OSMO_VTY_PORT_SGSN);
 	if (rc < 0)
 		exit(1);
@@ -507,7 +507,7 @@ int main(int argc, char **argv)
 
 #if BUILD_IU
 	/* Note that these are mostly defaults and can be overriden from the VTY */
-	sccp = osmo_sccp_simple_client(tall_bsc_ctx, "OsmoSGSN",
+	sccp = osmo_sccp_simple_client(tall_sgsn_ctx, "OsmoSGSN",
 				       (23 << 3) + 4,
 				       OSMO_SS7_ASP_PROT_M3UA,
 				       0, NULL,
@@ -517,7 +517,7 @@ int main(int argc, char **argv)
 		return 8;
 	}
 
-	ranap_iu_init(tall_bsc_ctx, DRANAP, "OsmoSGSN-IuPS", sccp, gsm0408_gprs_rcvmsg_iu, sgsn_ranap_iu_event);
+	ranap_iu_init(tall_sgsn_ctx, DRANAP, "OsmoSGSN-IuPS", sccp, gsm0408_gprs_rcvmsg_iu, sgsn_ranap_iu_event);
 #endif
 
 	if (daemonize) {

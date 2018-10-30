@@ -56,7 +56,7 @@
 #include <osmocom/ranap/iu_client.h>
 #endif
 
-extern void *tall_bsc_ctx;
+extern void *tall_sgsn_ctx;
 
 static struct sgsn_config *g_cfg = NULL;
 
@@ -416,7 +416,7 @@ DEFUN(cfg_grx_ggsn, cfg_grx_ggsn_cmd,
 	"Use the specified IP address for DNS-resolving the AP names to GGSN IP addresses\n"
 	"IPv4 address\n")
 {
-	struct ares_addr_node *node = talloc_zero(tall_bsc_ctx, struct ares_addr_node);
+	struct ares_addr_node *node = talloc_zero(tall_sgsn_ctx, struct ares_addr_node);
 	node->family = AF_INET;
 	inet_aton(argv[0], &node->addr.addr4);
 

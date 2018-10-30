@@ -51,7 +51,7 @@
 #endif
 
 extern void *osmo_gtphub_ctx;
-void *tall_bsc_ctx;
+void *tall_sgsn_ctx;
 
 const char *gtphub_copyright =
 	"Copyright (C) 2015 sysmocom s.f.m.c GmbH <info@sysmocom.de>\r\n"

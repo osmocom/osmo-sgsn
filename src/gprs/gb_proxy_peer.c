@@ -32,7 +32,7 @@
 
 #include <string.h>
 
-extern void *tall_bsc_ctx;
+extern void *tall_sgsn_ctx;
 
 static const struct rate_ctr_desc peer_ctr_description[] = {
 	{ "blocked",	   "BVC Block                       " },
@@ -185,7 +185,7 @@ struct gbproxy_peer *gbproxy_peer_alloc(struct gbproxy_config *cfg, uint16_t bvc
 {
 	struct gbproxy_peer *peer;
 
-	peer = talloc_zero(tall_bsc_ctx, struct gbproxy_peer);
+	peer = talloc_zero(tall_sgsn_ctx, struct gbproxy_peer);
 	if (!peer)
 		return NULL;
 

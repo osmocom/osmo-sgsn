@@ -56,7 +56,7 @@
 #define GPRS_LLME_CHECK_TICK 30
 
 extern struct sgsn_instance *sgsn;
-extern void *tall_bsc_ctx;
+extern void *tall_sgsn_ctx;
 
 LLIST_HEAD(sgsn_mm_ctxts);
 LLIST_HEAD(sgsn_ggsn_ctxts);
@@ -135,7 +135,7 @@ static const struct rate_ctr_group_desc sgsn_ctrg_desc = {
 };
 
 void sgsn_rate_ctr_init() {
-	sgsn->rate_ctrs = rate_ctr_group_alloc(tall_bsc_ctx, &sgsn_ctrg_desc, 0);
+	sgsn->rate_ctrs = rate_ctr_group_alloc(tall_sgsn_ctx, &sgsn_ctrg_desc, 0);
 	OSMO_ASSERT(sgsn->rate_ctrs);
 }
 
@@ -223,7 +223,7 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_gb(uint32_t tlli,
 {
 	struct sgsn_mm_ctx *ctx;
 
-	ctx = talloc_zero(tall_bsc_ctx, struct sgsn_mm_ctx);
+	ctx = talloc_zero(tall_sgsn_ctx, struct sgsn_mm_ctx);
 	if (!ctx)
 		return NULL;
 
@@ -257,7 +257,7 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_iu(void *uectx)
 	struct sgsn_mm_ctx *ctx;
 	struct ranap_ue_conn_ctx *ue_ctx = uectx;
 
-	ctx = talloc_zero(tall_bsc_ctx, struct sgsn_mm_ctx);
+	ctx = talloc_zero(tall_sgsn_ctx, struct sgsn_mm_ctx);
 	if (!ctx)
 		return NULL;
 
@@ -403,7 +403,7 @@ struct sgsn_pdp_ctx *sgsn_pdp_ctx_alloc(struct sgsn_mm_ctx *mm,
 	if (pdp)
 		return NULL;
 
-	pdp = talloc_zero(tall_bsc_ctx, struct sgsn_pdp_ctx);
+	pdp = talloc_zero(tall_sgsn_ctx, struct sgsn_pdp_ctx);
 	if (!pdp)
 		return NULL;
 
@@ -512,7 +512,7 @@ struct sgsn_ggsn_ctx *sgsn_ggsn_ctx_alloc(uint32_t id)
 {
 	struct sgsn_ggsn_ctx *ggc;
 
-	ggc = talloc_zero(tall_bsc_ctx, struct sgsn_ggsn_ctx);
+	ggc = talloc_zero(tall_sgsn_ctx, struct sgsn_ggsn_ctx);
 	if (!ggc)
 		return NULL;
 
@@ -575,7 +575,7 @@ static struct apn_ctx *sgsn_apn_ctx_alloc(const char *ap_name, const char *imsi_
 {
 	struct apn_ctx *actx;
 
-	actx = talloc_zero(tall_bsc_ctx, struct apn_ctx);
+	actx = talloc_zero(tall_sgsn_ctx, struct apn_ctx);
 	if (!actx)
 		return NULL;
 	actx->name = talloc_strdup(actx, ap_name);

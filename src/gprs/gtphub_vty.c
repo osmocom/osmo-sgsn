@@ -37,7 +37,7 @@
  * globals. */
 #include <osmocom/sgsn/sgsn.h>
 extern struct sgsn_instance *sgsn;
-extern void *tall_bsc_ctx;
+extern void *tall_sgsn_ctx;
 
 static struct gtphub *g_hub = 0;
 static struct gtphub_cfg *g_cfg = 0;
@@ -270,7 +270,7 @@ DEFUN(cfg_grx_ggsn, cfg_grx_ggsn_cmd,
 	"grx-dns-add A.B.C.D",
 	"Add DNS server\nIPv4 address\n")
 {
-	struct ares_addr_node *node = talloc_zero(tall_bsc_ctx, struct ares_addr_node);
+	struct ares_addr_node *node = talloc_zero(tall_sgsn_ctx, struct ares_addr_node);
 	node->family = AF_INET;
 	inet_aton(argv[0], &node->addr.addr4);
 

@@ -68,7 +68,7 @@
 #define PTMSI_ALLOC
 
 extern struct sgsn_instance *sgsn;
-extern void *tall_bsc_ctx;
+extern void *tall_sgsn_ctx;
 
 static const struct tlv_definition gsm48_gmm_att_tlvdef = {
 	.def = {
@@ -2623,7 +2623,7 @@ static int do_act_pdp_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg, bool *del
 		goto no_context;
 
 	/* schedule a dynamic look-up */
-	mmctx->ggsn_lookup = talloc_zero(tall_bsc_ctx, struct sgsn_ggsn_lookup);
+	mmctx->ggsn_lookup = talloc_zero(tall_sgsn_ctx, struct sgsn_ggsn_lookup);
 	if (!mmctx->ggsn_lookup)
 		goto no_context;
 

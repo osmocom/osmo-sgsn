@@ -75,7 +75,7 @@ class TestVTYGbproxy(TestVTYBase):
                 "doc/examples/osmo-gbproxy/osmo-gbproxy.cfg"]
 
     def vty_app(self):
-        return (4246, "./src/gprs/osmo-gbproxy", "OsmoGbProxy", "bsc")
+        return (4246, "./src/gprs/osmo-gbproxy", "OsmoGbProxy", "gbproxy")
 
     def testVtyTree(self):
         self.vty.enable()

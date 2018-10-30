@@ -33,7 +33,7 @@
 #include <errno.h>
 #include <string.h>
 
-extern void *tall_bsc_ctx;
+extern void *tall_sgsn_ctx;
 
 static void start_test_procedure(struct gsup_client *gsupc);
 
@@ -274,7 +274,7 @@ struct gsup_client *gsup_client_create(const char *unit_name,
 	struct gsup_client *gsupc;
 	int rc;
 
-	gsupc = talloc_zero(tall_bsc_ctx, struct gsup_client);
+	gsupc = talloc_zero(tall_sgsn_ctx, struct gsup_client);
 	OSMO_ASSERT(gsupc);
 
 	/* struct ipaccess_unit has a non-const unit_name, so let's copy to be

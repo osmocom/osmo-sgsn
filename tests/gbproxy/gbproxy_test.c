@@ -47,7 +47,7 @@
 
 #define MATCH_ANY (-1)
 
-void *tall_bsc_ctx = NULL;
+void *tall_sgsn_ctx = NULL;
 
 struct gbproxy_config gbcfg = {0};
 
@@ -1329,7 +1329,7 @@ static void gprs_dump_nsi(struct gprs_ns_inst *nsi)
 
 static void test_gbproxy()
 {
-	struct gprs_ns_inst *nsi = gprs_ns_instantiate(gprs_ns_callback, tall_bsc_ctx);
+	struct gprs_ns_inst *nsi = gprs_ns_instantiate(gprs_ns_callback, tall_sgsn_ctx);
 	struct sockaddr_in bss_peer[4] = {{0},};
 	struct sockaddr_in sgsn_peer= {0};
 
@@ -1497,7 +1497,7 @@ static void test_gbproxy()
 
 static void test_gbproxy_ident_changes()
 {
-	struct gprs_ns_inst *nsi = gprs_ns_instantiate(gprs_ns_callback, tall_bsc_ctx);
+	struct gprs_ns_inst *nsi = gprs_ns_instantiate(gprs_ns_callback, tall_sgsn_ctx);
 	struct sockaddr_in bss_peer[1] = {{0},};
 	struct sockaddr_in sgsn_peer= {0};
 	uint16_t nsei[2] = {0x1000, 0x2000};
@@ -1629,7 +1629,7 @@ static void test_gbproxy_ident_changes()
 
 static void test_gbproxy_ra_patching()
 {
-	struct gprs_ns_inst *nsi = gprs_ns_instantiate(gprs_ns_callback, tall_bsc_ctx);
+	struct gprs_ns_inst *nsi = gprs_ns_instantiate(gprs_ns_callback, tall_sgsn_ctx);
 	struct sockaddr_in bss_peer[1] = {{0},};
 	struct sockaddr_in sgsn_peer= {0};
 	struct  gprs_ra_id rai_bss =
@@ -1657,7 +1657,7 @@ static void test_gbproxy_ra_patching()
 	gbcfg.nsi = bssgp_nsi;
 	gbcfg.nsip_sgsn_nsei = SGSN_NSEI;
 	gbcfg.core_plmn = (struct osmo_plmn_id){ .mcc = 123, .mnc = 456 };
-	gbcfg.core_apn = talloc_zero_size(tall_bsc_ctx, 100);
+	gbcfg.core_apn = talloc_zero_size(tall_sgsn_ctx, 100);
 	gbcfg.core_apn_size = gprs_str_to_apn(gbcfg.core_apn, 100, "foo.bar");
 	gbcfg.patch_ptmsi = 0;
 
@@ -1971,7 +1971,7 @@ static void test_gbproxy_ra_patching()
 
 static void test_gbproxy_ptmsi_assignment()
 {
-	struct gprs_ns_inst *nsi = gprs_ns_instantiate(gprs_ns_callback, tall_bsc_ctx);
+	struct gprs_ns_inst *nsi = gprs_ns_instantiate(gprs_ns_callback, tall_sgsn_ctx);
 	struct sockaddr_in bss_peer[1] = {{0},};
 	struct sockaddr_in sgsn_peer= {0};
 	struct  gprs_ra_id rai_bss =
@@ -2000,7 +2000,7 @@ static void test_gbproxy_ptmsi_assignment()
 	gbcfg.nsi = bssgp_nsi;
 	gbcfg.nsip_sgsn_nsei = SGSN_NSEI;
 	gbcfg.core_plmn = (struct osmo_plmn_id){};
-	gbcfg.core_apn = talloc_zero_size(tall_bsc_ctx, 100);
+	gbcfg.core_apn = talloc_zero_size(tall_sgsn_ctx, 100);
 	gbcfg.core_apn_size = gprs_str_to_apn(gbcfg.core_apn, 100, "foo.bar");
 	gbcfg.patch_ptmsi = 0;
 
@@ -2187,7 +2187,7 @@ static void test_gbproxy_ptmsi_assignment()
 
 static void test_gbproxy_ptmsi_patching()
 {
-	struct gprs_ns_inst *nsi = gprs_ns_instantiate(gprs_ns_callback, tall_bsc_ctx);
+	struct gprs_ns_inst *nsi = gprs_ns_instantiate(gprs_ns_callback, tall_sgsn_ctx);
 	struct sockaddr_in bss_peer[1] = {{0},};
 	struct sockaddr_in sgsn_peer= {0};
 	struct  gprs_ra_id rai_bss =
@@ -2236,7 +2236,7 @@ static void test_gbproxy_ptmsi_patching()
 	gbcfg.nsi = bssgp_nsi;
 	gbcfg.nsip_sgsn_nsei = SGSN_NSEI;
 	gbcfg.core_plmn = (struct osmo_plmn_id){ .mcc = 123, .mnc = 456 };
-	gbcfg.core_apn = talloc_zero_size(tall_bsc_ctx, 100);
+	gbcfg.core_apn = talloc_zero_size(tall_sgsn_ctx, 100);
 	gbcfg.core_apn_size = gprs_str_to_apn(gbcfg.core_apn, 100, "foo.bar");
 	gbcfg.patch_ptmsi = 1;
 
@@ -2526,7 +2526,7 @@ static void test_gbproxy_ptmsi_patching()
 
 static void test_gbproxy_ptmsi_patching_bad_cases()
 {
-	struct gprs_ns_inst *nsi = gprs_ns_instantiate(gprs_ns_callback, tall_bsc_ctx);
+	struct gprs_ns_inst *nsi = gprs_ns_instantiate(gprs_ns_callback, tall_sgsn_ctx);
 	struct sockaddr_in bss_peer[1] = {{0},};
 	struct sockaddr_in sgsn_peer= {0};
 	struct  gprs_ra_id rai_bss =
@@ -2557,7 +2557,7 @@ static void test_gbproxy_ptmsi_patching_bad_cases()
 	gbcfg.nsi = bssgp_nsi;
 	gbcfg.nsip_sgsn_nsei = SGSN_NSEI;
 	gbcfg.core_plmn = (struct osmo_plmn_id){ .mcc = 123, .mnc = 456 };
-	gbcfg.core_apn = talloc_zero_size(tall_bsc_ctx, 100);
+	gbcfg.core_apn = talloc_zero_size(tall_sgsn_ctx, 100);
 	gbcfg.core_apn_size = gprs_str_to_apn(gbcfg.core_apn, 100, "foo.bar");
 	gbcfg.patch_ptmsi = 1;
 
@@ -2708,7 +2708,7 @@ static void test_gbproxy_ptmsi_patching_bad_cases()
 
 static void test_gbproxy_imsi_acquisition()
 {
-	struct gprs_ns_inst *nsi = gprs_ns_instantiate(gprs_ns_callback, tall_bsc_ctx);
+	struct gprs_ns_inst *nsi = gprs_ns_instantiate(gprs_ns_callback, tall_sgsn_ctx);
 	struct sockaddr_in bss_peer[1] = {{0},};
 	struct sockaddr_in sgsn_peer= {0};
 	struct  gprs_ra_id rai_bss =
@@ -2743,7 +2743,7 @@ static void test_gbproxy_imsi_acquisition()
 	gbcfg.nsi = bssgp_nsi;
 	gbcfg.nsip_sgsn_nsei = SGSN_NSEI;
 	gbcfg.core_plmn = (struct osmo_plmn_id){ .mcc = 123, .mnc = 456 };
-	gbcfg.core_apn = talloc_zero_size(tall_bsc_ctx, 100);
+	gbcfg.core_apn = talloc_zero_size(tall_sgsn_ctx, 100);
 	gbcfg.core_apn_size = gprs_str_to_apn(gbcfg.core_apn, 100, "foo.bar");
 	gbcfg.patch_ptmsi = 1;
 	gbcfg.acquire_imsi = 1;
@@ -3021,7 +3021,7 @@ static void test_gbproxy_imsi_acquisition()
 
 static void test_gbproxy_secondary_sgsn()
 {
-	struct gprs_ns_inst *nsi = gprs_ns_instantiate(gprs_ns_callback, tall_bsc_ctx);
+	struct gprs_ns_inst *nsi = gprs_ns_instantiate(gprs_ns_callback, tall_sgsn_ctx);
 	struct sockaddr_in bss_peer[1] = {{0},};
 	struct sockaddr_in sgsn_peer[2]= {{0},};
 	struct  gprs_ra_id rai_bss =
@@ -3071,7 +3071,7 @@ static void test_gbproxy_secondary_sgsn()
 	gbcfg.nsi = bssgp_nsi;
 	gbcfg.nsip_sgsn_nsei = SGSN_NSEI;
 	gbcfg.core_plmn = (struct osmo_plmn_id){ .mcc = 123, .mnc = 456 };
-	gbcfg.core_apn = talloc_zero_size(tall_bsc_ctx, 100);
+	gbcfg.core_apn = talloc_zero_size(tall_sgsn_ctx, 100);
 	gbcfg.core_apn_size = gprs_str_to_apn(gbcfg.core_apn, 100, "foo.bar");
 	gbcfg.patch_ptmsi = 1;
 	gbcfg.acquire_imsi = 1;
@@ -3525,7 +3525,7 @@ static void test_gbproxy_secondary_sgsn()
 
 static void test_gbproxy_keep_info()
 {
-	struct gprs_ns_inst *nsi = gprs_ns_instantiate(gprs_ns_callback, tall_bsc_ctx);
+	struct gprs_ns_inst *nsi = gprs_ns_instantiate(gprs_ns_callback, tall_sgsn_ctx);
 	struct sockaddr_in bss_peer[1] = {{0},};
 	struct sockaddr_in sgsn_peer= {0};
 	struct  gprs_ra_id rai_bss =
@@ -4833,7 +4833,7 @@ static void test_gbproxy_imsi_matching(void)
 
 static void test_gbproxy_stored_messages()
 {
-	struct gprs_ns_inst *nsi = gprs_ns_instantiate(gprs_ns_callback, tall_bsc_ctx);
+	struct gprs_ns_inst *nsi = gprs_ns_instantiate(gprs_ns_callback, tall_sgsn_ctx);
 	struct sockaddr_in bss_peer[1] = {{0},};
 	struct sockaddr_in sgsn_peer= {0};
 	struct  gprs_ra_id rai_bss =
@@ -4857,7 +4857,7 @@ static void test_gbproxy_stored_messages()
 	gbcfg.nsi = bssgp_nsi;
 	gbcfg.nsip_sgsn_nsei = SGSN_NSEI;
 	gbcfg.core_plmn = (struct osmo_plmn_id){};
-	gbcfg.core_apn = talloc_zero_size(tall_bsc_ctx, 100);
+	gbcfg.core_apn = talloc_zero_size(tall_sgsn_ctx, 100);
 	gbcfg.core_apn_size = gprs_str_to_apn(gbcfg.core_apn, 100, "foo.bar");
 	gbcfg.patch_ptmsi = 0;
 	gbcfg.acquire_imsi = 1;
@@ -5030,10 +5030,10 @@ static struct log_info info = {
 int main(int argc, char **argv)
 {
 	talloc_enable_leak_report();
-	tall_bsc_ctx = talloc_named_const(NULL, 0, "gbproxy_test");
-	void *log_ctx = talloc_named_const(tall_bsc_ctx, 0, "log");
+	tall_sgsn_ctx = talloc_named_const(NULL, 0, "gbproxy_test");
+	void *log_ctx = talloc_named_const(tall_sgsn_ctx, 0, "log");
 
-	msgb_talloc_ctx_init(tall_bsc_ctx, 0);
+	msgb_talloc_ctx_init(tall_sgsn_ctx, 0);
 
 	osmo_init_logging2(log_ctx, &info);
 	log_set_use_color(osmo_stderr_target, 0);
@@ -5044,7 +5044,7 @@ int main(int argc, char **argv)
 	log_set_log_level(osmo_stderr_target, LOGL_DEBUG);
 	log_set_all_filter(osmo_stderr_target, 1);
 
-	rate_ctr_init(tall_bsc_ctx);
+	rate_ctr_init(tall_sgsn_ctx);
 
 	setlinebuf(stdout);
 
@@ -5070,8 +5070,8 @@ int main(int argc, char **argv)
 
 	talloc_free(log_ctx);
 	/* expecting root and msgb ctx, empty */
-	OSMO_ASSERT(talloc_total_blocks(tall_bsc_ctx) == 2);
-	talloc_free(tall_bsc_ctx);
+	OSMO_ASSERT(talloc_total_blocks(tall_sgsn_ctx) == 2);
+	talloc_free(tall_sgsn_ctx);
 
 	return 0;
 }

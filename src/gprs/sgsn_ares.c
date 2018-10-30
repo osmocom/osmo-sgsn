@@ -24,7 +24,7 @@
 
 #include <netdb.h>
 
-extern void *tall_bsc_ctx;
+extern void *tall_sgsn_ctx;
 
 struct cares_event_fd {
 	struct llist_head head;
@@ -110,7 +110,7 @@ static void setup_ares_osmo_fd(void *data, int fd, int read, int write)
 	}
 
 	LOGP(DGPRS, LOGL_DEBUG, "Registering C-ares fd (%d)\n", fd);
-	ufd = talloc_zero(tall_bsc_ctx, struct cares_event_fd);
+	ufd = talloc_zero(tall_sgsn_ctx, struct cares_event_fd);
 	ufd->fd.fd = fd;
 	ufd->fd.cb = ares_osmo_fd_cb;
 	ufd->fd.data = data;
@@ -137,7 +137,7 @@ int sgsn_ares_query(struct sgsn_instance *sgsn, const char *name,
 {
 	struct cares_cb_data *cb_data;
 
-	cb_data = talloc_zero(tall_bsc_ctx, struct cares_cb_data);
+	cb_data = talloc_zero(tall_sgsn_ctx, struct cares_cb_data);
 	cb_data->cb = cb;
 	cb_data->data = data;
 	ares_gethostbyname(sgsn->ares_channel, name, AF_INET, ares_cb, cb_data);

@@ -62,7 +62,7 @@
 #define _GNU_SOURCE
 #include <getopt.h>
 
-void *tall_bsc_ctx;
+void *tall_sgsn_ctx;
 
 const char *openbsc_copyright =
 	"Copyright (C) 2010 Harald Welte and On-Waves\r\n"
@@ -116,7 +116,7 @@ static void signal_handler(int signal)
 		 * and then return to the caller, who will abort the process */
 	case SIGUSR1:
 		talloc_report(tall_vty_ctx, stderr);
-		talloc_report_full(tall_bsc_ctx, stderr);
+		talloc_report_full(tall_sgsn_ctx, stderr);
 		break;
 	case SIGUSR2:
 		talloc_report_full(tall_vty_ctx, stderr);
@@ -269,9 +269,9 @@ int main(int argc, char **argv)
 	int rc;
 	struct ctrl_handle *ctrl;
 
-	tall_bsc_ctx = talloc_named_const(NULL, 0, "nsip_proxy");
-	msgb_talloc_ctx_init(tall_bsc_ctx, 0);
-	vty_info.tall_ctx = tall_bsc_ctx;
+	tall_sgsn_ctx = talloc_named_const(NULL, 0, "nsip_proxy");
+	msgb_talloc_ctx_init(tall_sgsn_ctx, 0);
+	vty_info.tall_ctx = tall_sgsn_ctx;
 
 	signal(SIGINT, &signal_handler);
 	signal(SIGTERM, &signal_handler);
@@ -280,7 +280,7 @@ int main(int argc, char **argv)
 	signal(SIGUSR2, &signal_handler);
 	osmo_init_ignore_signals();
 
-	osmo_init_logging2(tall_bsc_ctx, &gprs_log_info);
+	osmo_init_logging2(tall_sgsn_ctx, &gprs_log_info);
 
 	vty_info.copyright = openbsc_copyright;
 	vty_init(&vty_info);
@@ -306,16 +306,16 @@ int main(int argc, char **argv)
 			config_file = CONFIG_FILE_DEFAULT;
 	}
 
-	rate_ctr_init(tall_bsc_ctx);
-	osmo_stats_init(tall_bsc_ctx);
+	rate_ctr_init(tall_sgsn_ctx);
+	osmo_stats_init(tall_sgsn_ctx);
 
-	bssgp_nsi = gprs_ns_instantiate(&proxy_ns_cb, tall_bsc_ctx);
+	bssgp_nsi = gprs_ns_instantiate(&proxy_ns_cb, tall_sgsn_ctx);
 	if (!bssgp_nsi) {
 		LOGP(DGPRS, LOGL_ERROR, "Unable to instantiate NS\n");
 		exit(1);
 	}
 
-	gbcfg = talloc_zero(tall_bsc_ctx, struct gbproxy_config);
+	gbcfg = talloc_zero(tall_sgsn_ctx, struct gbproxy_config);
 	if (!gbcfg) {
 		LOGP(DGPRS, LOGL_FATAL, "Unable to allocate config\n");
 		exit(1);
@@ -334,7 +334,7 @@ int main(int argc, char **argv)
 	}
 
 	/* start telnet after reading config for vty_get_bind_addr() */
-	rc = telnet_init_dynif(tall_bsc_ctx, NULL,
+	rc = telnet_init_dynif(tall_sgsn_ctx, NULL,
 			       vty_get_bind_addr(), OSMO_VTY_PORT_GBPROXY);
 	if (rc < 0)
 		exit(1);
