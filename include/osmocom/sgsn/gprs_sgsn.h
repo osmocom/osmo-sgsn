@@ -396,7 +396,8 @@ extern struct llist_head sgsn_apn_ctxts;
 extern struct llist_head sgsn_pdp_ctxts;
 
 uint32_t sgsn_alloc_ptmsi(void);
-void sgsn_inst_init(void);
+struct sgsn_instance *sgsn_instance_alloc(void *talloc_ctx);
+void sgsn_inst_init(struct sgsn_instance *sgsn);
 
 char *gprs_pdpaddr2str(uint8_t *pdpa, uint8_t len);
 

@@ -40,8 +40,6 @@
 #include <osmocom/core/logging.h>
 #include <osmocom/core/stats.h>
 
-#include <osmocom/gsm/gsup.h>
-
 #include <osmocom/gprs/gprs_ns.h>
 #include <osmocom/gprs/gprs_bssgp.h>
 
@@ -90,15 +88,8 @@ const char *openbsc_copyright =
 #define CONFIG_FILE_DEFAULT "osmo-sgsn.cfg"
 #define CONFIG_FILE_LEGACY "osmo_sgsn.cfg"
 
-static struct sgsn_instance sgsn_inst = {
-	.config_file = NULL,
-	.cfg = {
-		.gtp_statedir = "./",
-		.auth_policy = SGSN_AUTH_POLICY_CLOSED,
-		.gsup_server_port = OSMO_GSUP_PORT,
-	},
-};
-struct sgsn_instance *sgsn = &sgsn_inst;
+
+struct sgsn_instance *sgsn;
 
 /* call-back function for the NS protocol */
 static int sgsn_ns_cb(enum gprs_ns_evt event, struct gprs_nsvc *nsvc,
@@ -261,7 +252,7 @@ static void handle_options(int argc, char **argv)
 			daemonize = 1;
 			break;
 		case 'c':
-			sgsn_inst.config_file = strdup(optarg);
+			osmo_talloc_replace_string(sgsn, &sgsn->config_file, optarg);
 			break;
 		case 'T':
 			log_set_print_timestamp(osmo_stderr_target, 1);
@@ -376,6 +367,7 @@ int main(int argc, char **argv)
 
 	srand(time(NULL));
 	tall_sgsn_ctx = talloc_named_const(NULL, 0, "osmo_sgsn");
+	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
 	msgb_talloc_ctx_init(tall_sgsn_ctx, 0);
 	vty_info.tall_ctx = tall_sgsn_ctx;
 
@@ -394,7 +386,7 @@ int main(int argc, char **argv)
 	logging_vty_add_cmds(NULL);
 	osmo_talloc_vty_add_cmds();
 	osmo_stats_vty_add_cmds(&gprs_log_info);
-	sgsn_vty_init(&sgsn_inst.cfg);
+	sgsn_vty_init(&sgsn->cfg);
 	ctrl_vty_init(tall_sgsn_ctx);
 
 #if BUILD_IU
@@ -411,13 +403,13 @@ int main(int argc, char **argv)
 	 * previous setups that might rely on the legacy default config file
 	 * name, we need to look for the old config file if no -c option was
 	 * passed AND no file exists with the new default file name. */
-	if (!sgsn_inst.config_file) {
+	if (!sgsn->config_file) {
 		/* No -c option was passed */
 		if (file_exists(CONFIG_FILE_LEGACY)
 		    && !file_exists(CONFIG_FILE_DEFAULT))
-			sgsn_inst.config_file = CONFIG_FILE_LEGACY;
+			osmo_talloc_replace_string(sgsn, &sgsn->config_file, CONFIG_FILE_LEGACY);
 		else
-			sgsn_inst.config_file = CONFIG_FILE_DEFAULT;
+			osmo_talloc_replace_string(sgsn, &sgsn->config_file, CONFIG_FILE_DEFAULT);
 	}
 
 	rate_ctr_init(tall_sgsn_ctx);
@@ -430,21 +422,21 @@ int main(int argc, char **argv)
 		LOGP(DGPRS, LOGL_ERROR, "Unable to instantiate NS\n");
 		exit(1);
 	}
-	bssgp_nsi = sgsn_inst.cfg.nsi = sgsn_nsi;
+	bssgp_nsi = sgsn->cfg.nsi = sgsn_nsi;
 
 	gprs_llc_init("/usr/local/lib/osmocom/crypt/");
 	sgsn_rate_ctr_init();
-	sgsn_inst_init();
+	sgsn_inst_init(sgsn);
 
 	gprs_ns_vty_init(bssgp_nsi);
 	bssgp_vty_init();
 	gprs_llc_vty_init();
 	gprs_sndcp_vty_init();
 	sgsn_auth_init();
-	sgsn_cdr_init(&sgsn_inst);
+	sgsn_cdr_init(sgsn);
 	/* FIXME: register signal handler for SS_L_NS */
 
-	rc = sgsn_parse_config(sgsn_inst.config_file);
+	rc = sgsn_parse_config(sgsn->config_file);
 	if (rc < 0) {
 		LOGP(DGPRS, LOGL_FATAL, "Error in config file\n");
 		exit(2);
@@ -471,14 +463,14 @@ int main(int argc, char **argv)
 	}
 
 
-	rc = sgsn_gtp_init(&sgsn_inst);
+	rc = sgsn_gtp_init(sgsn);
 	if (rc) {
 		LOGP(DGPRS, LOGL_FATAL, "Cannot bind/listen on GTP socket\n");
 		exit(2);
 	} else
 		LOGP(DGPRS, LOGL_NOTICE, "libGTP v%s initialized\n", gtp_version());
 
-	rc = gprs_subscr_init(&sgsn_inst);
+	rc = gprs_subscr_init(sgsn);
 	if (rc < 0) {
 		LOGP(DGPRS, LOGL_FATAL, "Cannot set up subscriber management\n");
 		exit(2);

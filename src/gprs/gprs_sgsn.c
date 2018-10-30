@@ -32,6 +32,7 @@
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 #include <osmocom/gsm/apn.h>
 #include <osmocom/gsm/gsm_utils.h>
+#include <osmocom/gsm/gsup.h>
 
 #include <osmocom/sgsn/gprs_subscriber.h>
 #include <osmocom/sgsn/debug.h>
@@ -978,7 +979,17 @@ static void sgsn_llme_check_cb(void *data_)
 	osmo_timer_schedule(&sgsn->llme_timer, GPRS_LLME_CHECK_TICK, 0);
 }
 
-void sgsn_inst_init()
+struct sgsn_instance *sgsn_instance_alloc(void *talloc_ctx)
+{
+	struct sgsn_instance *inst;
+	inst = talloc_zero(talloc_ctx, struct sgsn_instance);
+	inst->cfg.gtp_statedir = talloc_strdup(inst, "./");
+	inst->cfg.auth_policy = SGSN_AUTH_POLICY_CLOSED;
+	inst->cfg.gsup_server_port = OSMO_GSUP_PORT;
+	return inst;
+}
+
+void sgsn_inst_init(struct sgsn_instance *sgsn)
 {
 	osmo_timer_setup(&sgsn->llme_timer, sgsn_llme_check_cb, NULL);
 	osmo_timer_schedule(&sgsn->llme_timer, GPRS_LLME_CHECK_TICK, 0);
