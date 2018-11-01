@@ -50,8 +50,6 @@ Files:     .gitignore
            src/gprs/.gitignore
            src/gprs/Makefile.am
            src/gprs/osmo_sgsn.cfg
-           src/libcommon/Makefile.am
-           src/libcommon/gsup_test_client.c
            tests/Makefile.am
            tests/atlocal.in
            tests/gbproxy/Makefile.am
@@ -61,9 +59,6 @@ Files:     .gitignore
            tests/gprs/gprs_test.ok
            tests/gtphub/Makefile.am
            tests/gtphub/gtphub_test.ok
-           tests/oap/Makefile.am
-           tests/oap/oap_client_test.err
-           tests/oap/oap_client_test.ok
            tests/sgsn/Makefile.am
            tests/sgsn/sgsn_test.ok
            tests/slhc/Makefile.am
@@ -85,9 +80,7 @@ Files:     include/osmocom/sgsn/a_reset.h
            include/osmocom/sgsn/gprs_sndcp_pcomp.h
            include/osmocom/sgsn/gprs_sndcp_xid.h
            include/osmocom/sgsn/gprs_utils.h
-           include/osmocom/sgsn/gsup_client.h
            include/osmocom/sgsn/gtphub.h
-           include/osmocom/sgsn/oap_client.h
            include/osmocom/sgsn/signal.h
            src/gprs/crc24.c
            src/gprs/gb_proxy.c
@@ -111,11 +104,9 @@ Files:     include/osmocom/sgsn/a_reset.h
            src/gprs/gprs_sndcp_xid.c
            src/gprs/gprs_subscriber.c
            src/gprs/gprs_utils.c
-           src/gprs/gsup_client.c
            src/gprs/gtphub.c
            src/gprs/gtphub_main.c
            src/gprs/gtphub_vty.c
-           src/gprs/oap_client.c
            src/gprs/sgsn_ares.c
            src/gprs/sgsn_auth.c
            src/gprs/sgsn_cdr.c
@@ -123,16 +114,7 @@ Files:     include/osmocom/sgsn/a_reset.h
            src/gprs/sgsn_libgtp.c
            src/gprs/sgsn_main.c
            src/gprs/sgsn_vty.c
-           src/libcommon/debug.c
-           src/libcommon/gsm_data.c
-           src/libcommon/gsm_data_shared.c
-           src/libcommon/gsm_subscriber_base.c
-           src/libcommon/gsup_client.c
-           src/libcommon/oap_client.c
-           src/libcommon/socket.c
-           src/libcommon/talloc_ctx.c
            tests/gtphub/gtphub_test.c
-           tests/oap/oap_client_test.c
            tests/sgsn/sgsn_test.c
            tests/slhc/slhc_test.c
            tests/sndcp_xid/sndcp_xid_test.c
