@@ -53,7 +53,7 @@ int gprs_sndcp_pcomp_init(const void *ctx, struct gprs_sndcp_comp *comp_entity,
 	OSMO_ASSERT(comp_field);
 
 	if (comp_entity->compclass == SNDCP_XID_PROTOCOL_COMPRESSION
-	    && comp_entity->algo == RFC_1144) {
+	    && comp_entity->algo.pcomp == RFC_1144) {
 		OSMO_ASSERT(comp_field->rfc1144_params);
 		comp_entity->state =
 		    slhc_init(ctx, comp_field->rfc1144_params->s01 + 1,
@@ -79,7 +79,7 @@ void gprs_sndcp_pcomp_term(struct gprs_sndcp_comp *comp_entity)
 	OSMO_ASSERT(comp_entity);
 
 	if (comp_entity->compclass == SNDCP_XID_PROTOCOL_COMPRESSION
-	    && comp_entity->algo == RFC_1144) {
+	    && comp_entity->algo.pcomp == RFC_1144) {
 		if (comp_entity->state) {
 			slhc_free((struct slcompress *)comp_entity->state);
 			comp_entity->state = NULL;
@@ -214,7 +214,7 @@ int gprs_sndcp_pcomp_expand(uint8_t *data, unsigned int len, uint8_t pcomp,
 
 	/* Note: Currently RFC1144 is the only compression method we
 	 * support, so the only allowed algorithm is RFC1144 */
-	OSMO_ASSERT(comp_entity->algo == RFC_1144);
+	OSMO_ASSERT(comp_entity->algo.pcomp == RFC_1144);
 
 	/* Find pcomp_index */
 	pcomp_index = gprs_sndcp_comp_get_idx(comp_entity, pcomp);
@@ -263,7 +263,7 @@ int gprs_sndcp_pcomp_compress(uint8_t *data, unsigned int len, uint8_t *pcomp,
 
 	/* Note: Currently RFC1144 is the only compression method we
 	 * support, so the only allowed algorithm is RFC1144 */
-	OSMO_ASSERT(comp_entity->algo == RFC_1144);
+	OSMO_ASSERT(comp_entity->algo.pcomp == RFC_1144);
 
 	/* Run compression algo */
 	rc = rfc1144_compress(&pcomp_index, data, len, comp_entity->state);

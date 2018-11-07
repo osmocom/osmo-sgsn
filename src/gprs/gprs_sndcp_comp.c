@@ -55,32 +55,36 @@ static struct gprs_sndcp_comp *gprs_sndcp_comp_create(const void *ctx,
 		memcpy(comp_entity->nsapi,
 		       comp_field->rfc1144_params->nsapi,
 		       sizeof(comp_entity->nsapi));
+		comp_entity->algo.pcomp = comp_field->algo.pcomp;
 	} else if (comp_field->rfc2507_params) {
 		comp_entity->nsapi_len = comp_field->rfc2507_params->nsapi_len;
 		memcpy(comp_entity->nsapi,
 		       comp_field->rfc2507_params->nsapi,
 		       sizeof(comp_entity->nsapi));
+		comp_entity->algo.pcomp = comp_field->algo.pcomp;
 	} else if (comp_field->rohc_params) {
 		comp_entity->nsapi_len = comp_field->rohc_params->nsapi_len;
 		memcpy(comp_entity->nsapi, comp_field->rohc_params->nsapi,
 		       sizeof(comp_entity->nsapi));
+		comp_entity->algo.pcomp = comp_field->algo.pcomp;
 	} else if (comp_field->v42bis_params) {
 		comp_entity->nsapi_len = comp_field->v42bis_params->nsapi_len;
 		memcpy(comp_entity->nsapi,
 		       comp_field->v42bis_params->nsapi,
 		       sizeof(comp_entity->nsapi));
+		comp_entity->algo.dcomp = comp_field->algo.dcomp;
 	} else if (comp_field->v44_params) {
 		comp_entity->nsapi_len = comp_field->v44_params->nsapi_len;
 		memcpy(comp_entity->nsapi,
 		       comp_field->v44_params->nsapi,
 		       sizeof(comp_entity->nsapi));
+		comp_entity->algo.dcomp = comp_field->algo.dcomp;
 	} else {
 		/* The caller is expected to check carefully if the all
 		 * data fields required for compression entity creation
 		 * are present. Otherwise we blow an assertion here */
 		OSMO_ASSERT(false);
 	}
-	comp_entity->algo = comp_field->algo;
 
 	/* Check if an NSAPI is selected, if not, it does not make sense
 	 * to create the compression entity, since the caller should
@@ -93,17 +97,20 @@ static struct gprs_sndcp_comp *gprs_sndcp_comp_create(const void *ctx,
 	comp_entity->compclass = gprs_sndcp_get_compression_class(comp_field);
 
 	/* Create an algorithm specific compression context */
-	if (comp_entity->compclass == SNDCP_XID_PROTOCOL_COMPRESSION) {
+	switch (comp_entity->compclass) {
+	case SNDCP_XID_PROTOCOL_COMPRESSION:
 		if (gprs_sndcp_pcomp_init(ctx, comp_entity, comp_field) != 0) {
 			talloc_free(comp_entity);
 			comp_entity = NULL;
 		}
-	} else if (comp_entity->compclass == SNDCP_XID_DATA_COMPRESSION) {
+		break;
+	case SNDCP_XID_DATA_COMPRESSION:
 		if (gprs_sndcp_dcomp_init(ctx, comp_entity, comp_field) != 0) {
 			talloc_free(comp_entity);
 			comp_entity = NULL;
 		}
-	} else {
+		break;
+	default:
 		/* comp_field is somehow invalid */
 		OSMO_ASSERT(false);
 	}

@@ -934,7 +934,7 @@ static int gprs_llc_gen_sndcp_xid(uint8_t *bytes, int bytes_len, uint8_t nsapi)
 		rfc1144_params.s01 = sgsn->cfg.pcomp_rfc1144.s01;
 		rfc1144_comp_field.p = 1;
 		rfc1144_comp_field.entity = entity;
-		rfc1144_comp_field.algo = RFC_1144;
+		rfc1144_comp_field.algo.pcomp = RFC_1144;
 		rfc1144_comp_field.comp[RFC1144_PCOMP1] = 1;
 		rfc1144_comp_field.comp[RFC1144_PCOMP2] = 2;
 		rfc1144_comp_field.comp_len = RFC1144_PCOMP_NUM;
@@ -952,7 +952,7 @@ static int gprs_llc_gen_sndcp_xid(uint8_t *bytes, int bytes_len, uint8_t nsapi)
 		v42bis_params.p2 = sgsn->cfg.dcomp_v42bis.p2;
 		v42bis_comp_field.p = 1;
 		v42bis_comp_field.entity = entity;
-		v42bis_comp_field.algo = V42BIS;
+		v42bis_comp_field.algo.dcomp = V42BIS;
 		v42bis_comp_field.comp[V42BIS_DCOMP1] = 1;
 		v42bis_comp_field.comp_len = V42BIS_DCOMP_NUM;
 		v42bis_comp_field.v42bis_params = &v42bis_params;
@@ -1021,7 +1021,7 @@ static int handle_pcomp_entities(struct gprs_sndcp_comp_field *comp_field,
 	comp_field->p = 0;
 
 	/* Process proposed parameters */
-	switch (comp_field->algo) {
+	switch (comp_field->algo.pcomp) {
 	case RFC_1144:
 		if (sgsn->cfg.pcomp_rfc1144.passive
 		    && comp_field->rfc1144_params->nsapi_len > 0) {
@@ -1068,7 +1068,7 @@ static int handle_dcomp_entities(struct gprs_sndcp_comp_field *comp_field,
 	comp_field->p = 0;
 
 	/* Process proposed parameters */
-	switch (comp_field->algo) {
+	switch (comp_field->algo.dcomp) {
 	case V42BIS:
 		if (sgsn->cfg.dcomp_v42bis.passive &&
 		    comp_field->v42bis_params->nsapi_len > 0) {

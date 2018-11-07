@@ -41,9 +41,9 @@ struct gprs_sndcp_comp {
 	uint8_t comp[MAX_COMP];	/* see also: 6.5.1.1.5 and 6.6.1.1.5 */
 
 	/* Algorithm parameters */
-	int algo;		/* Algorithm type (see gprs_sndcp_xid.h) */
-	int compclass;		/* See gprs_sndcp_xid.h/c */
-	void *state;		/* Algorithm status and parameters */
+	union gprs_sndcp_comp_algo algo;
+	enum gprs_sndcp_xid_param_types compclass;	/* See gprs_sndcp_xid.h/c */
+	void *state;					/* Algorithm status and parameters */
 };
 
 #define MAX_COMP 16	/* Maximum number of possible pcomp/dcomp values */

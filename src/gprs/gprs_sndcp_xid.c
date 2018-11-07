@@ -42,9 +42,8 @@
  * about the referenced algorithm to the parser. */
 struct entity_algo_table {
 	unsigned int entity;	/* see also: 6.5.1.1.3 and 6.6.1.1.3 */
-	unsigned int algo;	/* see also: 6.5.1.1.4 and 6.6.1.1.4 */
-	unsigned int compclass;	/* Can be either SNDCP_XID_DATA_COMPRESSION or
-				   SNDCP_XID_PROTOCOL_COMPRESSION */
+	union gprs_sndcp_comp_algo algo;
+	enum gprs_sndcp_xid_param_types compclass;
 };
 
 /* FUNCTIONS RELATED TO SNDCP-XID ENCODING */
@@ -386,6 +385,7 @@ static int encode_comp_field(uint8_t *dst, unsigned int dst_maxlen,
 	int len;
 	int expected_length;
 	int i;
+	enum gprs_sndcp_xid_param_types compclass;
 
 	uint8_t payload_bytes[256];
 	int payload_bytes_len = -1;
@@ -443,7 +443,17 @@ static int encode_comp_field(uint8_t *dst, unsigned int dst_maxlen,
 	OSMO_ASSERT(comp_field->entity <= 0x1f);
 
 	/* Check if the algorithm number is within bounds */
-	OSMO_ASSERT(comp_field->algo >= 0 && comp_field->algo <= 0x1f);
+	compclass = gprs_sndcp_get_compression_class(comp_field);
+	switch (compclass) {
+	case SNDCP_XID_PROTOCOL_COMPRESSION:
+		OSMO_ASSERT(comp_field->algo.pcomp >= 0 && comp_field->algo.pcomp <= 0x1f);
+		break;
+	case SNDCP_XID_DATA_COMPRESSION:
+		OSMO_ASSERT(comp_field->algo.dcomp >= 0 && comp_field->algo.dcomp <= 0x1f);
+		break;
+	default:
+		OSMO_ASSERT(false);
+	}
 
 	/* Zero out buffer */
 	memset(dst, 0, dst_maxlen);
@@ -459,7 +469,10 @@ static int encode_comp_field(uint8_t *dst, unsigned int dst_maxlen,
 
 	/* Encode algorithm number */
 	if (comp_field->p) {
-		*dst |= comp_field->algo & 0x1F;
+		if (compclass == SNDCP_XID_PROTOCOL_COMPRESSION)
+			*dst |= comp_field->algo.pcomp & 0x1F;
+		else
+			*dst |= comp_field->algo.dcomp & 0x1F;
 		dst++;
 		dst_counter++;
 	}
@@ -501,7 +514,7 @@ static int encode_comp_field(uint8_t *dst, unsigned int dst_maxlen,
 
 /* Find out to which compression class the specified comp-field belongs
  * (header compression or data compression?) */
-int gprs_sndcp_get_compression_class(const struct gprs_sndcp_comp_field
+enum gprs_sndcp_xid_param_types gprs_sndcp_get_compression_class(const struct gprs_sndcp_comp_field
 				     *comp_field)
 {
 	OSMO_ASSERT(comp_field);
@@ -517,7 +530,7 @@ int gprs_sndcp_get_compression_class(const struct gprs_sndcp_comp_field
 	else if (comp_field->v44_params)
 		return SNDCP_XID_DATA_COMPRESSION;
 	else
-		return -EINVAL;
+		return SNDCP_XID_INVALID_COMPRESSION;
 }
 
 /* Convert all compression fields to bytstreams */
@@ -1005,10 +1018,10 @@ static int decode_dcomp_v44_params(struct gprs_sndcp_dcomp_v44_params *params,
 	return byte_counter;
 }
 
-/* Lookup algorithm identfier by entity ID */
-static int lookup_algorithm_identifier(int entity, const struct
-				       entity_algo_table
-				       *lt, unsigned int lt_len, int compclass)
+/* Lookup protocol compression algorithm identfier by entity ID */
+static enum gprs_sndcp_hdr_comp_algo lookup_algorithm_identifier_pcomp(int entity,
+				       const struct entity_algo_table *lt,
+				       unsigned int lt_len)
 {
 	int i;
 
@@ -1017,26 +1030,46 @@ static int lookup_algorithm_identifier(int entity, const struct
 
 	for (i = 0; i < lt_len; i++) {
 		if ((lt[i].entity == entity)
-		    && (lt[i].compclass == compclass))
-			return lt[i].algo;
+		    && (lt[i].compclass == SNDCP_XID_PROTOCOL_COMPRESSION))
+			return lt[i].algo.pcomp;
 	}
 
-	return -1;
+	return SNDCP_XID_INVALID_COMPRESSION;
+}
+
+/* Lookup a data compression algorithm identfier by entity ID */
+static enum gprs_sndcp_data_comp_algo lookup_algorithm_identifier_dcomp(int entity,
+				       const struct entity_algo_table *lt,
+				       unsigned int lt_len)
+{
+	int i;
+
+	if (!lt)
+		return -1;
+
+	for (i = 0; i < lt_len; i++) {
+		if ((lt[i].entity == entity)
+		    && (lt[i].compclass == SNDCP_XID_DATA_COMPRESSION))
+			return lt[i].algo.dcomp;
+	}
+
+	return SNDCP_XID_INVALID_COMPRESSION;
 }
 
 /* Helper function for decode_comp_field(), decodes
  * numeric pcomp/dcomp values */
 static int decode_comp_values(struct gprs_sndcp_comp_field *comp_field,
-			      const uint8_t *src, int compclass)
+			      const uint8_t *src, enum gprs_sndcp_xid_param_types compclass)
 {
 	int src_counter = 0;
 	int i;
 
 	if (comp_field->p) {
 		/* Determine the number of expected PCOMP/DCOMP values */
-		if (compclass == SNDCP_XID_PROTOCOL_COMPRESSION) {
+		switch (compclass) {
+		case SNDCP_XID_PROTOCOL_COMPRESSION:
 			/* For protocol compression */
-			switch (comp_field->algo) {
+			switch (comp_field->algo.pcomp) {
 			case RFC_1144:
 				comp_field->comp_len = RFC1144_PCOMP_NUM;
 				break;
@@ -1052,9 +1085,10 @@ static int decode_comp_values(struct gprs_sndcp_comp_field *comp_field,
 			default:
 				return -EINVAL;
 			}
-		} else {
+			break;
+		case SNDCP_XID_DATA_COMPRESSION:
 			/* For data compression */
-			switch (comp_field->algo) {
+			switch (comp_field->algo.dcomp) {
 			case V42BIS:
 				comp_field->comp_len = V42BIS_DCOMP_NUM;
 				break;
@@ -1067,6 +1101,9 @@ static int decode_comp_values(struct gprs_sndcp_comp_field *comp_field,
 			default:
 				return -EINVAL;
 			}
+			break;
+		default:
+			return -EINVAL;
 		}
 
 		for (i = 0; i < comp_field->comp_len; i++) {
@@ -1094,7 +1131,7 @@ static int decode_pcomp_params(struct gprs_sndcp_comp_field *comp_field,
 {
 	int rc;
 
-	switch (comp_field->algo) {
+	switch (comp_field->algo.pcomp) {
 	case RFC_1144:
 		comp_field->rfc1144_params = talloc_zero(comp_field, struct
 					gprs_sndcp_pcomp_rfc1144_params);
@@ -1142,7 +1179,7 @@ static int decode_dcomp_params(struct gprs_sndcp_comp_field *comp_field,
 {
 	int rc;
 
-	switch (comp_field->algo) {
+	switch (comp_field->algo.dcomp) {
 	case V42BIS:
 		comp_field->v42bis_params = talloc_zero(comp_field, struct
 					gprs_sndcp_dcomp_v42bis_params);
@@ -1180,7 +1217,8 @@ static int decode_dcomp_params(struct gprs_sndcp_comp_field *comp_field,
 static int decode_comp_field(struct gprs_sndcp_comp_field *comp_field,
 			     const uint8_t *src, unsigned int src_len,
 			     const struct entity_algo_table *lt,
-			     unsigned int lt_len, int compclass)
+			     unsigned int lt_len,
+			     enum gprs_sndcp_xid_param_types compclass)
 {
 	int src_counter = 0;
 	unsigned int len;
@@ -1205,15 +1243,34 @@ static int decode_comp_field(struct gprs_sndcp_comp_field *comp_field,
 
 	/* Decode algorithm number (if present) */
 	if (comp_field->p) {
-		comp_field->algo = (*src) & 0x1F;
+		switch (compclass) {
+		case SNDCP_XID_PROTOCOL_COMPRESSION:
+			comp_field->algo.pcomp = (*src) & 0x1F;
+			break;
+		case SNDCP_XID_DATA_COMPRESSION:
+			comp_field->algo.dcomp = (*src) & 0x1F;
+			break;
+		default:
+			return -EINVAL;
+		}
 		src_counter++;
 		src++;
 	}
 	/* Alternatively take the information from the lookup table */
-	else
-		comp_field->algo =
-		    lookup_algorithm_identifier(comp_field->entity, lt,
-						lt_len, compclass);
+	else {
+		switch (compclass) {
+		case SNDCP_XID_PROTOCOL_COMPRESSION:
+			comp_field->algo.pcomp =
+			    lookup_algorithm_identifier_pcomp(comp_field->entity, lt, lt_len);
+			break;
+		case SNDCP_XID_DATA_COMPRESSION:
+			comp_field->algo.dcomp =
+			    lookup_algorithm_identifier_dcomp(comp_field->entity, lt, lt_len);
+			break;
+		default:
+			return -EINVAL;
+		}
+	}
 
 	/* Decode length field */
 	len = *src;
@@ -1368,7 +1425,7 @@ static int gprs_sndcp_fill_table(struct
 {
 	struct gprs_sndcp_comp_field *comp_field;
 	int i = 0;
-	int rc;
+	enum gprs_sndcp_xid_param_types compclass;
 
 	if (!comp_fields)
 		return -EINVAL;
@@ -1378,19 +1435,23 @@ static int gprs_sndcp_fill_table(struct
 	memset(lt, 0, sizeof(*lt));
 
 	llist_for_each_entry(comp_field, comp_fields, list) {
-		if (comp_field->algo >= 0) {
-			lt[i].entity = comp_field->entity;
-			lt[i].algo = comp_field->algo;
-			rc = gprs_sndcp_get_compression_class(comp_field);
-
-			if (rc < 0) {
-				memset(lt, 0, sizeof(*lt));
-				return -EINVAL;
-			}
-
-			lt[i].compclass = rc;
-			i++;
+		compclass = gprs_sndcp_get_compression_class(comp_field);
+		switch (compclass) {
+		case SNDCP_XID_PROTOCOL_COMPRESSION:
+			lt[i].algo.pcomp = comp_field->algo.pcomp;
+			break;
+		case SNDCP_XID_DATA_COMPRESSION:
+			lt[i].algo.dcomp = comp_field->algo.dcomp;
+			break;
+		case SNDCP_XID_INVALID_COMPRESSION:
+			continue;
+		default:
+			memset(lt, 0, sizeof(*lt));
+			return -EINVAL;
 		}
+		lt[i].compclass = compclass;
+		lt[i].entity = comp_field->entity;
+		i++;
 	}
 
 	return i;
@@ -1402,7 +1463,10 @@ static int complete_comp_field_params(struct gprs_sndcp_comp_field
 				      *comp_field_dst, const struct
 				      gprs_sndcp_comp_field *comp_field_src)
 {
-	if (comp_field_dst->algo < 0)
+	enum gprs_sndcp_xid_param_types compclass;
+
+	compclass = gprs_sndcp_get_compression_class(comp_field_dst);
+	if (compclass == SNDCP_XID_INVALID_COMPRESSION)
 		return -EINVAL;
 
 	if (comp_field_dst->rfc1144_params && comp_field_src->rfc1144_params) {
@@ -1626,7 +1690,7 @@ static void dump_pcomp_params(const struct gprs_sndcp_comp_field
 {
 	int i;
 
-	switch (comp_field->algo) {
+	switch (comp_field->algo.pcomp) {
 	case RFC_1144:
 		if (comp_field->rfc1144_params == NULL) {
 			LOGP(DSNDCP, logl,
@@ -1726,7 +1790,7 @@ static void dump_dcomp_params(const struct gprs_sndcp_comp_field
 {
 	int i;
 
-	switch (comp_field->algo) {
+	switch (comp_field->algo.dcomp) {
 	case V42BIS:
 		if (comp_field->v42bis_params == NULL) {
 			LOGP(DSNDCP, logl,
@@ -1791,15 +1855,26 @@ void gprs_sndcp_dump_comp_fields(const struct llist_head *comp_fields,
 {
 	struct gprs_sndcp_comp_field *comp_field;
 	int i;
-	int compclass;
+	enum gprs_sndcp_xid_param_types compclass;
 
 	OSMO_ASSERT(comp_fields);
 
 	llist_for_each_entry(comp_field, comp_fields, list) {
+		compclass = gprs_sndcp_get_compression_class(comp_field);
 		LOGP(DSNDCP, logl, "SNDCP-XID:\n");
 		LOGP(DSNDCP, logl, "struct gprs_sndcp_comp_field {\n");
 		LOGP(DSNDCP, logl, "   entity=%d;\n", comp_field->entity);
-		LOGP(DSNDCP, logl, "   algo=%d;\n", comp_field->algo);
+		switch (compclass) {
+		case SNDCP_XID_PROTOCOL_COMPRESSION:
+			LOGP(DSNDCP, logl, "   algo=%d;\n", comp_field->algo.pcomp);
+			break;
+		case SNDCP_XID_DATA_COMPRESSION:
+			LOGP(DSNDCP, logl, "   algo=%d;\n", comp_field->algo.dcomp);
+			break;
+		default:
+			LOGP(DSNDCP, logl, "   algo invalid!\n");
+			break;
+		}
 		LOGP(DSNDCP, logl, "   comp_len=%d;\n", comp_field->comp_len);
 		if (comp_field->comp_len == 0)
 			LOGP(DSNDCP, logl, "   comp[] = NULL;\n");
@@ -1808,12 +1883,16 @@ void gprs_sndcp_dump_comp_fields(const struct llist_head *comp_fields,
 			     comp_field->comp[i]);
 		}
 
-		compclass = gprs_sndcp_get_compression_class(comp_field);
-
-		if (compclass == SNDCP_XID_PROTOCOL_COMPRESSION) {
+		switch (compclass) {
+		case SNDCP_XID_PROTOCOL_COMPRESSION:
 			dump_pcomp_params(comp_field, logl);
-		} else if (compclass == SNDCP_XID_DATA_COMPRESSION) {
+			break;
+		case SNDCP_XID_DATA_COMPRESSION:
 			dump_dcomp_params(comp_field, logl);
+			break;
+		default:
+			LOGP(DSNDCP, logl, "   compression algorithm invalid!\n");
+			break;
 		}
 
 		LOGP(DSNDCP, logl, "}\n");

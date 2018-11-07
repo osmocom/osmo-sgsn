@@ -32,6 +32,24 @@
 #define MAX_NSAPI 11	/* Maximum number usable NSAPIs */
 #define MAX_ROHC 16	/* Maximum number of ROHC compression profiles */
 
+/* According to: 3GPP TS 44.065, 6.5.1.1.4 Algorithm identifier */
+enum gprs_sndcp_hdr_comp_algo {
+	RFC_1144,		/* TCP/IP header compression, see also 6.5.2 */
+	RFC_2507,		/* TCP/UDP/IP header compression, see also: 6.5.3 */
+	ROHC			/* Robust Header Compression, see also 6.5.4 */
+};
+
+/* According to: 3GPP TS 44.065, 6.5.1.1.4 Algorithm identifier */
+enum gprs_sndcp_data_comp_algo {
+	V42BIS,			/* V.42bis data compression, see also 6.6.2 */
+	V44			/* V44 data compression, see also: 6.6.3 */
+};
+
+union gprs_sndcp_comp_algo {
+	enum gprs_sndcp_hdr_comp_algo pcomp;
+	enum gprs_sndcp_data_comp_algo dcomp;
+};
+
 /* According to: 3GPP TS 44.065, 6.5.1.1 Format of the protocol control
  * information compression field (Figure 7) and 3GPP TS 44.065, 
  * 6.6.1.1 Format of the data compression field (Figure 9) */
@@ -45,7 +63,7 @@ struct gprs_sndcp_comp_field {
 	unsigned int entity;
 
 	/* Algorithm identifier, see also: 6.5.1.1.4 and 6.6.1.1.4 */
-	int algo;
+	union gprs_sndcp_comp_algo algo;
 
 	/* Number of contained PCOMP / DCOMP values */
 	uint8_t comp_len;
@@ -62,24 +80,12 @@ struct gprs_sndcp_comp_field {
 	struct gprs_sndcp_dcomp_v44_params *v44_params;
 };
 
-/* According to: 3GPP TS 44.065, 6.5.1.1.4 Algorithm identifier */
-enum gprs_sndcp_hdr_comp_algo {
-	RFC_1144,		/* TCP/IP header compression, see also 6.5.2 */
-	RFC_2507,		/* TCP/UDP/IP header compression, see also: 6.5.3 */
-	ROHC			/* Robust Header Compression, see also 6.5.4 */
-};
-
-/* According to: 3GPP TS 44.065, 6.5.1.1.4 Algorithm identifier */
-enum gprs_sndcp_data_comp_algo {
-	V42BIS,			/* V.42bis data compression, see also 6.6.2 */
-	V44			/* V44 data compression, see also: 6.6.3 */
-};
-
 /* According to: 3GPP TS 44.065, 8 SNDCP XID parameters */
 enum gprs_sndcp_xid_param_types {
 	SNDCP_XID_VERSION_NUMBER,
 	SNDCP_XID_DATA_COMPRESSION,	/* See also: subclause 6.6.1 */
 	SNDCP_XID_PROTOCOL_COMPRESSION,	/* See also: subclause 6.5.1 */
+	SNDCP_XID_INVALID_COMPRESSION   /* Not part of the spec; this means we found an invalid value */
 };
 
 /* According to: 3GPP TS 44.065, 6.5.2.1 Parameters (Table 5) */
@@ -209,7 +215,7 @@ struct llist_head *gprs_sndcp_parse_xid(int *version,
 
 /* Find out to which compression class the specified comp-field belongs
  * (header compression or data compression?) */
-int gprs_sndcp_get_compression_class(
+enum gprs_sndcp_xid_param_types gprs_sndcp_get_compression_class(
 				const struct gprs_sndcp_comp_field *comp_field);
 
 /* Dump a list with SNDCP-XID fields (Debug) */

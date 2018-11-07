@@ -106,7 +106,7 @@ static void test_xid_encode_decode(const void *ctx)
 	/* Setup rfc1144 compression field */
 	rfc1144_comp_field.p = 1;
 	rfc1144_comp_field.entity = 0;
-	rfc1144_comp_field.algo = RFC_1144;
+	rfc1144_comp_field.algo.pcomp = RFC_1144;
 	rfc1144_comp_field.comp[RFC1144_PCOMP1] = 1;
 	rfc1144_comp_field.comp[RFC1144_PCOMP2] = 2;
 	rfc1144_comp_field.comp_len = RFC1144_PCOMP_NUM;
@@ -126,7 +126,7 @@ static void test_xid_encode_decode(const void *ctx)
 	/* Setup rfc2507 compression field */
 	rfc2507_comp_field.p = 1;
 	rfc2507_comp_field.entity = 1;
-	rfc2507_comp_field.algo = RFC_2507;
+	rfc2507_comp_field.algo.pcomp = RFC_2507;
 	rfc2507_comp_field.comp[RFC2507_PCOMP1] = 3;
 	rfc2507_comp_field.comp[RFC2507_PCOMP2] = 4;
 	rfc2507_comp_field.comp[RFC2507_PCOMP3] = 5;
@@ -173,7 +173,7 @@ static void test_xid_encode_decode(const void *ctx)
 	/* Setup ROHC compression field */
 	rohc_comp_field.p = 1;
 	rohc_comp_field.entity = 2;
-	rohc_comp_field.algo = ROHC;
+	rohc_comp_field.algo.pcomp = ROHC;
 	rohc_comp_field.comp[ROHC_PCOMP1] = 8;
 	rohc_comp_field.comp[ROHC_PCOMP2] = 9;
 	rohc_comp_field.comp_len = ROHC_PCOMP_NUM;
@@ -191,7 +191,7 @@ static void test_xid_encode_decode(const void *ctx)
 	/* Setup v42bis compression field */
 	v42bis_comp_field.p = 1;
 	v42bis_comp_field.entity = 3;
-	v42bis_comp_field.algo = V42BIS;
+	v42bis_comp_field.algo.dcomp = V42BIS;
 	v42bis_comp_field.comp[V42BIS_DCOMP1] = 10;
 	v42bis_comp_field.comp_len = V42BIS_DCOMP_NUM;
 	v42bis_comp_field.v42bis_params = &v42bis_params;
@@ -211,7 +211,7 @@ static void test_xid_encode_decode(const void *ctx)
 	/* Setup v44 compression field */
 	v44_comp_field.p = 1;
 	v44_comp_field.entity = 3;
-	v44_comp_field.algo = V44;
+	v44_comp_field.algo.dcomp = V44;
 	v44_comp_field.comp[V44_DCOMP1] = 10;
 	v44_comp_field.comp[V44_DCOMP2] = 11;
 	v44_comp_field.comp_len = V44_DCOMP_NUM;

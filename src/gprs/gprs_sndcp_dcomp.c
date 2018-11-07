@@ -83,7 +83,7 @@ int gprs_sndcp_dcomp_init(const void *ctx, struct gprs_sndcp_comp *comp_entity,
 	OSMO_ASSERT(comp_field);
 
 	if (comp_entity->compclass == SNDCP_XID_DATA_COMPRESSION
-	    && comp_entity->algo == V42BIS) {
+	    && comp_entity->algo.dcomp == V42BIS) {
 		OSMO_ASSERT(comp_field->v42bis_params);
 		comp_entity->state =
 		    v42bis_init(ctx, NULL, comp_field->v42bis_params->p0,
@@ -114,7 +114,7 @@ void gprs_sndcp_dcomp_term(struct gprs_sndcp_comp *comp_entity)
 	OSMO_ASSERT(comp_entity);
 
 	if (comp_entity->compclass == SNDCP_XID_DATA_COMPRESSION
-	    && comp_entity->algo == V42BIS) {
+	    && comp_entity->algo.dcomp == V42BIS) {
 		if (comp_entity->state) {
 			v42bis_free((v42bis_state_t *) comp_entity->state);
 			comp_entity->state = NULL;
@@ -293,7 +293,7 @@ int gprs_sndcp_dcomp_expand(uint8_t *data, unsigned int len, uint8_t pcomp,
 
 	/* Note: Currently V42BIS is the only compression method we
 	 * support, so the only allowed algorithm is V42BIS */
-	OSMO_ASSERT(comp_entity->algo == V42BIS);
+	OSMO_ASSERT(comp_entity->algo.dcomp == V42BIS);
 
 	/* Find pcomp_index */
 	pcomp_index = gprs_sndcp_comp_get_idx(comp_entity, pcomp);
@@ -339,7 +339,7 @@ int gprs_sndcp_dcomp_compress(uint8_t *data, unsigned int len, uint8_t *pcomp,
 
 	/* Note: Currently V42BIS is the only compression method we
 	 * support, so the only allowed algorithm is V42BIS */
-	OSMO_ASSERT(comp_entity->algo == V42BIS);
+	OSMO_ASSERT(comp_entity->algo.dcomp == V42BIS);
 
 	/* Run compression algo */
 	rc = v42bis_compress_unitdata(&pcomp_index, data, len,
