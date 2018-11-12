@@ -443,7 +443,7 @@ static int encode_comp_field(uint8_t *dst, unsigned int dst_maxlen,
 	OSMO_ASSERT(comp_field->entity <= 0x1f);
 
 	/* Check if the algorithm number is within bounds */
-	OSMO_ASSERT(comp_field->algo >= 0 || comp_field->algo <= 0x1f);
+	OSMO_ASSERT(comp_field->algo >= 0 && comp_field->algo <= 0x1f);
 
 	/* Zero out buffer */
 	memset(dst, 0, dst_maxlen);
