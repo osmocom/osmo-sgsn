@@ -92,19 +92,20 @@ static struct gprs_sndcp_comp *gprs_sndcp_comp_create(const void *ctx,
 	 * (Protocol or Data compresson ?) */
 	comp_entity->compclass = gprs_sndcp_get_compression_class(comp_field);
 
-	OSMO_ASSERT(comp_entity->compclass != -1);
-
 	/* Create an algorithm specific compression context */
 	if (comp_entity->compclass == SNDCP_XID_PROTOCOL_COMPRESSION) {
 		if (gprs_sndcp_pcomp_init(ctx, comp_entity, comp_field) != 0) {
 			talloc_free(comp_entity);
 			comp_entity = NULL;
 		}
-	} else {
+	} else if (comp_entity->compclass == SNDCP_XID_DATA_COMPRESSION) {
 		if (gprs_sndcp_dcomp_init(ctx, comp_entity, comp_field) != 0) {
 			talloc_free(comp_entity);
 			comp_entity = NULL;
 		}
+	} else {
+		/* comp_field is somehow invalid */
+		OSMO_ASSERT(false);
 	}
 
 	/* Bail on failure */
