@@ -636,11 +636,14 @@ DEFUN(imsi_acl, cfg_imsi_acl_cmd,
 	"Remove IMSI from ACL\n"
 	"IMSI of subscriber\n")
 {
-	char imsi_sanitized[GSM23003_IMSI_MAX_DIGITS + 1] = { '0' };
+	char imsi_sanitized[GSM23003_IMSI_MAX_DIGITS + 1];
 	const char *op = argv[0];
 	const char *imsi = imsi_sanitized;
 	size_t len = strnlen(argv[1], GSM23003_IMSI_MAX_DIGITS + 1);
 	int rc;
+
+	memset(imsi_sanitized, '0', GSM23003_IMSI_MAX_DIGITS);
+	imsi_sanitized[GSM23003_IMSI_MAX_DIGITS] = '\0';
 
 	/* Sanitize IMSI */
 	if (len > GSM23003_IMSI_MAX_DIGITS) {
