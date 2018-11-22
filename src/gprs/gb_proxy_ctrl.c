@@ -76,10 +76,23 @@ static int get_gbproxy_state(struct ctrl_cmd *cmd, void *data)
 
 CTRL_CMD_DEFINE_RO(gbproxy_state, "gbproxy-state");
 
+static int get_num_peers(struct ctrl_cmd *cmd, void *data)
+{
+	struct gbproxy_config *cfg = data;
+
+	cmd->reply = talloc_strdup(cmd, "");
+	cmd->reply = talloc_asprintf_append(cmd->reply, "%u", llist_count(&cfg->bts_peers));
+
+	return CTRL_CMD_REPLY;
+}
+CTRL_CMD_DEFINE_RO(num_peers, "number-of-peers");
+
 int gb_ctrl_cmds_install(void)
 {
 	int rc = 0;
 	rc |= ctrl_cmd_install(CTRL_NODE_ROOT, &cmd_nsvc_state);
 	rc |= ctrl_cmd_install(CTRL_NODE_ROOT, &cmd_gbproxy_state);
+	rc |= ctrl_cmd_install(CTRL_NODE_ROOT, &cmd_num_peers);
+
 	return rc;
 }
