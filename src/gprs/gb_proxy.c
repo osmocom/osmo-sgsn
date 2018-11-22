@@ -324,8 +324,7 @@ static void gbproxy_reset_imsi_acquisition(struct gbproxy_link_info* link_info)
 static int gbproxy_flush_stored_messages(struct gbproxy_peer *peer,
 					  struct msgb *msg,
 					  time_t now,
-					  struct gbproxy_link_info* link_info,
-					  struct gprs_gb_parse_context *parse_ctx)
+					  struct gbproxy_link_info* link_info)
 {
 	int rc;
 	struct msgb *stored_msg;
@@ -369,8 +368,8 @@ static int gbproxy_flush_stored_messages(struct gbproxy_peer *peer,
 			     "NSEI=%d(BSS) failed to send stored message "
 			     "(%s)\n",
 			     msgb_nsei(msg),
-			     parse_ctx->llc_msg_name ?
-			     parse_ctx->llc_msg_name : "BSSGP");
+			     tmp_parse_ctx.llc_msg_name ?
+			     tmp_parse_ctx.llc_msg_name : "BSSGP");
 		msgb_free(stored_msg);
 	}
 
@@ -479,8 +478,7 @@ static int gbproxy_imsi_acquisition(struct gbproxy_peer *peer,
 		/* The IMSI is now available. If flushing the messages fails,
 		 * then link_info has been deleted and we should return
 		 * immediately. */
-		if (gbproxy_flush_stored_messages(peer, msg, now, link_info,
-					      parse_ctx) < 0)
+		if (gbproxy_flush_stored_messages(peer, msg, now, link_info) < 0)
 			return 0;
 
 		gbproxy_reset_imsi_acquisition(link_info);
