@@ -361,13 +361,13 @@ static int gbproxy_flush_stored_messages(struct gbproxy_peer *peer,
 		}
 
 		rc = gbprox_relay2sgsn(peer->cfg, stored_msg,
-				       msgb_bvci(msg), link_info->sgsn_nsei);
+				       msgb_bvci(stored_msg), link_info->sgsn_nsei);
 
 		if (rc < 0)
 			LOGP(DLLC, LOGL_ERROR,
 			     "NSEI=%d(BSS) failed to send stored message "
 			     "(%s)\n",
-			     msgb_nsei(msg),
+			     tmp_parse_ctx.peer_nsei,
 			     tmp_parse_ctx.llc_msg_name ?
 			     tmp_parse_ctx.llc_msg_name : "BSSGP");
 		msgb_free(stored_msg);
