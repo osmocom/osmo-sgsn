@@ -64,7 +64,7 @@ static int get_gbproxy_state(struct ctrl_cmd *cmd, void *data)
 		struct gprs_ra_id raid;
 		gsm48_parse_ra(&raid, peer->ra);
 
-		cmd->reply = talloc_asprintf_append(cmd->reply, "%u,%u,%u,%u,%u,%u,%s\n",
+		cmd->reply = talloc_asprintf_append(cmd->reply, "%u,%u,%u,%u,%u,%u,%s",
 				peer->nsei, peer->bvci,
 				raid.mcc, raid.mnc,
 				raid.lac, raid.rac,
