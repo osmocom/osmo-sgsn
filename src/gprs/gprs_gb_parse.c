@@ -46,7 +46,8 @@ static int gprs_gb_parse_gmm_attach_req(uint8_t *data, size_t data_len,
 	/* Skip Attach type */
 	/* Skip Ciphering key sequence number */
 	/* Skip DRX parameter */
-	osmo_shift_v_fixed(&data, &data_len, 3, NULL);
+	if (osmo_shift_v_fixed(&data, &data_len, 3, NULL) < 3)
+		return 0;
 
 	/* Get Mobile identity */
 	if (osmo_shift_lv(&data, &data_len, &value, &value_len) <= 0 ||
@@ -82,7 +83,8 @@ static int gprs_gb_parse_gmm_attach_ack(uint8_t *data, size_t data_len,
 	/* Skip Periodic RA update timer */
 	/* Skip Radio priority for SMS */
 	/* Skip Spare half octet */
-	osmo_shift_v_fixed(&data, &data_len, 3, NULL);
+	if (osmo_shift_v_fixed(&data, &data_len, 3, NULL) < 3)
+		return 0;
 
 	if (osmo_shift_v_fixed(&data, &data_len, 6, &value) <= 0)
 		return 0;
@@ -170,7 +172,8 @@ static int gprs_gb_parse_gmm_ra_upd_req(uint8_t *data, size_t data_len,
 
 	/* Skip Update type */
 	/* Skip GPRS ciphering key sequence number */
-	osmo_shift_v_fixed(&data, &data_len, 1, NULL);
+	if (osmo_shift_v_fixed(&data, &data_len, 1, NULL) < 1)
+		return 0;
 
 	if (osmo_shift_v_fixed(&data, &data_len, 6, &value) <= 0)
 		return 0;
@@ -221,7 +224,8 @@ static int gprs_gb_parse_gmm_ra_upd_ack(uint8_t *data, size_t data_len,
 	/* Skip Force to standby */
 	/* Skip Update result */
 	/* Skip Periodic RA update timer */
-	osmo_shift_v_fixed(&data, &data_len, 2, NULL);
+	if (osmo_shift_v_fixed(&data, &data_len, 2, NULL) < 2)
+		return 0;
 
 	if (osmo_shift_v_fixed(&data, &data_len, 6, &value) <= 0)
 		return 0;
@@ -299,7 +303,8 @@ static int gprs_gb_parse_gsm_act_pdp_req(uint8_t *data, size_t data_len,
 
 	/* Skip Requested NSAPI */
 	/* Skip Requested LLC SAPI */
-	osmo_shift_v_fixed(&data, &data_len, 2, NULL);
+	if (osmo_shift_v_fixed(&data, &data_len, 2, NULL) < 2)
+		return 0;
 
 	/* Skip Requested QoS (support 04.08 and 24.008) */
 	if (osmo_shift_lv(&data, &data_len, NULL, &value_len) <= 0 ||
