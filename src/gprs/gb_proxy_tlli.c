@@ -388,7 +388,7 @@ int gbproxy_imsi_matches(struct gbproxy_config *cfg,
 	return link_info != NULL && link_info->is_matching[match_id];
 }
 
-void gbproxy_assign_imsi(struct gbproxy_peer *peer,
+static void gbproxy_assign_imsi(struct gbproxy_peer *peer,
 			 struct gbproxy_link_info *link_info,
 			 struct gprs_gb_parse_context *parse_ctx)
 {
