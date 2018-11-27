@@ -1,0 +1,329 @@
+== Configuring OsmoSGSN
+
+Contrary to other network elements (like OsmoBSC, OsmoNITB), the
+OsmoSGSN has a relatively simple configuration.
+
+On the one hand, this is primary because the PCU configuration happens
+from the BSC side.
+
+On the other hand, it is because the Gb interface does not need an
+explicit configuration of all each PCU connecting to the SGSN.  The
+administrator only has to ensure that the NS and BSSGP layer identities
+(NSEI, NSVCI, BVCI) are unique for each PCU connecting to the SGSN.
+
+=== Configuring the Gp interface
+
+The Gp interface is the GTP-C and GTP-U based interface between the SGSN
+and the GGSNs.  It is implemented via UDP on well-known source and
+destination ports.
+
+When a MS requests establishment of a PDP context, it specifies the APN
+(Access Point Name) to which the context shall be established.  This APN
+determines which GGSN shall be used, and that in turn determines which
+external IP network the MS will be connected to.
+
+There are two modes in which GGSNs can be configured:
+
+. static GGSN/APN configuration
+. dynamic GGSN/APN configuration
+
+==== Static GGSN/APN configuration
+
+In this mode, there is a static list of GGSNs and APNs configured in
+OsmoSGSN via the VTY / config file.
+
+This is a non-standard method outside of the 3GPP specifications for the
+SGSN, and is typically only used in private/small GPRS networks without
+any access to a GRX.
+
+.Example: Static GGSN/APN configuration (single catch-all GGSN)
+----
+OsmoSGSN(config-sgsn)# gtp local-ip 172.0.0.1 <1>
+OsmoSGSN(config-sgsn)# ggsn 0 remote-ip 127.0.0.2 <2>
+OsmoSGSN(config-sgsn)# ggsn 0 gtp-version 1 <3>
+OsmoSGSN(config-sgsn)# apn * ggsn 0 <4>
+----
+<1> Configure the local IP address at the SGSN used for Gp/GTP
+<2> Specify the remote IP address of the GGSN (for GGSN 0)
+<3> Specify the GTP protocol version used for GGSN 0
+<4> Route all APN names to GGSN 0
+
+
+==== Dynamic GGSN/APN configuration
+
+In this mode, the SGSN will use a DNS-based method to perform the lookup
+from the APN (as specified by the MS) towards the GGSN IP address.
+
+This is the official method as per the 3GPP specifications for the SGSN,
+and what is used on GRX.
+
+.Example: Dynamic GGSN/APN configuration
+----
+OsmoSGSN(config-sgsn)# gtp local-ip 192.168.0.11 <1>
+OsmoSGSN(config-sgsn)# ggsn dynamic <2>
+OsmoSGSN(config-sgsn)# grx-dns-add 1.2.3.4 <3>
+----
+<1> Configure the local IP address at the SGSN used for Gp/GTP
+<2> Enable the dynamic GGSN resolving mode
+<3> Specify the IP address of a DNS server for APN resolution
+
+[[auth-pol]]
+=== Authorization Policy
+
+The authorization policy controls by which rules a subscriber is accepted or
+rejected. The possible options range from accepting just all subscribers without
+further checking, to a fine grained access-control, handled by an external HLR.
+
+accept-all:: All subscribers that attempt to attach to the GPRS network are
+accepted without further checking. This option is intended to be used for
+testing in a controlled environment only. A wide-open network may attract
+subscribers from foreign networks and disrupt their service. It is highly
+recommended to pick one of the options below.
+
+remote:: This option allows to connect OsmoSGSN to an external HLR via the
+GSUP protocol. This will be the preferred option in larger networks.
+
+acl-only:: If no external HLR is available, the network operator has the
+option to control the access using an access control list. The access control
+list contains the IMSI numbers of the allowed subscribers. This method offers
+fine grained access control and is ideal for small networks and lab test
+environments.
+
+closed:: This policy mode softens the strict *acl-only* only mode by also
+implicitly accepting home network subscribers. The decision is made by the MCC
+and MNC part of the IMSI number. The combination of MCC and MNC fully identifies
+a subscribers home network, also known as a Home Network Identity (HNI, i.e.
+MCC and MNC found at the start of the IMSI, e.g. MCC 901 and MNC 700 with
+IMSI 901700000003080).
+
+NOTE: The policy mode *closed* must not be confused with the equally named
+policy that is defined for osmo-nitb!
+
+
+.Example: Assign or change authorization policy:
+----
+OsmoSGSN> enable
+OsmoSGSN# configure terminal
+OsmoSGSN(config)# sgsn
+OsmoSGSN(config-sgsn)# auth-policy acl-only <1>
+OsmoSGSN(config-sgsn)# write <2>
+Configuration saved to sgsn.cfg
+OsmoSGSN(config-sgsn)# end
+OsmoSGSN# disable
+OsmoSGSN>
+----
+<1> 'acl-only' is selected as authorization policy
+<2> Saves current changes to cofiguration to make this policy
+persistent
+
+.Example: Access control list:
+----
+sgsn
+ auth-policy acl-only <1>
+ imsi-acl add 001010000000003
+ imsi-acl add 001010000000002
+ imsi-acl add 001010000000001
+ imsi-acl add 901700000000068 <2>
+----
+<1> Set the authorization policy
+<2> Add as many subscribers as required
+
+=== Subscriber Configuration
+
+As opposed to OsmoNITB, OsmoSGSN does not feature a built-in HLR.
+
+It can thus operate only in the following two modes:
+
+. Accessing an external HLR (or HLR gateway) via the GSUP protocol
+. Accepting subscribers based on internal ACL (access control list),
+  see also <<auth-pol>>
+
+==== Accessing an external HLR via GSUP
+
+The non-standard GSUP protocol was created to provide OsmoSGSN with
+access to an external HLR while avoiding the complexities of the
+TCAP/MAP protocol stack commonly used by HLRs.
+
+A custom HLR could either directly implement GSUP, or an external gateway
+can be used to convert GSUP to the respective MAP operations.
+
+The primitives/operations of GSUP are modelled to have a 1:1
+correspondence to their MAP counterparts.  However, the encoding is much
+simplified by use of a binary TLV encoding similar to Layer 3 of
+GSM/GPRS.
+
+GSUP performs a challenge-response authentication protocol called OAP,
+which uses the standard MILEAGE algorithm for mutual authentication
+between OsmoSGSN and the HLR/HLR-GW.
+
+[[sgsn-ex-gsup]]
+.Example: Using an external HLR via GSUP
+----
+OsmoSGSN(config-sgsn)# gsup remote-ip 2.3.4.5 <1>
+OsmoSGSN(config-sgsn)# gsup remote-port 10000 <2>
+OsmoSGSN(config-sgsn)# gsup oap-k 000102030405060708090a0b0c0d0e0f <3>
+OsmoSGSN(config-sgsn)# gsup oap-opc 101112131415161718191a1b1c1d1e1f <4>
+----
+<1> Configure the IP address of the (remote) HLR or HLR-GW
+<2> Configure the TCP port of the (remote) HLR or HLR-GW
+<3> Specify the OAP shared key
+<4> Specify the OAP shared OPC
+
+
+=== CDR configuration
+
+OsmoSGSN can write a text log file containing CDR (call data records),
+which are commonly used for accounting/billing purpose.
+
+.Example: CDR log file configuration
+----
+OsmoSGSN(config-sgsn)# cdr filename /var/log/osmosgsn.cdr
+OsmoSGSN(config-sgsn)# cdr interval 600 <1>
+----
+<1> Periodically log existing PDP contexts every 600 seconds (10 min)
+
+The CDR file is a simple CSV file including a header line naming the
+individual fields of each CSV line.
+
+==== CDR CTRL interface
+
+Independently of whether logging CDR to a file is enabled or not, OsmoSGSN can
+also provide delivery of CDR through the CTRL interface. CDR are sent by means
+of TRAP messages with variable name _cdr-v1_, and its value is filled using the
+same CSV line format as in the log file, but without CSV header line.
+
+.Example: CDR delivery through CTRL TRAP messages
+----
+OsmoSGSN(config-sgsn)# cdr trap
+----
+
+==== CDR Format
+
+[[sgsn-cdr]]
+.Description of CSV fields in OsmoSGSN CDR file
+[options="header",cols="15%,85%"]
+|===
+|Field Name|Description
+|timestamp|Timestamp in YYYYMMDDhhmmssXXX where XXX are milli-seconds
+|imsi|IMSI causing this CDR
+|imei|IMEI causing this CDR
+|msisdn|MSISDN causing this CDR (if known)
+|cell_id|Cell ID in which the MS was registered last
+|lac|Location Area Code in which the MS was registered last
+|hlr|HLR of the subscriber
+|event|Possible events are explained below in <<sgsn-cdr-event>>
+|===
+
+If the _event_ field describes a pdp context related action (starts with
+_pdp-_), then the following extra CSV fields are appended to the line:
+
+[[sgsn-cdr-pdp]]
+.Description of extra CSV fields for pdp context related events
+[options="header",cols="15%,85%"]
+|===
+|Field Name|Description
+|pdp_duration|duration of the PDP context so far
+|ggsn_addr|GGSN related to the PDP context
+|sgsn_addr|SGSN related to the PDP context
+|apni|APN identifier of the PDP context
+|eua_addr|IP address allocated to the PDP context
+|vol_in|Number of bytes in MO direction
+|vol_out|Number of bytes in MT direction
+|charging_id|Related charging ID
+|===
+
+[[sgsn-cdr-event]]
+.Description of OsmoSGSN CDR Events
+[options="header",cols="15%,85%"]
+|===
+|Event|Description
+|attach|GMM ATTACH COMPLETE about to be sent to MS
+|update|GMM ROUTING AREA UPDATE COMPLETE about to be sent to MS
+|detach|GMM DETACH REQUEST received from MS
+|free|Release of the MM context memory
+|pdp-act|GTP CREATE PDP CONTEXT CONFIRM received from GGSN
+|pdp-deact|GTP DELETE PDP CONTEXT CONFIRM received from GGSN
+|pdp-terminate|Forced PDP context termination during MM context release
+|pdp-free|Release of the PDP context memory
+|pdp-periodic|Triggered by periodic timer, see VTY cmd _cdr interval_
+|===
+
+
+=== User traffic compression
+
+In order to save optimize GPRS bandwith, OsmoSGSN implements header and data
+compression schemes. The compression will reduce the packet length in order
+to save radio bandwith.
+
+==== Header compression
+
+On TCP/IP connections, each packet is prepended with a fairly long TCP/IP
+header. The header contains a lot of static information that never changes
+throughout the connection. (source and destination address, port numbers etc.)
+OsmoSGSN implements a TCP/IP header compression scheme called RFC1144, also
+known as SLHC. This type of header compression removes the TCP/IP header
+entirely and replaces it with a shorter version, that only contains the
+information that is absolutely necessary to identify and check the packet.
+The receiving part then restores the original header and forwards it to higher
+layers.
+
+*compression rfc1144 passive*::
+TCP/IP header compression has to be actively requested by the modem. The
+network will not promote compression by itself. This is the recommended mode
+of operation.
+
+*compression rfc1144 active slots <1-256>*::
+TCP/IP header compression is actively promoted by the network. Modems may still
+actively request different compression parameters or reject the offered
+compression parameters entirely. The number of slots is the maximum number
+of packet headers per subscriber that can be stored in the codebook.
+
+.Example: Accept compression if requested:
+----
+sgsn
+ compression rfc1144 passive
+----
+
+.Example: Actively promote compression:
+----
+sgsn
+ compression rfc1144 active slots 8
+----
+
+NOTE: The usage of TCP/IP options may disturb the RFC1144 header compression
+scheme. TCP/IP options may render RFC1144 ineffective if variable data is
+encoded into the option section of the TCP/IP packet. (e.g. TCP option 8,
+Timestamp)
+
+
+==== Data compression
+
+Data compression works on the raw packet data, including the header part of the
+packet. If enabled, header compression is applied before first data compression
+is applied. OsmoSGSN implements the V.42bis data compression scheme.
+
+*compression rfc1144 passive*::
+V42bis data compression has to be actively requested by the modem. The network
+will not promote compression by itself. This is the recommended mode of
+operation.
+
+*compression v42bis active direction (ms|sgsn|both) codewords <512-65535> strlen <6-250>*::
+V42bis data compression is actively promoted by the network. Modems may still
+actively request different compression parameters or reject the offered
+compression parameters entirely. The direction configures which sides are
+allowed to send compressed packets. For most cases, compressing 'both'
+directions will be the preferred option. The following to parameters configure
+the codebook size by the maxium number ('codewords') and size ('strlen') of
+entries.
+
+.Example: Accept compression if requested:
+----
+sgsn
+ compression v42bis passive
+----
+
+.Example: Actively promote compression:
+----
+sgsn
+ compression v42bis active direction both codewords 512 strlen 20
+----

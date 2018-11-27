@@ -1,0 +1,23 @@
+[[control]]
+== Control interface
+
+The actual protocol is described in <<common-control-if>>, the variables
+common to all programs using it are described in <<ctrl_common_vars>>. Here we
+describe variables specific to OsmoSGSN.
+
+.Variables available over control interface
+[options="header",width="100%",cols="20%,5%,5%,50%,20%"]
+|===
+|Name|Access|Trap|Value|Comment
+|subscriber-list-active-v1|RO|No|"<imsi>,<addr>"|See <<subs>> for details.
+|===
+
+[[subs]]
+=== subscriber-list-active-v1
+
+Return the list of active subscribers as a concatenated set of pairs "<imsi>",
+"addr" where first element of the pair is subscriber's IMSI and the second
+element (which might be empty) is the subscriber's address. The address value
+might be "none", "invalid" and "PPP" in addition to actual IP address. In case
+of IP address it will be prefixed with "IPv4" or "IPv6" string depending on the
+version of IP protocol.
