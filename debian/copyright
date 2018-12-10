@@ -45,7 +45,6 @@ Files:     .gitignore
            include/osmocom/sgsn/sgsn.h
            include/osmocom/sgsn/vty.h
            m4/README
-           osmo-sgsn.pc.in
            src/Makefile.am
            src/gprs/.gitignore
            src/gprs/Makefile.am

@@ -16,9 +16,6 @@ SUBDIRS = \
 	tests \
 	$(NULL)
 
-pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = osmo-sgsn.pc
-
 BUILT_SOURCES = $(top_srcdir)/.version
 EXTRA_DIST = git-version-gen osmoappdesc.py .version
 
