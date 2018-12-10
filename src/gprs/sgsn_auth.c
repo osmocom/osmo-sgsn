@@ -43,7 +43,6 @@ void sgsn_auth_init(void)
 	INIT_LLIST_HEAD(&sgsn->cfg.imsi_acl);
 }
 
-/* temporary IMSI ACL hack */
 struct imsi_acl_entry *sgsn_acl_lookup(const char *imsi, struct sgsn_config *cfg)
 {
 	struct imsi_acl_entry *acl;
