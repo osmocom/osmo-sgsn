@@ -43,7 +43,7 @@ void sgsn_auth_init(void)
 	INIT_LLIST_HEAD(&sgsn->cfg.imsi_acl);
 }
 
-struct imsi_acl_entry *sgsn_acl_lookup(const char *imsi, struct sgsn_config *cfg)
+struct imsi_acl_entry *sgsn_acl_lookup(const char *imsi, const struct sgsn_config *cfg)
 {
 	struct imsi_acl_entry *acl;
 	llist_for_each_entry(acl, &cfg->imsi_acl, list) {

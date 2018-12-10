@@ -460,7 +460,7 @@ struct sgsn_instance;
 extern const struct value_string *sgsn_auth_state_names;
 
 void sgsn_auth_init(void);
-struct imsi_acl_entry *sgsn_acl_lookup(const char *imsi, struct sgsn_config *cfg);
+struct imsi_acl_entry *sgsn_acl_lookup(const char *imsi, const struct sgsn_config *cfg);
 int sgsn_acl_add(const char *imsi, struct sgsn_config *cfg);
 int sgsn_acl_del(const char *imsi, struct sgsn_config *cfg);
 /* Request authorization */
