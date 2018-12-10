@@ -432,7 +432,7 @@ int main(int argc, char **argv)
 	bssgp_vty_init();
 	gprs_llc_vty_init();
 	gprs_sndcp_vty_init();
-	sgsn_auth_init();
+	sgsn_auth_init(sgsn);
 	sgsn_cdr_init(sgsn);
 	/* FIXME: register signal handler for SS_L_NS */
 

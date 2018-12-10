@@ -1641,7 +1641,7 @@ int main(int argc, char **argv)
 	msgb_ctx = msgb_talloc_ctx_init(osmo_sgsn_ctx, 0);
 
 	sgsn_rate_ctr_init();
-	sgsn_auth_init();
+	sgsn_auth_init(sgsn);
 	gprs_subscr_init(sgsn);
 
 	test_llme();

@@ -38,7 +38,7 @@ const struct value_string auth_state_names[] = {
 
 const struct value_string *sgsn_auth_state_names = auth_state_names;
 
-void sgsn_auth_init(void)
+void sgsn_auth_init(struct sgsn_instance *sgsn)
 {
 	INIT_LLIST_HEAD(&sgsn->cfg.imsi_acl);
 }
