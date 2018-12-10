@@ -176,9 +176,7 @@ struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
 
 	/* Put the MSISDN in case we have it */
 	if (mmctx->subscr && mmctx->subscr->sgsn_data->msisdn_len) {
-		pdp->msisdn.l = mmctx->subscr->sgsn_data->msisdn_len;
-		if (pdp->msisdn.l > sizeof(pdp->msisdn.v))
-			pdp->msisdn.l = sizeof(pdp->msisdn.v);
+		pdp->msisdn.l = OSMO_MIN(mmctx->subscr->sgsn_data->msisdn_len, sizeof(pdp->msisdn.v));
 		memcpy(pdp->msisdn.v, mmctx->subscr->sgsn_data->msisdn,
 			pdp->msisdn.l);
 	} else {
