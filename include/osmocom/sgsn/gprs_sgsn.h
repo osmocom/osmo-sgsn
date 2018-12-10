@@ -428,7 +428,7 @@ int sgsn_ctrl_cmds_install(void);
  */
 struct imsi_acl_entry {
 	struct llist_head list;
-	char imsi[16+1];
+	char imsi[OSMO_IMSI_BUF_SIZE];
 };
 
 /* see GSM 09.02, 17.7.1, PDP-Context and GPRSSubscriptionData */
