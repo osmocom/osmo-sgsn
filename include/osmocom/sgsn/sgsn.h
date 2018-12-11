@@ -124,6 +124,12 @@ struct sgsn_config {
 		enum ranap_nsap_addr_enc rab_assign_addr_enc;
 	} iu;
 #endif
+
+	/* This is transmitted as IPA Serial Number tag, which is used for GSUP routing (e.g. in OsmoHLR).
+	 * This name must be set in a multi-SGSN network, and it must be unique to each SGSN.
+	 * If no name is set, the IPA Serial Number will be the same as the Unit Name,
+	 * and will be of the form 'SGSN-00-00-00-00-00-00' */
+	char *sgsn_ipa_name;
 };
 
 struct sgsn_instance {

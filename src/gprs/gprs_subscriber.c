@@ -23,6 +23,7 @@
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 #include <osmocom/gsm/gsup.h>
 #include <osmocom/gsm/apn.h>
+#include <osmocom/gsm/ipa.h>
 #include <osmocom/core/utils.h>
 #include <osmocom/core/logging.h>
 #include <osmocom/sgsn/gprs_subscriber.h>
@@ -63,15 +64,20 @@ static int gsup_read_cb(struct osmo_gsup_client *gsupc, struct msgb *msg);
 int gprs_subscr_init(struct sgsn_instance *sgi)
 {
 	const char *addr_str;
+	struct ipaccess_unit *ipa_dev;
 
 	if (!sgi->cfg.gsup_server_addr.sin_addr.s_addr)
 		return 0;
 
 	addr_str = inet_ntoa(sgi->cfg.gsup_server_addr.sin_addr);
 
-	sgi->gsup_client = osmo_gsup_client_create(
+	ipa_dev = talloc_zero(sgi, struct ipaccess_unit);
+	ipa_dev->unit_name = "SGSN";
+	ipa_dev->serno = sgi->cfg.sgsn_ipa_name; /* NULL unless configured via VTY */
+
+	sgi->gsup_client = osmo_gsup_client_create2(
 		sgi,
-		"SGSN",
+		ipa_dev,
 		addr_str, sgi->cfg.gsup_server_port,
 		&gsup_read_cb,
 		&sgi->cfg.oap);

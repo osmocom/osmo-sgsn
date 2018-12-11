@@ -203,6 +203,8 @@ static int config_write_sgsn(struct vty *vty)
 		vty_out(vty, " encryption %s%s",
 			get_value_string(gprs_cipher_names, g_cfg->cipher),
 			VTY_NEWLINE);
+	if (g_cfg->sgsn_ipa_name)
+		vty_out(vty, " gsup ipa-name %s%s", g_cfg->sgsn_ipa_name, VTY_NEWLINE);
 	if (g_cfg->gsup_server_addr.sin_addr.s_addr)
 		vty_out(vty, " gsup remote-ip %s%s",
 			inet_ntoa(g_cfg->gsup_server_addr.sin_addr), VTY_NEWLINE);
@@ -1075,6 +1077,25 @@ DEFUN(update_subscr_update_auth_info, update_subscr_update_auth_info_cmd,
 	return CMD_SUCCESS;
 }
 
+DEFUN(cfg_gsup_ipa_name,
+	cfg_gsup_ipa_name_cmd,
+	"gsup ipa-name NAME",
+	"GSUP Parameters\n"
+	"Set the IPA name of this SGSN\n"
+	"A unique name for this SGSN. For example: PLMN + redundancy server number: SGSN-901-70-0. "
+	"This name is used for GSUP routing and must be set if more than one SGSN is connected to the network. "
+	"The default is 'SGSN-00-00-00-00-00-00'.\n")
+{
+	if (vty->type != VTY_FILE) {
+		vty_out(vty, "The IPA name cannot be changed at run-time; "
+			"It can only be set in the configuraton file.%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+
+	g_cfg->sgsn_ipa_name = talloc_strdup(tall_vty_ctx, argv[0]);
+	return CMD_SUCCESS;
+}
+
 DEFUN(cfg_gsup_remote_ip, cfg_gsup_remote_ip_cmd,
 	"gsup remote-ip A.B.C.D",
 	"GSUP Parameters\n"
@@ -1365,6 +1386,7 @@ int sgsn_vty_init(struct sgsn_config *cfg)
 	install_element(SGSN_NODE, &cfg_imsi_acl_cmd);
 	install_element(SGSN_NODE, &cfg_auth_policy_cmd);
 	install_element(SGSN_NODE, &cfg_encrypt_cmd);
+	install_element(SGSN_NODE, &cfg_gsup_ipa_name_cmd);
 	install_element(SGSN_NODE, &cfg_gsup_remote_ip_cmd);
 	install_element(SGSN_NODE, &cfg_gsup_remote_port_cmd);
 	install_element(SGSN_NODE, &cfg_gsup_oap_id_cmd);
