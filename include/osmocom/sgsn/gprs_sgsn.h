@@ -404,9 +404,6 @@ char *gprs_pdpaddr2str(uint8_t *pdpa, uint8_t len);
 /*
  * ctrl interface related work
  */
-struct gsm_network;
-struct ctrl_handle *sgsn_controlif_setup(struct gsm_network *,
-					 const char *bind_addr, uint16_t port);
 int sgsn_ctrl_cmds_install(void);
 
 /*
