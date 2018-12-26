@@ -820,6 +820,13 @@ int gprs_subscr_location_update(struct gprs_subscr *subscr)
 		"subscriber data is not available\n");
 
 	gsup_msg.message_type = OSMO_GSUP_MSGT_UPDATE_LOCATION_REQUEST;
+#if BUILD_IU
+	if (subscr->sgsn_data->mm->ran_type == MM_CTX_T_UTRAN_Iu)
+		gsup_msg.rat_types[0] = OSMO_RAT_UTRAN_IU;
+	else
+#endif
+		gsup_msg.rat_types[0] = OSMO_RAT_GERAN_A;
+	gsup_msg.rat_types_len = 1;
 	return gprs_subscr_tx_gsup_message(subscr, &gsup_msg);
 }
 
