@@ -9,6 +9,7 @@ Type=simple
 Restart=always
 ExecStart=/usr/bin/osmo-sgsn -c /etc/osmocom/osmo-sgsn.cfg
 RestartSec=2
+ExecStopPost=/usr/local/bin/save_log_tail osmo-sgsn
 
 [Install]
 WantedBy=multi-user.target
