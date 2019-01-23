@@ -1,3 +1,150 @@
+osmo-sgsn (1.4.0) unstable; urgency=medium
+
+  [ Alexander Couzens ]
+  * gprs_subscriber: gsup_auth_error: reject MS in all cases
+  * gprs_gmm: make functions relating to GMM Attach Request public
+  * gprs_gmm: make extract_subscr_msisdn extract_subscr_hlr public
+  * gprs_gmm: Cancel Location: use detach type IMSI
+  * vty: add cmd "reset sgsn state"
+  * tests: remove gmm unit tests
+  * gprs_gmm: introduce a GMM Attach Request FSM
+  * debian: add missing build dependencies
+  * sgsn: use gtp_clear_queues() when reset sgsn state
+  * vty: restart sgsn state: improve output message
+  * sgsn_ggsn_ctx_drop_pdp: protect against nullpointer when MM is gone
+  * gprs_sgsn.h: fix wrong type of re-attempts
+  * GTP: refactor the echo timer
+  * gprs_gmm: dont answer unknown IMSI/TMSI on Service Requests NET_FAIL
+  * gprs_gmm: Fix missing Security Command for 3G when attaching
+  * sgsn_libgtp: fix a potential memleak when the GGSN is not reachable
+  * gprs_llc: remove the FCS from the msgb by trim'ing the msgb
+  * OsmoSGSN: add rate counter documentation
+
+  [ Daniel Willmann ]
+  * gb_proxy: tallocate memory for gbproxy cfg so it can be a talloc ctx
+  * gb_proxy: Add ctrl interface and nsvc-state, gbproxy-state commands
+  * git-version-gen: Don't check for .git directory
+
+  [ Stefan Sperling ]
+  * add a test for OS#3178 (invalid unitdata message)
+  * finish gbproxy_parse_bssgp_unitdata test
+  * fix bogus assertion in encode_comp_field()
+  * fix bogus error check in gprs_sndcp_comp_create()
+  * use enums consistently instead of falling back to int
+  * update gbproxy test expected output
+  * consistently check the result of osmo_shift_v_fixed()
+  * remove pointless declaration of struct gsm_network
+  * make gsup ipa name configurable in osmo-sgsn.cfg
+
+  [ Pau Espin Pedrol ]
+  * jenkins.sh: Use --enable-werror only when iu support is disabled
+  * jenkins.sh: Remove non-existent configure options
+  * Drop all references of unused SMPP
+  * Drop all references of unused MGCP
+  * Drop unused common_vty.c
+  * sgsn_libgtp.c: Log pointer of deleted context
+  * Maintain per ggsn pdp ctx list
+  * osmo-sgsn: ping GGSN periodically and check for restart counter
+  * Disarm T3395 when dettaching mmctx from pdpctx
+  * examples: Enable by default echo req towards active GGSNs
+  * vty: Add cmd to disable echo loop explictly
+  * Add optional TearDownInd IE in PDP DEACT REQ towards PCU
+  * sgsn: Don't attempt to delete GTP pdp ctx if GGSN was restarted
+  * Forward GGSN originated DEACT PDP CTX REQ
+  * sgsn: Fix T3395 firing forever
+  * sgsn: subscriber: Avoid calling memcpy with NULL src
+  * sgsn: cdr: Fix uninitialized string access if ggsn is detached
+  * sgsn: gtp: Use new API to send PDP DEL CTX REQ without freeing ctx locally
+  * sgsn: Fix crash using new libgtp cb_recovery2 API
+  * gbproxy: Replace '.' in counter names with ':'
+  * Drop gprs_msgb_copy with libosmocore replacement
+  * Drop gprs_msgb_resize_area with libosmocore replacement
+  * Use osmo_clock_gettime from libosmocore
+  * gbproxy: Add VTY parameter: link stored-msgs-max-length
+  * gbproxy: Add new VTY-managed timer: link-list clean-stale-timer
+  * gbproxy: Replace '.' in counter names with ':'
+  * Add osmo-gtphub systemd service file
+  * debian: Fix typo in rules preventing build with IU support
+  * Install systemd services with autotools
+  * Install sample cfg file to /etc/osmocom
+  * Update wrong references to bsc in sgsn code
+  * Allocate sgsn_instance with talloc
+  * gbproxy: flag gbproxy_assign_imsi as static
+  * gbproxy: Fix abort during APN patch
+  * gbproxy: Remove unneeded parse_ctx param
+  * gbproxy: flush_stored_messages: Move comment to func description
+  * gbproxy: flush_stored_messages: Log and route using stored_msg info
+  * gbproxy: flush_stored_messages: Get rid of msg param
+  * Allow easily disabling GFDL references
+  * OsmoSGSN: configuration: Move pdp ctx specific CDR fields to its own table
+  * OsmoSGSN: configuration: Add missing pdp-periodic event
+  * OsmoSGSN: configuration: Document CDR CTRL interface
+  * OsmoSGSN: overview: Fix typo and reference OpenGGSN->OsmoGGSN
+
+  [ Harald Welte ]
+  * migrate to oap_client in libosmogsm
+  * remove libcommon
+  * gbproxy-legacy: Ensure well-formed config file
+  * Remove local libgsupclient; Use libosmo-gsup-client from osmo-hlr
+  * initial checkin of manuals to public repo
+  * Add link to Asciidoc source code of manual
+  * OsmoSGSN: Fix formatting/cross reference in CDR section
+  * Update GSUP chapter regarding UMTS AKA and other recent changes
+  * GSUP: Add ladder diagrams for protocol transactions / procedures
+  * share chapters/gsup.adoc from OsmoSGSN to OsmoMSC + OsmoHLR
+  * vty-ref: Update URI of docbook 5.0 schema
+
+  [ Neels Hofmeyr ]
+  * use __FILE__, not __BASE_FILE__
+  * vty: fix doc str for 'reset sgsn state'
+  * vty: add SCCP related vty commands
+  * fix build: remove unused variable
+  * Importing history from osmo-gsm-manuals.git
+  * add 'make check' target
+  * fix 'make clean': shell glob, ignore failure
+  * refactor Makefile build rules, don't use the FORCE
+  * OsmoSGSN: update VTY reference
+  * sgsn: update vty reference
+
+  [ Oliver Smith ]
+  * gtphub: Add --version cmdline option
+  * build manuals moved here from osmo-gsm-manuals.git
+  * Fix DISTCHECK_CONFIGURE_FLAGS override
+  * contrib/jenkins.sh: build and publish manuals
+  * contrib: fix makedistcheck with disabled systemd
+
+  [ Max ]
+  * Cleanup non-existent files from debian/copyright
+  * Use safer functions for IMSI ACL
+  * gbproxy: fix formatting in gbproxy-state command
+  * gbproxy: add number-of-peers ctrl command
+  * Revert "gbproxy: fix formatting in gbproxy-state command"
+  * Add OsmoSGSN control interface description
+  * Remove misleading comment
+  * Constify sgsn_acl_lookup() parameter
+  * Drop unused osmo-sgsn.pc
+  * Use explicit length check
+  * Use explicit parameter for sgsn_auth_init()
+
+  [ Jonathan Brielmaier ]
+  * fix various typos across all manuals
+
+  [ ikostov ]
+  * SGSN: add Auth. policy, NS Statistics and BSSGP state examples, tweaks
+  * GSUP, OAP: fix AUTS length to 14, not 16
+
+  [ Philipp Maier ]
+  * osmo-sgsn: Update VTY command reference
+  * osmo-sgsn: improve auth-policy explaination
+  * osmo-sgsn: Explain TCP/IP header compression
+  * osmo-sgsn: fix arrow tips in flow diagrams
+
+  [ Holger Hans Peter Freyther ]
+  * sgsn: Fix numbering of QoS and add basic description for APN
+  * sgsn: Add charging characteristics to GSUP
+
+ -- Harald Welte <laforge@gnumonks.org>  Wed, 23 Jan 2019 18:32:41 +0100
+
 osmo-sgsn (1.3.0) unstable; urgency=medium
 
   [ Neels Hofmeyr ]
