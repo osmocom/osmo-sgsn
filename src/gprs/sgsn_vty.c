@@ -749,13 +749,13 @@ static void subscr_dump_full_vty(struct vty *vty, struct gprs_subscr *gsub, int 
 			at->key_seq);
 		if (at->vec.auth_types & OSMO_AUTH_TYPE_GSM) {
 			vty_out(vty, "RAND: %s, ",
-				osmo_hexdump(at->vec.rand,
+				osmo_hexdump_nospc(at->vec.rand,
 					     sizeof(at->vec.rand)));
 			vty_out(vty, "SRES: %s, ",
-				osmo_hexdump(at->vec.sres,
+				osmo_hexdump_nospc(at->vec.sres,
 					     sizeof(at->vec.sres)));
 			vty_out(vty, "Kc: %s%s",
-				osmo_hexdump(at->vec.kc,
+				osmo_hexdump_nospc(at->vec.kc,
 					     sizeof(at->vec.kc)), VTY_NEWLINE);
 		}
 		if (at->vec.auth_types & OSMO_AUTH_TYPE_UMTS) {
@@ -763,19 +763,22 @@ static void subscr_dump_full_vty(struct vty *vty, struct gprs_subscr *gsub, int 
 				osmo_hexdump(at->vec.autn,
 					     sizeof(at->vec.autn)));
 			vty_out(vty, "RES: %s, ",
-				osmo_hexdump(at->vec.res, at->vec.res_len));
+				osmo_hexdump_nospc(at->vec.res, at->vec.res_len));
 			vty_out(vty, "IK: %s, ",
-				osmo_hexdump(at->vec.ik, sizeof(at->vec.ik)));
+				osmo_hexdump_nospc(at->vec.ik, sizeof(at->vec.ik)));
 			vty_out(vty, "CK: %s, ",
-				osmo_hexdump(at->vec.ck, sizeof(at->vec.ck)));
+				osmo_hexdump_nospc(at->vec.ck, sizeof(at->vec.ck)));
 		}
 	}
 
 	llist_for_each_entry(pdp, &gsub->sgsn_data->pdp_list, list) {
-		vty_out(vty, "    PDP info: Id: %d, Type: 0x%04x, APN: '%s' QoS: %s%s",
-			pdp->context_id, pdp->pdp_type, pdp->apn_str,
-			osmo_hexdump(pdp->qos_subscribed, pdp->qos_subscribed_len),
-			VTY_NEWLINE);
+		vty_out(vty, "    PDP info: Id: %d, Type: 0x%04x, APN: '%s'",
+			pdp->context_id, pdp->pdp_type, pdp->apn_str);
+
+		if (pdp->qos_subscribed_len)
+			vty_out(vty, " QoS: %s", osmo_hexdump(pdp->qos_subscribed, pdp->qos_subscribed_len));
+
+		vty_out(vty, "%s", VTY_NEWLINE);
 	}
 
 #if 0
