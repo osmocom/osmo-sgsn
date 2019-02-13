@@ -195,6 +195,12 @@ static void st_accept(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 		extract_subscr_hlr(ctx);
 		osmo_fsm_inst_state_chg(fi, ST_INIT, 0, 0);
 		break;
+	case E_VLR_ANSWERED:
+		extract_subscr_msisdn(ctx);
+		extract_subscr_hlr(ctx);
+		LOGMMCTXP(LOGL_NOTICE, ctx,
+			  "Unusual event: if MS got no data connection, check that it has APN configured.\n");
+		break;
 	}
 }
 
@@ -295,7 +301,7 @@ static struct osmo_fsm_state gmm_attach_req_fsm_states[] = {
 		.action = st_iu_security_cmd,
 	},
 	[ST_ACCEPT] = {
-		.in_event_mask = X(E_ATTACH_COMPLETE_RECV),
+		.in_event_mask = X(E_ATTACH_COMPLETE_RECV) | X(E_VLR_ANSWERED),
 		.out_state_mask = X(ST_INIT) | X(ST_REJECT),
 		.name = "WaitAttachComplete",
 		.onenter = st_accept_on_enter,
