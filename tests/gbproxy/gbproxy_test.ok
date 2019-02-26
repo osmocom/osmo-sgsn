@@ -11,7 +11,7 @@ PROCESSING RESET_ACK from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 0a 
 
-result (RESET_ACK) = 1
+result (RESET_ACK) = 0
 
 PROCESSING ALIVE_ACK from 0x05060708:32000
 0b 
@@ -19,7 +19,7 @@ PROCESSING ALIVE_ACK from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 06 
 
-result (ALIVE_ACK) = 1
+result (ALIVE_ACK) = 0
 
 PROCESSING UNBLOCK_ACK from 0x05060708:32000
 07 
@@ -34,7 +34,7 @@ PROCESSING ALIVE from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 Current NS-VCIs:
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
@@ -59,7 +59,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 9
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0a 
 
-result (RESET) = 9
+result (RESET) = 0
 
 PROCESSING ALIVE from 0x01020304:1111
 0a 
@@ -67,7 +67,7 @@ PROCESSING ALIVE from 0x01020304:1111
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 PROCESSING UNBLOCK from 0x01020304:1111
 06 
@@ -77,7 +77,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 1
 
 ==> got signal NS_UNBLOCK, NS-VC 0x1001/1.2.3.4:1111
 
-result (UNBLOCK) = 1
+result (UNBLOCK) = 0
 
 PROCESSING ALIVE_ACK from 0x01020304:1111
 0b 
@@ -96,7 +96,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 18 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 22
 00 00 00 00 22 04 82 10 02 07 81 08 08 88 11 22 33 40 50 60 10 00 
 
-result (BVC_RESET) = 22
+result (BVC_RESET) = 0
 
 Current NS-VCIs:
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:1111
@@ -124,7 +124,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 5 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 9
 00 00 00 00 23 04 82 10 02 
 
-result (BVC_RESET_ACK) = 9
+result (BVC_RESET_ACK) = 0
 
 --- Initialise BSS 2 ---
 
@@ -141,7 +141,7 @@ MESSAGE to BSS at 0x01020304:2222, msg length 9
 MESSAGE to BSS at 0x01020304:2222, msg length 1
 0a 
 
-result (RESET) = 9
+result (RESET) = 0
 
 PROCESSING ALIVE from 0x01020304:2222
 0a 
@@ -149,7 +149,7 @@ PROCESSING ALIVE from 0x01020304:2222
 MESSAGE to BSS at 0x01020304:2222, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 PROCESSING UNBLOCK from 0x01020304:2222
 06 
@@ -159,7 +159,7 @@ MESSAGE to BSS at 0x01020304:2222, msg length 1
 
 ==> got signal NS_UNBLOCK, NS-VC 0x2001/1.2.3.4:2222
 
-result (UNBLOCK) = 1
+result (UNBLOCK) = 0
 
 PROCESSING ALIVE_ACK from 0x01020304:2222
 0b 
@@ -178,7 +178,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 18 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 22
 00 00 00 00 22 04 82 20 02 07 81 08 08 88 11 22 33 40 50 60 10 00 
 
-result (BVC_RESET) = 22
+result (BVC_RESET) = 0
 
 Current NS-VCIs:
     VCI 0x2001, NSEI 0x2000, peer 0x01020304:2222
@@ -213,7 +213,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 5 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:2222, msg length 9
 00 00 00 00 23 04 82 20 02 
 
-result (BVC_RESET_ACK) = 9
+result (BVC_RESET_ACK) = 0
 
 --- Move BSS 1 to new port ---
 
@@ -230,7 +230,7 @@ MESSAGE to BSS at 0x01020304:3333, msg length 9
 MESSAGE to BSS at 0x01020304:3333, msg length 1
 0a 
 
-result (RESET) = 9
+result (RESET) = 0
 
 PROCESSING ALIVE from 0x01020304:3333
 0a 
@@ -238,7 +238,7 @@ PROCESSING ALIVE from 0x01020304:3333
 MESSAGE to BSS at 0x01020304:3333, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 PROCESSING UNBLOCK from 0x01020304:3333
 06 
@@ -248,7 +248,7 @@ MESSAGE to BSS at 0x01020304:3333, msg length 1
 
 ==> got signal NS_UNBLOCK, NS-VC 0x1001/1.2.3.4:3333
 
-result (UNBLOCK) = 1
+result (UNBLOCK) = 0
 
 PROCESSING ALIVE_ACK from 0x01020304:3333
 0b 
@@ -293,7 +293,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 9
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0a 
 
-result (RESET) = 9
+result (RESET) = 0
 
 PROCESSING ALIVE from 0x01020304:1111
 0a 
@@ -301,7 +301,7 @@ PROCESSING ALIVE from 0x01020304:1111
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 PROCESSING UNBLOCK from 0x01020304:1111
 06 
@@ -311,7 +311,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 1
 
 ==> got signal NS_UNBLOCK, NS-VC 0x2001/1.2.3.4:1111
 
-result (UNBLOCK) = 1
+result (UNBLOCK) = 0
 
 PROCESSING ALIVE_ACK from 0x01020304:1111
 0b 
@@ -356,7 +356,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 9
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0a 
 
-result (RESET) = 9
+result (RESET) = 0
 
 PROCESSING ALIVE from 0x01020304:1111
 0a 
@@ -364,7 +364,7 @@ PROCESSING ALIVE from 0x01020304:1111
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 PROCESSING UNBLOCK from 0x01020304:1111
 06 
@@ -374,7 +374,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 1
 
 ==> got signal NS_UNBLOCK, NS-VC 0x2001/1.2.3.4:1111
 
-result (UNBLOCK) = 1
+result (UNBLOCK) = 0
 
 PROCESSING ALIVE_ACK from 0x01020304:1111
 0b 
@@ -419,7 +419,7 @@ MESSAGE to BSS at 0x01020304:4444, msg length 9
 MESSAGE to BSS at 0x01020304:4444, msg length 1
 0a 
 
-result (RESET) = 9
+result (RESET) = 0
 
 PROCESSING ALIVE from 0x01020304:4444
 0a 
@@ -427,7 +427,7 @@ PROCESSING ALIVE from 0x01020304:4444
 MESSAGE to BSS at 0x01020304:4444, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 PROCESSING UNBLOCK from 0x01020304:4444
 06 
@@ -437,7 +437,7 @@ MESSAGE to BSS at 0x01020304:4444, msg length 1
 
 ==> got signal NS_UNBLOCK, NS-VC 0x2001/1.2.3.4:4444
 
-result (UNBLOCK) = 1
+result (UNBLOCK) = 0
 
 PROCESSING ALIVE_ACK from 0x01020304:4444
 0b 
@@ -484,7 +484,7 @@ MESSAGE to BSS at 0x01020304:3333, msg length 9
 MESSAGE to BSS at 0x01020304:3333, msg length 1
 0a 
 
-result (RESET) = 9
+result (RESET) = 0
 
 PROCESSING ALIVE from 0x01020304:3333
 0a 
@@ -492,7 +492,7 @@ PROCESSING ALIVE from 0x01020304:3333
 MESSAGE to BSS at 0x01020304:3333, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 PROCESSING UNBLOCK from 0x01020304:3333
 06 
@@ -502,7 +502,7 @@ MESSAGE to BSS at 0x01020304:3333, msg length 1
 
 ==> got signal NS_UNBLOCK, NS-VC 0x2001/1.2.3.4:3333
 
-result (UNBLOCK) = 1
+result (UNBLOCK) = 0
 
 PROCESSING ALIVE_ACK from 0x01020304:3333
 0b 
@@ -548,7 +548,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 9
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0a 
 
-result (RESET) = 9
+result (RESET) = 0
 
 PROCESSING ALIVE from 0x01020304:1111
 0a 
@@ -556,7 +556,7 @@ PROCESSING ALIVE from 0x01020304:1111
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 PROCESSING UNBLOCK from 0x01020304:1111
 06 
@@ -566,7 +566,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 1
 
 ==> got signal NS_UNBLOCK, NS-VC 0x1001/1.2.3.4:1111
 
-result (UNBLOCK) = 1
+result (UNBLOCK) = 0
 
 PROCESSING ALIVE_ACK from 0x01020304:1111
 0b 
@@ -611,7 +611,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 18 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 22
 00 00 00 00 22 04 82 10 12 07 81 08 08 88 11 22 33 40 50 60 10 00 
 
-result (BVC_RESET) = 22
+result (BVC_RESET) = 0
 
 Current NS-VCIs:
     VCI 0x2001, NSEI 0x2000, peer 0x01020304:3333
@@ -649,7 +649,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 5 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 9
 00 00 00 00 23 04 82 10 12 
 
-result (BVC_RESET_ACK) = 9
+result (BVC_RESET_ACK) = 0
 
 --- Reset BSS 1 with the old BVCI ---
 
@@ -665,7 +665,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 18 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 22
 00 00 00 00 22 04 82 10 02 07 81 08 08 88 11 22 33 40 50 60 10 00 
 
-result (BVC_RESET) = 22
+result (BVC_RESET) = 0
 
 Current NS-VCIs:
     VCI 0x2001, NSEI 0x2000, peer 0x01020304:3333
@@ -703,7 +703,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 5 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 9
 00 00 00 00 23 04 82 10 02 
 
-result (BVC_RESET_ACK) = 9
+result (BVC_RESET_ACK) = 0
 
 --- Reset BSS 1 with the old BVCI again ---
 
@@ -719,7 +719,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 18 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 22
 00 00 00 00 22 04 82 10 02 07 81 08 08 88 11 22 33 40 50 60 10 00 
 
-result (BVC_RESET) = 22
+result (BVC_RESET) = 0
 
 Current NS-VCIs:
     VCI 0x2001, NSEI 0x2000, peer 0x01020304:3333
@@ -757,7 +757,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 5 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 9
 00 00 00 00 23 04 82 10 02 
 
-result (BVC_RESET_ACK) = 9
+result (BVC_RESET_ACK) = 0
 
 --- Send message from BSS 1 to SGSN, BVCI 0x1012 ---
 
@@ -771,7 +771,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1012, msg length 0 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 4
 00 00 10 12 
 
-result (UNITDATA) = 4
+result (UNITDATA) = 0
 
 --- Send message from SGSN to BSS 1, BVCI 0x1012 ---
 
@@ -785,7 +785,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1012, msg length 0 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 4
 00 00 10 12 
 
-result (UNITDATA) = 4
+result (UNITDATA) = 0
 
 --- Send message from BSS 1 to SGSN, BVCI 0x1002 ---
 
@@ -799,7 +799,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1012, msg length 0 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 4
 00 00 10 12 
 
-result (UNITDATA) = 4
+result (UNITDATA) = 0
 
 --- Send message from SGSN to BSS 1, BVCI 0x1002 ---
 
@@ -813,7 +813,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1012, msg length 0 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 4
 00 00 10 12 
 
-result (UNITDATA) = 4
+result (UNITDATA) = 0
 
 --- Send message from BSS 2 to SGSN, BVCI 0x2002 ---
 
@@ -827,7 +827,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x2002, msg length 0 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 4
 00 00 20 02 
 
-result (UNITDATA) = 4
+result (UNITDATA) = 0
 
 --- Send message from SGSN to BSS 2, BVCI 0x2002 ---
 
@@ -841,7 +841,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x2002, msg length 0 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:3333, msg length 4
 00 00 20 02 
 
-result (UNITDATA) = 4
+result (UNITDATA) = 0
 
 --- Reset BSS 1 with the old BVCI on BSS2's link ---
 
@@ -857,7 +857,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 18 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 22
 00 00 00 00 22 04 82 10 02 07 81 08 08 88 11 22 33 40 50 60 10 00 
 
-result (BVC_RESET) = 22
+result (BVC_RESET) = 0
 
 Current NS-VCIs:
     VCI 0x2001, NSEI 0x2000, peer 0x01020304:3333
@@ -898,7 +898,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 5 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:3333, msg length 9
 00 00 00 00 23 04 82 10 02 
 
-result (BVC_RESET_ACK) = 9
+result (BVC_RESET_ACK) = 0
 
 --- Send message from BSS 1 to SGSN, BVCI 0x1002 ---
 
@@ -912,7 +912,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1012, msg length 0 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 4
 00 00 10 12 
 
-result (UNITDATA) = 4
+result (UNITDATA) = 0
 
 --- Send message from SGSN to BSS 1, BVCI 0x1002 ---
 
@@ -926,7 +926,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1012, msg length 0 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 4
 00 00 10 12 
 
-result (UNITDATA) = 4
+result (UNITDATA) = 0
 
 --- Send message from SGSN to BSS 1, BVCI 0x10ff (invalid) ---
 
@@ -940,7 +940,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 10 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 14
 00 00 00 00 41 07 81 05 04 82 10 ff 15 80 
 
-result (UNITDATA) = 14
+result (UNITDATA) = 0
 
 Peers:
   NSEI 8192, BVCI 8194, not blocked, RAI 112-332-16464-96
@@ -963,7 +963,7 @@ PROCESSING RESET_ACK from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 0a 
 
-result (RESET_ACK) = 1
+result (RESET_ACK) = 0
 
 PROCESSING ALIVE_ACK from 0x05060708:32000
 0b 
@@ -971,7 +971,7 @@ PROCESSING ALIVE_ACK from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 06 
 
-result (ALIVE_ACK) = 1
+result (ALIVE_ACK) = 0
 
 PROCESSING UNBLOCK_ACK from 0x05060708:32000
 07 
@@ -986,7 +986,7 @@ PROCESSING ALIVE from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 Current NS-VCIs:
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
@@ -1011,7 +1011,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 9
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0a 
 
-result (RESET) = 9
+result (RESET) = 0
 
 PROCESSING ALIVE from 0x01020304:1111
 0a 
@@ -1019,7 +1019,7 @@ PROCESSING ALIVE from 0x01020304:1111
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 PROCESSING UNBLOCK from 0x01020304:1111
 06 
@@ -1029,7 +1029,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 1
 
 ==> got signal NS_UNBLOCK, NS-VC 0x1001/1.2.3.4:1111
 
-result (UNBLOCK) = 1
+result (UNBLOCK) = 0
 
 PROCESSING ALIVE_ACK from 0x01020304:1111
 0b 
@@ -1063,7 +1063,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 18 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 22
 00 00 00 00 22 04 82 10 02 07 81 08 08 88 11 22 33 40 50 60 10 00 
 
-result (BVC_RESET) = 22
+result (BVC_RESET) = 0
 
 PROCESSING BVC_RESET_ACK from 0x05060708:32000
 00 00 00 00 23 04 82 10 02 
@@ -1075,7 +1075,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 5 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 9
 00 00 00 00 23 04 82 10 02 
 
-result (BVC_RESET_ACK) = 9
+result (BVC_RESET_ACK) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -1094,7 +1094,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 18 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 22
 00 00 00 00 22 04 82 20 02 07 81 08 08 88 11 22 33 40 50 60 10 00 
 
-result (BVC_RESET) = 22
+result (BVC_RESET) = 0
 
 PROCESSING BVC_RESET_ACK from 0x05060708:32000
 00 00 00 00 23 04 82 20 02 
@@ -1106,7 +1106,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 5 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 9
 00 00 00 00 23 04 82 20 02 
 
-result (BVC_RESET_ACK) = 9
+result (BVC_RESET_ACK) = 0
 
 Peers:
   NSEI 4096, BVCI 8194, not blocked, RAI 112-332-16464-96
@@ -1125,7 +1125,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 0 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 4
 00 00 10 02 
 
-result (UNITDATA) = 4
+result (UNITDATA) = 0
 
 PROCESSING UNITDATA from 0x05060708:32000
 00 00 10 02 
@@ -1137,7 +1137,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 0 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 4
 00 00 10 02 
 
-result (UNITDATA) = 4
+result (UNITDATA) = 0
 
 --- Send message from BSS 1 to SGSN and back, BVCI 2 ---
 
@@ -1151,7 +1151,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x2002, msg length 0 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 4
 00 00 20 02 
 
-result (UNITDATA) = 4
+result (UNITDATA) = 0
 
 PROCESSING UNITDATA from 0x05060708:32000
 00 00 20 02 
@@ -1163,7 +1163,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x2002, msg length 0 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 4
 00 00 20 02 
 
-result (UNITDATA) = 4
+result (UNITDATA) = 0
 
 --- Change NSEI ---
 
@@ -1180,7 +1180,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 9
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0a 
 
-result (RESET) = 9
+result (RESET) = 0
 
 PROCESSING ALIVE from 0x01020304:1111
 0a 
@@ -1188,7 +1188,7 @@ PROCESSING ALIVE from 0x01020304:1111
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 PROCESSING UNBLOCK from 0x01020304:1111
 06 
@@ -1198,7 +1198,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 1
 
 ==> got signal NS_UNBLOCK, NS-VC 0x1001/1.2.3.4:1111
 
-result (UNBLOCK) = 1
+result (UNBLOCK) = 0
 
 PROCESSING ALIVE_ACK from 0x01020304:1111
 0b 
@@ -1233,7 +1233,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 18 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 22
 00 00 00 00 22 04 82 10 02 07 81 08 08 88 11 22 33 40 50 60 10 00 
 
-result (BVC_RESET) = 22
+result (BVC_RESET) = 0
 
 PROCESSING BVC_RESET_ACK from 0x05060708:32000
 00 00 00 00 23 04 82 10 02 
@@ -1245,7 +1245,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 5 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 9
 00 00 00 00 23 04 82 10 02 
 
-result (BVC_RESET_ACK) = 9
+result (BVC_RESET_ACK) = 0
 
 Peers:
   NSEI 4096, BVCI 8194, not blocked, RAI 112-332-16464-96
@@ -1267,7 +1267,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 18 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 22
 00 00 00 00 22 04 82 30 02 07 81 08 08 88 11 22 33 40 50 60 10 00 
 
-result (BVC_RESET) = 22
+result (BVC_RESET) = 0
 
 PROCESSING BVC_RESET_ACK from 0x05060708:32000
 00 00 00 00 23 04 82 30 02 
@@ -1279,7 +1279,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 5 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 9
 00 00 00 00 23 04 82 30 02 
 
-result (BVC_RESET_ACK) = 9
+result (BVC_RESET_ACK) = 0
 
 Peers:
   NSEI 8192, BVCI 12290, not blocked, RAI 112-332-16464-96
@@ -1301,7 +1301,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 0 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 4
 00 00 10 02 
 
-result (UNITDATA) = 4
+result (UNITDATA) = 0
 
 PROCESSING UNITDATA from 0x05060708:32000
 00 00 10 02 
@@ -1313,7 +1313,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 0 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 4
 00 00 10 02 
 
-result (UNITDATA) = 4
+result (UNITDATA) = 0
 
 --- Send message from BSS 1 to SGSN and back, BVCI 2  (should fail) ---
 
@@ -1327,7 +1327,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x2002, msg length 0 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 4
 00 00 20 02 
 
-result (UNITDATA) = 4
+result (UNITDATA) = 0
 
 Peers:
   NSEI 8192, BVCI 12290, not blocked, RAI 112-332-16464-96
@@ -1369,7 +1369,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x3002, msg length 0 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 4
 00 00 30 02 
 
-result (UNITDATA) = 4
+result (UNITDATA) = 0
 
 PROCESSING UNITDATA from 0x05060708:32000
 00 00 30 02 
@@ -1381,7 +1381,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x3002, msg length 0 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 4
 00 00 30 02 
 
-result (UNITDATA) = 4
+result (UNITDATA) = 0
 
 --- Change NSVCI ---
 
@@ -1400,7 +1400,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 9
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0a 
 
-result (RESET) = 9
+result (RESET) = 0
 
 PROCESSING ALIVE from 0x01020304:1111
 0a 
@@ -1408,7 +1408,7 @@ PROCESSING ALIVE from 0x01020304:1111
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 PROCESSING UNBLOCK from 0x01020304:1111
 06 
@@ -1418,7 +1418,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 1
 
 ==> got signal NS_UNBLOCK, NS-VC 0x2001/1.2.3.4:1111
 
-result (UNBLOCK) = 1
+result (UNBLOCK) = 0
 
 PROCESSING ALIVE_ACK from 0x01020304:1111
 0b 
@@ -1459,7 +1459,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 18 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 22
 00 00 00 00 22 04 82 10 02 07 81 08 08 88 11 22 33 40 50 60 10 00 
 
-result (BVC_RESET) = 22
+result (BVC_RESET) = 0
 
 PROCESSING BVC_RESET_ACK from 0x05060708:32000
 00 00 00 00 23 04 82 10 02 
@@ -1471,7 +1471,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 5 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 9
 00 00 00 00 23 04 82 10 02 
 
-result (BVC_RESET_ACK) = 9
+result (BVC_RESET_ACK) = 0
 
 Peers:
   NSEI 8192, BVCI 12290, not blocked, RAI 112-332-16464-96
@@ -1497,7 +1497,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 18 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 22
 00 00 00 00 22 04 82 40 02 07 81 08 08 88 11 22 33 40 50 60 10 00 
 
-result (BVC_RESET) = 22
+result (BVC_RESET) = 0
 
 PROCESSING BVC_RESET_ACK from 0x05060708:32000
 00 00 00 00 23 04 82 40 02 
@@ -1509,7 +1509,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 5 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 9
 00 00 00 00 23 04 82 40 02 
 
-result (BVC_RESET_ACK) = 9
+result (BVC_RESET_ACK) = 0
 
 Peers:
   NSEI 8192, BVCI 16386, not blocked, RAI 112-332-16464-96
@@ -1535,7 +1535,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 0 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 4
 00 00 10 02 
 
-result (UNITDATA) = 4
+result (UNITDATA) = 0
 
 PROCESSING UNITDATA from 0x05060708:32000
 00 00 10 02 
@@ -1547,7 +1547,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 0 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 4
 00 00 10 02 
 
-result (UNITDATA) = 4
+result (UNITDATA) = 0
 
 --- Send message from BSS 1 to SGSN and back, BVCI 2  (should fail) ---
 
@@ -1561,7 +1561,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x2002, msg length 0 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 4
 00 00 20 02 
 
-result (UNITDATA) = 4
+result (UNITDATA) = 0
 
 Peers:
   NSEI 8192, BVCI 16386, not blocked, RAI 112-332-16464-96
@@ -1608,7 +1608,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x3002, msg length 0 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 4
 00 00 30 02 
 
-result (UNITDATA) = 4
+result (UNITDATA) = 0
 
 PROCESSING UNITDATA from 0x05060708:32000
 00 00 30 02 
@@ -1620,7 +1620,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x3002, msg length 0 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 4
 00 00 30 02 
 
-result (UNITDATA) = 4
+result (UNITDATA) = 0
 
 --- Send message from BSS 1 to SGSN and back, BVCI 4 ---
 
@@ -1634,7 +1634,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x4002, msg length 0 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 4
 00 00 40 02 
 
-result (UNITDATA) = 4
+result (UNITDATA) = 0
 
 PROCESSING UNITDATA from 0x05060708:32000
 00 00 40 02 
@@ -1646,7 +1646,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x4002, msg length 0 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 4
 00 00 40 02 
 
-result (UNITDATA) = 4
+result (UNITDATA) = 0
 
 Gbproxy global:
 Peers:
@@ -1675,7 +1675,7 @@ PROCESSING RESET_ACK from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 0a 
 
-result (RESET_ACK) = 1
+result (RESET_ACK) = 0
 
 PROCESSING ALIVE_ACK from 0x05060708:32000
 0b 
@@ -1683,7 +1683,7 @@ PROCESSING ALIVE_ACK from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 06 
 
-result (ALIVE_ACK) = 1
+result (ALIVE_ACK) = 0
 
 PROCESSING UNBLOCK_ACK from 0x05060708:32000
 07 
@@ -1698,7 +1698,7 @@ PROCESSING ALIVE from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 --- Initialise BSS 1 ---
 
@@ -1715,7 +1715,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 9
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0a 
 
-result (RESET) = 9
+result (RESET) = 0
 
 PROCESSING ALIVE from 0x01020304:1111
 0a 
@@ -1723,7 +1723,7 @@ PROCESSING ALIVE from 0x01020304:1111
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 PROCESSING UNBLOCK from 0x01020304:1111
 06 
@@ -1733,7 +1733,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 1
 
 ==> got signal NS_UNBLOCK, NS-VC 0x1001/1.2.3.4:1111
 
-result (UNBLOCK) = 1
+result (UNBLOCK) = 0
 
 PROCESSING ALIVE_ACK from 0x01020304:1111
 0b 
@@ -1752,7 +1752,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 18 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 22
 00 00 00 00 22 04 82 10 02 07 81 08 08 88 11 22 33 40 50 60 10 00 
 
-result (BVC_RESET) = 22
+result (BVC_RESET) = 0
 
 PROCESSING BVC_RESET_ACK from 0x05060708:32000
 00 00 00 00 23 04 82 10 02 
@@ -1764,7 +1764,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 5 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 9
 00 00 00 00 23 04 82 10 02 
 
-result (BVC_RESET_ACK) = 9
+result (BVC_RESET_ACK) = 0
 
 Current NS-VCIs:
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:1111
@@ -1795,7 +1795,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 75 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 79
 00 00 10 02 01 80 00 de ad 00 00 04 08 88 00 f1 99 00 63 60 12 34 00 80 0e 00 34 01 c0 01 08 01 02 f5 e0 21 08 02 05 f4 fb c5 46 79 11 22 33 40 50 60 19 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 16 6d 01 
 
-result (ATTACH REQUEST) = 79
+result (ATTACH REQUEST) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -1813,7 +1813,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 23 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 27
 00 00 10 02 00 80 00 de ad 00 50 20 16 82 02 58 0e 89 41 c0 01 08 15 01 ff 6c ba 
 
-result (IDENT REQUEST) = 27
+result (IDENT REQUEST) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -1831,7 +1831,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 40 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 44
 00 00 10 02 01 80 00 de ad 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 11 01 c0 05 08 16 08 11 12 13 14 15 16 17 18 ad 05 28 
 
-result (IDENT RESPONSE) = 44
+result (IDENT RESPONSE) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -1849,7 +1849,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 88 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 92
 00 00 10 02 00 80 00 de ad 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 9e 41 c0 05 08 02 01 49 04 21 63 54 40 50 60 19 cd d7 08 17 16 18 05 f4 ef e2 b7 00 53 62 f1 
 
-result (ATTACH ACCEPT) = 92
+result (ATTACH ACCEPT) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -1868,7 +1868,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 31 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 35
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 08 01 c0 09 08 03 39 d7 bc 
 
-result (ATTACH COMPLETE) = 35
+result (ATTACH COMPLETE) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -1888,7 +1888,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 66 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 70
 00 00 10 02 00 ef e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 88 41 c0 09 08 21 04 ba 3d 
 
-result (GMM INFO) = 70
+result (GMM INFO) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -1910,7 +1910,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 75 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 79
 00 00 10 02 01 80 00 be ef 00 00 04 08 88 00 f1 99 00 63 60 12 34 00 80 0e 00 34 01 c0 0d 08 01 02 f5 e0 21 08 02 05 f4 fb c5 46 79 11 22 33 40 50 60 19 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 46 42 6e 
 
-result (ATTACH REQUEST) = 79
+result (ATTACH REQUEST) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -1931,7 +1931,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 23 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 27
 00 00 10 02 00 80 00 be ef 00 50 20 16 82 02 58 0e 89 41 c0 0d 08 15 01 0c a6 18 
 
-result (IDENT REQUEST) = 27
+result (IDENT REQUEST) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -1952,7 +1952,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 40 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 44
 00 00 10 02 01 80 00 be ef 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 11 01 c0 11 08 16 08 11 12 99 99 99 16 17 18 bf d2 01 
 
-result (IDENT RESPONSE) = 44
+result (IDENT RESPONSE) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -1973,7 +1973,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 88 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 92
 00 00 10 02 00 80 00 be ef 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 99 99 99 16 17 18 00 81 00 0e 9e 41 c0 11 08 02 01 49 04 21 63 54 40 50 60 19 cd d7 08 17 16 18 05 f4 ef e2 b7 00 3a 6d d4 
 
-result (ATTACH ACCEPT) = 92
+result (ATTACH ACCEPT) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -1993,7 +1993,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 31 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 35
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 08 01 c0 15 08 03 86 ac 47 
 
-result (ATTACH COMPLETE) = 35
+result (ATTACH COMPLETE) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -2013,7 +2013,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 66 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 70
 00 00 10 02 00 ef e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 99 99 99 16 17 18 00 81 00 0e 88 41 c0 15 08 21 bb c1 c6 
 
-result (GMM INFO) = 70
+result (GMM INFO) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -2036,7 +2036,7 @@ PROCESSING RESET_ACK from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 0a 
 
-result (RESET_ACK) = 1
+result (RESET_ACK) = 0
 
 PROCESSING ALIVE_ACK from 0x05060708:32000
 0b 
@@ -2044,7 +2044,7 @@ PROCESSING ALIVE_ACK from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 06 
 
-result (ALIVE_ACK) = 1
+result (ALIVE_ACK) = 0
 
 PROCESSING UNBLOCK_ACK from 0x05060708:32000
 07 
@@ -2059,7 +2059,7 @@ PROCESSING ALIVE from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 Current NS-VCIs:
     VCI 0x0101, NSEI 0x0100, peer 0x05060708:32000
@@ -2084,7 +2084,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 9
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0a 
 
-result (RESET) = 9
+result (RESET) = 0
 
 PROCESSING ALIVE from 0x01020304:1111
 0a 
@@ -2092,7 +2092,7 @@ PROCESSING ALIVE from 0x01020304:1111
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 PROCESSING UNBLOCK from 0x01020304:1111
 06 
@@ -2102,7 +2102,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 1
 
 ==> got signal NS_UNBLOCK, NS-VC 0x1001/1.2.3.4:1111
 
-result (UNBLOCK) = 1
+result (UNBLOCK) = 0
 
 PROCESSING ALIVE_ACK from 0x01020304:1111
 0b 
@@ -2121,7 +2121,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 18 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 22
 00 00 00 00 22 04 82 10 02 07 81 08 08 88 21 63 54 40 50 60 10 00 
 
-result (BVC_RESET) = 22
+result (BVC_RESET) = 0
 
 Current NS-VCIs:
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:1111
@@ -2150,7 +2150,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 5 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 9
 00 00 00 00 23 04 82 10 02 
 
-result (BVC_RESET_ACK) = 9
+result (BVC_RESET_ACK) = 0
 
 PROCESSING BVC_SUSPEND from 0x01020304:1111
 00 00 00 00 0b 1f 84 cc d1 75 8b 1b 86 11 22 33 40 50 60 
@@ -2162,7 +2162,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 15 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 19
 00 00 00 00 0b 1f 84 cc d1 75 8b 1b 86 21 63 54 40 50 60 
 
-result (BVC_SUSPEND) = 19
+result (BVC_SUSPEND) = 0
 
 PROCESSING BVC_SUSPEND_ACK from 0x05060708:32000
 00 00 00 00 0c 1f 84 cc d1 75 8b 1b 86 21 63 54 40 50 60 1d 81 01 
@@ -2174,7 +2174,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 18 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 22
 00 00 00 00 0c 1f 84 cc d1 75 8b 1b 86 11 22 33 40 50 60 1d 81 01 
 
-result (BVC_SUSPEND_ACK) = 22
+result (BVC_SUSPEND_ACK) = 0
 
 Gbproxy global:
 Peers:
@@ -2195,7 +2195,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 75 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 79
 00 00 10 02 01 bb c5 46 79 00 00 04 08 88 21 63 54 40 50 60 75 30 00 80 0e 00 34 01 c0 01 08 01 02 f5 e0 21 08 02 05 f4 fb c5 46 79 21 63 54 40 50 60 19 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 8e cd 32 
 
-result (ATTACH REQUEST) = 79
+result (ATTACH REQUEST) = 0
 
 PROCESSING IDENT REQUEST from 0x05060708:32000
 00 00 10 02 00 bb c5 46 79 00 50 20 16 82 02 58 0e 89 41 c0 01 08 15 01 ff 6c ba 
@@ -2207,7 +2207,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 23 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 27
 00 00 10 02 00 bb c5 46 79 00 50 20 16 82 02 58 0e 89 41 c0 01 08 15 01 ff 6c ba 
 
-result (IDENT REQUEST) = 27
+result (IDENT REQUEST) = 0
 
 PROCESSING IDENT RESPONSE from 0x01020304:1111
 00 00 10 02 01 bb c5 46 79 00 00 04 08 88 11 22 33 40 50 60 75 30 00 80 0e 00 11 01 c0 0d 08 16 08 11 12 13 14 15 16 17 18 b7 1b 9a 
@@ -2219,7 +2219,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 40 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 44
 00 00 10 02 01 bb c5 46 79 00 00 04 08 88 21 63 54 40 50 60 75 30 00 80 0e 00 11 01 c0 0d 08 16 08 11 12 13 14 15 16 17 18 b7 1b 9a 
 
-result (IDENT RESPONSE) = 44
+result (IDENT RESPONSE) = 0
 
 PROCESSING ATTACH ACCEPT from 0x05060708:32000
 00 00 10 02 00 bb c5 46 79 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 9e 41 c0 05 08 02 01 49 04 21 63 54 40 50 60 19 cd d7 08 17 16 18 05 f4 ef e2 b7 00 53 62 f1 
@@ -2231,7 +2231,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 88 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 92
 00 00 10 02 00 bb c5 46 79 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 9e 41 c0 05 08 02 01 49 04 11 22 33 40 50 60 19 cd d7 08 17 16 18 05 f4 ef e2 b7 00 be 38 c0 
 
-result (ATTACH ACCEPT) = 92
+result (ATTACH ACCEPT) = 0
 
 PROCESSING ATTACH COMPLETE from 0x01020304:1111
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 75 30 00 80 0e 00 08 01 c0 11 08 03 ea 67 11 
@@ -2243,7 +2243,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 31 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 35
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 21 63 54 40 50 60 75 30 00 80 0e 00 08 01 c0 11 08 03 ea 67 11 
 
-result (ATTACH COMPLETE) = 35
+result (ATTACH COMPLETE) = 0
 
 PROCESSING ACT PDP CTX REQ (REPLACE APN) from 0x01020304:1111
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 75 30 00 80 0e 00 35 01 c0 0d 0a 41 05 03 0c 00 00 1f 10 00 00 00 00 00 00 00 00 02 01 21 28 03 02 61 62 27 14 80 80 21 10 01 00 00 10 81 06 00 00 00 00 83 06 00 00 00 00 5a ff 02 
@@ -2255,7 +2255,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 81 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 85
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 21 63 54 40 50 60 75 30 00 80 0e 00 3a 01 c0 0d 0a 41 05 03 0c 00 00 1f 10 00 00 00 00 00 00 00 00 02 01 21 28 08 03 66 6f 6f 03 62 61 72 27 14 80 80 21 10 01 00 00 10 81 06 00 00 00 00 83 06 00 00 00 00 24 9d 75 
 
-result (ACT PDP CTX REQ (REPLACE APN)) = 85
+result (ACT PDP CTX REQ (REPLACE APN)) = 0
 
 PROCESSING GMM INFO from 0x05060708:32000
 00 00 10 02 00 ef e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 88 41 c0 09 08 21 04 ba 3d 
@@ -2267,7 +2267,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 66 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 70
 00 00 10 02 00 ef e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 88 41 c0 09 08 21 04 ba 3d 
 
-result (GMM INFO) = 70
+result (GMM INFO) = 0
 
 PROCESSING ACT PDP CTX REQ (REPLACE APN) from 0x01020304:1111
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 75 30 00 80 0e 00 35 01 c0 0d 0a 41 05 03 0c 00 00 1f 10 00 00 00 00 00 00 00 00 02 01 21 28 03 02 61 62 27 14 80 80 21 10 01 00 00 10 81 06 00 00 00 00 83 06 00 00 00 00 5a ff 02 
@@ -2279,7 +2279,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 81 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 85
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 21 63 54 40 50 60 75 30 00 80 0e 00 3a 01 c0 0d 0a 41 05 03 0c 00 00 1f 10 00 00 00 00 00 00 00 00 02 01 21 28 08 03 66 6f 6f 03 62 61 72 27 14 80 80 21 10 01 00 00 10 81 06 00 00 00 00 83 06 00 00 00 00 24 9d 75 
 
-result (ACT PDP CTX REQ (REPLACE APN)) = 85
+result (ACT PDP CTX REQ (REPLACE APN)) = 0
 
 PROCESSING ACT PDP CTX REQ (REMOVE APN) from 0x01020304:1111
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 75 30 00 80 0e 00 35 01 c0 0d 0a 41 05 03 0c 00 00 1f 10 00 00 00 00 00 00 00 00 02 01 21 28 03 02 61 62 27 14 80 80 21 10 01 00 00 10 81 06 00 00 00 00 83 06 00 00 00 00 5a ff 02 
@@ -2291,7 +2291,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 71 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 75
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 21 63 54 40 50 60 75 30 00 80 0e 00 30 01 c0 0d 0a 41 05 03 0c 00 00 1f 10 00 00 00 00 00 00 00 00 02 01 21 27 14 80 80 21 10 01 00 00 10 81 06 00 00 00 00 83 06 00 00 00 00 85 fa 60 
 
-result (ACT PDP CTX REQ (REMOVE APN)) = 75
+result (ACT PDP CTX REQ (REMOVE APN)) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -2316,7 +2316,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 44 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 48
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 21 63 54 40 50 60 75 30 00 80 0e 00 15 01 c0 19 08 05 01 18 05 f4 ef e2 b7 00 19 03 b9 97 cb 7e e1 41 
 
-result (DETACH REQ) = 48
+result (DETACH REQ) = 0
 
 PROCESSING DETACH ACC from 0x05060708:32000
 00 00 10 02 00 ef e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 89 41 c0 15 08 06 00 f7 35 f0 
@@ -2328,7 +2328,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 67 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 71
 00 00 10 02 00 ef e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 89 41 c0 15 08 06 00 f7 35 f0 
 
-result (DETACH ACC) = 71
+result (DETACH ACC) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -2355,7 +2355,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 85 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 89
 00 00 10 02 01 bb c5 46 79 00 00 04 08 88 21 63 54 40 50 60 70 80 00 80 0e 00 3e 01 c0 15 08 08 10 21 63 54 40 50 60 1d 19 13 42 33 57 2b f7 c8 48 02 13 48 50 c8 48 02 14 48 50 c8 48 02 17 49 10 c8 48 02 00 19 8b b2 92 17 16 27 07 04 31 02 e5 e0 32 02 20 00 1d f0 41 
 
-result (RA UPD REQ) = 89
+result (RA UPD REQ) = 0
 
 PROCESSING RA UPD ACC from 0x05060708:32000
 00 00 10 02 00 bb c5 46 79 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 9d 41 c0 19 08 09 00 49 21 63 54 40 50 60 19 54 ab b3 18 05 f4 ef e2 b7 00 17 16 d7 59 65 
@@ -2367,7 +2367,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 87 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 91
 00 00 10 02 00 bb c5 46 79 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 9d 41 c0 19 08 09 00 49 11 22 33 40 50 60 19 54 ab b3 18 05 f4 ef e2 b7 00 17 16 3a 03 54 
 
-result (RA UPD ACC) = 91
+result (RA UPD ACC) = 0
 
 PROCESSING ACT PDP CTX REQ (REMOVE APN) from 0x01020304:1111
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 75 30 00 80 0e 00 35 01 c0 0d 0a 41 05 03 0c 00 00 1f 10 00 00 00 00 00 00 00 00 02 01 21 28 03 02 61 62 27 14 80 80 21 10 01 00 00 10 81 06 00 00 00 00 83 06 00 00 00 00 5a ff 02 
@@ -2379,7 +2379,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 71 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 75
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 21 63 54 40 50 60 75 30 00 80 0e 00 30 01 c0 0d 0a 41 05 03 0c 00 00 1f 10 00 00 00 00 00 00 00 00 02 01 21 27 14 80 80 21 10 01 00 00 10 81 06 00 00 00 00 83 06 00 00 00 00 85 fa 60 
 
-result (ACT PDP CTX REQ (REMOVE APN)) = 75
+result (ACT PDP CTX REQ (REMOVE APN)) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -2408,7 +2408,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 44 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 48
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 21 63 54 40 50 60 75 30 00 80 0e 00 15 01 c0 19 08 05 09 18 05 f4 ef e2 b7 00 19 03 b9 97 cb 84 0c eb 
 
-result (DETACH REQ (PWR OFF)) = 48
+result (DETACH REQ (PWR OFF)) = 0
 
 Gbproxy global:
 Peers:
@@ -2438,7 +2438,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 75 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 79
 00 00 10 02 01 bb 00 be ef 00 00 04 08 88 21 63 54 40 50 60 75 30 00 80 0e 00 34 01 c0 01 08 01 02 f5 e0 21 08 02 05 f4 fb 00 be ef 99 99 99 40 50 60 19 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 2d c7 df 
 
-result (ATTACH REQUEST (foreign RAI)) = 79
+result (ATTACH REQUEST (foreign RAI)) = 0
 
 TLLI is already detached, shouldn't patch
 PROCESSING ACT PDP CTX REQ from 0x01020304:1111
@@ -2451,7 +2451,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 76 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 80
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 21 63 54 40 50 60 75 30 00 80 0e 00 35 01 c0 0d 0a 41 05 03 0c 00 00 1f 10 00 00 00 00 00 00 00 00 02 01 21 28 03 02 61 62 27 14 80 80 21 10 01 00 00 10 81 06 00 00 00 00 83 06 00 00 00 00 5a ff 02 
 
-result (ACT PDP CTX REQ) = 80
+result (ACT PDP CTX REQ) = 0
 
 Invalid RAI, shouldn't patch
 PROCESSING BVC_SUSPEND_ACK from 0x05060708:32000
@@ -2464,7 +2464,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 24 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 28
 00 00 00 00 41 07 81 21 15 92 0c 1f 84 cc d1 75 8b 1b 86 00 f1 99 00 63 60 1d 81 01 
 
-result (BVC_SUSPEND_ACK) = 28
+result (BVC_SUSPEND_ACK) = 0
 
 Gbproxy global:
     Invalid Routing Area Identifier : 1
@@ -2499,7 +2499,7 @@ PROCESSING RESET_ACK from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 0a 
 
-result (RESET_ACK) = 1
+result (RESET_ACK) = 0
 
 PROCESSING ALIVE_ACK from 0x05060708:32000
 0b 
@@ -2507,7 +2507,7 @@ PROCESSING ALIVE_ACK from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 06 
 
-result (ALIVE_ACK) = 1
+result (ALIVE_ACK) = 0
 
 PROCESSING UNBLOCK_ACK from 0x05060708:32000
 07 
@@ -2522,7 +2522,7 @@ PROCESSING ALIVE from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 --- Initialise BSS 1 ---
 
@@ -2539,7 +2539,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 9
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0a 
 
-result (RESET) = 9
+result (RESET) = 0
 
 PROCESSING ALIVE from 0x01020304:1111
 0a 
@@ -2547,7 +2547,7 @@ PROCESSING ALIVE from 0x01020304:1111
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 PROCESSING UNBLOCK from 0x01020304:1111
 06 
@@ -2557,7 +2557,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 1
 
 ==> got signal NS_UNBLOCK, NS-VC 0x1001/1.2.3.4:1111
 
-result (UNBLOCK) = 1
+result (UNBLOCK) = 0
 
 PROCESSING ALIVE_ACK from 0x01020304:1111
 0b 
@@ -2576,7 +2576,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 18 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 22
 00 00 00 00 22 04 82 10 02 07 81 08 08 88 21 63 54 40 50 60 10 00 
 
-result (BVC_RESET) = 22
+result (BVC_RESET) = 0
 
 PROCESSING BVC_RESET_ACK from 0x05060708:32000
 00 00 00 00 23 04 82 10 02 
@@ -2588,7 +2588,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 5 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 9
 00 00 00 00 23 04 82 10 02 
 
-result (BVC_RESET_ACK) = 9
+result (BVC_RESET_ACK) = 0
 
 Current NS-VCIs:
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:1111
@@ -2620,7 +2620,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 75 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 79
 00 00 10 02 01 78 de ad 00 00 00 04 08 88 21 63 54 00 63 60 12 34 00 80 0e 00 34 01 c0 01 08 01 02 f5 e0 21 08 02 05 f4 fb c5 46 79 11 22 33 40 50 60 19 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 16 6d 01 
 
-result (ATTACH REQUEST) = 79
+result (ATTACH REQUEST) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -2640,7 +2640,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 23 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 27
 00 00 10 02 00 80 00 de ad 00 50 20 16 82 02 58 0e 89 41 c0 01 08 15 01 ff 6c ba 
 
-result (IDENT REQUEST) = 27
+result (IDENT REQUEST) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -2661,7 +2661,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 40 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 44
 00 00 10 02 01 78 de ad 00 00 00 04 08 88 21 63 54 40 50 60 12 34 00 80 0e 00 11 01 c0 05 08 16 08 11 12 13 14 15 16 17 18 ad 05 28 
 
-result (IDENT RESPONSE) = 44
+result (IDENT RESPONSE) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -2682,7 +2682,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 88 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 92
 00 00 10 02 00 80 00 de ad 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 9e 41 c0 05 08 02 01 49 04 11 22 33 40 50 60 19 cd d7 08 17 16 18 05 f4 c0 de ad 01 0c 0a 29 
 
-result (ATTACH ACCEPT) = 92
+result (ATTACH ACCEPT) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -2706,7 +2706,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 31 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 35
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 21 63 54 40 50 60 12 34 00 80 0e 00 08 01 c0 09 08 03 39 d7 bc 
 
-result (ATTACH COMPLETE) = 35
+result (ATTACH COMPLETE) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -2731,7 +2731,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 66 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 70
 00 00 10 02 00 c0 de ad 01 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 88 41 c0 09 08 21 04 ba 3d 
 
-result (GMM INFO) = 70
+result (GMM INFO) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -2756,7 +2756,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 81 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 85
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 21 63 54 40 50 60 12 34 00 80 0e 00 3a 01 c0 0d 0a 41 05 03 0c 00 00 1f 10 00 00 00 00 00 00 00 00 02 01 21 28 08 03 66 6f 6f 03 62 61 72 27 14 80 80 21 10 01 00 00 10 81 06 00 00 00 00 83 06 00 00 00 00 24 9d 75 
 
-result (ACT PDP CTX REQ (REPLACE APN)) = 85
+result (ACT PDP CTX REQ (REPLACE APN)) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -2783,7 +2783,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 38 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 42
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 21 63 54 40 50 60 12 34 00 80 0e 00 0f 41 fb 01 00 0e 00 64 11 05 16 01 90 66 b3 28 
 
-result (XID (UL)) = 42
+result (XID (UL)) = 0
 
 PROCESSING XID (DL) from 0x05060708:32000
 00 00 10 02 00 ef e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 8c 41 fb 30 84 10 61 b6 64 e4 a9 1a 9e 
@@ -2795,7 +2795,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 70 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 74
 00 00 10 02 00 c0 de ad 01 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 8c 41 fb 30 84 10 61 b6 64 e4 a9 1a 9e 
 
-result (XID (DL)) = 74
+result (XID (DL)) = 0
 
 PROCESSING LL11 DNS QUERY (UL) from 0x01020304:1111
 00 00 10 02 01 c0 de ad 01 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 42 0b c0 01 65 00 00 00 45 00 00 38 95 72 00 00 45 11 20 85 0a c0 07 e4 ac 10 01 0a ad ab 00 35 00 24 0e 1c 3b e0 01 00 00 01 00 00 00 00 00 00 01 6d 05 68 65 69 73 65 02 64 65 00 00 01 00 01 47 8f 07 
@@ -2807,7 +2807,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 89 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 93
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 21 63 54 40 50 60 12 34 00 80 0e 00 42 0b c0 01 65 00 00 00 45 00 00 38 95 72 00 00 45 11 20 85 0a c0 07 e4 ac 10 01 0a ad ab 00 35 00 24 0e 1c 3b e0 01 00 00 01 00 00 00 00 00 00 01 6d 05 68 65 69 73 65 02 64 65 00 00 01 00 01 47 8f 07 
 
-result (LL11 DNS QUERY (UL)) = 93
+result (LL11 DNS QUERY (UL)) = 0
 
 PROCESSING LL11 DNS RESP (DL) from 0x05060708:32000
 00 00 10 02 00 ef e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 00 d0 4b c0 01 65 00 00 00 45 00 00 c6 00 00 40 00 3e 11 7c 69 ac 10 01 0a 0a c0 07 e4 00 35 ad ab 00 b2 74 4e 3b e0 81 80 00 01 00 01 00 05 00 00 01 6d 05 68 65 69 73 65 02 64 65 00 00 01 00 01 c0 0c 00 01 00 01 00 00 0e 10 00 04 c1 63 90 58 c0 0e 00 02 00 01 00 00 0e 10 00 16 03 6e 73 32 0c 70 6f 70 2d 68 61 6e 6e 6f 76 65 72 03 6e 65 74 00 c0 0e 00 02 00 01 00 00 0e 10 00 10 02 6e 73 01 73 08 70 6c 75 73 6c 69 6e 65 c0 14 c0 0e 00 02 00 01 00 00 0e 10 00 05 02 6e 73 c0 0e c0 0e 00 02 00 01 00 00 0e 10 00 05 02 6e 73 c0 5f c0 0e 00 02 00 01 00 00 0e 10 00 12 02 6e 73 0c 70 6f 70 2d 68 61 6e 6e 6f 76 65 72 c0 14 aa df 31 
@@ -2819,7 +2819,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 267 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 271
 00 00 10 02 00 c0 de ad 01 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 00 d0 4b c0 01 65 00 00 00 45 00 00 c6 00 00 40 00 3e 11 7c 69 ac 10 01 0a 0a c0 07 e4 00 35 ad ab 00 b2 74 4e 3b e0 81 80 00 01 00 01 00 05 00 00 01 6d 05 68 65 69 73 65 02 64 65 00 00 01 00 01 c0 0c 00 01 00 01 00 00 0e 10 00 04 c1 63 90 58 c0 0e 00 02 00 01 00 00 0e 10 00 16 03 6e 73 32 0c 70 6f 70 2d 68 61 6e 6e 6f 76 65 72 03 6e 65 74 00 c0 0e 00 02 00 01 00 00 0e 10 00 10 02 6e 73 01 73 08 70 6c 75 73 6c 69 6e 65 c0 14 c0 0e 00 02 00 01 00 00 0e 10 00 05 02 6e 73 c0 0e c0 0e 00 02 00 01 00 00 0e 10 00 05 02 6e 73 c0 5f c0 0e 00 02 00 01 00 00 0e 10 00 12 02 6e 73 0c 70 6f 70 2d 68 61 6e 6e 6f 76 65 72 c0 14 aa df 31 
 
-result (LL11 DNS RESP (DL)) = 271
+result (LL11 DNS RESP (DL)) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -2846,7 +2846,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 85 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 89
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 21 63 54 40 50 60 70 80 00 80 0e 00 3e 01 c0 11 08 08 10 21 63 54 40 50 60 1d 19 13 42 33 57 2b f7 c8 48 02 13 48 50 c8 48 02 14 48 50 c8 48 02 17 49 10 c8 48 02 00 19 8b b2 92 17 16 27 07 04 31 02 e5 e0 32 02 20 00 69 a3 ae 
 
-result (RA UPD REQ (P-TMSI 2)) = 89
+result (RA UPD REQ (P-TMSI 2)) = 0
 
 PROCESSING RA UDP ACC (P-TMSI 2) from 0x05060708:32000
 00 00 10 02 00 ef e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 9d 41 c0 0d 08 09 00 49 21 63 54 40 50 60 19 54 ab b3 18 05 f4 e0 98 76 54 17 16 9f e8 ea 
@@ -2858,7 +2858,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 87 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 91
 00 00 10 02 00 c0 de ad 01 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 9d 41 c0 0d 08 09 00 49 11 22 33 40 50 60 19 54 ab b3 18 05 f4 c0 de ad 02 17 16 bb 4d a0 
 
-result (RA UDP ACC (P-TMSI 2)) = 91
+result (RA UDP ACC (P-TMSI 2)) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -2887,7 +2887,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 85 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 89
 00 00 10 02 01 e0 98 76 54 00 00 04 08 88 21 63 54 40 50 60 70 80 00 80 0e 00 3e 01 c0 15 08 08 10 21 63 54 40 50 60 1d 19 13 42 33 57 2b f7 c8 48 02 13 48 50 c8 48 02 14 48 50 c8 48 02 17 49 10 c8 48 02 00 19 8b b2 92 17 16 27 07 04 31 02 e5 e0 32 02 20 00 1d f0 41 
 
-result (RA UPD REQ (P-TMSI 3)) = 89
+result (RA UPD REQ (P-TMSI 3)) = 0
 
 PROCESSING RA UDP ACC (P-TMSI 3) from 0x05060708:32000
 00 00 10 02 00 e0 98 76 54 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 9d 41 c0 11 08 09 00 49 21 63 54 40 50 60 19 54 ab b3 18 05 f4 e0 54 32 10 17 16 1b a3 a8 
@@ -2899,7 +2899,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 87 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 91
 00 00 10 02 00 c0 de ad 02 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 9d 41 c0 11 08 09 00 49 11 22 33 40 50 60 19 54 ab b3 18 05 f4 c0 de ad 03 17 16 6e 58 26 
 
-result (RA UDP ACC (P-TMSI 3)) = 91
+result (RA UDP ACC (P-TMSI 3)) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -2928,7 +2928,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 31 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 35
 00 00 10 02 01 e0 54 32 10 00 00 04 08 88 21 63 54 40 50 60 70 80 00 80 0e 00 08 01 c0 19 08 0a d5 5f 5e 
 
-result (RA UPD COMPLETE) = 35
+result (RA UPD COMPLETE) = 0
 
 PROCESSING GMM INFO from 0x05060708:32000
 00 00 10 02 00 e0 54 32 10 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 88 41 c0 15 08 21 bb c1 c6 
@@ -2940,7 +2940,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 66 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 70
 00 00 10 02 00 c0 de ad 03 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 88 41 c0 15 08 21 bb c1 c6 
 
-result (GMM INFO) = 70
+result (GMM INFO) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -2970,7 +2970,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 19 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 23
 00 00 00 00 2c 1f 84 e0 54 32 10 0f 81 01 04 82 10 02 25 83 00 00 0c 
 
-result (LLC_DISCARDED) = 23
+result (LLC_DISCARDED) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -3000,7 +3000,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 15 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 19
 00 00 00 00 0b 1f 84 e0 54 32 10 1b 86 21 63 54 40 50 60 
 
-result (BVC_SUSPEND) = 19
+result (BVC_SUSPEND) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -3030,7 +3030,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 18 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 22
 00 00 00 00 0c 1f 84 c0 de ad 03 1b 86 11 22 33 40 50 60 1d 81 01 
 
-result (BVC_SUSPEND_ACK) = 22
+result (BVC_SUSPEND_ACK) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -3060,7 +3060,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 34 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 38
 00 00 00 00 06 0d 88 11 12 13 14 15 16 17 18 0a 82 07 04 1b 86 11 22 33 40 50 60 18 83 00 00 00 20 84 c0 de ad 03 
 
-result (PAGING_PS) = 38
+result (PAGING_PS) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -3090,7 +3090,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 19 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 23
 00 00 00 00 2c 1f 84 e0 54 32 10 0f 81 01 04 82 ee e1 25 83 00 00 0c 
 
-result (LLC_DISCARDED) = 23
+result (LLC_DISCARDED) = 0
 
 Gbproxy global:
 PROCESSING BVC_SUSPEND_ACK from 0x05060708:32000
@@ -3103,7 +3103,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 24 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 28
 00 00 00 00 41 07 81 21 15 92 0c 1f 84 e0 54 32 10 1b 86 00 f1 99 00 63 60 1d 81 01 
 
-result (BVC_SUSPEND_ACK) = 28
+result (BVC_SUSPEND_ACK) = 0
 
 Gbproxy global:
     Invalid Routing Area Identifier : 1
@@ -3118,7 +3118,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 18 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 22
 00 00 00 00 0c 1f 84 c0 de ad 03 1b 86 11 22 33 40 50 60 1d 81 01 
 
-result (BVC_SUSPEND_ACK) = 22
+result (BVC_SUSPEND_ACK) = 0
 
 Gbproxy global:
     Invalid Routing Area Identifier : 1
@@ -3133,7 +3133,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 58 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 62
 00 00 10 02 00 ee ba db ad 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 00 83 00 00 00 0e 88 41 c0 09 08 21 04 ba 3d 
 
-result (GMM INFO) = 62
+result (GMM INFO) = 0
 
 PROCESSING GMM INFO from 0x05060708:32000
 00 00 10 02 00 ee ba db ad 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 88 41 c0 0d 08 21 68 71 6b 
@@ -3145,7 +3145,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 66 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 70
 00 00 10 02 00 ee ba db ad 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 88 41 c0 0d 08 21 68 71 6b 
 
-result (GMM INFO) = 70
+result (GMM INFO) = 0
 
 PROCESSING DETACH REQ from 0x01020304:1111
 00 00 10 02 01 c0 de ad 03 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 15 01 c0 1d 08 05 01 18 05 f4 ef e2 b7 00 19 03 b9 97 cb aa cc a3 
@@ -3157,7 +3157,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 44 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 48
 00 00 10 02 01 e0 54 32 10 00 00 04 08 88 21 63 54 40 50 60 12 34 00 80 0e 00 15 01 c0 1d 08 05 01 18 05 f4 e0 54 32 10 19 03 b9 97 cb ea 6d af 
 
-result (DETACH REQ) = 48
+result (DETACH REQ) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -3190,7 +3190,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 67 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 71
 00 00 10 02 00 c0 de ad 03 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 89 41 c0 19 08 06 00 04 ff 52 
 
-result (DETACH ACC) = 71
+result (DETACH ACC) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -3227,7 +3227,7 @@ PROCESSING RESET_ACK from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 0a 
 
-result (RESET_ACK) = 1
+result (RESET_ACK) = 0
 
 PROCESSING ALIVE_ACK from 0x05060708:32000
 0b 
@@ -3235,7 +3235,7 @@ PROCESSING ALIVE_ACK from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 06 
 
-result (ALIVE_ACK) = 1
+result (ALIVE_ACK) = 0
 
 PROCESSING UNBLOCK_ACK from 0x05060708:32000
 07 
@@ -3250,7 +3250,7 @@ PROCESSING ALIVE from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 --- Initialise BSS 1 ---
 
@@ -3267,7 +3267,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 9
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0a 
 
-result (RESET) = 9
+result (RESET) = 0
 
 PROCESSING ALIVE from 0x01020304:1111
 0a 
@@ -3275,7 +3275,7 @@ PROCESSING ALIVE from 0x01020304:1111
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 PROCESSING UNBLOCK from 0x01020304:1111
 06 
@@ -3285,7 +3285,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 1
 
 ==> got signal NS_UNBLOCK, NS-VC 0x1001/1.2.3.4:1111
 
-result (UNBLOCK) = 1
+result (UNBLOCK) = 0
 
 PROCESSING ALIVE_ACK from 0x01020304:1111
 0b 
@@ -3304,7 +3304,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 18 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 22
 00 00 00 00 22 04 82 10 02 07 81 08 08 88 21 63 54 40 50 60 10 00 
 
-result (BVC_RESET) = 22
+result (BVC_RESET) = 0
 
 PROCESSING BVC_RESET_ACK from 0x05060708:32000
 00 00 00 00 23 04 82 10 02 
@@ -3316,7 +3316,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 5 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 9
 00 00 00 00 23 04 82 10 02 
 
-result (BVC_RESET_ACK) = 9
+result (BVC_RESET_ACK) = 0
 
 Current NS-VCIs:
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:1111
@@ -3348,7 +3348,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 75 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 79
 00 00 10 02 01 78 de ad 00 00 00 04 08 88 21 63 54 00 63 60 12 34 00 80 0e 00 34 01 c0 01 08 01 02 f5 e0 21 08 02 05 f4 fb c5 46 79 11 22 33 40 50 60 19 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 16 6d 01 
 
-result (ATTACH REQUEST) = 79
+result (ATTACH REQUEST) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -3368,7 +3368,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 23 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 27
 00 00 10 02 00 80 00 de ad 00 50 20 16 82 02 58 0e 89 41 c0 01 08 15 01 ff 6c ba 
 
-result (IDENT REQUEST) = 27
+result (IDENT REQUEST) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -3389,7 +3389,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 40 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 44
 00 00 10 02 01 78 de ad 00 00 00 04 08 88 21 63 54 40 50 60 12 34 00 80 0e 00 11 01 c0 05 08 16 08 11 12 13 14 15 16 17 18 ad 05 28 
 
-result (IDENT RESPONSE) = 44
+result (IDENT RESPONSE) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -3410,7 +3410,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 88 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 92
 00 00 10 02 00 80 00 de ad 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 9e 41 c0 05 08 02 01 49 04 11 22 33 40 50 60 19 cd d7 08 17 16 18 05 f4 c0 de ad 01 0c 0a 29 
 
-result (ATTACH ACCEPT) = 92
+result (ATTACH ACCEPT) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -3434,7 +3434,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 88 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 92
 00 00 10 02 00 80 00 de ad 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 9e 41 c0 09 08 02 01 49 04 11 22 33 40 50 60 19 cd d7 08 17 16 18 05 f4 c0 de ad 01 42 f6 fc 
 
-result (ATTACH ACCEPT (duplicated)) = 92
+result (ATTACH ACCEPT (duplicated)) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -3458,7 +3458,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 31 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 35
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 21 63 54 40 50 60 12 34 00 80 0e 00 08 01 c0 09 08 03 39 d7 bc 
 
-result (ATTACH COMPLETE) = 35
+result (ATTACH COMPLETE) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -3483,7 +3483,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 66 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 70
 00 00 10 02 00 c0 de ad 01 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 88 41 c0 0d 08 21 68 71 6b 
 
-result (GMM INFO) = 70
+result (GMM INFO) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -3508,7 +3508,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 44 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 48
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 21 63 54 40 50 60 12 34 00 80 0e 00 15 01 c0 0d 08 05 01 18 05 f4 ef e2 b7 00 19 03 b9 97 cb 37 67 c6 
 
-result (DETACH REQ) = 48
+result (DETACH REQ) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -3534,7 +3534,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 67 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 71
 00 00 10 02 00 c0 de ad 01 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 89 41 c0 11 08 06 00 cf 8a 58 
 
-result (DETACH ACC) = 71
+result (DETACH ACC) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -3562,7 +3562,7 @@ PROCESSING RESET_ACK from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 0a 
 
-result (RESET_ACK) = 1
+result (RESET_ACK) = 0
 
 PROCESSING ALIVE_ACK from 0x05060708:32000
 0b 
@@ -3570,7 +3570,7 @@ PROCESSING ALIVE_ACK from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 06 
 
-result (ALIVE_ACK) = 1
+result (ALIVE_ACK) = 0
 
 PROCESSING UNBLOCK_ACK from 0x05060708:32000
 07 
@@ -3585,7 +3585,7 @@ PROCESSING ALIVE from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 --- Initialise BSS 1 ---
 
@@ -3602,7 +3602,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 9
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0a 
 
-result (RESET) = 9
+result (RESET) = 0
 
 PROCESSING ALIVE from 0x01020304:1111
 0a 
@@ -3610,7 +3610,7 @@ PROCESSING ALIVE from 0x01020304:1111
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 PROCESSING UNBLOCK from 0x01020304:1111
 06 
@@ -3620,7 +3620,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 1
 
 ==> got signal NS_UNBLOCK, NS-VC 0x1001/1.2.3.4:1111
 
-result (UNBLOCK) = 1
+result (UNBLOCK) = 0
 
 PROCESSING ALIVE_ACK from 0x01020304:1111
 0b 
@@ -3639,7 +3639,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 18 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 22
 00 00 00 00 22 04 82 10 02 07 81 08 08 88 21 63 54 40 50 60 10 00 
 
-result (BVC_RESET) = 22
+result (BVC_RESET) = 0
 
 PROCESSING BVC_RESET_ACK from 0x05060708:32000
 00 00 00 00 23 04 82 10 02 
@@ -3651,7 +3651,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 5 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 9
 00 00 00 00 23 04 82 10 02 
 
-result (BVC_RESET_ACK) = 9
+result (BVC_RESET_ACK) = 0
 
 Current NS-VCIs:
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:1111
@@ -3722,7 +3722,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 23 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 27
 00 00 10 02 00 80 00 de ad 00 50 20 16 82 02 58 0e 89 41 c0 01 08 15 01 ff 6c ba 
 
-result (IDENT REQUEST) = 27
+result (IDENT REQUEST) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -3743,7 +3743,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 40 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 44
 00 00 10 02 01 78 de ad 00 00 00 04 08 88 21 63 54 40 50 60 12 34 00 80 0e 00 11 01 c0 09 08 16 08 11 12 13 14 15 16 17 18 ba 14 c3 
 
-result (IDENT RESPONSE) = 44
+result (IDENT RESPONSE) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -3764,7 +3764,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 88 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 92
 00 00 10 02 00 80 00 de ad 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 9e 41 c0 05 08 02 01 49 04 11 22 33 40 50 60 19 cd d7 08 17 16 18 05 f4 c0 de ad 01 0c 0a 29 
 
-result (ATTACH ACCEPT) = 92
+result (ATTACH ACCEPT) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -3788,7 +3788,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 31 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 35
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 21 63 54 40 50 60 12 34 00 80 0e 00 08 01 c0 0d 08 03 55 1c ea 
 
-result (ATTACH COMPLETE) = 35
+result (ATTACH COMPLETE) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -3813,7 +3813,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 66 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 70
 00 00 10 02 00 c0 de ad 01 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 88 41 c0 09 08 21 04 ba 3d 
 
-result (GMM INFO) = 70
+result (GMM INFO) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -3838,7 +3838,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 38 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 42
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 21 63 54 40 50 60 12 34 00 80 0e 00 0f 41 fb 01 00 0e 00 64 11 05 16 01 90 66 b3 28 
 
-result (XID (UL)) = 42
+result (XID (UL)) = 0
 
 PROCESSING XID (DL) from 0x05060708:32000
 00 00 10 02 00 ef e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 8c 41 fb 30 84 10 61 b6 64 e4 a9 1a 9e 
@@ -3850,7 +3850,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 70 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 74
 00 00 10 02 00 c0 de ad 01 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 8c 41 fb 30 84 10 61 b6 64 e4 a9 1a 9e 
 
-result (XID (DL)) = 74
+result (XID (DL)) = 0
 
 PROCESSING LL11 DNS QUERY (UL) from 0x01020304:1111
 00 00 10 02 01 c0 de ad 01 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 42 0b c0 01 65 00 00 00 45 00 00 38 95 72 00 00 45 11 20 85 0a c0 07 e4 ac 10 01 0a ad ab 00 35 00 24 0e 1c 3b e0 01 00 00 01 00 00 00 00 00 00 01 6d 05 68 65 69 73 65 02 64 65 00 00 01 00 01 47 8f 07 
@@ -3862,7 +3862,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 89 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 93
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 21 63 54 40 50 60 12 34 00 80 0e 00 42 0b c0 01 65 00 00 00 45 00 00 38 95 72 00 00 45 11 20 85 0a c0 07 e4 ac 10 01 0a ad ab 00 35 00 24 0e 1c 3b e0 01 00 00 01 00 00 00 00 00 00 01 6d 05 68 65 69 73 65 02 64 65 00 00 01 00 01 47 8f 07 
 
-result (LL11 DNS QUERY (UL)) = 93
+result (LL11 DNS QUERY (UL)) = 0
 
 PROCESSING LL11 DNS RESP (DL) from 0x05060708:32000
 00 00 10 02 00 ef e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 00 d0 4b c0 01 65 00 00 00 45 00 00 c6 00 00 40 00 3e 11 7c 69 ac 10 01 0a 0a c0 07 e4 00 35 ad ab 00 b2 74 4e 3b e0 81 80 00 01 00 01 00 05 00 00 01 6d 05 68 65 69 73 65 02 64 65 00 00 01 00 01 c0 0c 00 01 00 01 00 00 0e 10 00 04 c1 63 90 58 c0 0e 00 02 00 01 00 00 0e 10 00 16 03 6e 73 32 0c 70 6f 70 2d 68 61 6e 6e 6f 76 65 72 03 6e 65 74 00 c0 0e 00 02 00 01 00 00 0e 10 00 10 02 6e 73 01 73 08 70 6c 75 73 6c 69 6e 65 c0 14 c0 0e 00 02 00 01 00 00 0e 10 00 05 02 6e 73 c0 0e c0 0e 00 02 00 01 00 00 0e 10 00 05 02 6e 73 c0 5f c0 0e 00 02 00 01 00 00 0e 10 00 12 02 6e 73 0c 70 6f 70 2d 68 61 6e 6e 6f 76 65 72 c0 14 aa df 31 
@@ -3874,7 +3874,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 267 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 271
 00 00 10 02 00 c0 de ad 01 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 00 d0 4b c0 01 65 00 00 00 45 00 00 c6 00 00 40 00 3e 11 7c 69 ac 10 01 0a 0a c0 07 e4 00 35 ad ab 00 b2 74 4e 3b e0 81 80 00 01 00 01 00 05 00 00 01 6d 05 68 65 69 73 65 02 64 65 00 00 01 00 01 c0 0c 00 01 00 01 00 00 0e 10 00 04 c1 63 90 58 c0 0e 00 02 00 01 00 00 0e 10 00 16 03 6e 73 32 0c 70 6f 70 2d 68 61 6e 6e 6f 76 65 72 03 6e 65 74 00 c0 0e 00 02 00 01 00 00 0e 10 00 10 02 6e 73 01 73 08 70 6c 75 73 6c 69 6e 65 c0 14 c0 0e 00 02 00 01 00 00 0e 10 00 05 02 6e 73 c0 0e c0 0e 00 02 00 01 00 00 0e 10 00 05 02 6e 73 c0 5f c0 0e 00 02 00 01 00 00 0e 10 00 12 02 6e 73 0c 70 6f 70 2d 68 61 6e 6e 6f 76 65 72 c0 14 aa df 31 
 
-result (LL11 DNS RESP (DL)) = 271
+result (LL11 DNS RESP (DL)) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -3899,7 +3899,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 19 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 23
 00 00 00 00 2c 1f 84 ef e2 b7 00 0f 81 01 04 82 10 02 25 83 00 00 0c 
 
-result (LLC_DISCARDED) = 23
+result (LLC_DISCARDED) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -3924,7 +3924,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 25 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 29
 00 00 00 00 41 07 81 27 15 93 2c 1f 84 ef e2 b7 00 0f 81 01 04 82 10 02 25 83 00 00 0c 
 
-result (LLC_DISCARDED) = 29
+result (LLC_DISCARDED) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -3949,7 +3949,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 15 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 19
 00 00 00 00 0b 1f 84 ef e2 b7 00 1b 86 21 63 54 40 50 60 
 
-result (BVC_SUSPEND) = 19
+result (BVC_SUSPEND) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -3974,7 +3974,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 18 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 22
 00 00 00 00 0c 1f 84 c0 de ad 01 1b 86 11 22 33 40 50 60 1d 81 01 
 
-result (BVC_SUSPEND_ACK) = 22
+result (BVC_SUSPEND_ACK) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -3999,7 +3999,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 19 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 23
 00 00 00 00 2c 1f 84 ef e2 b7 00 0f 81 01 04 82 ee e1 25 83 00 00 0c 
 
-result (LLC_DISCARDED) = 23
+result (LLC_DISCARDED) = 0
 
 Gbproxy global:
     BSSGP protocol error      (SGSN): 1
@@ -4013,7 +4013,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 24 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 28
 00 00 00 00 41 07 81 21 15 92 0c 1f 84 ef e2 b7 00 1b 86 00 f1 99 00 63 60 1d 81 01 
 
-result (BVC_SUSPEND_ACK) = 28
+result (BVC_SUSPEND_ACK) = 0
 
 Gbproxy global:
     Invalid Routing Area Identifier : 1
@@ -4029,7 +4029,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 18 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 22
 00 00 00 00 0c 1f 84 c0 de ad 01 1b 86 11 22 33 40 50 60 1d 81 01 
 
-result (BVC_SUSPEND_ACK) = 22
+result (BVC_SUSPEND_ACK) = 0
 
 Gbproxy global:
     Invalid Routing Area Identifier : 1
@@ -4045,7 +4045,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 44 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 48
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 21 63 54 40 50 60 12 34 00 80 0e 00 15 01 c0 11 08 05 01 18 05 f4 ef e2 b7 00 19 03 b9 97 cb 6d b1 de 
 
-result (DETACH REQ) = 48
+result (DETACH REQ) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -4071,7 +4071,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 67 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 71
 00 00 10 02 00 c0 de ad 01 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 89 41 c0 0d 08 06 00 aa ab ee 
 
-result (DETACH ACC) = 71
+result (DETACH ACC) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -4136,7 +4136,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 87 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 91
 00 00 10 02 00 80 00 de ad 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 9d 41 c0 11 08 09 00 49 11 22 33 40 50 60 19 54 ab b3 18 05 f4 c0 de ad 03 17 16 6e 58 26 
 
-result (RA UDP ACC) = 91
+result (RA UDP ACC) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -4194,7 +4194,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 67 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 71
 00 00 10 02 00 c0 de ad 03 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 89 41 c0 15 08 06 00 f7 35 f0 
 
-result (DETACH ACC) = 71
+result (DETACH ACC) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -4356,7 +4356,7 @@ PROCESSING RESET_ACK from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 0a 
 
-result (RESET_ACK) = 1
+result (RESET_ACK) = 0
 
 PROCESSING ALIVE_ACK from 0x05060708:32000
 0b 
@@ -4364,7 +4364,7 @@ PROCESSING ALIVE_ACK from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 06 
 
-result (ALIVE_ACK) = 1
+result (ALIVE_ACK) = 0
 
 PROCESSING UNBLOCK_ACK from 0x05060708:32000
 07 
@@ -4379,7 +4379,7 @@ PROCESSING ALIVE from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 --- Initialise SGSN 2 ---
 
@@ -4392,7 +4392,7 @@ PROCESSING RESET_ACK from 0x15161718:32001
 MESSAGE to SGSN 2 at 0x15161718:32001, msg length 1
 0a 
 
-result (RESET_ACK) = 1
+result (RESET_ACK) = 0
 
 PROCESSING ALIVE_ACK from 0x15161718:32001
 0b 
@@ -4400,7 +4400,7 @@ PROCESSING ALIVE_ACK from 0x15161718:32001
 MESSAGE to SGSN 2 at 0x15161718:32001, msg length 1
 06 
 
-result (ALIVE_ACK) = 1
+result (ALIVE_ACK) = 0
 
 PROCESSING UNBLOCK_ACK from 0x15161718:32001
 07 
@@ -4415,7 +4415,7 @@ PROCESSING ALIVE from 0x15161718:32001
 MESSAGE to SGSN 2 at 0x15161718:32001, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 --- Initialise BSS 1 ---
 
@@ -4432,7 +4432,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 9
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0a 
 
-result (RESET) = 9
+result (RESET) = 0
 
 PROCESSING ALIVE from 0x01020304:1111
 0a 
@@ -4440,7 +4440,7 @@ PROCESSING ALIVE from 0x01020304:1111
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 PROCESSING UNBLOCK from 0x01020304:1111
 06 
@@ -4450,7 +4450,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 1
 
 ==> got signal NS_UNBLOCK, NS-VC 0x1001/1.2.3.4:1111
 
-result (UNBLOCK) = 1
+result (UNBLOCK) = 0
 
 PROCESSING ALIVE_ACK from 0x01020304:1111
 0b 
@@ -4469,7 +4469,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 5 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 9
 00 00 00 00 23 04 82 00 00 
 
-result (BVC_RESET) = 9
+result (BVC_RESET) = 0
 
 PROCESSING BVC_RESET_ACK from 0x05060708:32000
 00 00 00 00 23 04 82 00 00 
@@ -4495,7 +4495,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 18 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 22
 00 00 00 00 22 04 82 10 02 07 81 08 08 88 21 63 54 40 50 60 10 00 
 
-result (BVC_RESET) = 22
+result (BVC_RESET) = 0
 
 PROCESSING BVC_RESET_ACK from 0x05060708:32000
 00 00 00 00 23 04 82 10 02 
@@ -4507,7 +4507,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 5 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 9
 00 00 00 00 23 04 82 10 02 
 
-result (BVC_RESET_ACK) = 9
+result (BVC_RESET_ACK) = 0
 
 PROCESSING BVC_RESET_ACK from 0x15161718:32001
 00 00 00 00 23 04 82 10 02 
@@ -4515,7 +4515,7 @@ PROCESSING BVC_RESET_ACK from 0x15161718:32001
 CALLBACK, event 0, msg length 5, bvci 0x0000
 00 00 00 00 23 04 82 10 02 
 
-result (BVC_RESET_ACK) = 1
+result (BVC_RESET_ACK) = 0
 
 Current NS-VCIs:
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:1111
@@ -4559,7 +4559,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 24 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 28
 00 00 10 02 26 1e 81 01 05 82 01 dc 03 82 02 76 01 82 00 50 1c 82 02 58 06 82 00 03 
 
-result (FLOW_CONTROL_BVC) = 28
+result (FLOW_CONTROL_BVC) = 0
 
 PROCESSING FLOW_CONTROL_BVC_ACK from 0x05060708:32000
 00 00 10 02 27 1e 81 01 
@@ -4571,7 +4571,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 4 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 8
 00 00 10 02 27 1e 81 01 
 
-result (FLOW_CONTROL_BVC_ACK) = 8
+result (FLOW_CONTROL_BVC_ACK) = 0
 
 PROCESSING FLOW_CONTROL_BVC_ACK from 0x15161718:32001
 00 00 10 02 27 1e 81 01 
@@ -4632,7 +4632,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 23 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 27
 00 00 10 02 00 80 00 de ad 00 50 20 16 82 02 58 0e 89 41 c0 01 08 15 01 ff 6c ba 
 
-result (IDENT REQUEST) = 27
+result (IDENT REQUEST) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -4653,7 +4653,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 40 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 44
 00 00 10 02 01 78 de ad 00 00 00 04 08 88 21 63 54 40 50 60 12 34 00 80 0e 00 11 01 c0 09 08 16 08 11 12 13 14 15 16 17 18 ba 14 c3 
 
-result (IDENT RESPONSE) = 44
+result (IDENT RESPONSE) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -4674,7 +4674,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 88 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 92
 00 00 10 02 00 80 00 de ad 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 9e 41 c0 05 08 02 01 49 04 11 22 33 40 50 60 19 cd d7 08 17 16 18 05 f4 c0 de ad 01 0c 0a 29 
 
-result (ATTACH ACCEPT) = 92
+result (ATTACH ACCEPT) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -4698,7 +4698,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 31 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 35
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 21 63 54 40 50 60 12 34 00 80 0e 00 08 01 c0 0d 08 03 55 1c ea 
 
-result (ATTACH COMPLETE) = 35
+result (ATTACH COMPLETE) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -4723,7 +4723,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 66 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 70
 00 00 10 02 00 c0 de ad 01 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 88 41 c0 09 08 21 04 ba 3d 
 
-result (GMM INFO) = 70
+result (GMM INFO) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -4748,7 +4748,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 38 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 42
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 21 63 54 40 50 60 12 34 00 80 0e 00 0f 41 fb 01 00 0e 00 64 11 05 16 01 90 66 b3 28 
 
-result (XID (UL)) = 42
+result (XID (UL)) = 0
 
 PROCESSING XID (DL) from 0x05060708:32000
 00 00 10 02 00 ef e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 8c 41 fb 30 84 10 61 b6 64 e4 a9 1a 9e 
@@ -4760,7 +4760,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 70 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 74
 00 00 10 02 00 c0 de ad 01 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 8c 41 fb 30 84 10 61 b6 64 e4 a9 1a 9e 
 
-result (XID (DL)) = 74
+result (XID (DL)) = 0
 
 PROCESSING LL11 DNS QUERY (UL) from 0x01020304:1111
 00 00 10 02 01 c0 de ad 01 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 42 0b c0 01 65 00 00 00 45 00 00 38 95 72 00 00 45 11 20 85 0a c0 07 e4 ac 10 01 0a ad ab 00 35 00 24 0e 1c 3b e0 01 00 00 01 00 00 00 00 00 00 01 6d 05 68 65 69 73 65 02 64 65 00 00 01 00 01 47 8f 07 
@@ -4772,7 +4772,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 89 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 93
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 21 63 54 40 50 60 12 34 00 80 0e 00 42 0b c0 01 65 00 00 00 45 00 00 38 95 72 00 00 45 11 20 85 0a c0 07 e4 ac 10 01 0a ad ab 00 35 00 24 0e 1c 3b e0 01 00 00 01 00 00 00 00 00 00 01 6d 05 68 65 69 73 65 02 64 65 00 00 01 00 01 47 8f 07 
 
-result (LL11 DNS QUERY (UL)) = 93
+result (LL11 DNS QUERY (UL)) = 0
 
 PROCESSING LL11 DNS RESP (DL) from 0x05060708:32000
 00 00 10 02 00 ef e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 00 d0 4b c0 01 65 00 00 00 45 00 00 c6 00 00 40 00 3e 11 7c 69 ac 10 01 0a 0a c0 07 e4 00 35 ad ab 00 b2 74 4e 3b e0 81 80 00 01 00 01 00 05 00 00 01 6d 05 68 65 69 73 65 02 64 65 00 00 01 00 01 c0 0c 00 01 00 01 00 00 0e 10 00 04 c1 63 90 58 c0 0e 00 02 00 01 00 00 0e 10 00 16 03 6e 73 32 0c 70 6f 70 2d 68 61 6e 6e 6f 76 65 72 03 6e 65 74 00 c0 0e 00 02 00 01 00 00 0e 10 00 10 02 6e 73 01 73 08 70 6c 75 73 6c 69 6e 65 c0 14 c0 0e 00 02 00 01 00 00 0e 10 00 05 02 6e 73 c0 0e c0 0e 00 02 00 01 00 00 0e 10 00 05 02 6e 73 c0 5f c0 0e 00 02 00 01 00 00 0e 10 00 12 02 6e 73 0c 70 6f 70 2d 68 61 6e 6e 6f 76 65 72 c0 14 aa df 31 
@@ -4784,7 +4784,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 267 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 271
 00 00 10 02 00 c0 de ad 01 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 00 d0 4b c0 01 65 00 00 00 45 00 00 c6 00 00 40 00 3e 11 7c 69 ac 10 01 0a 0a c0 07 e4 00 35 ad ab 00 b2 74 4e 3b e0 81 80 00 01 00 01 00 05 00 00 01 6d 05 68 65 69 73 65 02 64 65 00 00 01 00 01 c0 0c 00 01 00 01 00 00 0e 10 00 04 c1 63 90 58 c0 0e 00 02 00 01 00 00 0e 10 00 16 03 6e 73 32 0c 70 6f 70 2d 68 61 6e 6e 6f 76 65 72 03 6e 65 74 00 c0 0e 00 02 00 01 00 00 0e 10 00 10 02 6e 73 01 73 08 70 6c 75 73 6c 69 6e 65 c0 14 c0 0e 00 02 00 01 00 00 0e 10 00 05 02 6e 73 c0 0e c0 0e 00 02 00 01 00 00 0e 10 00 05 02 6e 73 c0 5f c0 0e 00 02 00 01 00 00 0e 10 00 12 02 6e 73 0c 70 6f 70 2d 68 61 6e 6e 6f 76 65 72 c0 14 aa df 31 
 
-result (LL11 DNS RESP (DL)) = 271
+result (LL11 DNS RESP (DL)) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -4809,7 +4809,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 19 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 23
 00 00 00 00 2c 1f 84 ef e2 b7 00 0f 81 01 04 82 10 02 25 83 00 00 0c 
 
-result (LLC_DISCARDED) = 23
+result (LLC_DISCARDED) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -4834,7 +4834,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 25 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 29
 00 00 00 00 41 07 81 27 15 93 2c 1f 84 ef e2 b7 00 0f 81 01 04 82 10 02 25 83 00 00 0c 
 
-result (LLC_DISCARDED) = 29
+result (LLC_DISCARDED) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -4859,7 +4859,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 15 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 19
 00 00 00 00 0b 1f 84 ef e2 b7 00 1b 86 21 63 54 40 50 60 
 
-result (BVC_SUSPEND) = 19
+result (BVC_SUSPEND) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -4884,7 +4884,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 18 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 22
 00 00 00 00 0c 1f 84 c0 de ad 01 1b 86 11 22 33 40 50 60 1d 81 01 
 
-result (BVC_SUSPEND_ACK) = 22
+result (BVC_SUSPEND_ACK) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -4963,7 +4963,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 23 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 27
 00 00 10 02 00 80 00 be ef 00 50 20 16 82 02 58 0e 89 41 c0 0d 08 15 01 0c a6 18 
 
-result (IDENT REQUEST) = 27
+result (IDENT REQUEST) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -5015,7 +5015,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 88 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 92
 00 00 10 02 00 80 00 be ef 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 99 99 99 16 17 18 00 81 00 0e 9e 41 c0 11 08 02 01 49 04 11 22 33 40 50 60 19 cd d7 08 17 16 18 05 f4 c0 de ad 03 32 40 fa 
 
-result (ATTACH ACCEPT) = 92
+result (ATTACH ACCEPT) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -5067,7 +5067,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 66 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 70
 00 00 10 02 00 c0 de ad 03 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 99 99 99 16 17 18 00 81 00 0e 88 41 c0 15 08 21 bb c1 c6 
 
-result (GMM INFO) = 70
+result (GMM INFO) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -5105,7 +5105,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 70 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 74
 00 00 10 02 00 c0 de ad 03 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 99 99 99 16 17 18 00 81 00 0e 8c 41 fb 30 84 10 61 b6 64 e4 a9 1a 9e 
 
-result (XID (DL)) = 74
+result (XID (DL)) = 0
 
 PROCESSING LL11 DNS QUERY (UL) from 0x01020304:1111
 00 00 10 02 01 c0 de ad 03 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 42 0b c0 01 65 00 00 00 45 00 00 38 95 72 00 00 45 11 20 85 0a c0 07 e4 ac 10 01 0a ad ab 00 35 00 24 0e 1c 3b e0 01 00 00 01 00 00 00 00 00 00 01 6d 05 68 65 69 73 65 02 64 65 00 00 01 00 01 47 8f 07 
@@ -5129,7 +5129,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 267 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 271
 00 00 10 02 00 c0 de ad 03 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 99 99 99 16 17 18 00 81 00 0e 00 d0 4b c0 01 65 00 00 00 45 00 00 c6 00 00 40 00 3e 11 7c 69 ac 10 01 0a 0a c0 07 e4 00 35 ad ab 00 b2 74 4e 3b e0 81 80 00 01 00 01 00 05 00 00 01 6d 05 68 65 69 73 65 02 64 65 00 00 01 00 01 c0 0c 00 01 00 01 00 00 0e 10 00 04 c1 63 90 58 c0 0e 00 02 00 01 00 00 0e 10 00 16 03 6e 73 32 0c 70 6f 70 2d 68 61 6e 6e 6f 76 65 72 03 6e 65 74 00 c0 0e 00 02 00 01 00 00 0e 10 00 10 02 6e 73 01 73 08 70 6c 75 73 6c 69 6e 65 c0 14 c0 0e 00 02 00 01 00 00 0e 10 00 05 02 6e 73 c0 0e c0 0e 00 02 00 01 00 00 0e 10 00 05 02 6e 73 c0 5f c0 0e 00 02 00 01 00 00 0e 10 00 12 02 6e 73 0c 70 6f 70 2d 68 61 6e 6e 6f 76 65 72 c0 14 aa df 31 
 
-result (LL11 DNS RESP (DL)) = 271
+result (LL11 DNS RESP (DL)) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -5181,7 +5181,7 @@ NS UNITDATA MESSAGE to SGSN 2, BVCI 0x0000, msg length 25 (gprs_ns_sendmsg)
 MESSAGE to SGSN 2 at 0x15161718:32001, msg length 29
 00 00 00 00 41 07 81 27 15 93 2c 1f 84 e0 98 76 54 0f 81 01 04 82 10 02 25 83 00 00 0c 
 
-result (LLC_DISCARDED) = 29
+result (LLC_DISCARDED) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -5233,7 +5233,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 18 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 22
 00 00 00 00 0c 1f 84 c0 de ad 03 1b 86 11 22 33 40 50 60 1d 81 01 
 
-result (BVC_SUSPEND_ACK) = 22
+result (BVC_SUSPEND_ACK) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -5315,7 +5315,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 23 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 27
 00 00 10 02 00 80 00 fe ed 00 50 20 16 82 02 58 0e 89 41 c0 19 08 15 01 a2 f2 a4 
 
-result (IDENT REQUEST) = 27
+result (IDENT REQUEST) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -5369,7 +5369,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 88 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 92
 00 00 10 02 00 80 00 fe ed 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 99 99 99 26 27 28 00 81 00 0e 9e 41 c0 1d 08 02 01 49 04 11 22 33 40 50 60 19 cd d7 08 17 16 18 05 f4 c0 de ad 05 3e 78 6e 
 
-result (ATTACH ACCEPT (P-TMSI 1)) = 92
+result (ATTACH ACCEPT (P-TMSI 1)) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -5423,7 +5423,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 66 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 70
 00 00 10 02 00 c0 de ad 05 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 99 99 99 26 27 28 00 81 00 0e 88 41 c0 21 08 21 ca 60 90 
 
-result (GMM INFO) = 70
+result (GMM INFO) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -5452,7 +5452,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 44 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 48
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 21 63 54 40 50 60 12 34 00 80 0e 00 15 01 c0 31 08 05 01 18 05 f4 ef e2 b7 00 19 03 b9 97 cb 57 e6 15 
 
-result (DETACH REQ) = 48
+result (DETACH REQ) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -5480,7 +5480,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 67 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 71
 00 00 10 02 00 c0 de ad 01 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 89 41 c0 25 08 06 00 4d 09 cd 
 
-result (DETACH ACC) = 71
+result (DETACH ACC) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -5539,7 +5539,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 67 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 71
 00 00 10 02 00 c0 de ad 03 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 99 99 99 16 17 18 00 81 00 0e 89 41 c0 29 08 06 00 be c3 6f 
 
-result (DETACH ACC) = 71
+result (DETACH ACC) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -5597,7 +5597,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 67 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 71
 00 00 10 02 00 c0 de ad 05 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 99 99 99 26 27 28 00 81 00 0e 89 41 c0 2d 08 06 00 86 7c c7 
 
-result (DETACH ACC) = 71
+result (DETACH ACC) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -5629,7 +5629,7 @@ PROCESSING RESET_ACK from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 0a 
 
-result (RESET_ACK) = 1
+result (RESET_ACK) = 0
 
 PROCESSING ALIVE_ACK from 0x05060708:32000
 0b 
@@ -5637,7 +5637,7 @@ PROCESSING ALIVE_ACK from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 06 
 
-result (ALIVE_ACK) = 1
+result (ALIVE_ACK) = 0
 
 PROCESSING UNBLOCK_ACK from 0x05060708:32000
 07 
@@ -5652,7 +5652,7 @@ PROCESSING ALIVE from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 --- Initialise BSS 1 ---
 
@@ -5669,7 +5669,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 9
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0a 
 
-result (RESET) = 9
+result (RESET) = 0
 
 PROCESSING ALIVE from 0x01020304:1111
 0a 
@@ -5677,7 +5677,7 @@ PROCESSING ALIVE from 0x01020304:1111
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 PROCESSING UNBLOCK from 0x01020304:1111
 06 
@@ -5687,7 +5687,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 1
 
 ==> got signal NS_UNBLOCK, NS-VC 0x1001/1.2.3.4:1111
 
-result (UNBLOCK) = 1
+result (UNBLOCK) = 0
 
 PROCESSING ALIVE_ACK from 0x01020304:1111
 0b 
@@ -5706,7 +5706,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 18 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 22
 00 00 00 00 22 04 82 10 02 07 81 08 08 88 11 22 33 40 50 60 10 00 
 
-result (BVC_RESET) = 22
+result (BVC_RESET) = 0
 
 PROCESSING BVC_RESET_ACK from 0x05060708:32000
 00 00 00 00 23 04 82 10 02 
@@ -5718,7 +5718,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 5 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 9
 00 00 00 00 23 04 82 10 02 
 
-result (BVC_RESET_ACK) = 9
+result (BVC_RESET_ACK) = 0
 
 Current NS-VCIs:
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:1111
@@ -5785,7 +5785,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 23 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 27
 00 00 10 02 00 af e2 b7 00 00 50 20 16 82 02 58 0e 89 41 c0 01 08 15 01 ff 6c ba 
 
-result (IDENT REQUEST) = 27
+result (IDENT REQUEST) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -5803,7 +5803,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 40 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 44
 00 00 10 02 01 af e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 11 01 c0 09 08 16 08 11 12 13 14 15 16 17 18 ba 14 c3 
 
-result (IDENT RESPONSE) = 44
+result (IDENT RESPONSE) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -5821,7 +5821,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 88 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 92
 00 00 10 02 00 af e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 9e 41 c0 05 08 02 01 49 04 21 63 54 40 50 60 19 cd d7 08 17 16 18 05 f4 ef e2 b7 00 53 62 f1 
 
-result (ATTACH ACCEPT) = 92
+result (ATTACH ACCEPT) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -5840,7 +5840,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 31 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 35
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 08 01 c0 0d 08 03 55 1c ea 
 
-result (ATTACH COMPLETE) = 35
+result (ATTACH COMPLETE) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -5860,7 +5860,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 66 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 70
 00 00 10 02 00 ef e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 88 41 c0 09 08 21 04 ba 3d 
 
-result (GMM INFO) = 70
+result (GMM INFO) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -5880,7 +5880,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 44 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 48
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 15 01 c0 11 08 05 01 18 05 f4 ef e2 b7 00 19 03 b9 97 cb 6d b1 de 
 
-result (DETACH REQ) = 48
+result (DETACH REQ) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -5901,7 +5901,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 67 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 71
 00 00 10 02 00 ef e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 89 41 c0 0d 08 06 00 aa ab ee 
 
-result (DETACH ACC) = 71
+result (DETACH ACC) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -5923,7 +5923,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 75 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 79
 00 00 10 02 01 af e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 34 01 c0 15 08 01 02 f5 e0 21 08 02 05 f4 ef e2 b7 00 11 22 33 40 50 60 19 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 e6 71 c7 
 
-result (ATTACH REQUEST) = 79
+result (ATTACH REQUEST) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -5945,7 +5945,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 88 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 92
 00 00 10 02 00 af e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 9e 41 c0 11 08 02 01 49 04 21 63 54 40 50 60 19 cd d7 08 17 16 18 05 f4 ef e2 b7 00 3a 6d d4 
 
-result (ATTACH ACCEPT) = 92
+result (ATTACH ACCEPT) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -5967,7 +5967,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 31 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 35
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 08 01 c0 19 08 03 32 f1 bc 
 
-result (ATTACH COMPLETE) = 35
+result (ATTACH COMPLETE) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -5989,7 +5989,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 69 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 73
 00 00 10 02 00 ef e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 8b 41 c0 15 08 05 01 25 0a 67 0e 96 
 
-result (DETACH REQ (re-attach)) = 73
+result (DETACH REQ (re-attach)) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6011,7 +6011,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 31 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 35
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 08 01 c0 1d 08 06 3d 1c 8b 
 
-result (DETACH ACC) = 35
+result (DETACH ACC) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6033,7 +6033,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 75 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 79
 00 00 10 02 01 af e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 34 01 c0 21 08 01 02 f5 e0 21 08 02 05 f4 ef e2 b7 00 11 22 33 40 50 60 19 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 44 db cc 
 
-result (ATTACH REQUEST) = 79
+result (ATTACH REQUEST) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6055,7 +6055,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 88 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 92
 00 00 10 02 00 af e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 9e 41 c0 19 08 02 01 49 04 21 63 54 40 50 60 19 cd d7 08 17 16 18 05 f4 ef e2 b7 00 27 3c 84 
 
-result (ATTACH ACCEPT) = 92
+result (ATTACH ACCEPT) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6077,7 +6077,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 31 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 35
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 08 01 c0 25 08 03 9b c6 47 
 
-result (ATTACH COMPLETE) = 35
+result (ATTACH COMPLETE) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6099,7 +6099,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 69 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 73
 00 00 10 02 00 ef e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 8b 41 c0 1d 08 05 02 25 0a dd 56 6c 
 
-result (DETACH REQ) = 73
+result (DETACH REQ) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6121,7 +6121,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 31 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 35
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 08 01 c0 29 08 06 4c bd dd 
 
-result (DETACH ACC) = 35
+result (DETACH ACC) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6143,7 +6143,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 78 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 82
 00 00 10 02 01 af e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 37 01 c0 2d 08 01 02 f5 e0 21 08 02 08 11 12 13 14 15 16 17 18 11 22 33 40 50 60 19 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 a5 85 76 
 
-result (ATTACH REQUEST (IMSI)) = 82
+result (ATTACH REQUEST (IMSI)) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6165,7 +6165,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 88 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 92
 00 00 10 02 00 af e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 9e 41 c0 21 08 02 01 49 04 21 63 54 40 50 60 19 cd d7 08 17 16 18 05 f4 ef e2 b7 00 cf 80 6e 
 
-result (ATTACH ACCEPT) = 92
+result (ATTACH ACCEPT) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6187,7 +6187,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 31 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 35
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 08 01 c0 31 08 03 fc 2b 11 
 
-result (ATTACH COMPLETE) = 35
+result (ATTACH COMPLETE) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6209,7 +6209,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 69 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 73
 00 00 10 02 00 ef e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 8b 41 c0 25 08 05 02 25 0a 8e ee 85 
 
-result (DETACH REQ) = 73
+result (DETACH REQ) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6231,7 +6231,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 31 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 35
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 08 01 c0 35 08 06 f3 c6 26 
 
-result (DETACH ACC) = 35
+result (DETACH ACC) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6253,7 +6253,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 75 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 79
 00 00 10 02 01 af e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 34 01 c0 39 08 01 02 f5 e0 21 08 02 05 f4 ef e2 b7 00 11 22 33 40 50 60 19 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 e4 85 12 
 
-result (ATTACH REQUEST) = 79
+result (ATTACH REQUEST) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6275,7 +6275,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 88 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 92
 00 00 10 02 00 af e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 9e 41 c0 29 08 02 01 49 04 21 63 54 40 50 60 19 cd d7 08 17 16 18 05 f4 ef e2 b7 00 d2 d1 3e 
 
-result (ATTACH ACCEPT) = 92
+result (ATTACH ACCEPT) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6297,7 +6297,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 31 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 35
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 08 01 c0 3d 08 03 48 76 ea 
 
-result (ATTACH COMPLETE) = 35
+result (ATTACH COMPLETE) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6319,7 +6319,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 85 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 89
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 70 80 00 80 0e 00 3e 01 c0 41 08 08 10 11 22 33 40 50 60 1d 19 13 42 33 57 2b f7 c8 48 02 13 48 50 c8 48 02 14 48 50 c8 48 02 17 49 10 c8 48 02 00 19 8b b2 92 17 16 27 07 04 31 02 e5 e0 32 02 20 00 30 73 32 
 
-result (RA UPD REQ) = 89
+result (RA UPD REQ) = 0
 
 PROCESSING RA UDP REJ from 0x05060708:32000
 00 00 10 02 00 ef e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 8a 41 c0 2d 08 0b 0a 00 41 30 a7 
@@ -6331,7 +6331,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 68 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 72
 00 00 10 02 00 ef e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 8a 41 c0 2d 08 0b 0a 00 41 30 a7 
 
-result (RA UDP REJ) = 72
+result (RA UDP REJ) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6404,7 +6404,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 88 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 92
 00 00 10 02 00 af e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 9e 41 c0 31 08 02 01 49 04 21 63 54 40 50 60 19 cd d7 08 17 16 18 05 f4 ef e2 b7 00 f5 22 ce 
 
-result (ATTACH ACCEPT) = 92
+result (ATTACH ACCEPT) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6428,7 +6428,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 31 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 35
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 08 01 c0 4d 08 03 79 84 ea 
 
-result (ATTACH COMPLETE) = 35
+result (ATTACH COMPLETE) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6452,7 +6452,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 69 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 73
 00 00 10 02 00 ef e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 8b 41 c0 35 08 05 02 25 0a 9b fa 57 
 
-result (DETACH REQ) = 73
+result (DETACH REQ) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6476,7 +6476,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 31 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 35
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 08 01 c0 51 08 06 a5 d9 70 
 
-result (DETACH ACC) = 35
+result (DETACH ACC) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6500,7 +6500,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 75 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 79
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 34 01 c0 55 08 01 02 f5 e0 21 08 02 05 f4 ef e2 b7 00 11 22 33 40 50 60 19 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 f9 cc e9 
 
-result (ATTACH REQUEST (local TLLI)) = 79
+result (ATTACH REQUEST (local TLLI)) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6524,7 +6524,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 88 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 92
 00 00 10 02 00 ef e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 9e 41 c0 39 08 02 01 49 04 21 63 54 40 50 60 19 cd d7 08 17 16 18 05 f4 ef e2 b7 00 e8 73 9e 
 
-result (ATTACH ACCEPT) = 92
+result (ATTACH ACCEPT) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6548,7 +6548,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 31 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 35
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 08 01 c0 59 08 03 1e 69 bc 
 
-result (ATTACH COMPLETE) = 35
+result (ATTACH COMPLETE) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6572,7 +6572,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 69 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 73
 00 00 10 02 00 ef e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 8b 41 c0 3d 08 05 01 25 0a 21 a2 ad 
 
-result (DETACH REQ (re-attach)) = 73
+result (DETACH REQ (re-attach)) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6596,7 +6596,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 31 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 35
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 08 01 c0 5d 08 06 11 84 8b 
 
-result (DETACH ACC) = 35
+result (DETACH ACC) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6620,7 +6620,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 75 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 79
 00 00 10 02 01 af e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 34 01 c0 61 08 01 02 f5 e0 21 08 02 05 f4 ef e2 b7 00 11 22 33 40 50 60 19 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 5b 66 e2 
 
-result (ATTACH REQUEST) = 79
+result (ATTACH REQUEST) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6644,7 +6644,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 88 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 92
 00 00 10 02 00 af e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 9e 41 c0 41 08 02 01 49 04 21 63 54 40 50 60 19 cd d7 08 17 16 18 05 f4 ef e2 b7 00 9e 50 40 
 
-result (ATTACH ACCEPT) = 92
+result (ATTACH ACCEPT) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6668,7 +6668,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 31 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 35
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 08 01 c0 65 08 03 b7 5e 47 
 
-result (ATTACH COMPLETE) = 35
+result (ATTACH COMPLETE) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6692,7 +6692,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 66 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 70
 00 00 10 02 00 ef e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 88 41 c0 45 08 21 9c 7f c6 
 
-result (GMM INFO) = 70
+result (GMM INFO) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6716,7 +6716,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 78 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 82
 00 00 10 02 01 af e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 37 01 c0 69 08 01 02 f5 e0 21 08 02 08 11 12 13 14 15 16 17 18 11 22 33 40 50 60 19 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 e1 11 8e 
 
-result (ATTACH REQUEST (unexpected, IMSI)) = 82
+result (ATTACH REQUEST (unexpected, IMSI)) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6740,7 +6740,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 88 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 92
 00 00 10 02 00 af e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 9e 41 c0 49 08 02 01 49 04 21 63 54 40 50 60 19 cd d7 08 17 16 18 05 f4 ef e2 b7 00 83 01 10 
 
-result (ATTACH ACCEPT) = 92
+result (ATTACH ACCEPT) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6764,7 +6764,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 31 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 35
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 08 01 c0 6d 08 03 6f c8 ea 
 
-result (ATTACH COMPLETE) = 35
+result (ATTACH COMPLETE) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6788,7 +6788,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 69 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 73
 00 00 10 02 00 ef e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 8b 41 c0 4d 08 05 02 25 0a 51 0e 1b 
 
-result (DETACH REQ) = 73
+result (DETACH REQ) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6812,7 +6812,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 31 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 35
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 08 01 c0 71 08 06 b3 95 70 
 
-result (DETACH ACC) = 35
+result (DETACH ACC) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6836,7 +6836,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 75 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 79
 00 00 10 02 01 af e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 34 01 c0 75 08 01 02 f5 e0 21 08 02 05 f4 ef e2 b7 00 11 22 33 40 50 60 19 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 ab 17 53 
 
-result (ATTACH REQUEST) = 79
+result (ATTACH REQUEST) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6860,7 +6860,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 88 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 92
 00 00 10 02 00 af e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 9e 41 c0 51 08 02 01 49 04 21 63 54 40 50 60 19 cd d7 08 17 16 18 05 f4 ef e2 b7 00 a4 f2 e0 
 
-result (ATTACH ACCEPT) = 92
+result (ATTACH ACCEPT) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6884,7 +6884,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 31 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 35
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 08 01 c0 79 08 03 08 25 bc 
 
-result (ATTACH COMPLETE) = 35
+result (ATTACH COMPLETE) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6908,7 +6908,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 66 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 70
 00 00 10 02 00 ef e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 88 41 c0 55 08 21 97 59 c6 
 
-result (GMM INFO) = 70
+result (GMM INFO) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6932,7 +6932,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 75 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 79
 00 00 10 02 01 af e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 34 01 c0 7d 08 01 02 f5 e0 21 08 02 05 f4 ef e2 b7 00 11 22 33 40 50 60 19 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 a2 24 d0 
 
-result (ATTACH REQUEST (unexpected)) = 79
+result (ATTACH REQUEST (unexpected)) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6956,7 +6956,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 88 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 92
 00 00 10 02 00 af e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 9e 41 c0 59 08 02 01 49 04 21 63 54 40 50 60 19 cd d7 08 17 16 18 05 f4 ef e2 b7 00 b9 a3 b0 
 
-result (ATTACH ACCEPT) = 92
+result (ATTACH ACCEPT) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -6980,7 +6980,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 31 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 35
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 08 01 c0 81 08 03 b9 71 10 
 
-result (ATTACH COMPLETE) = 35
+result (ATTACH COMPLETE) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -7004,7 +7004,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 69 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 73
 00 00 10 02 00 ef e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 8b 41 c0 5d 08 05 02 25 0a 44 1a c9 
 
-result (DETACH REQ) = 73
+result (DETACH REQ) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -7028,7 +7028,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 31 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 35
 00 00 10 02 01 ef e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 08 01 c0 85 08 06 b6 9c 27 
 
-result (DETACH ACC) = 35
+result (DETACH ACC) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -7100,7 +7100,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 67 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 71
 00 00 10 02 00 af e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 89 41 c0 61 08 04 07 79 ba a5 
 
-result (ATTACH REJECT) = 71
+result (ATTACH REJECT) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -7198,7 +7198,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 69 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 73
 00 00 10 02 00 af e2 b7 00 00 50 20 16 82 02 58 13 99 18 b3 43 2b 25 96 62 00 60 80 9a c2 c6 62 00 60 80 ba c8 c6 62 00 60 80 00 0a 82 08 02 0d 88 11 12 13 14 15 16 17 18 00 81 00 0e 8b 41 c0 65 08 05 02 25 0a 17 a2 20 
 
-result (DETACH REQ (MT)) = 73
+result (DETACH REQ (MT)) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -7227,7 +7227,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x1002, msg length 31 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 35
 00 00 10 02 01 af e2 b7 00 00 00 04 08 88 11 22 33 40 50 60 12 34 00 80 0e 00 08 01 c0 9d 08 06 65 2c 8a 
 
-result (DETACH ACC) = 35
+result (DETACH ACC) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -7311,7 +7311,7 @@ PROCESSING RESET_ACK from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 0a 
 
-result (RESET_ACK) = 1
+result (RESET_ACK) = 0
 
 PROCESSING ALIVE_ACK from 0x05060708:32000
 0b 
@@ -7319,7 +7319,7 @@ PROCESSING ALIVE_ACK from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 06 
 
-result (ALIVE_ACK) = 1
+result (ALIVE_ACK) = 0
 
 PROCESSING UNBLOCK_ACK from 0x05060708:32000
 07 
@@ -7334,7 +7334,7 @@ PROCESSING ALIVE from 0x05060708:32000
 MESSAGE to SGSN at 0x05060708:32000, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 --- Initialise BSS 1 ---
 
@@ -7351,7 +7351,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 9
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0a 
 
-result (RESET) = 9
+result (RESET) = 0
 
 PROCESSING ALIVE from 0x01020304:1111
 0a 
@@ -7359,7 +7359,7 @@ PROCESSING ALIVE from 0x01020304:1111
 MESSAGE to BSS at 0x01020304:1111, msg length 1
 0b 
 
-result (ALIVE) = 1
+result (ALIVE) = 0
 
 PROCESSING UNBLOCK from 0x01020304:1111
 06 
@@ -7369,7 +7369,7 @@ MESSAGE to BSS at 0x01020304:1111, msg length 1
 
 ==> got signal NS_UNBLOCK, NS-VC 0x1001/1.2.3.4:1111
 
-result (UNBLOCK) = 1
+result (UNBLOCK) = 0
 
 PROCESSING ALIVE_ACK from 0x01020304:1111
 0b 
@@ -7388,7 +7388,7 @@ NS UNITDATA MESSAGE to SGSN, BVCI 0x0000, msg length 18 (gprs_ns_sendmsg)
 MESSAGE to SGSN at 0x05060708:32000, msg length 22
 00 00 00 00 22 04 82 10 02 07 81 08 08 88 11 22 33 40 50 60 10 00 
 
-result (BVC_RESET) = 22
+result (BVC_RESET) = 0
 
 PROCESSING BVC_RESET_ACK from 0x05060708:32000
 00 00 00 00 23 04 82 10 02 
@@ -7400,7 +7400,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x0000, msg length 5 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 9
 00 00 00 00 23 04 82 10 02 
 
-result (BVC_RESET_ACK) = 9
+result (BVC_RESET_ACK) = 0
 
 Current NS-VCIs:
     VCI 0x1001, NSEI 0x1000, peer 0x01020304:1111
@@ -7449,7 +7449,7 @@ NS UNITDATA MESSAGE to BSS, BVCI 0x1002, msg length 23 (gprs_ns_sendmsg)
 MESSAGE to BSS at 0x01020304:1111, msg length 27
 00 00 10 02 00 80 00 de ad 00 50 20 16 82 02 58 0e 89 41 c0 01 08 15 01 ff 6c ba 
 
-result (IDENT REQUEST) = 27
+result (IDENT REQUEST) = 0
 
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96

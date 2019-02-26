@@ -1302,7 +1302,13 @@ static int gprs_process_message(struct gprs_ns_inst *nsi, const char *text, stru
 
 	ret = gprs_ns_rcvmsg(nsi, msg, peer, GPRS_NS_LL_UDP);
 
-	printf("result (%s) = %d\n\n", text, ret);
+	/* gprs_ns_rcvmsg() in old libosmocore returns "number of bytes
+	 * transmitted by any response PDU we sent as a result of the
+	 * received message", while modern libosmocore simply retunrs '0'
+	 * for any successfully received message.  Let's make sure any
+	 * non-negative responses lead to a reproducible test output
+	 * with both old and new libosmocore. */
+	printf("result (%s) = %d\n\n", text, ret < 0 ? ret : 0);
 
 	msgb_free(msg);
 
