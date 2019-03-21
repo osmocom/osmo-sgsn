@@ -1,0 +1,29 @@
+[[control]]
+== Control interface
+
+The actual protocol is described in <<common-control-if>>, the variables
+common to all programs using it are described in <<ctrl_common_vars>>. Here we
+describe variables specific to OsmoGbPROXY.
+
+.Variables available over control interface
+[options="header",width="100%",cols="20%,5%,5%,50%,20%"]
+|===
+|Name|Access|Trap|Value|Comment
+|nsvc-state|RO|No|"<nsei>,<nsvci>,<local-alive>,<local-blocked>,<remote-role>,<remote-alive>,<remote-blocked>"|See <<nsvc_state>> for details.
+|gbproxy-state|RO|No|"<nsei>,<bvci>,<mcc>,<mnc>,<lac>,<rac>,<blocked>"|See <<gbproxy_state>> for details.
+|number-of-peers|RO|No|"<num-of-bss>"|Count of concurrent BSS(BTS) peers.
+|===
+
+[[nsvc_state]]
+=== nsvc-state
+
+Return the list of active NS-VCs (NS Virtual Circuits), including information
+on the key parameters, such as NSEI, NSVCI and the local + remote ALIVE
+and BLOCKED state.
+
+[[gbproxy_state]]
+=== gbproxy-state
+
+Return the list of active Peers, including information on the key
+parameters, such as NSEI, BVCI, and the MCC-MNC-LAC-RAC of the attached
+BSS, as well as the overall state (BLOCKED or UNBLOCKED).

@@ -1,12 +1,14 @@
 EXTRA_DIST = osmosgsn-usermanual.adoc \
     osmosgsn-usermanual-docinfo.xml \
     osmosgsn-vty-reference.xml \
+    osmogbproxy-usermanual.adoc \
+    osmogbproxy-usermanual-docinfo.xml \
     regen_doc.sh \
     chapters \
     vty
 
 if BUILD_MANUALS
-  ASCIIDOC = osmosgsn-usermanual.adoc
+  ASCIIDOC = osmosgsn-usermanual.adoc osmogbproxy-usermanual.adoc
   ASCIIDOC_DEPS = $(srcdir)/chapters/*.adoc
   include $(OSMO_GSM_MANUALS_DIR)/build/Makefile.asciidoc.inc
 

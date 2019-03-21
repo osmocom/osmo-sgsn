@@ -1,0 +1,127 @@
+[[chapter_overview]]
+== Overview
+
+=== About OsmoGbPROXY
+
+OsmoGbPROXY is the Osmocom proxy for the 3GPP Gb interface.  The Gb
+interface is defined by 3GPP as the protocol between the BSS and the
+SGSN inside the 2G/2.5G/2.75G packet switched network domain.
+
+As Osmocom implements a BTS-colocated PCU, there are potentially many
+Gb interface connections between all those many PCUs in the network
+and the SGSN.  This can be cumbersome to configure/maintain at the
+SGSN sine.
+
+OsmoGbPROXY aggregates many PCU-facing Gb connections into one Gb
+connection to the SGSN.  This is achieved by
+
+* maintaining sepaate NS-VCs on the PCU side and on the SGSN side
+* more or less transparently routing BSSGP peer-to-peer Virtual Circuits
+  (BVCs) through the proxy
+* having some special handling for the signaling BVC (BVCI=0) which is
+  shared among all the PCUs connected to the proxy
+
+=== Data Model
+
+==== gbproxy_config
+
+This contains the parsed configuration of the OsmoGbPROXY.
+
+==== gproxy_peer
+
+A "peer" is any remote NS-entity that the proxy interacts with.  A peer
+includes information about:
+
+* the [unique] NSEI of the peer
+* the [unique] BVCI of the peer
+* the Routeing Area (RA) of the peer
+
+==== gbproxy_tlli_state
+
+One of the (unique) TLLI of any of the subscribers/UEs attached to any of
+the BTSs/PCUs served by the proxy.
+
+==== gbproxy_link_info
+
+One of the [unique] subscribers/connections that are served through this
+proxy.  The information includes
+
+* the TLLI on BSS side
+* the TLLI on SGSN side (may be different due to P-TMSI rewriting)
+* the NSEI of the SGSN for this link
+* a timestamp when we last conversed with this subscriber
+* state related to IMSI acquisition
+** a temporary queue of stored messages (until IMSI acquisition succeeds)
+** N(U) rewriting state (inserting IDENTTIY REQ changes LLC sequence numbers)
+
+==== gbproxy_match
+
+A single matching rule against which IMSIs are matched.  The matching rule
+is expressed as regular expression.  There can be one such matching rule for
+each
+
+* routing between two different SGSNs, see below
+* patching of messages (e.g. APN, PLMN)
+
+
+=== Advanced Features
+
+==== PLMN patching
+
+This feature permits to modify the PLMN inside any BSSGP messages
+containing the Routing Area ID (RAID).
+
+The configured core-mcc and core-mnc will be used towards the SGSN,
+irrespective of which MCC/MNC the PCU is using/reporting on Gb.
+
+==== APN patching
+
+This will transparently re-write the APN name inside SM ACTIVATE PDP
+REQUEST messages on the way from the MS to the SGSN.  The patching is
+performed based on matching on the IMSI of the subscriber.
+
+The configured core-apn will be used towards the SGSN, irrespective
+of which APN the MS is requesting in its Layer3 signaling.
+
+APN patching can only be performed if no GPRS encryption is enabled in
+the network!
+
+APN patching is useful in case a valid APN cannot reliably be
+provisioned via other means, such as via the SIM Card, OTA-DM or via
+CAMEL rewriting in the SGSN.
+
+==== P-TMSI patching
+
+This feature transparently rewrite the P-TMSI between MS and SGSN.  This
+is required when using the Secondary SGSN support, as both SGSNs could
+allocate overlapping TMSIs and we must make sure they're unique across
+both SGSNs.
+
+P-TMSI patching is required by (and hence automatically enablede if
+secondary SGSN support is enabled.
+
+P-TMSI patching can only be performed if no GPRS encryption is enabled in
+the network!
+
+==== IMSI Acquisition
+
+This is a special feature where the proxy will by itself inject GMM IDENTITY
+REQUEST messages for the IMSI into the downlink BSSGP traffic in order
+to establish the IMSI of subscribers for which it is not otherwise known
+
+IMSI acquisition is automatically enabled if secondary SGSN support is
+enabled.
+
+==== Secondary SGSN Support
+
+This allows the proxy to connect not only to one SGSN, but to two
+different SGSNs.  IMSI matching rules are applied to determine which of
+the SGSNs is to be used for traffic of this subscriber.
+
+One possible use case of this feature is to have a "local break-out" for
+subscribers who are native to this network (and hence save
+latencies/overhead of back-hauling all related traffic via the
+SGSN+GGSN) while at the same time maintaining the classic behavior for
+inbound roaming subscribers, where the roaming agreements mandate that
+data traffic is brought back to the GGSN in the HPLMN via the SGSN of
+the VPLMN.
