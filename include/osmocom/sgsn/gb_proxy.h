@@ -10,6 +10,7 @@
 
 #include <sys/types.h>
 #include <regex.h>
+#include <stdbool.h>
 
 #define GBPROXY_INIT_VU_GEN_TX 256
 
@@ -83,7 +84,7 @@ enum gbproxy_match_id {
 };
 
 struct gbproxy_match {
-	int   enable;		/* is this match enabled? */
+	bool  enable;		/* is this match enabled? */
 	char *re_str;		/* regular expression (for IMSI) in string format */
 	regex_t re_comp;	/* compiled regular expression (for IMSI) */
 };
@@ -119,11 +120,11 @@ struct gbproxy_config {
 	uint32_t stored_msgs_max_len;
 
 	/* Should the P-TMSI be patched on the fly (required for 2-SGSN config) */
-	int patch_ptmsi;
+	bool patch_ptmsi;
 	/* Should the IMSI be acquired by the proxy (required for 2-SGSN config) */
-	int acquire_imsi;
+	bool acquire_imsi;
 	/* Should we route subscribers to two different SGSNs? */
-	int route_to_sgsn2;
+	bool route_to_sgsn2;
 	/* NSEI of the second SGSN */
 	uint16_t nsip_sgsn2_nsei;
 	/* should we keep a cache of per-subscriber state even after de-registration? */
@@ -154,7 +155,7 @@ struct gbproxy_peer {
 
 	/* BVCI used for Point-to-Point to this peer */
 	uint16_t bvci;
-	int blocked;
+	bool blocked;
 
 	/* Routeing Area that this peer is part of (raw 04.08 encoding) */
 	uint8_t ra[6];
@@ -175,9 +176,9 @@ struct gbproxy_tlli_state {
 	/* newly-assigned TLLI (e.g. during P-TMSI allocation procedure) */
 	uint32_t assigned;
 	/* has the BSS side validated (confirmed) the new TLLI? */
-	int bss_validated;
+	bool bss_validated;
 	/* has the SGSN side validated (confirmed) the new TLLI? */
-	int net_validated;
+	bool net_validated;
 	/* NOTE: once both are validated, we set current = assigned and assigned = 0 */
 
 	/* The P-TMSI for this subscriber */
@@ -204,7 +205,7 @@ struct gbproxy_link_info {
 	size_t imsi_len;
 
 	/* is the IMSI acquisition still pending? */
-	int imsi_acq_pending;
+	bool imsi_acq_pending;
 
 	/* queue of stored UL messages (until IMSI acquisition completes and we can
 	 * determine which of the SGSNs we should route this to */
@@ -215,10 +216,10 @@ struct gbproxy_link_info {
 	unsigned vu_gen_tx_bss;
 
 	/* is this subscriber deregistered (TLLI invalidated)? */
-	int is_deregistered;
+	bool is_deregistered;
 
 	/* does this link match either the (2-SGSN) routing or the patching rule? */
-	int is_matching[GBPROX_MATCH_LAST];
+	bool is_matching[GBPROX_MATCH_LAST];
 };
 
 

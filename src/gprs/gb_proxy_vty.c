@@ -241,7 +241,7 @@ DEFUN(cfg_gbproxy_match_imsi,
 		return CMD_WARNING;
 	}
 
-	g_cfg->acquire_imsi = 1;
+	g_cfg->acquire_imsi = true;
 
 	return CMD_SUCCESS;
 }
@@ -256,7 +256,7 @@ DEFUN(cfg_gbproxy_no_match_imsi,
 	for (match_id = 0; match_id < ARRAY_SIZE(g_cfg->matches); ++match_id)
 		gbproxy_clear_patch_filter(&g_cfg->matches[match_id]);
 
-	g_cfg->acquire_imsi = 0;
+	g_cfg->acquire_imsi = false;
 
 	return CMD_SUCCESS;
 }
@@ -329,7 +329,7 @@ DEFUN(cfg_gbproxy_patch_ptmsi,
       "patch-ptmsi",
       GBPROXY_PATCH_PTMSI_STR)
 {
-	g_cfg->patch_ptmsi = 1;
+	g_cfg->patch_ptmsi = true;
 
 	return CMD_SUCCESS;
 }
@@ -339,7 +339,7 @@ DEFUN(cfg_gbproxy_no_patch_ptmsi,
       "no patch-ptmsi",
       NO_STR GBPROXY_PATCH_PTMSI_STR)
 {
-	g_cfg->patch_ptmsi = 0;
+	g_cfg->patch_ptmsi = false;
 
 	return CMD_SUCCESS;
 }
@@ -355,7 +355,7 @@ DEFUN(cfg_gbproxy_acquire_imsi,
       "acquire-imsi",
       GBPROXY_ACQUIRE_IMSI_STR)
 {
-	g_cfg->acquire_imsi = 1;
+	g_cfg->acquire_imsi = true;
 
 	return CMD_SUCCESS;
 }
@@ -365,7 +365,7 @@ DEFUN(cfg_gbproxy_no_acquire_imsi,
       "no acquire-imsi",
       NO_STR GBPROXY_ACQUIRE_IMSI_STR)
 {
-	g_cfg->acquire_imsi = 0;
+	g_cfg->acquire_imsi = false;
 
 	return CMD_SUCCESS;
 }
@@ -387,10 +387,10 @@ DEFUN(cfg_gbproxy_secondary_sgsn,
 		return CMD_WARNING;
 	}
 
-	g_cfg->route_to_sgsn2 = 1;
+	g_cfg->route_to_sgsn2 = true;
 	g_cfg->nsip_sgsn2_nsei = nsei;
 
-	g_cfg->patch_ptmsi = 1;
+	g_cfg->patch_ptmsi = true;
 
 	return CMD_SUCCESS;
 }
@@ -400,10 +400,10 @@ DEFUN(cfg_gbproxy_no_secondary_sgsn,
       "no secondary-sgsn",
       NO_STR GBPROXY_SECOND_SGSN_STR)
 {
-	g_cfg->route_to_sgsn2 = 0;
+	g_cfg->route_to_sgsn2 = false;
 	g_cfg->nsip_sgsn2_nsei = 0xFFFF;
 
-	g_cfg->patch_ptmsi = 0;
+	g_cfg->patch_ptmsi = false;
 
 	return CMD_SUCCESS;
 }
@@ -849,7 +849,7 @@ DEFUN_DEPRECATED(cfg_gbproxy_broken_apn_match,
 		return CMD_WARNING;
 	}
 
-	g_cfg->acquire_imsi = 1;
+	g_cfg->acquire_imsi = true;
 
 	return CMD_SUCCESS;
 }

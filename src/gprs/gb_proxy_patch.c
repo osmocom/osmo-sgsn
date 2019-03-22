@@ -398,7 +398,7 @@ void gbproxy_clear_patch_filter(struct gbproxy_match *match)
 {
 	if (match->enable) {
 		regfree(&match->re_comp);
-		match->enable = 0;
+		match->enable = false;
 	}
 	talloc_free(match->re_str);
 	match->re_str = NULL;
@@ -419,7 +419,7 @@ int gbproxy_set_patch_filter(struct gbproxy_match *match, const char *filter,
 		     REG_EXTENDED | REG_NOSUB | REG_ICASE);
 
 	if (rc == 0) {
-		match->enable = 1;
+		match->enable = true;
 		match->re_str = talloc_strdup(tall_sgsn_ctx, filter);
 		return 0;
 	}

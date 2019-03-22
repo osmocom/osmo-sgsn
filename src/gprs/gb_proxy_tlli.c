@@ -284,8 +284,8 @@ void gbproxy_reassign_tlli(struct gbproxy_tlli_state *tlli_state,
 
 	/* Remember assigned TLLI */
 	tlli_state->assigned = new_tlli;
-	tlli_state->bss_validated = 0;
-	tlli_state->net_validated = 0;
+	tlli_state->bss_validated = false;
+	tlli_state->net_validated = false;
 }
 
 uint32_t gbproxy_map_tlli(uint32_t other_tlli,
@@ -325,9 +325,9 @@ static void gbproxy_validate_tlli(struct gbproxy_tlli_state *tlli_state,
 
 	/* See GSM 04.08, 4.7.1.5 */
 	if (to_bss)
-		tlli_state->net_validated = 1;
+		tlli_state->net_validated = true;
 	else
-		tlli_state->bss_validated = 1;
+		tlli_state->bss_validated = true;
 
 	if (!tlli_state->bss_validated || !tlli_state->net_validated)
 		return;
@@ -367,7 +367,7 @@ static int gbproxy_unregister_link_info(struct gbproxy_peer *peer,
 	link_info->sgsn_tlli.current = 0;
 	link_info->sgsn_tlli.assigned = 0;
 
-	link_info->is_deregistered = 1;
+	link_info->is_deregistered = true;
 
 	gbproxy_reset_link(link_info);
 
@@ -424,7 +424,7 @@ static void gbproxy_assign_imsi(struct gbproxy_peer *peer,
 			&peer->cfg->matches[match_id],
 			parse_ctx->imsi, parse_ctx->imsi_len);
 		if (imsi_matches >= 0)
-			link_info->is_matching[match_id] = imsi_matches;
+			link_info->is_matching[match_id] = imsi_matches ? true : false;
 	}
 }
 
@@ -498,7 +498,7 @@ static struct gbproxy_link_info *gbproxy_get_link_info_ul(
 	if (!link_info)
 		return NULL;
 
-	link_info->is_deregistered = 0;
+	link_info->is_deregistered = false;
 
 	return link_info;
 }
@@ -577,7 +577,7 @@ static struct gbproxy_link_info *gbproxy_get_link_info_dl(
 			peer, parse_ctx->imsi, parse_ctx->imsi_len);
 
 	if (link_info)
-		link_info->is_deregistered = 0;
+		link_info->is_deregistered = false;
 
 	return link_info;
 }

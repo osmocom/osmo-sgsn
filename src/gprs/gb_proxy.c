@@ -310,7 +310,7 @@ static int gbproxy_restart_imsi_acquisition(struct gbproxy_link_info* link_info)
 		in_progress = 1;
 
 	gbproxy_link_info_discard_messages(link_info);
-	link_info->imsi_acq_pending = 0;
+	link_info->imsi_acq_pending = false;
 
 	return in_progress;
 }
@@ -531,7 +531,7 @@ static int gbproxy_imsi_acquisition(struct gbproxy_peer *peer,
 		 * implementation relies on the MS doing proper retransmissions
 		 * of the triggering message instead */
 
-		link_info->imsi_acq_pending = 1;
+		link_info->imsi_acq_pending = true;
 	}
 
 	return 0;
@@ -836,11 +836,11 @@ static int block_unblock_peer(struct gbproxy_config *cfg, uint16_t ptp_bvci, uin
 
 	switch (pdu_type) {
 	case BSSGP_PDUT_BVC_BLOCK_ACK:
-		peer->blocked = 1;
+		peer->blocked = true;
 		rate_ctr_inc(&peer->ctrg->ctr[GBPROX_PEER_CTR_BLOCKED]);
 		break;
 	case BSSGP_PDUT_BVC_UNBLOCK_ACK:
-		peer->blocked = 0;
+		peer->blocked = false;
 		rate_ctr_inc(&peer->ctrg->ctr[GBPROX_PEER_CTR_UNBLOCKED]);
 		break;
 	default:
