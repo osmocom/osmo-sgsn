@@ -70,29 +70,30 @@ enum gbproxy_peer_ctr {
 };
 
 enum gbproxy_keep_mode {
-	GBPROX_KEEP_NEVER,
-	GBPROX_KEEP_REATTACH,
-	GBPROX_KEEP_IDENTIFIED,
-	GBPROX_KEEP_ALWAYS,
+	GBPROX_KEEP_NEVER,	/* don't ever keep TLLI/IMSI state of de-registered subscribers */
+	GBPROX_KEEP_REATTACH,	/* keep if re-attach has been requested by SGSN */
+	GBPROX_KEEP_IDENTIFIED,	/* keep if we had resolved an IMSI */
+	GBPROX_KEEP_ALWAYS,	/* always keep */
 };
 
 enum gbproxy_match_id {
-	GBPROX_MATCH_PATCHING,
-	GBPROX_MATCH_ROUTING,
+	GBPROX_MATCH_PATCHING,	/* match rule on whether or not we should patch */
+	GBPROX_MATCH_ROUTING,	/* match rule on whether or not we should route (2-SGSN) */
 	GBPROX_MATCH_LAST
 };
 
 struct gbproxy_match {
-	int   enable;
-	char *re_str;
-	regex_t re_comp;
+	int   enable;		/* is this match enabled? */
+	char *re_str;		/* regular expression (for IMSI) in string format */
+	regex_t re_comp;	/* compiled regular expression (for IMSI) */
 };
 
+/* global gb-proxy configuration */
 struct gbproxy_config {
 	/* parsed from config file */
 	uint16_t nsip_sgsn_nsei;
 
-	/* misc */
+	/* NS instance of libosmogb */
 	struct gprs_ns_inst *nsi;
 
 	/* Linked list of all Gb peers (except SGSN) */
@@ -101,10 +102,13 @@ struct gbproxy_config {
 	/* Counter */
 	struct rate_ctr_group *ctrg;
 
-	/* force mcc/mnc */
+	/* MCC/MNC to be patched into RA-ID on the way from BSS to SGSN? */
 	struct osmo_plmn_id core_plmn;
+
+	/* APN to be patched into PDP CTX ACT REQ on the way from BSS to SGSN */
 	uint8_t* core_apn;
 	size_t core_apn_size;
+
 	/* Frequency (sec) at which timer to clean stale links is fired (0 disabled) */
 	unsigned int clean_stale_timer_freq;
 	/* If !0, Max age to consider a struct gbproxy_link_info as stale */
@@ -114,14 +118,18 @@ struct gbproxy_config {
 	/* If !0, Max len of gbproxy_link_info->stored_msgs (list of msgb) */
 	uint32_t stored_msgs_max_len;
 
-	/* Experimental config */
+	/* Should the P-TMSI be patched on the fly (required for 2-SGSN config) */
 	int patch_ptmsi;
+	/* Should the IMSI be acquired by the proxy (required for 2-SGSN config) */
 	int acquire_imsi;
+	/* Should we route subscribers to two different SGSNs? */
 	int route_to_sgsn2;
+	/* NSEI of the second SGSN */
 	uint16_t nsip_sgsn2_nsei;
+	/* should we keep a cache of per-subscriber state even after de-registration? */
 	enum gbproxy_keep_mode keep_link_infos;
 
-	/* IMSI checking/matching */
+	/* IMSI checking/matching for 2-SGSN routing and patching */
 	struct gbproxy_match matches[GBPROX_MATCH_LAST];
 };
 
@@ -133,7 +141,9 @@ struct gbproxy_patch_state {
 	int logical_link_count;
 };
 
+/* one peer at NS level that we interact with (BSS/PCU) */
 struct gbproxy_peer {
+	/* linked to gbproxy_config.bts_peers */
 	struct llist_head list;
 
 	/* point back to the config */
@@ -152,6 +162,7 @@ struct gbproxy_peer {
 	/* Counter */
 	struct rate_ctr_group *ctrg;
 
+	/* State related to on-the-fly patching of certain messages */
 	struct gbproxy_patch_state patch_state;
 
 	/* Fired periodically to clean up stale links from list */
@@ -159,32 +170,54 @@ struct gbproxy_peer {
 };
 
 struct gbproxy_tlli_state {
+	/* currently active TLLI */
 	uint32_t current;
+	/* newly-assigned TLLI (e.g. during P-TMSI allocation procedure) */
 	uint32_t assigned;
+	/* has the BSS side validated (confirmed) the new TLLI? */
 	int bss_validated;
+	/* has the SGSN side validated (confirmed) the new TLLI? */
 	int net_validated;
+	/* NOTE: once both are validated, we set current = assigned and assigned = 0 */
 
+	/* The P-TMSI for this subscriber */
 	uint32_t ptmsi;
 };
 
+/* One TLLI (= UE, = Subscriber) served via this proxy */
 struct gbproxy_link_info {
+	/* link to gbproxy_peer.patch_state.logical_links */
 	struct llist_head list;
 
+	/* TLLI on the BSS/PCU side */
 	struct gbproxy_tlli_state tlli;
+	/* TLLI on the SGSN side (can be different in case of P-TMSI patching) */
 	struct gbproxy_tlli_state sgsn_tlli;
+	/* NSEI of the SGSN serving this link */
 	uint32_t sgsn_nsei;
 
+	/* timestamp when we last had any contact with this UE */
 	time_t timestamp;
+
+	/* IMSI of the subscriber (if/once known) */
 	uint8_t *imsi;
 	size_t imsi_len;
 
+	/* is the IMSI acquisition still pending? */
 	int imsi_acq_pending;
+
+	/* queue of stored UL messages (until IMSI acquisition completes and we can
+	 * determine which of the SGSNs we should route this to */
 	struct llist_head stored_msgs;
 	uint32_t stored_msgs_len;
+
+	/* generated N(U) we use (required due to IMSI acquisition */
 	unsigned vu_gen_tx_bss;
 
+	/* is this subscriber deregistered (TLLI invalidated)? */
 	int is_deregistered;
 
+	/* does this link match either the (2-SGSN) routing or the patching rule? */
 	int is_matching[GBPROX_MATCH_LAST];
 };
 
