@@ -2035,6 +2035,13 @@ static int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 			goto null_mmctx;
 		/* only in case SGSN offered new P-TMSI */
 		LOGMMCTXP(LOGL_INFO, mmctx, "-> ATTACH COMPLETE\n");
+
+#ifdef BUILD_IU
+		if (mmctx->iu.ue_ctx) {
+			ranap_iu_tx_release(mmctx->iu.ue_ctx, NULL);
+		}
+#endif
+
 		mmctx_timer_stop(mmctx, 3350);
 		mmctx->t3350_mode = GMM_T3350_MODE_NONE;
 		mmctx->p_tmsi_old = 0;
