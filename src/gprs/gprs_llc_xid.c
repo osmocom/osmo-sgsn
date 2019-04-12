@@ -41,7 +41,7 @@ const struct value_string gprs_llc_xid_type_names[] = {
 	{ GPRS_LLC_XID_T_IOV_I,		"IOV_I"},
 	{ GPRS_LLC_XID_T_T200,		"T200"},
 	{ GPRS_LLC_XID_T_N200,		"N200"},
-	{ GPRS_LLC_XID_T_N201_U,	"N201_"},
+	{ GPRS_LLC_XID_T_N201_U,	"N201_U"},
 	{ GPRS_LLC_XID_T_N201_I,	"N201_I"},
 	{ GPRS_LLC_XID_T_mD,		"mD"},
 	{ GPRS_LLC_XID_T_mU,		"mU"},
