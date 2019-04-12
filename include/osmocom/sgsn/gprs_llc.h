@@ -145,6 +145,13 @@ struct gprs_llc_lle {
 	unsigned int retrans_ctr;
 
 	struct gprs_llc_params params;
+
+	/* Copy of the XID fields we have sent with the last
+	 * network originated XID-Request. Since the phone
+	 * may strip the optional fields in the confirmation
+	 * we need to remeber those fields in order to be
+	 * able to create the compression entity. */
+	struct llist_head *xid;
 };
 
 #define NUM_SAPIS	16
@@ -168,13 +175,6 @@ struct gprs_llc_llme {
 	uint16_t bvci;
 	uint16_t nsei;
 	struct gprs_llc_lle lle[NUM_SAPIS];
-
-	/* Copy of the XID fields we have sent with the last
-	 * network originated XID-Request. Since the phone
-	 * may strip the optional fields in the confirmation
-	 * we need to remeber those fields in order to be
-	 * able to create the compression entity. */
-	struct llist_head *xid;
 
 	/* Compression entities */
 	struct {

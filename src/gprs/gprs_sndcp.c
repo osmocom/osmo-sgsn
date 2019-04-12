@@ -989,8 +989,8 @@ int sndcp_sn_xid_req(struct gprs_llc_lle *lle, uint8_t nsapi)
 	gprs_sndcp_comp_free(lle->llme->comp.data);
 	lle->llme->comp.proto = gprs_sndcp_comp_alloc(lle->llme);
 	lle->llme->comp.data = gprs_sndcp_comp_alloc(lle->llme);
-	talloc_free(lle->llme->xid);
-	lle->llme->xid = NULL;
+	talloc_free(lle->xid);
+	lle->xid = NULL;
 
 	/* Generate compression parameter bytestream */
 	xid_len = gprs_llc_gen_sndcp_xid(l3params, sizeof(l3params), nsapi);

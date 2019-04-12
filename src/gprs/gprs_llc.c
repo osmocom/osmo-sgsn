@@ -53,7 +53,7 @@ static int gprs_llc_tx_u(struct msgb *msg, uint8_t sapi,
 /* Generate XID message */
 static int gprs_llc_generate_xid(uint8_t *bytes, int bytes_len,
 				 struct gprs_llc_xid_field *l3_xid_field,
-				 struct gprs_llc_llme *llme)
+				 struct gprs_llc_lle *lle)
 {
 	/* Note: Called by gprs_ll_xid_req() */
 
@@ -90,8 +90,8 @@ static int gprs_llc_generate_xid(uint8_t *bytes, int bytes_len,
 	}
 
 	/* Store generated XID for later reference */
-	talloc_free(llme->xid);
-	llme->xid = gprs_llc_copy_xid(llme, &xid_fields);
+	talloc_free(lle->xid);
+	lle->xid = gprs_llc_copy_xid(lle->llme, &xid_fields);
 
 	return gprs_llc_compile_xid(bytes, bytes_len, &xid_fields);
 }
@@ -99,7 +99,7 @@ static int gprs_llc_generate_xid(uint8_t *bytes, int bytes_len,
 /* Generate XID message that will cause the GMM to reset */
 static int gprs_llc_generate_xid_for_gmm_reset(uint8_t *bytes,
 					       int bytes_len, uint32_t iov_ui,
-					       struct gprs_llc_llme *llme)
+					       struct gprs_llc_lle *lle)
 {
 	/* Called by gprs_llgmm_reset() and
 	 * gprs_llgmm_reset_oldmsg() */
@@ -124,8 +124,8 @@ static int gprs_llc_generate_xid_for_gmm_reset(uint8_t *bytes,
 	llist_add(&xid_reset.list, &xid_fields);
 
 	/* Store generated XID for later reference */
-	talloc_free(llme->xid);
-	llme->xid = gprs_llc_copy_xid(llme, &xid_fields);
+	talloc_free(lle->xid);
+	lle->xid = gprs_llc_copy_xid(lle->llme, &xid_fields);
 
 	return gprs_llc_compile_xid(bytes, bytes_len, &xid_fields);
 }
@@ -144,8 +144,8 @@ static int gprs_llc_process_xid_conf(uint8_t *bytes, int bytes_len,
 	struct gprs_llc_xid_field *xid_field_request_l3 = NULL;
 
 	/* Pick layer3 XID from the XID request we have sent last */
-	if (lle->llme->xid) {
-		llist_for_each_entry(xid_field_request, lle->llme->xid, list) {
+	if (lle->xid) {
+		llist_for_each_entry(xid_field_request, lle->xid, list) {
 			if (xid_field_request->type == GPRS_LLC_XID_T_L3_PAR)
 				xid_field_request_l3 = xid_field_request;
 		}
@@ -189,8 +189,8 @@ static int gprs_llc_process_xid_conf(uint8_t *bytes, int bytes_len,
 	}
 
 	/* Flush pending XID fields */
-	talloc_free(lle->llme->xid);
-	lle->llme->xid = NULL;
+	talloc_free(lle->xid);
+	lle->xid = NULL;
 
 	return 0;
 }
@@ -325,8 +325,7 @@ int gprs_ll_xid_req(struct gprs_llc_lle *lle,
 
 	/* Generate XID */
 	xid_bytes_len =
-	    gprs_llc_generate_xid(xid_bytes, sizeof(xid_bytes),
-				  l3_xid_field, lle->llme);
+	    gprs_llc_generate_xid(xid_bytes, sizeof(xid_bytes), l3_xid_field, lle);
 
 	/* Only perform XID sending if the XID message contains something */
 	if (xid_bytes_len > 0) {
@@ -577,7 +576,6 @@ static void llme_free(struct gprs_llc_llme *llme)
 {
 	gprs_sndcp_comp_free(llme->comp.proto);
 	gprs_sndcp_comp_free(llme->comp.data);
-	talloc_free(llme->xid);
 	llist_del(&llme->list);
 	talloc_free(llme);
 }
@@ -1114,8 +1112,8 @@ int gprs_llgmm_reset(struct gprs_llc_llme *llme)
 	}
 
 	/* Generate XID message */
-	xid_bytes_len = gprs_llc_generate_xid_for_gmm_reset(xid_bytes,
-					sizeof(xid_bytes),llme->iov_ui,llme);
+	xid_bytes_len = gprs_llc_generate_xid_for_gmm_reset(xid_bytes, sizeof(xid_bytes),
+							    llme->iov_ui, lle);
 	if (xid_bytes_len < 0)
 		return -EINVAL;
 	xid = msgb_put(msg, xid_bytes_len);
@@ -1135,6 +1133,7 @@ int gprs_llgmm_reset_oldmsg(struct msgb* oldmsg, uint8_t sapi,
 			    struct gprs_llc_llme *llme)
 {
 	struct msgb *msg = msgb_alloc_headroom(4096, 1024, "LLC_XID");
+	struct gprs_llc_lle *lle = &llme->lle[sapi];
 	uint8_t xid_bytes[1024];
 	int xid_bytes_len, rc;
 	uint8_t *xid;
@@ -1148,8 +1147,8 @@ int gprs_llgmm_reset_oldmsg(struct msgb* oldmsg, uint8_t sapi,
 	}
 
 	/* Generate XID message */
-	xid_bytes_len = gprs_llc_generate_xid_for_gmm_reset(xid_bytes,
-					sizeof(xid_bytes),llme->iov_ui,llme);
+	xid_bytes_len = gprs_llc_generate_xid_for_gmm_reset(xid_bytes, sizeof(xid_bytes),
+							    llme->iov_ui, lle);
 	if (xid_bytes_len < 0)
 		return -EINVAL;
 	xid = msgb_put(msg, xid_bytes_len);
