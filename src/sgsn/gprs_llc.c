@@ -69,17 +69,20 @@ static int gprs_llc_generate_xid(uint8_t *bytes, int bytes_len,
 	struct gprs_llc_xid_field xid_version;
 	struct gprs_llc_xid_field xid_n201u;
 	struct gprs_llc_xid_field xid_n201i;
+	uint16_t n201_u, n201_i;
 
 	xid_version.type = GPRS_LLC_XID_T_VERSION;
 	xid_version.data = (uint8_t *) "\x00";
 	xid_version.data_len = 1;
 
+	n201_u = htons(lle->params.n201_u);
 	xid_n201u.type = GPRS_LLC_XID_T_N201_U;
-	xid_n201u.data = (uint8_t *) "\x05\xf0";
+	xid_n201u.data = (uint8_t *) &n201_u;
 	xid_n201u.data_len = 2;
 
+	n201_i = htons(lle->params.n201_i);
 	xid_n201i.type = GPRS_LLC_XID_T_N201_I;
-	xid_n201i.data = (uint8_t *) "\x05\xf0";
+	xid_n201i.data = (uint8_t *) &n201_i;
 	xid_n201i.data_len = 2;
 
 	/* Add locally managed XID Fields */
