@@ -383,6 +383,14 @@ int gprs_gb_parse_dtap(uint8_t *data, size_t data_len,
 		parse_ctx->invalidate_tlli = 1;
 		break;
 
+	case GSM48_MT_GSM_DEACT_PDP_REQ:
+		parse_ctx->llc_msg_name = "DEACT_PDP_REQ";
+		break;
+
+	case GSM48_MT_GSM_DEACT_PDP_ACK:
+		parse_ctx->llc_msg_name = "DEACT_PDP_ACK";
+		break;
+
 	default:
 		LOGP(DLLC, LOGL_NOTICE,
 		     "Unhandled GSM 04.08 message type %s for protocol discriminator %s.\n",
