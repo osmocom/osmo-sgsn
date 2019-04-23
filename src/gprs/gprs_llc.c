@@ -860,6 +860,9 @@ static int gprs_llc_hdr_rx(struct gprs_llc_hdr_parsed *gph,
 		if ((gph->seq_tx + 1) / 512)
 			lle->oc_ui_recv += 512;
 		break;
+	case GPRS_LLC_NULL:
+		LOGP(DLLC, LOGL_DEBUG, "TLLI=%08x sends us LLC NULL\n", lle->llme ? lle->llme->tlli : -1);
+		break;
 	default:
 		LOGP(DLLC, LOGL_NOTICE, "Unhandled command: %d\n", gph->cmd);
 		break;
