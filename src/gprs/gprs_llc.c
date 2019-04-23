@@ -44,6 +44,7 @@
 static struct gprs_llc_llme *llme_alloc(uint32_t tlli);
 static int gprs_llc_tx_xid(struct gprs_llc_lle *lle, struct msgb *msg,
 			   int command);
+static int gprs_llc_tx_dm(struct gprs_llc_lle *lle);
 static int gprs_llc_tx_u(struct msgb *msg, uint8_t sapi,
 			 int command, enum gprs_llc_u_cmd u_cmd, int pf_bit);
 
@@ -676,6 +677,18 @@ static int gprs_llc_tx_xid(struct gprs_llc_lle *lle, struct msgb *msg,
 	return gprs_llc_tx_u(msg, lle->sapi, command, GPRS_LLC_U_XID, 1);
 }
 
+static int gprs_llc_tx_dm(struct gprs_llc_lle *lle)
+{
+	struct msgb *msg = msgb_alloc_headroom(4096, 1024, "LLC_DM");
+
+	/* copy identifiers from LLE to ensure lower layers can route */
+	msgb_tlli(msg) = lle->llme->tlli;
+	msgb_bvci(msg) = lle->llme->bvci;
+	msgb_nsei(msg) = lle->llme->nsei;
+
+	return gprs_llc_tx_u(msg, lle->sapi, 0, GPRS_LLC_U_DM_RESP, 1);
+}
+
 /* encrypt information field + FCS, if needed! */
 static int apply_gea(struct gprs_llc_lle *lle, uint16_t crypt_len, uint16_t nu,
 		     uint32_t oc, uint8_t sapi, uint8_t *fcs, uint8_t *data)
@@ -802,6 +815,8 @@ static int gprs_llc_hdr_rx(struct gprs_llc_hdr_parsed *gph,
 			   struct gprs_llc_lle *lle)
 {
 	switch (gph->cmd) {
+#if 0
+	/* we don't fully imoplement ABM, so refuse it properly (OS#3953) */
 	case GPRS_LLC_SABM: /* Section 6.4.1.1 */
 		lle->v_sent = lle->v_ack = lle->v_recv = 0;
 		if (lle->state == GPRS_LLES_ASSIGNED_ADM) {
@@ -827,6 +842,13 @@ static int gprs_llc_hdr_rx(struct gprs_llc_hdr_parsed *gph,
 		break;
 	case GPRS_LLC_FRMR: /* Section 6.4.1.5 */
 		break;
+#else
+	case GPRS_LLC_SABM:
+	case GPRS_LLC_DISC:
+		/* send DM to properly signal we don't do ABM */
+		gprs_llc_tx_dm(lle);
+		break;
+#endif
 	case GPRS_LLC_XID: /* Section 6.4.1.6 */
 		rx_llc_xid(lle, gph);
 		break;
