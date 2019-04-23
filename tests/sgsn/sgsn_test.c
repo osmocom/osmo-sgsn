@@ -1575,6 +1575,22 @@ static void test_ggsn_selection(void)
 	cleanup_test();
 }
 
+bool pdp_status_has_active_nsapis(const uint8_t *pdp_status, const size_t pdp_status_len);
+
+static void test_pdp_status_has_active_nsapis(void)
+{
+	const size_t pdp_status_len = 2;
+	const uint8_t pdp_status1[] = { 0b00100000, 0b00000000 }; /* PDP NSAPI 5 active */
+	const uint8_t pdp_status2[] = { 0b00000000, 0b00000000 }; /* no active PDP NSAPI */
+	const uint8_t pdp_status3[] = { 0b00000000, 0b00000001 }; /* PDP NSAPI 8 active */
+
+	printf("Testing pdp_status_has_active_nsapis\n");
+
+	OSMO_ASSERT(pdp_status_has_active_nsapis(pdp_status1, pdp_status_len));
+	OSMO_ASSERT(!pdp_status_has_active_nsapis(pdp_status2, pdp_status_len));
+	OSMO_ASSERT(pdp_status_has_active_nsapis(pdp_status3, pdp_status_len));
+}
+
 static struct log_info_cat gprs_categories[] = {
 	[DMM] = {
 		.name = "DMM",
@@ -1657,6 +1673,7 @@ int main(int argc, char **argv)
 	test_gmm_cancel();
 	test_apn_matching();
 	test_ggsn_selection();
+	test_pdp_status_has_active_nsapis();
 	printf("Done\n");
 
 	talloc_report_full(osmo_sgsn_ctx, stderr);

@@ -24,4 +24,5 @@ Testing GMM reject
 Testing cancellation
 Testing APN matching
 Testing GGSN selection
+Testing pdp_status_has_active_nsapis
 Done

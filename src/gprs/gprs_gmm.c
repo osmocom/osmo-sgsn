@@ -1616,6 +1616,19 @@ static void process_ms_ctx_status(struct sgsn_mm_ctx *mmctx,
 	}
 }
 
+/* 3GPP TS 24.008 Section 4.7.13.4 Service request procedure not accepted by the
+ * network. Returns true if MS has active PDP contexts in pdp_status */
+bool pdp_status_has_active_nsapis(const uint8_t *pdp_status, const size_t pdp_status_len)
+{
+	size_t i;
+
+	for (i = 0; i < pdp_status_len; i++)
+		if (pdp_status[i] != 0)
+			return true;
+
+	return false;
+}
+
 /* Chapter 9.4.14: Routing area update request */
 static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 				   struct gprs_llc_llme *llme)
@@ -1896,12 +1909,23 @@ static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 
 	ctx->iu.service.type = service_type;
 
-	/* TODO: Handle those only in case of accept? */
 	/* Look at PDP Context Status IE and see if MS's view of
 	 * activated/deactivated NSAPIs agrees with our view */
 	if (TLVP_PRESENT(&tp, GSM48_IE_GMM_PDP_CTX_STATUS)) {
 		const uint8_t *pdp_status = TLVP_VAL(&tp, GSM48_IE_GMM_PDP_CTX_STATUS);
+		const size_t pdp_status_len = TLVP_LEN(&tp, GSM48_IE_GMM_PDP_CTX_STATUS);
+
 		process_ms_ctx_status(ctx, pdp_status);
+
+		/* 3GPP TS 24.008 Section 4.7.13.4 Service request procedure not
+		 * accepted by the network. Cause #40. If MS has PDP Contexts in
+		 * Active state in pdp_status but there is no PDP contexts on
+		 * SGSN side then Reject with the cause will force the mobile to
+		 * reset PDP contexts */
+		if (llist_empty(&ctx->pdp_list) && pdp_status_has_active_nsapis(pdp_status, pdp_status_len)) {
+			reject_cause = GMM_CAUSE_NO_PDP_ACTIVATED;
+			goto rejected;
+		}
 	}
 
 
