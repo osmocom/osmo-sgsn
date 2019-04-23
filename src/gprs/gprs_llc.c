@@ -945,9 +945,6 @@ int gprs_llc_rcvmsg(struct msgb *msg, struct tlv_parsed *tv)
 		LOGP(DLLC, LOGL_INFO, "Dropping frame with invalid FCS\n");
 		return -EIO;
 	}
-	/* set l3 layer & remove the fcs */
-	msg->l3h = llhp.data;
-	msgb_l3trim(msg, llhp.data_len);
 
 	/* Update LLE's (BVCI, NSEI) tuple */
 	lle->llme->bvci = msgb_bvci(msg);
@@ -957,6 +954,14 @@ int gprs_llc_rcvmsg(struct msgb *msg, struct tlv_parsed *tv)
 	rc = gprs_llc_hdr_rx(&llhp, lle);
 	if (rc < 0)
 		return rc;
+
+	/* there are many frame types that don't carry user information
+	 * and which hence have llhp.data = NULL */
+	if (llhp.data)  {
+		/* set l3 layer & remove the fcs */
+		msg->l3h = llhp.data;
+		msgb_l3trim(msg, llhp.data_len);
+	}
 
 	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_LLC_UL_PACKETS]);
 	rate_ctr_add(&sgsn->rate_ctrs->ctr[CTR_LLC_UL_BYTES], msg->len);
