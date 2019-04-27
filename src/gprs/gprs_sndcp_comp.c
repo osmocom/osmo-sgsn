@@ -160,16 +160,23 @@ void gprs_sndcp_comp_free(struct llist_head *comp_entities)
 
 	llist_for_each_entry(comp_entity, comp_entities, list) {
 		/* Free compression entity */
-		if (comp_entity->compclass == SNDCP_XID_PROTOCOL_COMPRESSION) {
+		switch (comp_entity->compclass) {
+		case SNDCP_XID_PROTOCOL_COMPRESSION:
 			LOGP(DSNDCP, LOGL_INFO,
 			     "Deleting header compression entity %d ...\n",
 			     comp_entity->entity);
 			gprs_sndcp_pcomp_term(comp_entity);
-		} else {
+			break;
+		case SNDCP_XID_DATA_COMPRESSION:
 			LOGP(DSNDCP, LOGL_INFO,
 			     "Deleting data compression entity %d ...\n",
 			     comp_entity->entity);
 			gprs_sndcp_dcomp_term(comp_entity);
+			break;
+		default:
+			LOGP(DSNDCP, LOGL_INFO,
+			     "Invalid compression class %d!\n", comp_entity->compclass);
+			OSMO_ASSERT(false);
 		}
 	}
 
