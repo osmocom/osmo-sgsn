@@ -1120,6 +1120,14 @@ int sndcp_sn_xid_ind(struct gprs_llc_xid_field *xid_field_indication,
 	OSMO_ASSERT(xid_field_response);
 	OSMO_ASSERT(lle);
 
+	/* Some phones send zero byte length SNDCP frames
+	 * and do require a confirmation response. */
+	if (xid_field_indication->data_len == 0) {
+		xid_field_response->type = GPRS_LLC_XID_T_L3_PAR;
+		xid_field_response->data_len = 0;
+		return 0;
+	}
+
 	/* Parse SNDCP-CID XID-Field */
 	comp_fields = gprs_sndcp_parse_xid(&version, lle->llme,
 					   xid_field_indication->data,
