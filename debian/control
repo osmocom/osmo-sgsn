@@ -20,7 +20,8 @@ Build-Depends: debhelper (>=9),
                libosmo-sccp-dev,
                libosmo-sigtran-dev,
                libosmo-netif-dev,
-               libosmo-gsup-client-dev
+               libosmo-gsup-client-dev,
+               osmo-gsm-manuals-dev
 Standards-Version: 3.9.8
 Vcs-Git: git://git.osmocom.org/osmo-sgsn.git
 Vcs-Browser: https://git.osmocom.org/osmo-sgsn
@@ -67,3 +68,12 @@ Section: debug
 Priority: extra
 Depends: osmo-gbproxy (= ${binary:Version}), ${misc:Depends}
 Description: Debug symbols for Osmocom GPRS Gb Interface Proxy
+
+Package: osmo-sgsn-doc
+Architecture: all
+Section: doc
+Priority: optional
+Depends: ${misc:Depends}
+Description: ${misc:Package} PDF documentation
+ Various manuals: user manual, VTY reference manual and/or
+ protocol/interface manuals.
