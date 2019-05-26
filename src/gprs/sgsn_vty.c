@@ -211,6 +211,8 @@ static int config_write_sgsn(struct vty *vty)
 	if (g_cfg->gsup_server_port)
 		vty_out(vty, " gsup remote-port %d%s",
 			g_cfg->gsup_server_port, VTY_NEWLINE);
+	vty_out(vty, " authentication %s%s",
+		g_cfg->require_authentication ? "required" : "optional", VTY_NEWLINE);
 	vty_out(vty, " auth-policy %s%s",
 		get_value_string(sgsn_auth_pol_strs, g_cfg->auth_policy),
 		VTY_NEWLINE);
@@ -693,6 +695,27 @@ DEFUN(cfg_encrypt, cfg_encrypt_cmd,
 	return CMD_SUCCESS;
 }
 
+DEFUN(cfg_authentication, cfg_authentication_cmd,
+      "authentication (optional|required)",
+      "Whether to enforce MS authentication in GERAN\n"
+      "Allow MS to attach via GERAN without authentication\n"
+      "Always require authentication\n")
+{
+	int required = (argv[0][0] == 'r');
+
+	if (vty->type != VTY_FILE) {
+		if (g_cfg->auth_policy != SGSN_AUTH_POLICY_REMOTE && required) {
+			vty_out(vty, "%% Authentication is not possible without HLR, "
+				     "consider setting 'auth-policy' to 'remote'%s",
+				     VTY_NEWLINE);
+			return CMD_WARNING;
+		}
+	}
+
+	g_cfg->require_authentication = required;
+	return CMD_SUCCESS;
+}
+
 DEFUN(cfg_auth_policy, cfg_auth_policy_cmd,
 	"auth-policy (accept-all|closed|acl-only|remote)",
 	"Configure the Authorization policy of the SGSN. This setting determines which subscribers are"
@@ -705,8 +728,11 @@ DEFUN(cfg_auth_policy, cfg_auth_policy_cmd,
 	int val = get_string_value(sgsn_auth_pol_strs, argv[0]);
 	OSMO_ASSERT(val >= SGSN_AUTH_POLICY_OPEN && val <= SGSN_AUTH_POLICY_REMOTE);
 	g_cfg->auth_policy = val;
-	g_cfg->require_authentication = (val == SGSN_AUTH_POLICY_REMOTE);
 	g_cfg->require_update_location = (val == SGSN_AUTH_POLICY_REMOTE);
+
+	/* Authentication is not possible without HLR */
+	if (val != SGSN_AUTH_POLICY_REMOTE)
+		g_cfg->require_authentication = 0;
 
 	return CMD_SUCCESS;
 }
@@ -1391,6 +1417,7 @@ int sgsn_vty_init(struct sgsn_config *cfg)
 	install_element(SGSN_NODE, &cfg_ggsn_no_echo_interval_cmd);
 	install_element(SGSN_NODE, &cfg_imsi_acl_cmd);
 	install_element(SGSN_NODE, &cfg_auth_policy_cmd);
+	install_element(SGSN_NODE, &cfg_authentication_cmd);
 	install_element(SGSN_NODE, &cfg_encrypt_cmd);
 	install_element(SGSN_NODE, &cfg_gsup_ipa_name_cmd);
 	install_element(SGSN_NODE, &cfg_gsup_remote_ip_cmd);
@@ -1460,6 +1487,14 @@ int sgsn_parse_config(const char *config_file)
 	if (rc < 0) {
 		fprintf(stderr, "Failed to parse the config file: '%s'\n", config_file);
 		return rc;
+	}
+
+	if (g_cfg->auth_policy != SGSN_AUTH_POLICY_REMOTE
+	    && g_cfg->require_authentication) {
+		fprintf(stderr, "Configuration error:"
+			" authentication is not possible without HLR."
+			" Consider setting 'auth-policy' to 'remote'\n");
+		return -EINVAL;
 	}
 
 	if (g_cfg->auth_policy == SGSN_AUTH_POLICY_REMOTE

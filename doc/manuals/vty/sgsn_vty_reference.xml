@@ -2230,6 +2230,13 @@
         <param name='remote' doc='Use remote subscription data only (HLR)' />
       </params>
     </command>
+    <command id='authentication (optional|required)'>
+      <params>
+        <param name='authentication' doc='Whether to enforce MS authentication in GERAN' />
+        <param name='optional' doc='Allow MS to attach via GERAN without authentication' />
+        <param name='required' doc='Always require authentication' />
+      </params>
+    </command>
     <command id='encryption (GEA0|GEA1|GEA2|GEA3|GEA4)'>
       <params>
         <param name='encryption' doc='Set encryption algorithm for SGSN' />
