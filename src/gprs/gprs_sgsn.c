@@ -492,12 +492,15 @@ void sgsn_pdp_ctx_free(struct sgsn_pdp_ctx *pdp)
 
 void sgsn_ggsn_ctx_check_echo_timer(struct sgsn_ggsn_ctx *ggc)
 {
-	if (llist_empty(&ggc->pdp_list) || ggc->echo_interval <= 0) {
-		if (osmo_timer_pending(&ggc->echo_timer))
-			osmo_timer_del(&ggc->echo_timer);
-	} else {
-		if (!osmo_timer_pending(&ggc->echo_timer))
+	bool pending = osmo_timer_pending(&ggc->echo_timer);
+
+	/* Only enable if allowed by policy and at least 1 pdp ctx exists against ggsn */
+	if (!llist_empty(&ggc->pdp_list) && ggc->echo_interval > 0) {
+		if (!pending)
 			osmo_timer_schedule(&ggc->echo_timer, ggc->echo_interval, 0);
+	} else {
+		if (pending)
+			osmo_timer_del(&ggc->echo_timer);
 	}
 }
 
@@ -754,9 +757,8 @@ int sgsn_ggsn_ctx_drop_all_pdp_except(struct sgsn_ggsn_ctx *ggsn, struct sgsn_pd
 
 void sgsn_ggsn_ctx_add_pdp(struct sgsn_ggsn_ctx *ggc, struct sgsn_pdp_ctx *pdp)
 {
-	sgsn_ggsn_ctx_check_echo_timer(ggc);
-
 	llist_add(&pdp->ggsn_list, &ggc->pdp_list);
+	sgsn_ggsn_ctx_check_echo_timer(ggc);
 }
 void sgsn_ggsn_ctx_remove_pdp(struct sgsn_ggsn_ctx *ggc, struct sgsn_pdp_ctx *pdp)
 {
