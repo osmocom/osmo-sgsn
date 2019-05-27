@@ -381,7 +381,7 @@ DEFUN(cfg_ggsn_echo_interval, cfg_ggsn_echo_interval_cmd,
 	ggc->echo_interval = atoi(argv[1]);
 
 	if (ggc->echo_interval < 60)
-		vty_out(vty, "%% 3GPP TS 29.060 section states inteval should " \
+		vty_out(vty, "%% 3GPP TS 29.060 section 7.2.1 states interval should " \
 			     "not be lower than 60 seconds, use this value for " \
 			     "testing purposes only!%s", VTY_NEWLINE);
 
