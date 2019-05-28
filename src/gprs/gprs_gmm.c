@@ -67,6 +67,9 @@
 
 #define PTMSI_ALLOC
 
+/* 3GPP TS 04.08 sec 6.1.3.4.3(.a) "Abnormal cases" */
+#define T339X_MAX_RETRANS 4
+
 extern struct sgsn_instance *sgsn;
 extern void *tall_sgsn_ctx;
 
@@ -2797,8 +2800,8 @@ static void pdpctx_timer_cb(void *_pdp)
 
 	switch (pdp->T) {
 	case 3395:	/* waiting for PDP CTX DEACT ACK */
-		if (pdp->num_T_exp >= 5) {
-			LOGPDPCTXP(LOGL_NOTICE, pdp, "T3395 expired >= 5 times\n");
+		if (pdp->num_T_exp > T339X_MAX_RETRANS) {
+			LOGPDPCTXP(LOGL_NOTICE, pdp, "T3395 expired > %d times\n", T339X_MAX_RETRANS);
 			pdp->state = PDP_STATE_INACTIVE;
 			if (pdp->ggsn)
 				sgsn_delete_pdp_ctx(pdp);
