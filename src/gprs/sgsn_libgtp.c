@@ -153,7 +153,7 @@ struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
 
 	imsi_ui64 = imsi_str2gtp(mmctx->imsi);
 
-	rc = pdp_newpdp(&pdp, imsi_ui64, nsapi, NULL);
+	rc = gtp_pdp_newpdp(ggsn->gsn, &pdp, imsi_ui64, nsapi, NULL);
 	if (rc) {
 		LOGP(DGPRS, LOGL_ERROR, "Out of libgtp PDP Contexts\n");
 		return NULL;
