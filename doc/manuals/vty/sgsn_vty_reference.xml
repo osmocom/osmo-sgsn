@@ -187,7 +187,7 @@
         <param name='MASK' doc='List of logging categories to log, e.g. &apos;abc:mno:xyz&apos;. Available log categories depend on the specific application, refer to the &apos;logging level&apos; command. Optionally add individual log levels like &apos;abc,1:mno,3:xyz,5&apos;, where the level numbers are LOGL_DEBUG=1 LOGL_INFO=3 LOGL_NOTICE=5 LOGL_ERROR=7 LOGL_FATAL=8' />
       </params>
     </command>
-    <command id='logging level (|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|slhc|ranap|sua|v42bis|lglobal|llapd|linp|lmux|lmi|lmib|lsms|lctrl|lgtp|lstats|lgsup|loap|lss7|lsccp|lsua|lm3ua|lmgcp|ljibuf) (debug|info|notice|error|fatal)'>
+    <command id='logging level (|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|slhc|ranap|sua|v42bis|lglobal|llapd|linp|lmux|lmi|lmib|lsms|lctrl|lgtp|lstats|lgsup|loap|lss7|lsccp|lsua|lm3ua|lmgcp|ljibuf|lrspro) (debug|info|notice|error|fatal)'>
       <params>
         <param name='logging' doc='Configure logging' />
         <param name='level' doc='Set the log level for a specified category' />
@@ -222,6 +222,7 @@
         <param name='lm3ua' doc='libosmo-sigtran MTP3 User Adaptation' />
         <param name='lmgcp' doc='libosmo-mgcp Media Gateway Control Protocol' />
         <param name='ljibuf' doc='libosmo-netif Jitter Buffer' />
+        <param name='lrspro' doc='Remote SIM protocol' />
         <param name='debug' doc='Log debug messages and higher levels' />
         <param name='info' doc='Log informational messages and higher levels' />
         <param name='notice' doc='Log noticeable messages and higher levels' />
@@ -733,7 +734,7 @@
         <param name='MASK' doc='List of logging categories to log, e.g. &apos;abc:mno:xyz&apos;. Available log categories depend on the specific application, refer to the &apos;logging level&apos; command. Optionally add individual log levels like &apos;abc,1:mno,3:xyz,5&apos;, where the level numbers are LOGL_DEBUG=1 LOGL_INFO=3 LOGL_NOTICE=5 LOGL_ERROR=7 LOGL_FATAL=8' />
       </params>
     </command>
-    <command id='logging level (|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|slhc|ranap|sua|v42bis|lglobal|llapd|linp|lmux|lmi|lmib|lsms|lctrl|lgtp|lstats|lgsup|loap|lss7|lsccp|lsua|lm3ua|lmgcp|ljibuf) (debug|info|notice|error|fatal)'>
+    <command id='logging level (|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|slhc|ranap|sua|v42bis|lglobal|llapd|linp|lmux|lmi|lmib|lsms|lctrl|lgtp|lstats|lgsup|loap|lss7|lsccp|lsua|lm3ua|lmgcp|ljibuf|lrspro) (debug|info|notice|error|fatal)'>
       <params>
         <param name='logging' doc='Configure logging' />
         <param name='level' doc='Set the log level for a specified category' />
@@ -768,6 +769,7 @@
         <param name='lm3ua' doc='libosmo-sigtran MTP3 User Adaptation' />
         <param name='lmgcp' doc='libosmo-mgcp Media Gateway Control Protocol' />
         <param name='ljibuf' doc='libosmo-netif Jitter Buffer' />
+        <param name='lrspro' doc='Remote SIM protocol' />
         <param name='debug' doc='Log debug messages and higher levels' />
         <param name='info' doc='Log informational messages and higher levels' />
         <param name='notice' doc='Log noticeable messages and higher levels' />
@@ -1488,7 +1490,8 @@
         <param name='category' doc='Configure log message' />
         <param name='0' doc='Don&apos;t prefix each log message' />
         <param name='1' doc='Prefix each log message with category/subsystem name' />
-      </params>    </command>
+      </params>
+    </command>
     <command id='logging print category-hex (0|1)'>
       <params>
         <param name='logging' doc='Configure logging' />
@@ -1518,7 +1521,7 @@
         <param name='[last]' doc='Log source file info at the end of a log line. If omitted, log source file info just before the log text.' />
       </params>
     </command>
-    <command id='logging level (|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|slhc|ranap|sua|v42bis|lglobal|llapd|linp|lmux|lmi|lmib|lsms|lctrl|lgtp|lstats|lgsup|loap|lss7|lsccp|lsua|lm3ua|lmgcp|ljibuf) (debug|info|notice|error|fatal)'>
+    <command id='logging level (|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|slhc|ranap|sua|v42bis|lglobal|llapd|linp|lmux|lmi|lmib|lsms|lctrl|lgtp|lstats|lgsup|loap|lss7|lsccp|lsua|lm3ua|lmgcp|ljibuf|lrspro) (debug|info|notice|error|fatal)'>
       <params>
         <param name='logging' doc='Configure logging' />
         <param name='level' doc='Set the log level for a specified category' />
@@ -1553,6 +1556,7 @@
         <param name='lm3ua' doc='libosmo-sigtran MTP3 User Adaptation' />
         <param name='lmgcp' doc='libosmo-mgcp Media Gateway Control Protocol' />
         <param name='ljibuf' doc='libosmo-netif Jitter Buffer' />
+        <param name='lrspro' doc='Remote SIM protocol' />
         <param name='debug' doc='Log debug messages and higher levels' />
         <param name='info' doc='Log informational messages and higher levels' />
         <param name='notice' doc='Log noticeable messages and higher levels' />
@@ -1696,10 +1700,11 @@
         <param name='login' doc='Enable password checking' />
       </params>
     </command>
-    <command id='bind A.B.C.D'>
+    <command id='bind A.B.C.D [&lt;0-65535&gt;]'>
       <params>
         <param name='bind' doc='Accept VTY telnet connections on local interface' />
         <param name='A.B.C.D' doc='Local interface IP address (default: 127.0.0.1)' />
+        <param name='[&lt;0-65535&gt;]' doc='Local TCP port number' />
       </params>
     </command>
   </node>
@@ -1762,7 +1767,7 @@
         <param name='&lt;0-65535&gt;' doc='NS Entity ID (NSEI)' />
       </params>
     </command>
-    <command id='timer (tns-block|tns-block-retries|tns-reset|tns-reset-retries|tns-test|tns-alive|tns-alive-retries) &lt;0-65535&gt;'>
+    <command id='timer (tns-block|tns-block-retries|tns-reset|tns-reset-retries|tns-test|tns-alive|tns-alive-retries|tsns-prov) &lt;0-65535&gt;'>
       <params>
         <param name='timer' doc='Network Service Timer' />
         <param name='tns-block' doc='(un)blocking Timer (Tns-block) timeout' />
@@ -1772,6 +1777,7 @@
         <param name='tns-test' doc='Test Timer (Tns-test) timeout' />
         <param name='tns-alive' doc='Alive Timer (Tns-alive) timeout' />
         <param name='tns-alive-retries' doc='Alive Timer (Tns-alive) number of retries' />
+        <param name='tsns-prov' doc='SNS Provision Timer (Tsns-prov) timeout' />
         <param name='&lt;0-65535&gt;' doc='Timer Value' />
       </params>
     </command>
@@ -2234,6 +2240,13 @@
         <param name='GEA4' doc='Use GEA4' />
       </params>
     </command>
+    <command id='gsup ipa-name NAME'>
+      <params>
+        <param name='gsup' doc='GSUP Parameters' />
+        <param name='ipa-name' doc='Set the IPA name of this SGSN' />
+        <param name='NAME' doc='A unique name for this SGSN. For example: PLMN + redundancy server number: SGSN-901-70-0. This name is used for GSUP routing and must be set if more than one SGSN is connected to the network. The default is &apos;SGSN-00-00-00-00-00-00&apos;.' />
+      </params>
+    </command>
     <command id='gsup remote-ip A.B.C.D'>
       <params>
         <param name='gsup' doc='GSUP Parameters' />
@@ -2325,7 +2338,8 @@
         <param name='no' doc='Negate a command or set its defaults' />
         <param name='cdr' doc='CDR' />
         <param name='trap' doc='Disable sending CDR via TRAP CTRL messages' />
-      </params>    </command>
+      </params>
+    </command>
     <command id='cdr interval &lt;1-2147483647&gt;'>
       <params>
         <param name='cdr' doc='CDR' />
