@@ -211,8 +211,8 @@ static int config_write_sgsn(struct vty *vty)
 	if (g_cfg->gsup_server_port)
 		vty_out(vty, " gsup remote-port %d%s",
 			g_cfg->gsup_server_port, VTY_NEWLINE);
-	vty_out(vty, " authentication %s%s",
-		g_cfg->require_authentication ? "required" : "optional", VTY_NEWLINE);
+	if (g_cfg->auth_policy == SGSN_AUTH_POLICY_REMOTE && !g_cfg->require_authentication)
+		vty_out(vty, " authentication optional%s", VTY_NEWLINE);
 	vty_out(vty, " auth-policy %s%s",
 		get_value_string(sgsn_auth_pol_strs, g_cfg->auth_policy),
 		VTY_NEWLINE);
@@ -697,9 +697,9 @@ DEFUN(cfg_encrypt, cfg_encrypt_cmd,
 
 DEFUN(cfg_authentication, cfg_authentication_cmd,
       "authentication (optional|required)",
-      "Whether to enforce MS authentication in GERAN\n"
-      "Allow MS to attach via GERAN without authentication\n"
-      "Always require authentication\n")
+      "Whether to enforce MS authentication in GERAN (only with auth-policy remote)\n"
+      "Allow MS to attach via GERAN without authentication (default and only possible value for non-remote auth-policy)\n"
+      "Always require authentication (only available for auth-policy remote, default with that auth-policy)\n")
 {
 	int required = (argv[0][0] == 'r');
 
@@ -729,10 +729,6 @@ DEFUN(cfg_auth_policy, cfg_auth_policy_cmd,
 	OSMO_ASSERT(val >= SGSN_AUTH_POLICY_OPEN && val <= SGSN_AUTH_POLICY_REMOTE);
 	g_cfg->auth_policy = val;
 	g_cfg->require_update_location = (val == SGSN_AUTH_POLICY_REMOTE);
-
-	/* Authentication is not possible without HLR */
-	if (val != SGSN_AUTH_POLICY_REMOTE)
-		g_cfg->require_authentication = 0;
 
 	return CMD_SUCCESS;
 }
@@ -1487,14 +1483,6 @@ int sgsn_parse_config(const char *config_file)
 	if (rc < 0) {
 		fprintf(stderr, "Failed to parse the config file: '%s'\n", config_file);
 		return rc;
-	}
-
-	if (g_cfg->auth_policy != SGSN_AUTH_POLICY_REMOTE
-	    && g_cfg->require_authentication) {
-		fprintf(stderr, "Configuration error:"
-			" authentication is not possible without HLR."
-			" Consider setting 'auth-policy' to 'remote'\n");
-		return -EINVAL;
 	}
 
 	if (g_cfg->auth_policy == SGSN_AUTH_POLICY_REMOTE

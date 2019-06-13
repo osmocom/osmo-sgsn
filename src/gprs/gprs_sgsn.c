@@ -987,6 +987,7 @@ struct sgsn_instance *sgsn_instance_alloc(void *talloc_ctx)
 	inst = talloc_zero(talloc_ctx, struct sgsn_instance);
 	inst->cfg.gtp_statedir = talloc_strdup(inst, "./");
 	inst->cfg.auth_policy = SGSN_AUTH_POLICY_CLOSED;
+	inst->cfg.require_authentication = true; /* only applies if auth_policy is REMOTE */
 	inst->cfg.gsup_server_port = OSMO_GSUP_PORT;
 	return inst;
 }

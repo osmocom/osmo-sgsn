@@ -78,7 +78,9 @@ struct sgsn_config {
 	struct sockaddr_in gsup_server_addr;
 	int gsup_server_port;
 
+	/* Only meaningful if auth_policy is SGSN_AUTH_POLICY_REMOTE */
 	int require_authentication;
+
 	int require_update_location;
 
 	/* CDR configuration */
