@@ -692,12 +692,12 @@ restart:
 	 * Alternatively, a freeze list could be used if another PRNG is used
 	 * or when this approach proves to be not sufficient.
 	 */
-	if (ptmsi >= 0xC0000000) {
+	if (ptmsi >= GSM23003_TMSI_SGSN_MASK) {
 		if (!max_retries--)
 			goto failed;
 		goto restart;
 	}
-	ptmsi |= 0xC0000000;
+	ptmsi |= GSM23003_TMSI_SGSN_MASK;
 
 	if (ptmsi == GSM_RESERVED_TMSI) {
 		if (!max_retries--)

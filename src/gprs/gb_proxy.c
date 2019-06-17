@@ -243,7 +243,7 @@ uint32_t gbproxy_make_bss_ptmsi(struct gbproxy_peer *peer,
 				break;
 			}
 
-			bss_ptmsi = bss_ptmsi | 0xC0000000;
+			bss_ptmsi = bss_ptmsi | GSM23003_TMSI_SGSN_MASK;
 
 			if (gbproxy_link_info_by_ptmsi(peer, bss_ptmsi))
 				bss_ptmsi = GSM_RESERVED_TMSI;
