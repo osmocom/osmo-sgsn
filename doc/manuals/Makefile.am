@@ -1,6 +1,7 @@
 EXTRA_DIST = osmosgsn-usermanual.adoc \
     osmosgsn-usermanual-docinfo.xml \
     osmosgsn-vty-reference.xml \
+    regen_doc.sh \
     chapters \
     vty
 
