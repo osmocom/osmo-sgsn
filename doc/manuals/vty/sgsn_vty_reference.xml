@@ -2460,7 +2460,7 @@
     <command id='compression rfc1144 active slots &lt;1-256&gt;'>
       <params>
         <param name='compression' doc='Configure compression' />
-        <param name='rfc1144' doc='RFC1144 Header compresion scheme' />
+        <param name='rfc1144' doc='RFC1144 Header compression scheme' />
         <param name='active' doc='Compression is actively proposed' />
         <param name='slots' doc='Number of compression state slots' />
         <param name='&lt;1-256&gt;' doc='Number of compression state slots' />
@@ -2469,7 +2469,7 @@
     <command id='compression rfc1144 passive'>
       <params>
         <param name='compression' doc='Configure compression' />
-        <param name='rfc1144' doc='RFC1144 Header compresion scheme' />
+        <param name='rfc1144' doc='RFC1144 Header compression scheme' />
         <param name='passive' doc='Compression is available on request' />
       </params>
     </command>
@@ -2483,7 +2483,7 @@
     <command id='compression v42bis active direction (ms|sgsn|both) codewords &lt;512-65535&gt; strlen &lt;6-250&gt;'>
       <params>
         <param name='compression' doc='Configure compression' />
-        <param name='v42bis' doc='V.42bis data compresion scheme' />
+        <param name='v42bis' doc='V.42bis data compression scheme' />
         <param name='active' doc='Compression is actively proposed' />
         <param name='direction' doc='Direction in which the compression shall be active (p0)' />
         <param name='ms' doc='Compress ms-&gt;sgsn direction only' />
@@ -2498,7 +2498,7 @@
     <command id='compression v42bis passive'>
       <params>
         <param name='compression' doc='Configure compression' />
-        <param name='v42bis' doc='V.42bis data compresion scheme' />
+        <param name='v42bis' doc='V.42bis data compression scheme' />
         <param name='passive' doc='Compression is available on request' />
       </params>
     </command>
