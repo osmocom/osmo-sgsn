@@ -77,4 +77,5 @@ if [ "$WITH_MANUALS" = "1" ] && [ "$PUBLISH" = "1" ]; then
 	make -C "$base/doc/manuals" publish
 fi
 
+$MAKE maintainer-clean
 osmo-clean-workspace.sh
