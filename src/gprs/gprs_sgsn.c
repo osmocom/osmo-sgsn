@@ -920,7 +920,8 @@ struct sgsn_ggsn_ctx *sgsn_mm_ctx_find_ggsn_ctx(struct sgsn_mm_ctx *mmctx,
 		LOGMMCTXP(LOGL_NOTICE, mmctx,
 			"No static GGSN configured. Selected APN '%s'\n",
 			selected_apn_str);
-			return NULL;
+		*gsm_cause = GSM_CAUSE_MISSING_APN;
+		return NULL;
 	}
 
 	LOGMMCTXP(LOGL_INFO, mmctx,
