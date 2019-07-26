@@ -140,7 +140,7 @@ static void print_help()
 	printf("  -c --config-file filename The config file to use [%s]\n", CONFIG_FILE_DEFAULT);
 	printf("  -s --disable-color\n");
 	printf("  -T --timestamp Prefix every log line with a timestamp\n");
-	printf("  -V --version. Print the version of OpenBSC.\n");
+	printf("  -V --version. Print the version.\n");
 	printf("  -e --log-level number. Set a global loglevel.\n");
 }
 

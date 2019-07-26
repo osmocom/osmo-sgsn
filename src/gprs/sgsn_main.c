@@ -209,6 +209,7 @@ static void print_help(void)
 {
 	printf("Some useful help...\n");
 	printf("  -h --help\tthis text\n");
+	printf("  -V --version\tPrint the version\n");
 	printf("  -D --daemonize\tFork the process into a background daemon\n");
 	printf("  -d option --debug\tenable Debugging\n");
 	printf("  -s --disable-color\n");

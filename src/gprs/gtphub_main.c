@@ -238,7 +238,7 @@ static void print_help(struct cmdline_cfg *ccfg)
 	printf("  -e,--log-level <nr>      Set a global log level.\n");
 	printf("  -r,--restart-file <path> File for counting restarts [%s].\n",
 	       ccfg->restart_counter_file);
-	printf("  -V,--version         Print the version number.\n");
+	printf("  -V,--version         Print the version.\n");
 }
 
 static void list_categories(void)
