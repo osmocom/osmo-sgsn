@@ -74,14 +74,13 @@ The LLC (Logical Link Control) implementation of OsmoSGSN only supports
 non-acknowledged mode, as this is the most common use case in real-world
 GPRS networks.
 
-Furthermore, it does not support IP header nor payload compression at
-this point.  Addition of those features is subject to customer demand or
-user/customer contributions.
+It does support both TCP/IP header compression according to RFC1144 and
+payload compression according to V.42bis
 
-The LLC implementation does support LLC encryption.  However, as no HLR
-access is implemented yet, there is no way to enable/configure
-per-subscriber specific keys.
-
+The LLC implementation does support LLC encryption with ciphers GEA3 and GEA4.
+For encryption to work the auth policy needs to be set to remote and the SGSN
+connected to an HLR containing the subscriber data including key material.
+Other auth policys will not work with encryption.
 
 ==== Session Management Implementation
 
@@ -93,11 +92,8 @@ networks while skipping the more esoteric features.
 
 Multiple PDP contexts can be attached by a single MS.
 
-Currently, all PDP contexts are routed to the same GGSN, irrespective of
-the APN used/configured in the MS.  This is sufficient (and actually
-desirable) for small autonomous networks, but of course not suitable for
-real networks in roaming scenarios.  Please contact sysmocom in case you
-require additional features such as DNS-based APN resolving.
+Multiple GGSNs can be configured and routing to a GGSN can be configured based
+on APN. Dynamic lookup of GGSNs though DNS-based APN resolving is also possible.
 
 === Limitations
 
@@ -109,10 +105,5 @@ performing that work.
 
 Known Limitations include:
 
-* No LLC encryption support
-* No interface to the OsmoNITB HLR
 * No paging coordination between SGSN and MSC
 * No SMS over Ps support
-* No IuPS interface for 3G (in progress)
-* No IP header compression
-* No payload compression
