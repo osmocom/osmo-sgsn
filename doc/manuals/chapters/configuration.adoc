@@ -7,7 +7,7 @@ On the one hand, this is primary because the PCU configuration happens
 from the BSC side.
 
 On the other hand, it is because the Gb interface does not need an
-explicit configuration of all each PCU connecting to the SGSN.  The
+explicit configuration of each PCU connecting to the SGSN. The
 administrator only has to ensure that the NS and BSSGP layer identities
 (NSEI, NSVCI, BVCI) are unique for each PCU connecting to the SGSN.
 
@@ -17,7 +17,7 @@ The Gp interface is the GTP-C and GTP-U based interface between the SGSN
 and the GGSNs.  It is implemented via UDP on well-known source and
 destination ports.
 
-When a MS requests establishment of a PDP context, it specifies the APN
+When an MS requests establishment of a PDP context, it specifies the APN
 (Access Point Name) to which the context shall be established.  This APN
 determines which GGSN shall be used, and that in turn determines which
 external IP network the MS will be connected to.
@@ -100,7 +100,7 @@ NOTE: The policy mode *closed* must not be confused with the equally named
 policy that is defined for osmo-nitb!
 
 
-.Example: Assign or change authorization policy:
+.Example: Assign or change authorization policy
 ----
 OsmoSGSN> enable
 OsmoSGSN# configure terminal
@@ -116,7 +116,7 @@ OsmoSGSN>
 <2> Saves current changes to cofiguration to make this policy
 persistent
 
-.Example: Access control list:
+.Example: Access control list
 ----
 sgsn
  auth-policy acl-only <1>
@@ -153,7 +153,7 @@ simplified by use of a binary TLV encoding similar to Layer 3 of
 GSM/GPRS.
 
 GSUP performs a challenge-response authentication protocol called OAP,
-which uses the standard MILEAGE algorithm for mutual authentication
+which uses the standard MILENAGE algorithm for mutual authentication
 between OsmoSGSN and the HLR/HLR-GW.
 
 [[sgsn-ex-gsup]]
@@ -251,9 +251,8 @@ _pdp-_), then the following extra CSV fields are appended to the line:
 
 === User traffic compression
 
-In order to save optimize GPRS bandwith, OsmoSGSN implements header and data
-compression schemes. The compression will reduce the packet length in order
-to save radio bandwith.
+In order to save GPRS bandwith, OsmoSGSN implements header and data
+compression schemes which will reduce the packet length.
 
 ==== Header compression
 
@@ -278,16 +277,22 @@ actively request different compression parameters or reject the offered
 compression parameters entirely. The number of slots is the maximum number
 of packet headers per subscriber that can be stored in the codebook.
 
-.Example: Accept compression if requested:
+.Example: Accept compression if requested
 ----
 sgsn
  compression rfc1144 passive
 ----
 
-.Example: Actively promote compression:
+.Example: Actively promote compression
 ----
 sgsn
  compression rfc1144 active slots 8
+----
+
+.Example: Turn off compression
+----
+sgsn
+ no compression rfc1144
 ----
 
 NOTE: The usage of TCP/IP options may disturb the RFC1144 header compression
@@ -299,10 +304,10 @@ Timestamp)
 ==== Data compression
 
 Data compression works on the raw packet data, including the header part of the
-packet. If enabled, header compression is applied before first data compression
+packet. If enabled, header compression is applied first before data compression
 is applied. OsmoSGSN implements the V.42bis data compression scheme.
 
-*compression rfc1144 passive*::
+*compression v42bis passive*::
 V42bis data compression has to be actively requested by the modem. The network
 will not promote compression by itself. This is the recommended mode of
 operation.
@@ -316,14 +321,20 @@ directions will be the preferred option. The following to parameters configure
 the codebook size by the maxium number ('codewords') and size ('strlen') of
 entries.
 
-.Example: Accept compression if requested:
+.Example: Accept compression if requested
 ----
 sgsn
  compression v42bis passive
 ----
 
-.Example: Actively promote compression:
+.Example: Actively promote compression
 ----
 sgsn
  compression v42bis active direction both codewords 512 strlen 20
+----
+
+.Example: Turn off compression
+----
+sgsn
+ no compression v42bis
 ----
