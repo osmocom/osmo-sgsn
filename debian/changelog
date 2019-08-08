@@ -1,3 +1,69 @@
+osmo-sgsn (1.5.0) unstable; urgency=medium
+
+  [ Max ]
+  * Improve 'show subscriber cache' vty command
+  * GMM: permit VLR_ANSWERED event in attach FSM
+  * Fix IMSI padding in imsi-acl
+
+  [ Harald Welte ]
+  * gbproxy_test: Fix test expectations of gprs_ns_rcvmsg()
+  * LLC XID: Fix string representation of N201_U
+  * LLC: Don't blindly assume all LLC frames have data payload
+  * LLC: Avoid NOTICE message on LLC NULL
+  * gprs_llc: Correctly refuse any ABM command (SABM, DISC) with DM
+  * LLC: Store the XID inside the LLC Entity, not LLC Mgmg Entity
+  * gb_proxy.h: Add missing comments; improve comments
+  * gb_proxy: cosmetic: Use 'bool' in data structures where applicable
+
+  [ efistokl ]
+  * gsm0408_rcv_gmm: send Iu-ReleaseCommand upon receiving Attach Complete.
+  * gprs_gmm: send Service Reject when no PDP ctxs are available.
+
+  [ Alexander Couzens ]
+  * gprs_gmm: reintroduce calling gsm48_gmm_authorize when not handling GMM Attach Requests
+  * gbproxy: parse dtap GSM48_MT_GSM_DEACT_PDP_REQ|ACK
+
+  [ Pau Espin Pedrol ]
+  * gprs_sndcp_comp_free: Replace ifelse with switch and better handling of error
+  * sgsn: vty: Improve log warning content with spec section
+  * Document max retransmit times for T3395
+  * sgsn: Fix echo timer not started upon first pdp ctx created
+  * sgsn_libgtp: Use new per-GSN libgtp API instead of deprecated API
+  * sgsn: Have authentication required on by default
+  * Remove undefined param passed to {logging,osmo_stats}_vty_add_cmds
+  * Require newer versions of dependencies
+
+  [ Keith ]
+  * Echo zero byte XID-Field of Type L3_PAR
+
+  [ Oliver Smith ]
+  * debian: create -doc subpackage with pdf manuals
+  * contrib/jenkins.sh: run "make maintainer-clean"
+  * osmo-gtphub.cfg: fix conflict with osmo-sgsn.cfg
+  * osmo-gbproxy.cfg: fix conflict with osmo-sgsn.cfg
+
+  [ Vadim Yanitskiy ]
+  * doc/manuals/vty: regenerate sgsn_vty_reference.xml
+  * osmo-sgsn: add VTY parameter to toggle authentication
+  * sgsn_mm_ctx_find_ggsn_ctx(): fix: always set gsm_cause
+
+  [ Eric Wild ]
+  * replace magic tmsi constant with define
+  * turn -Werror=null-dereference into a warning
+
+  [ Daniel Willmann ]
+  * manuals: Add script to regenerate vty/counter documentation
+  * manuals: Update vty/counter documentation
+  * Add/fix help string for version option
+  * osmo-sgsn: Fix outdated information in usermanual
+  * configuration.adoc: Small fixes
+  * configuration.adoc: Add a section about encryption
+
+  [ Ruben Undheim ]
+  * Spelling fixes
+
+ -- Pau Espin Pedrol <pespin@sysmocom.de>  Thu, 08 Aug 2019 16:46:31 +0200
+
 osmo-sgsn (1.4.0) unstable; urgency=medium
 
   [ Alexander Couzens ]
