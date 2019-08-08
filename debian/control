@@ -10,17 +10,17 @@ Build-Depends: debhelper (>=9),
                automake,
                libtool,
                pkg-config,
-               libasn1c-dev,
                libtalloc-dev,
                libc-ares-dev,
-               libgtp-dev,
-               libosmocore-dev,
-               libosmo-abis-dev,
-               libosmo-ranap-dev,
-               libosmo-sccp-dev,
-               libosmo-sigtran-dev,
-               libosmo-netif-dev,
-               libosmo-gsup-client-dev,
+               libgtp-dev (>= 1.4.0),
+               libosmocore-dev (>= 1.2.0),
+               libosmo-abis-dev (>= 0.6.0),
+               libosmo-netif-dev (>= 0.4.0),
+               libosmo-gsup-client-dev (>= 1.0.0),
+               libasn1c-dev (>= 0.9.30),
+               libosmo-ranap-dev (>= 0.4.0),
+               libosmo-sigtran-dev (>= 1.0.0),
+               libosmo-sccp-dev (>= 1.0.0),
                osmo-gsm-manuals-dev
 Standards-Version: 3.9.8
 Vcs-Git: git://git.osmocom.org/osmo-sgsn.git
@@ -32,14 +32,14 @@ Package: osmo-sgsn
 Architecture: any
 Multi-Arch: foreign
 Depends: ${misc:Depends}, ${shlibs:Depends}
-Description: OsmoSGSN: Osmocom's Serving GPRS Support Node for 2G and 3G packet-switched mobile networks 
+Description: OsmoSGSN: Osmocom's Serving GPRS Support Node for 2G and 3G packet-switched mobile networks
 
 Package: osmo-sgsn-dbg
 Section: debug
 Architecture: any
 Multi-Arch: same
 Depends: osmo-sgsn (= ${binary:Version}), ${misc:Depends}
-Description: OsmoSGSN: Osmocom's Serving GPRS Support Node for 2G and 3G packet-switched mobile networks 
+Description: OsmoSGSN: Osmocom's Serving GPRS Support Node for 2G and 3G packet-switched mobile networks
 
 Package: osmo-gtphub
 Architecture: any

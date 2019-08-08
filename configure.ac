@@ -39,12 +39,12 @@ AC_SEARCH_LIBS([dlopen], [dl dld], [LIBRARY_DL="$LIBS";LIBS=""])
 AC_SUBST(LIBRARY_DL)
 
 
-PKG_CHECK_MODULES(LIBOSMOCORE, libosmocore >= 1.0.0)
-PKG_CHECK_MODULES(LIBOSMOVTY, libosmovty >= 1.0.0)
-PKG_CHECK_MODULES(LIBOSMOCTRL, libosmoctrl >= 1.0.0)
-PKG_CHECK_MODULES(LIBOSMOGSM, libosmogsm >= 1.0.0)
+PKG_CHECK_MODULES(LIBOSMOCORE, libosmocore >= 1.2.0)
+PKG_CHECK_MODULES(LIBOSMOVTY, libosmovty >= 1.2.0)
+PKG_CHECK_MODULES(LIBOSMOCTRL, libosmoctrl >= 1.2.0)
+PKG_CHECK_MODULES(LIBOSMOGSM, libosmogsm >= 1.2.0)
+PKG_CHECK_MODULES(LIBOSMOGB, libosmogb >= 1.2.0)
 PKG_CHECK_MODULES(LIBOSMOABIS, libosmoabis >= 0.6.0)
-PKG_CHECK_MODULES(LIBOSMOGB, libosmogb >= 1.0.0)
 PKG_CHECK_MODULES(LIBOSMONETIF, libosmo-netif >= 0.4.0)
 PKG_CHECK_MODULES(LIBOSMOGSUPCLIENT, libosmo-gsup-client >= 1.0.0)
 
@@ -61,7 +61,7 @@ AM_CONDITIONAL(BUILD_IU, test "x$osmo_ac_iu" = "xyes")
 AC_SUBST(osmo_ac_iu)
 
 
-PKG_CHECK_MODULES(LIBGTP, libgtp >= 1.3.0)
+PKG_CHECK_MODULES(LIBGTP, libgtp >= 1.4.0)
 PKG_CHECK_MODULES(LIBCARES, libcares)
 
 dnl checks for header files
