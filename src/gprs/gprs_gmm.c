@@ -1403,7 +1403,9 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 		goto err_inval;
 	cur += msnc_len;
 
-	/* TODO: In iu mode - handle follow-on request */
+	/* TODO: In iu mode - handle follow-on request.
+	 * Atm the SGSN do a Release Request which is in spec and will
+	 * signal we ignored the follow-on request. */
 
 	/* aTTACH Type 10.5.5.2 */
 	att_type = *cur++ & 0x07;
