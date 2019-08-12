@@ -1820,10 +1820,8 @@ rejected:
 	rc = gsm48_tx_gmm_ra_upd_rej(msg, reject_cause);
 	if (mmctx)
 		mm_ctx_cleanup_free(mmctx, "GPRS RA UPDATE REJ");
-	else {
-		if (llme)
-			gprs_llgmm_unassign(llme);
-	}
+	else if (llme)
+		gprs_llgmm_unassign(llme);
 
 	return rc;
 }
