@@ -1959,7 +1959,7 @@ static int gsm48_rx_gmm_status(struct sgsn_mm_ctx *mmctx, struct msgb *msg)
 	return 0;
 }
 
-/* GPRS Mobility Management */
+/* Rx GPRS Mobility Management. MMCTX can be NULL when called. On !Gb (Iu), llme is NULL  */
 static int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 			   struct gprs_llc_llme *llme, bool drop_cipherable)
 {
@@ -1967,7 +1967,6 @@ static int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
 	int rc;
 
-	/* MMCTX can be NULL when called */
 	if (drop_cipherable && gsm48_hdr_gmm_cipherable(gh)) {
 		LOGMMCTXP(LOGL_NOTICE, mmctx, "Dropping cleartext GMM %s which "
 			  "is expected to be encrypted for TLLI 0x%08x\n",
