@@ -110,13 +110,13 @@ struct gprs_llc_params {
 	uint16_t kU;
 };
 
-/* Section 4.7.1: Logical Link Entity: One per DLCI (TLLI + SAPI) */
+/* 3GPP TS 44.064 § 4.7.1: Logical Link Entity: One per DLCI (TLLI + SAPI) */
 struct gprs_llc_lle {
 	struct llist_head list;
 
 	uint32_t sapi;
 
-	struct gprs_llc_llme *llme;
+	struct gprs_llc_llme *llme; /* backpointer to the Logical Link Management Entity */
 
 	enum gprs_llc_lle_state state;
 
@@ -156,6 +156,7 @@ struct gprs_llc_lle {
 
 #define NUM_SAPIS	16
 
+/* 3GPP TS 44.064 § 4.7.3: Logical Link Management Entity: One per TLLI */
 struct gprs_llc_llme {
 	struct llist_head list;
 
