@@ -1404,7 +1404,11 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 		goto err_inval;
 	cur += msnc_len;
 
-	/* TODO: In iu mode - handle follow-on request */
+	/* TODO: In iu mode - handle follow-on request.
+	 * The follow-on request can be signaled in an Attach Request on IuPS.
+	 * This means the MS/UE asks to keep the PS connection open for further requests
+	 * after the Attach Request succeed.
+	 * The SGSN can decide if it close the connection or not. Both are spec conform. */
 
 	/* aTTACH Type 10.5.5.2 */
 	att_type = *cur++ & 0x07;
@@ -1742,7 +1746,11 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	enum gsm48_gmm_cause reject_cause = GMM_CAUSE_PROTO_ERR_UNSPEC;
 	int rc;
 
-	/* TODO: In iu mode - handle follow-on request */
+	/* TODO: In iu mode - handle follow-on request.
+	 * The follow-on request can be signaled in an Attach Request on IuPS.
+	 * This means the MS/UE asks to keep the PS connection open for further requests
+	 * after the Attach Request succeed.
+	 * The SGSN can decide if it close the connection or not. Both are spec conform. */
 
 	/* Update Type 10.5.5.18 */
 	upd_type = *cur++ & 0x07;
