@@ -527,7 +527,7 @@ static struct gprs_llc_lle *lle_for_rx_by_tlli_sapi(const uint32_t tlli,
 		lle = &llme->lle[sapi];
 		return lle;
 	}
-	
+
 	LOGP(DLLC, LOGL_NOTICE,
 		"unknown TLLI(0x%08x)/SAPI(%d): Silently dropping\n",
 		tlli, sapi);
@@ -556,7 +556,7 @@ static struct gprs_llc_llme *llme_alloc(uint32_t tlli)
 		return NULL;
 
 	llme->tlli = tlli;
-	llme->old_tlli = 0xffffffff;
+	llme->old_tlli = TLLI_UNASSIGNED;
 	llme->state = GPRS_LLMS_UNASSIGNED;
 	llme->age_timestamp = GPRS_LLME_RESET_AGE;
 	llme->cksn = GSM_KEY_SEQ_INVAL;
@@ -1042,19 +1042,19 @@ int gprs_llgmm_assign(struct gprs_llc_llme *llme,
 {
 	unsigned int i;
 
-	if (old_tlli == 0xffffffff && new_tlli != 0xffffffff) {
+	if (old_tlli == TLLI_UNASSIGNED && new_tlli != TLLI_UNASSIGNED) {
 		/* TLLI Assignment 8.3.1 */
 		/* New TLLI shall be assigned and used when (re)transmitting LLC frames */
-		/* If old TLLI != 0xffffffff was assigned to LLME, then TLLI
+		/* If old TLLI != TLLI_UNASSIGNED was assigned to LLME, then TLLI
 		 * old is unassigned.  Only TLLI new shall be accepted when
 		 * received from peer. */
-		if (llme->old_tlli != 0xffffffff) {
-			llme->old_tlli = 0xffffffff;
+		if (llme->old_tlli != TLLI_UNASSIGNED) {
+			llme->old_tlli = TLLI_UNASSIGNED;
 			llme->tlli = new_tlli;
 		} else {
-			/* If TLLI old == 0xffffffff was assigned to LLME, then this is
+			/* If TLLI old == TLLI_UNASSIGNED was assigned to LLME, then this is
 			 * TLLI assignmemt according to 8.3.1 */
-			llme->old_tlli = 0xffffffff;
+			llme->old_tlli = TLLI_UNASSIGNED;
 			llme->tlli = new_tlli;
 			llme->state = GPRS_LLMS_ASSIGNED;
 			/* 8.5.3.1 For all LLE's */
@@ -1066,14 +1066,14 @@ int gprs_llgmm_assign(struct gprs_llc_llme *llme,
 				/* FIXME Set parameters according to table 9 */
 			}
 		}
-	} else if (old_tlli != 0xffffffff && new_tlli != 0xffffffff) {
+	} else if (old_tlli != TLLI_UNASSIGNED && new_tlli != TLLI_UNASSIGNED) {
 		/* TLLI Change 8.3.2 */
 		/* Both TLLI Old and TLLI New are assigned; use New when
 		 * (re)transmitting.  Accept both Old and New on Rx */
 		llme->old_tlli = old_tlli;
 		llme->tlli = new_tlli;
 		llme->state = GPRS_LLMS_ASSIGNED;
-	} else if (old_tlli != 0xffffffff && new_tlli == 0xffffffff) {
+	} else if (old_tlli != TLLI_UNASSIGNED && new_tlli == TLLI_UNASSIGNED) {
 		/* TLLI Unassignment 8.3.3) */
 		llme->tlli = llme->old_tlli = 0;
 		llme->state = GPRS_LLMS_UNASSIGNED;
@@ -1091,7 +1091,7 @@ int gprs_llgmm_assign(struct gprs_llc_llme *llme,
 /* TLLI unassignment */
 int gprs_llgmm_unassign(struct gprs_llc_llme *llme)
 {
-	return gprs_llgmm_assign(llme, llme->tlli, 0xffffffff);
+	return gprs_llgmm_assign(llme, llme->tlli, TLLI_UNASSIGNED);
 }
 
 /* Chapter 7.2.1.2 LLGMM-RESET.req */

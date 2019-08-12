@@ -2077,7 +2077,7 @@ static int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 			/* Unassign the old TLLI */
 			mmctx->gb.tlli = mmctx->gb.tlli_new;
 			gprs_llme_copy_key(mmctx, mmctx->gb.llme);
-			gprs_llgmm_assign(mmctx->gb.llme, 0xffffffff,
+			gprs_llgmm_assign(mmctx->gb.llme, TLLI_UNASSIGNED,
 					  mmctx->gb.tlli_new);
 		}
 		mmctx->gmm_state = GMM_REGISTERED_NORMAL;
@@ -2102,7 +2102,7 @@ static int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		if (mmctx->ran_type == MM_CTX_T_GERAN_Gb) {
 			/* Unassign the old TLLI */
 			mmctx->gb.tlli = mmctx->gb.tlli_new;
-			gprs_llgmm_assign(mmctx->gb.llme, 0xffffffff,
+			gprs_llgmm_assign(mmctx->gb.llme, TLLI_UNASSIGNED,
 					  mmctx->gb.tlli_new);
 		}
 		mmctx->gmm_state = GMM_REGISTERED_NORMAL;
@@ -2125,7 +2125,7 @@ static int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		if (mmctx->ran_type == MM_CTX_T_GERAN_Gb) {
 			/* Unassign the old TLLI */
 			mmctx->gb.tlli = mmctx->gb.tlli_new;
-			//gprs_llgmm_assign(mmctx->gb.llme, 0xffffffff, mmctx->gb.tlli_new, GPRS_ALGO_GEA0, NULL);
+			//gprs_llgmm_assign(mmctx->gb.llme, TLLI_UNASSIGNED, mmctx->gb.tlli_new, GPRS_ALGO_GEA0, NULL);
 		}
 		rc = 0;
 		break;

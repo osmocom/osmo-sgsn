@@ -192,6 +192,9 @@ struct gprs_llc_llme {
 
 #define GPRS_LLME_RESET_AGE (0)
 
+/* 3GPP TS 44.064 § 8.3 TLLI assignment procedures */
+#define TLLI_UNASSIGNED (0xffffffff)
+
 extern struct llist_head gprs_llc_llmes;
 
 /* LLC low level types */
