@@ -375,15 +375,20 @@ static void gmm_copy_id(struct msgb *msg, const struct msgb *old)
 /* Store BVCI/NSEI in MM context */
 static void msgid2mmctx(struct sgsn_mm_ctx *mm, const struct msgb *msg)
 {
-	mm->gb.bvci = msgb_bvci(msg);
-	mm->gb.nsei = msgb_nsei(msg);
-	/* In case a Iu connection is reconnected we need to update the ue ctx */
-	mm->iu.ue_ctx = MSG_IU_UE_CTX(msg);
-	if (mm->ran_type == MM_CTX_T_UTRAN_Iu
-	    && mm->iu.ue_ctx) {
+	/* check for Iu or Gb */
+	if (!MSG_IU_UE_CTX(msg)) {
+		mm->gb.bvci = msgb_bvci(msg);
+		mm->gb.nsei = msgb_nsei(msg);
+	} else {
 #ifdef BUILD_IU
-		mm->iu.ue_ctx->rab_assign_addr_enc =
-			sgsn->cfg.iu.rab_assign_addr_enc;
+		/* In case a Iu connection is reconnected we need to update the ue ctx */
+		/* FIXME: the old ue_ctx have to be freed/disconnected */
+		mm->iu.ue_ctx = msg->dst;
+		if (mm->ran_type == MM_CTX_T_UTRAN_Iu
+				&& mm->iu.ue_ctx) {
+			mm->iu.ue_ctx->rab_assign_addr_enc =
+					sgsn->cfg.iu.rab_assign_addr_enc;
+		}
 #endif
 	}
 }
