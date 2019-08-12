@@ -116,6 +116,12 @@ static const struct value_string gprs_pmm_state_names[] = {
 	{ 0, NULL }
 };
 
+/* On RANAP, Returns pointer to he associated ranap_ue_conn_ctx in msg, filled
+ * in by osmo-iuh's iu_recv_cb().
+ * On Gb, returns NULL */
+#define MSG_IU_UE_CTX(msg) ((struct ranap_ue_conn_ctx *)(msg)->dst)
+#define MSG_IU_UE_CTX_SET(msg, val) (msg)->dst = (val)
+
 static int gsm48_gmm_authorize(struct sgsn_mm_ctx *ctx);
 
 static void mmctx_change_gtpu_endpoints_to_sgsn(struct sgsn_mm_ctx *mm_ctx)
@@ -271,10 +277,7 @@ static int gsm48_gmm_sendmsg(struct msgb *msg, int command,
 	}
 
 #ifdef BUILD_IU
-	/* In Iu mode, msg->dst contains the ranap_ue_conn_ctx pointer, in Gb mode
-	 * dst is empty. */
-	/* FIXME: have a more explicit indicator for Iu messages */
-	if (msg->dst)
+	if (MSG_IU_UE_CTX(msg))
 		return ranap_iu_tx(msg, GPRS_SAPI_GMM);
 #endif
 
@@ -289,7 +292,7 @@ static void gmm_copy_id(struct msgb *msg, const struct msgb *old)
 	msgb_tlli(msg) = msgb_tlli(old);
 	msgb_bvci(msg) = msgb_bvci(old);
 	msgb_nsei(msg) = msgb_nsei(old);
-	msg->dst = old->dst;
+	MSG_IU_UE_CTX_SET(msg, MSG_IU_UE_CTX(old));
 }
 
 /* Store BVCI/NSEI in MM context */
@@ -298,7 +301,7 @@ static void msgid2mmctx(struct sgsn_mm_ctx *mm, const struct msgb *msg)
 	mm->gb.bvci = msgb_bvci(msg);
 	mm->gb.nsei = msgb_nsei(msg);
 	/* In case a Iu connection is reconnected we need to update the ue ctx */
-	mm->iu.ue_ctx = msg->dst;
+	mm->iu.ue_ctx = MSG_IU_UE_CTX(msg);
 	if (mm->ran_type == MM_CTX_T_UTRAN_Iu
 	    && mm->iu.ue_ctx) {
 #ifdef BUILD_IU
@@ -314,7 +317,7 @@ static void mmctx2msgid(struct msgb *msg, const struct sgsn_mm_ctx *mm)
 	msgb_tlli(msg) = mm->gb.tlli;
 	msgb_bvci(msg) = mm->gb.bvci;
 	msgb_nsei(msg) = mm->gb.nsei;
-	msg->dst = mm->iu.ue_ctx;
+	MSG_IU_UE_CTX_SET(msg, mm->iu.ue_ctx);
 }
 
 static void mm_ctx_cleanup_free(struct sgsn_mm_ctx *ctx, const char *log_text)
@@ -1290,15 +1293,12 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 	 * with a foreign TLLI (P-TMSI that was allocated to the MS before),
 	 * or with random TLLI. */
 
-	/* In Iu mode, msg->dst contains the ranap_ue_conn_ctx pointer, in Gb mode
-	 * dst is empty. */
-	/* FIXME: have a more explicit indicator for Iu messages */
-	if (!msg->dst) {
+	if (!MSG_IU_UE_CTX(msg)) {
 		/* Gb mode */
 		cid = bssgp_parse_cell_id(&ra_id, msgb_bcid(msg));
 	} else {
 #ifdef BUILD_IU
-		ra_id = ((struct ranap_ue_conn_ctx*)msg->dst)->ra_id;
+		ra_id = MSG_IU_UE_CTX(msg)->ra_id;
 #else
 		LOGMMCTXP(LOGL_ERROR, ctx, "Cannot handle Iu Attach Request, built without Iu support\n");
 		return -ENOTSUP;
@@ -1354,8 +1354,8 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 		if (!ctx)
 			ctx = sgsn_mm_ctx_by_imsi(mi_string);
 		if (!ctx) {
-			if (msg->dst)
-				ctx = sgsn_mm_ctx_alloc_iu(msg->dst);
+			if (MSG_IU_UE_CTX(msg))
+				ctx = sgsn_mm_ctx_alloc_iu(MSG_IU_UE_CTX(msg));
 			else
 				ctx = sgsn_mm_ctx_alloc_gb(0, &ra_id);
 			if (!ctx) {
@@ -1379,8 +1379,8 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 		if (!ctx) {
 			/* Allocate a context as most of our code expects one.
 			 * Context will not have an IMSI ultil ID RESP is received */
-			if (msg->dst)
-				ctx = sgsn_mm_ctx_alloc_iu(msg->dst);
+			if (MSG_IU_UE_CTX(msg))
+				ctx = sgsn_mm_ctx_alloc_iu(MSG_IU_UE_CTX(msg));
 			else
 				ctx = sgsn_mm_ctx_alloc_gb(msgb_tlli(msg), &ra_id);
 			if (!ctx) {
@@ -1697,10 +1697,8 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		 * is an optimization to avoid the RA reject (impl detached)
 		 * below, which will cause a new attach cycle. */
 		/* Look-up the MM context based on old RA-ID and TLLI */
-		/* In Iu mode, msg->dst contains the ranap_ue_conn_ctx pointer, in Gb
-		 * mode dst is empty. */
-		/* FIXME: have a more explicit indicator for Iu messages */
-		if (!msg->dst) {
+		if (!MSG_IU_UE_CTX(msg)) {
+			/* Gb */
 			mmctx = sgsn_mm_ctx_by_tlli_and_ptmsi(msgb_tlli(msg), &old_ra_id);
 		} else if (TLVP_PRESENT(&tp, GSM48_IE_GMM_ALLOC_PTMSI)) {
 #ifdef BUILD_IU
@@ -1847,7 +1845,7 @@ static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 	LOGMMCTXP(LOGL_INFO, ctx, "-> GMM SERVICE REQUEST ");
 
 	/* This message is only valid in Iu mode */
-	if (!msg->dst) {
+	if (!MSG_IU_UE_CTX(msg)) {
 		LOGPC(DMM, LOGL_INFO, "Invalid if not in Iu mode\n");
 		return -1;
 	}
@@ -2904,7 +2902,7 @@ int gsm0408_gprs_rcvmsg_iu(struct msgb *msg, struct gprs_ra_id *ra_id,
 	struct sgsn_mm_ctx *mmctx;
 	int rc = -EINVAL;
 
-	mmctx = sgsn_mm_ctx_by_ue_ctx(msg->dst);
+	mmctx = sgsn_mm_ctx_by_ue_ctx(MSG_IU_UE_CTX(msg));
 	if (mmctx) {
 		rate_ctr_inc(&mmctx->ctrg->ctr[GMM_CTR_PKTS_SIG_IN]);
 		if (ra_id)
