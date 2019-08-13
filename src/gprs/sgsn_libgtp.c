@@ -279,7 +279,9 @@ struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
 	pdp->userloc.l = 8;
 	switch (mmctx->ran_type) {
 	case MM_CTX_T_GERAN_Gb:
+#if 0
 	case MM_CTX_T_GERAN_Iu:
+#endif
 		pdp->rattype.v[0] = 2;
 		/* User Location Information */
 		pdp->userloc_given = 1;

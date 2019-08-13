@@ -108,8 +108,10 @@ enum sgsn_ran_type {
 	MM_CTX_T_GERAN_Gb,
 	/* UMTS via Iu */
 	MM_CTX_T_UTRAN_Iu,
-	/* GPRS/EDGE via Iu */
+#if 0
+	/* GPRS/EDGE via Iu, not supported */
 	MM_CTX_T_GERAN_Iu,
+#endif
 };
 
 struct service_info {
