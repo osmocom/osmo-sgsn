@@ -188,6 +188,15 @@ static void mmctx_state_timer_stop(struct sgsn_mm_ctx *mm, unsigned int T)
 	mm->gb.state_T = 0;
 }
 
+static void mmctx_free_ue_ctx(struct sgsn_mm_ctx *ctx)
+{
+	if (!ctx->iu.ue_ctx)
+		return;
+
+	ranap_iu_free_ue(ctx->iu.ue_ctx);
+	ctx->iu.ue_ctx = NULL;
+}
+
 static void mmctx_set_pmm_state(struct sgsn_mm_ctx *ctx, enum gprs_pmm_state state)
 {
 	OSMO_ASSERT(ctx->ran_type == MM_CTX_T_UTRAN_Iu);
@@ -257,6 +266,7 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 #define REQUIRE_MM \
 	if (!mm) { \
 		LOGIUP(ctx, LOGL_NOTICE, "Cannot find mm ctx for IU event %d\n", type); \
+		ranap_iu_free_ue(ctx); \
 		return rc; \
 	}
 
@@ -269,11 +279,16 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 		/* fall thru */
 	case RANAP_IU_EVENT_LINK_INVALIDATED:
 		/* Clean up ranap_ue_conn_ctx here */
-		if (mm)
-			LOGMMCTXP(LOGL_INFO, mm, "IU release for imsi %s\n", mm->imsi);
-		else
+		if (!mm) {
 			LOGIUP(ctx, LOGL_INFO, "IU release\n");
-		if (mm && mm->pmm_state == PMM_CONNECTED)
+			ranap_iu_free_ue(ctx);
+			break;
+		}
+
+		LOGMMCTXP(LOGL_INFO, mm, "IU release for imsi %s\n", mm->imsi);
+		mmctx_free_ue_ctx(mm);
+
+		if (mm->pmm_state == PMM_CONNECTED)
 			mmctx_set_pmm_state(mm, PMM_IDLE);
 		rc = 0;
 		break;
@@ -293,6 +308,9 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 			LOGMMCTXP(LOGL_NOTICE, mm, "Unknown event received: %i\n", type);
 		else
 			LOGIUP(ctx, LOGL_NOTICE, "Unknown event received: %i\n", type);
+
+		if (!mm)
+			ranap_iu_free_ue(ctx);
 		rc = -1;
 		break;
 	}
