@@ -2122,7 +2122,7 @@ static int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	case GSM48_MT_GMM_PTMSI_REALL_COMPL:
 		if (!mmctx)
 			goto null_mmctx;
-		LOGMMCTXP(LOGL_INFO, mmctx, "-> PTMSI REALLLICATION COMPLETE\n");
+		LOGMMCTXP(LOGL_INFO, mmctx, "-> PTMSI REALLOCATION COMPLETE\n");
 		mmctx_timer_stop(mmctx, 3350);
 		mmctx->t3350_mode = GMM_T3350_MODE_NONE;
 		mmctx->p_tmsi_old = 0;
