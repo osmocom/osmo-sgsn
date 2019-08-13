@@ -1794,7 +1794,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	 	* foreign TLLI to local TLLI */
 		mmctx->gb.tlli_new = gprs_tmsi2tlli(mmctx->p_tmsi, TLLI_LOCAL);
 
-		/* Inform LLC layer about new TLLI but keep old active */
+		/* Inform LLC layer about new TLLI but keep accepting the old one during Rx */
 		gprs_llgmm_assign(mmctx->gb.llme, mmctx->gb.tlli,
 				  mmctx->gb.tlli_new);
 	}
