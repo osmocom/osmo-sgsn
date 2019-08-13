@@ -1461,7 +1461,6 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 			ctx->gb.tlli = msgb_tlli(msg);
 			ctx->gb.llme = llme;
 		}
-		msgid2mmctx(ctx, msg);
 		break;
 	case GSM_MI_TYPE_TMSI:
 		memcpy(&tmsi, mi+1, 4);
@@ -1486,7 +1485,6 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 			ctx->gb.tlli = msgb_tlli(msg);
 			ctx->gb.llme = llme;
 		}
-		msgid2mmctx(ctx, msg);
 		break;
 	default:
 		LOGMMCTXP(LOGL_NOTICE, ctx, "Rejecting ATTACH REQUEST with "
@@ -1494,6 +1492,8 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 		reject_cause = GMM_CAUSE_MS_ID_NOT_DERIVED;
 		goto rejected;
 	}
+
+	msgid2mmctx(ctx, msg);
 	/* Update MM Context with currient RA and Cell ID */
 	ctx->ra = ra_id;
 	if (ctx->ran_type == MM_CTX_T_GERAN_Gb)
