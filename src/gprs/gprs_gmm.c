@@ -138,8 +138,7 @@ static void mmctx_change_gtpu_endpoints_to_sgsn(struct sgsn_mm_ctx *mm_ctx)
 
 static void mmctx_set_pmm_state(struct sgsn_mm_ctx *ctx, enum gprs_pmm_state state)
 {
-	if (ctx->ran_type != MM_CTX_T_UTRAN_Iu)
-		return;
+	OSMO_ASSERT(ctx->ran_type == MM_CTX_T_UTRAN_Iu);
 
 	if (ctx->pmm_state == state)
 		return;
@@ -164,8 +163,7 @@ static void mmctx_set_pmm_state(struct sgsn_mm_ctx *ctx, enum gprs_pmm_state sta
 
 static void mmctx_set_mm_state(struct sgsn_mm_ctx *ctx, enum gprs_pmm_state state)
 {
-	if (ctx->ran_type != MM_CTX_T_GERAN_Gb)
-		return;
+	OSMO_ASSERT(ctx->ran_type == MM_CTX_T_GERAN_Gb);
 
 	if (ctx->pmm_state == state)
 		return;
@@ -326,8 +324,15 @@ static void mm_ctx_cleanup_free(struct sgsn_mm_ctx *ctx, const char *log_text)
 
 	/* Mark MM state as deregistered */
 	ctx->gmm_state = GMM_DEREGISTERED;
-	mmctx_set_pmm_state(ctx, PMM_DETACHED);
-	mmctx_set_mm_state(ctx, MM_IDLE);
+
+	switch(ctx->ran_type) {
+	case MM_CTX_T_UTRAN_Iu:
+		mmctx_set_pmm_state(ctx, PMM_DETACHED);
+		break;
+	case MM_CTX_T_GERAN_Gb:
+		mmctx_set_mm_state(ctx, MM_IDLE);
+		break;
+	}
 
 	sgsn_mm_ctx_cleanup_free(ctx);
 }
@@ -2078,16 +2083,20 @@ static int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		mmctx->t3350_mode = GMM_T3350_MODE_NONE;
 		mmctx->p_tmsi_old = 0;
 		mmctx->pending_req = 0;
-		if (mmctx->ran_type == MM_CTX_T_GERAN_Gb) {
+		mmctx->gmm_state = GMM_REGISTERED_NORMAL;
+		switch(mmctx->ran_type) {
+		case MM_CTX_T_UTRAN_Iu:
+			mmctx_set_pmm_state(mmctx, PMM_CONNECTED);
+			break;
+		case MM_CTX_T_GERAN_Gb:
 			/* Unassign the old TLLI */
 			mmctx->gb.tlli = mmctx->gb.tlli_new;
 			gprs_llme_copy_key(mmctx, mmctx->gb.llme);
 			gprs_llgmm_assign(mmctx->gb.llme, TLLI_UNASSIGNED,
 					  mmctx->gb.tlli_new);
+			mmctx_set_mm_state(mmctx, MM_READY);
+			break;
 		}
-		mmctx->gmm_state = GMM_REGISTERED_NORMAL;
-		mmctx_set_pmm_state(mmctx, PMM_CONNECTED);
-		mmctx_set_mm_state(mmctx, MM_READY);
 		rc = 0;
 
 		osmo_fsm_inst_dispatch(mmctx->gmm_att_req.fsm, E_ATTACH_COMPLETE_RECV, 0);
@@ -2104,15 +2113,19 @@ static int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		mmctx->t3350_mode = GMM_T3350_MODE_NONE;
 		mmctx->p_tmsi_old = 0;
 		mmctx->pending_req = 0;
-		if (mmctx->ran_type == MM_CTX_T_GERAN_Gb) {
+		mmctx->gmm_state = GMM_REGISTERED_NORMAL;
+		switch(mmctx->ran_type) {
+		case MM_CTX_T_UTRAN_Iu:
+			mmctx_set_pmm_state(mmctx, PMM_CONNECTED);
+			break;
+		case MM_CTX_T_GERAN_Gb:
 			/* Unassign the old TLLI */
 			mmctx->gb.tlli = mmctx->gb.tlli_new;
 			gprs_llgmm_assign(mmctx->gb.llme, TLLI_UNASSIGNED,
 					  mmctx->gb.tlli_new);
+			mmctx_set_mm_state(mmctx, MM_READY);
+			break;
 		}
-		mmctx->gmm_state = GMM_REGISTERED_NORMAL;
-		mmctx_set_pmm_state(mmctx, PMM_CONNECTED);
-		mmctx_set_mm_state(mmctx, MM_READY);
 		rc = 0;
 
 		memset(&sig_data, 0, sizeof(sig_data));
