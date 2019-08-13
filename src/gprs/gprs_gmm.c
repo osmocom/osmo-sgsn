@@ -136,7 +136,7 @@ static void mmctx_change_gtpu_endpoints_to_sgsn(struct sgsn_mm_ctx *mm_ctx)
 	}
 }
 
-void mmctx_set_pmm_state(struct sgsn_mm_ctx *ctx, enum gprs_pmm_state state)
+static void mmctx_set_pmm_state(struct sgsn_mm_ctx *ctx, enum gprs_pmm_state state)
 {
 	if (ctx->ran_type != MM_CTX_T_UTRAN_Iu)
 		return;
@@ -162,7 +162,7 @@ void mmctx_set_pmm_state(struct sgsn_mm_ctx *ctx, enum gprs_pmm_state state)
 	ctx->pmm_state = state;
 }
 
-void mmctx_set_mm_state(struct sgsn_mm_ctx *ctx, enum gprs_pmm_state state)
+static void mmctx_set_mm_state(struct sgsn_mm_ctx *ctx, enum gprs_pmm_state state)
 {
 	if (ctx->ran_type != MM_CTX_T_GERAN_Gb)
 		return;
