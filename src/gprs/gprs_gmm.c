@@ -327,7 +327,7 @@ static void mm_ctx_cleanup_free(struct sgsn_mm_ctx *ctx, const char *log_text)
 	/* Mark MM state as deregistered */
 	ctx->gmm_state = GMM_DEREGISTERED;
 	mmctx_set_pmm_state(ctx, PMM_DETACHED);
-	mmctx_set_pmm_state(ctx, MM_IDLE);
+	mmctx_set_mm_state(ctx, MM_IDLE);
 
 	sgsn_mm_ctx_cleanup_free(ctx);
 }
