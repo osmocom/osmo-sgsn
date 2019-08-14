@@ -1,0 +1,61 @@
+OsmoSGSN> enable
+OsmoSGSN# show timer
+T3312 = 600 s	Periodic RA Update timer (s) (default: 600 s)
+T3313 = 30 s	Waiting for paging response timer (s) (default: 30 s)
+T3314 = 44 s	Force to STANDBY on expiry timer (s) (default: 44 s)
+T3316 = 44 s	AA-Ready timer (s) (default: 44 s)
+T3322 = 6 s	Detach request -> accept timer (s) (default: 6 s)
+T3350 = 6 s	Waiting for ATT/RAU/TMSI_COMPL timer (s) (default: 6 s)
+T3360 = 6 s	Waiting for AUTH/CIPH response timer (s) (default: 6 s)
+T3370 = 6 s	Waiting for IDENTITY response timer (s) (default: 6 s)
+T3385 = 8 s	Wait for ACT PDP CTX REQ timer (s) (default: 8 s)
+T3386 = 8 s	Wait for MODIFY PDP CTX ACK timer (s) (default: 8 s)
+T3395 = 8 s	Wait for DEACT PDP CTX ACK timer (s) (default: 8 s)
+T3397 = 8 s	Wait for DEACT AA PDP CTX ACK timer (s) (default: 8 s)
+OsmoSGSN# configure terminal
+OsmoSGSN(config)# list
+...
+  sgsn
+  ctrl
+...
+  ns
+  bssgp
+...
+
+OsmoSGSN(config)# sgsn
+OsmoSGSN(config-sgsn)# list
+...
+  gtp local-ip A.B.C.D
+  ggsn <0-255> remote-ip A.B.C.D
+  ggsn <0-255> gtp-version (0|1)
+  ggsn <0-255> echo-interval <1-36000>
+  ggsn <0-255> no echo-interval
+  imsi-acl (add|del) IMSI
+  auth-policy (accept-all|closed|acl-only|remote)
+  authentication (optional|required)
+  encryption (GEA0|GEA1|GEA2|GEA3|GEA4)
+  gsup ipa-name NAME
+  gsup remote-ip A.B.C.D
+  gsup remote-port <0-65535>
+  gsup oap-id <0-65535>
+  gsup oap-k K
+  gsup oap-opc OPC
+  apn APNAME ggsn <0-255>
+  apn APNAME imsi-prefix IMSIPRE ggsn <0-255>
+  access-point-name NAME
+  no access-point-name NAME
+  cdr filename NAME
+  no cdr filename
+  cdr trap
+  no cdr trap
+  cdr interval <1-2147483647>
+  ggsn dynamic
+  grx-dns-add A.B.C.D
+  timer [TNNNN] [(<0-2147483647>|default)]
+  no compression rfc1144
+  compression rfc1144 active slots <1-256>
+  compression rfc1144 passive
+  no compression v42bis
+  compression v42bis active direction (ms|sgsn|both) codewords <512-65535> strlen <6-250>
+  compression v42bis passive
+...

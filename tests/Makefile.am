@@ -33,6 +33,7 @@ EXTRA_DIST = \
 	$(TESTSUITE) \
 	vty_test_runner.py \
 	ctrl_test_runner.py \
+	test_nodes.vty \
 	$(NULL)
 
 TESTSUITE = $(srcdir)/testsuite
@@ -43,15 +44,37 @@ DISTCLEANFILES = \
 
 if ENABLE_EXT_TESTS
 python-tests: $(BUILT_SOURCES)
-	osmotestvty.py -p $(abs_top_srcdir) -w $(abs_top_builddir) -v
-	osmotestconfig.py -p $(abs_top_srcdir) -w $(abs_top_builddir) -v
-	$(srcdir)/vty_test_runner.py -w $(abs_top_builddir) -v
-	$(srcdir)/ctrl_test_runner.py -w $(abs_top_builddir) -v
-	rm -f $(top_builddir)/sms.db $(top_builddir)/gsn_restart $(top_builddir)/gtphub_restart_count
+	$(MAKE) vty-test
+	$(MAKE) ctrl-python-test
 else
 python-tests: $(BUILT_SOURCES)
 	echo "Not running python-based tests (determined at configure-time)"
 endif
+
+vty-python-test: $(BUILT_SOURCES)
+	osmotestvty.py -p $(abs_top_srcdir) -w $(abs_top_builddir) -v
+	osmotestconfig.py -p $(abs_top_srcdir) -w $(abs_top_builddir) -v
+	$(srcdir)/vty_test_runner.py -w $(abs_top_builddir) -v
+	rm -f $(top_builddir)/sms.db $(top_builddir)/gsn_restart $(top_builddir)/gtphub_restart_count
+
+# To update the VTY script from current application behavior,
+# pass -u to vty_script_runner.py by doing:
+#   make vty-transcript-test U=-u
+vty-transcript-test:
+	osmo_verify_transcript_vty.py -v \
+		-n OsmoSGSN -p 4245 \
+		-r "$(top_builddir)/src/gprs/osmo-sgsn -c $(top_srcdir)/doc/examples/osmo-sgsn/osmo-sgsn.cfg" \
+		$(U) $${T:-$(srcdir)/*.vty}
+	rm -f $(builddir)/sms.db $(builddir)/gsn_restart
+
+# don't run multiple tests concurrently so that the ports don't conflict
+vty-test:
+	$(MAKE) vty-python-test
+	$(MAKE) vty-transcript-test
+
+ctrl-python-test: $(BUILT_SOURCES)
+	$(srcdir)/ctrl_test_runner.py -w $(abs_top_builddir) -v
+	rm -f $(top_builddir)/sms.db $(top_builddir)/gsn_restart $(top_builddir)/gtphub_restart_count
 
 check-local: atconfig $(TESTSUITE)
 	$(SHELL) '$(TESTSUITE)' $(TESTSUITEFLAGS)
