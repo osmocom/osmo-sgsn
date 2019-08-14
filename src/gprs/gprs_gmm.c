@@ -107,12 +107,12 @@ static const struct tlv_definition gsm48_sm_att_tlvdef = {
 };
 
 static const struct value_string gprs_pmm_state_names[] = {
-	{ PMM_DETACHED,		"PMM DETACH" },
-	{ PMM_CONNECTED,	"PMM CONNECTED" },
-	{ PMM_IDLE,		"PMM IDLE" },
-	{ MM_IDLE,		"MM IDLE" },
-	{ MM_READY,		"MM READY" },
-	{ MM_STANDBY,		"MM STANDBY" },
+	OSMO_VALUE_STRING(PMM_DETACHED),
+	OSMO_VALUE_STRING(PMM_CONNECTED),
+	OSMO_VALUE_STRING(PMM_IDLE),
+	OSMO_VALUE_STRING(MM_IDLE),
+	OSMO_VALUE_STRING(MM_READY),
+	OSMO_VALUE_STRING(MM_STANDBY),
 	{ 0, NULL }
 };
 

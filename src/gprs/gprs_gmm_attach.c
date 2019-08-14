@@ -316,17 +316,17 @@ static struct osmo_fsm_state gmm_attach_req_fsm_states[] = {
 };
 
 const struct value_string gmm_attach_req_fsm_event_names[] = {
-	{ E_ATTACH_REQ_RECV,		"Received an attach request" },
-	{ E_IDEN_RESP_RECV,		"Identity Request received" },
-	{ E_AUTH_RESP_RECV_SUCCESS,	"Authentication Response received" },
-	{ E_AUTH_RESP_RECV_RESYNC,	"Authentication Failure with resync received" },
-	{ E_ATTACH_ACCEPTED,		"Attach accepted" },
-	{ E_ATTACH_ACCEPT_SENT,		"Attach accept sent" },
-	{ E_ATTACH_COMPLETE_RECV, 	"Attach complete received." },
-	{ E_IU_SECURITY_CMD_COMPLETE,   "IU Security Command Complete received." },
-	{ E_REJECT,			"Reject the MS"},
-	{ E_VLR_ANSWERED,		"VLR answered"},
-	{ 0,				NULL }
+	OSMO_VALUE_STRING(E_ATTACH_REQ_RECV),
+	OSMO_VALUE_STRING(E_IDEN_RESP_RECV),
+	OSMO_VALUE_STRING(E_AUTH_RESP_RECV_SUCCESS),
+	OSMO_VALUE_STRING(E_AUTH_RESP_RECV_RESYNC),
+	OSMO_VALUE_STRING(E_ATTACH_ACCEPTED),
+	OSMO_VALUE_STRING(E_ATTACH_ACCEPT_SENT),
+	OSMO_VALUE_STRING(E_ATTACH_COMPLETE_RECV),
+	OSMO_VALUE_STRING(E_IU_SECURITY_CMD_COMPLETE),
+	OSMO_VALUE_STRING(E_REJECT),
+	OSMO_VALUE_STRING(E_VLR_ANSWERED),
+	{ 0, NULL }
 };
 
 void gmm_attach_allstate_action(struct osmo_fsm_inst *fi, uint32_t event, void *data) {
