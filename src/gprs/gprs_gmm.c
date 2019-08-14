@@ -40,6 +40,7 @@
 #include <osmocom/core/talloc.h>
 #include <osmocom/core/rate_ctr.h>
 #include <osmocom/core/utils.h>
+#include <osmocom/core/tdef.h>
 #include <osmocom/crypt/auth.h>
 #include <osmocom/gsm/apn.h>
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
@@ -235,12 +236,15 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 
 static void mmctx_timer_cb(void *_mm);
 
-static void mmctx_timer_start(struct sgsn_mm_ctx *mm, unsigned int T,
-				unsigned int seconds)
+static void mmctx_timer_start(struct sgsn_mm_ctx *mm, unsigned int T)
 {
+	unsigned long seconds;
 	if (osmo_timer_pending(&mm->timer))
 		LOGMMCTXP(LOGL_ERROR, mm, "Starting MM timer %u while old "
 			"timer %u pending\n", T, mm->T);
+
+	seconds = osmo_tdef_get(sgsn->cfg.T_defs, T, OSMO_TDEF_S, -1);
+
 	mm->T = T;
 	mm->num_T_exp = 0;
 
@@ -259,7 +263,11 @@ static void mmctx_timer_stop(struct sgsn_mm_ctx *mm, unsigned int T)
 
 time_t gprs_max_time_to_idle(void)
 {
-	return sgsn->cfg.timers.T3314 + (sgsn->cfg.timers.T3312 + 4 * 60);
+	unsigned long T3314, T3312;
+
+	T3314 = osmo_tdef_get(sgsn->cfg.T_defs, 3314, OSMO_TDEF_S, -1);
+	T3312 = osmo_tdef_get(sgsn->cfg.T_defs, 3312, OSMO_TDEF_S, -1);
+	return T3314 + (T3312 + 4 * 60);
 }
 
 /* Send a message through the underlying layer.
@@ -449,6 +457,7 @@ int gsm48_tx_gmm_att_ack(struct sgsn_mm_ctx *mm)
 	struct gsm48_hdr *gh;
 	struct gsm48_attach_ack *aa;
 	uint8_t *mid;
+	unsigned long t;
 #if 0
 	uint8_t *ptsig;
 #endif
@@ -465,7 +474,8 @@ int gsm48_tx_gmm_att_ack(struct sgsn_mm_ctx *mm)
 	aa = (struct gsm48_attach_ack *) msgb_put(msg, sizeof(*aa));
 	aa->force_stby = 0;	/* not indicated */
 	aa->att_result = 1;	/* GPRS only */
-	aa->ra_upd_timer = gprs_secs_to_tmr_floor(sgsn->cfg.timers.T3312);
+	t = osmo_tdef_get(sgsn->cfg.T_defs, 3312, OSMO_TDEF_S, -1);
+	aa->ra_upd_timer = gprs_secs_to_tmr_floor(t);
 	aa->radio_prio = 4;	/* lowest */
 	gsm48_encode_ra(&aa->ra_id, &mm->ra);
 
@@ -482,8 +492,8 @@ int gsm48_tx_gmm_att_ack(struct sgsn_mm_ctx *mm)
 	 * (fixed 44s, default value, GSM 04.08, table 11.4a) to safely limit
 	 * the inactivity time READY->STANDBY.
 	 */
-	msgb_tv_put(msg, GSM48_IE_GMM_TIMER_READY,
-		    gprs_secs_to_tmr_floor(sgsn->cfg.timers.T3314));
+	t = osmo_tdef_get(sgsn->cfg.T_defs, 3314, OSMO_TDEF_S, -1);
+	msgb_tv_put(msg, GSM48_IE_GMM_TIMER_READY, gprs_secs_to_tmr_floor(t));
 
 #ifdef PTMSI_ALLOC
 	/* Optional: Allocated P-TMSI */
@@ -1019,12 +1029,12 @@ static int gsm48_gmm_authorize(struct sgsn_mm_ctx *ctx)
 	/* Request IMSI and IMEI from the MS if they are unknown */
 	if (!strlen(ctx->imei)) {
 		ctx->t3370_id_type = GSM_MI_TYPE_IMEI;
-		mmctx_timer_start(ctx, 3370, sgsn->cfg.timers.T3370);
+		mmctx_timer_start(ctx, 3370);
 		return gsm48_tx_gmm_id_req(ctx, GSM_MI_TYPE_IMEI);
 	}
 	if (!strlen(ctx->imsi)) {
 		ctx->t3370_id_type = GSM_MI_TYPE_IMSI;
-		mmctx_timer_start(ctx, 3370, sgsn->cfg.timers.T3370);
+		mmctx_timer_start(ctx, 3370);
 		return gsm48_tx_gmm_id_req(ctx, GSM_MI_TYPE_IMSI);
 	}
 
@@ -1047,7 +1057,7 @@ static int gsm48_gmm_authorize(struct sgsn_mm_ctx *ctx)
 	    && !sgsn_mm_ctx_is_authenticated(ctx)) {
 		struct gsm_auth_tuple *at = &ctx->auth_triplet;
 
-		mmctx_timer_start(ctx, 3360, sgsn->cfg.timers.T3360);
+		mmctx_timer_start(ctx, 3360);
 		return gsm48_tx_gmm_auth_ciph_req(ctx, &at->vec, at->key_seq,
 						  false);
 	}
@@ -1086,7 +1096,7 @@ static int gsm48_gmm_authorize(struct sgsn_mm_ctx *ctx)
 		extract_subscr_hlr(ctx);
 #ifdef PTMSI_ALLOC
 		/* Start T3350 and re-transmit up to 5 times until ATTACH COMPLETE */
-		mmctx_timer_start(ctx, 3350, sgsn->cfg.timers.T3350);
+		mmctx_timer_start(ctx, 3350);
 		ctx->t3350_mode = GMM_T3350_MODE_ATT;
 #else
 		memset(&sig_data, 0, sizeof(sig_data));
@@ -1534,6 +1544,7 @@ static int gsm48_tx_gmm_ra_upd_ack(struct sgsn_mm_ctx *mm)
 	struct gsm48_hdr *gh;
 	struct gsm48_ra_upd_ack *rua;
 	uint8_t *mid;
+	unsigned long t;
 
 	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_GPRS_ROUTING_AREA_ACKED]);
 	LOGMMCTXP(LOGL_INFO, mm, "<- ROUTING AREA UPDATE ACCEPT\n");
@@ -1547,7 +1558,8 @@ static int gsm48_tx_gmm_ra_upd_ack(struct sgsn_mm_ctx *mm)
 	rua = (struct gsm48_ra_upd_ack *) msgb_put(msg, sizeof(*rua));
 	rua->force_stby = 0;	/* not indicated */
 	rua->upd_result = 0;	/* RA updated */
-	rua->ra_upd_timer = gprs_secs_to_tmr_floor(sgsn->cfg.timers.T3312);
+	t = osmo_tdef_get(sgsn->cfg.T_defs, 3312, OSMO_TDEF_S, -1);
+	rua->ra_upd_timer = gprs_secs_to_tmr_floor(t);
 
 	gsm48_encode_ra(&rua->ra_id, &mm->ra);
 
@@ -1568,8 +1580,8 @@ static int gsm48_tx_gmm_ra_upd_ack(struct sgsn_mm_ctx *mm)
 #endif
 
 	/* Optional: Negotiated READY timer value */
-	msgb_tv_put(msg, GSM48_IE_GMM_TIMER_READY,
-		    gprs_secs_to_tmr_floor(sgsn->cfg.timers.T3314));
+	t = osmo_tdef_get(sgsn->cfg.T_defs, 3314, OSMO_TDEF_S, -1);
+	msgb_tv_put(msg, GSM48_IE_GMM_TIMER_READY, gprs_secs_to_tmr_floor(t));
 
 	/* Option: MS ID, ... */
 	return gsm48_gmm_sendmsg(msg, 0, mm, true);
@@ -1793,7 +1805,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 
 	/* Start T3350 and re-transmit up to 5 times until ATTACH COMPLETE */
 	mmctx->t3350_mode = GMM_T3350_MODE_RAU;
-	mmctx_timer_start(mmctx, 3350, sgsn->cfg.timers.T3350);
+	mmctx_timer_start(mmctx, 3350);
 #else
 	/* Make sure we are NORMAL (i.e. not SUSPENDED anymore) */
 	mmctx->gmm_state = GMM_REGISTERED_NORMAL;
@@ -2183,6 +2195,7 @@ static void mmctx_timer_cb(void *_mm)
 	struct sgsn_mm_ctx *mm = _mm;
 	struct gsm_auth_tuple *at;
 	int rc;
+	unsigned long seconds;
 
 	mm->num_T_exp++;
 
@@ -2210,7 +2223,8 @@ static void mmctx_timer_cb(void *_mm)
 				  "T3350 mode wasn't set, ignoring timeout\n");
 			break;
 		}
-		osmo_timer_schedule(&mm->timer, sgsn->cfg.timers.T3350, 0);
+		seconds = osmo_tdef_get(sgsn->cfg.T_defs, 3350, OSMO_TDEF_S, -1);
+		osmo_timer_schedule(&mm->timer, seconds, 0);
 		break;
 	case 3360:	/* waiting for AUTH AND CIPH RESP */
 		if (mm->num_T_exp >= 5) {
@@ -2228,10 +2242,12 @@ static void mmctx_timer_cb(void *_mm)
 		at = &mm->auth_triplet;
 
 		rc = gsm48_tx_gmm_auth_ciph_req(mm, &at->vec, at->key_seq, false);
-		if (rc < 0)
+		if (rc < 0) {
 			LOGMMCTXP(LOGL_ERROR, mm, "failed sending Auth. & Ciph. Request: %s \n", strerror(-rc));
-		else
-			osmo_timer_schedule(&mm->timer, sgsn->cfg.timers.T3360, 0);
+		} else {
+			seconds = osmo_tdef_get(sgsn->cfg.T_defs, 3360, OSMO_TDEF_S, -1);
+			osmo_timer_schedule(&mm->timer, seconds, 0);
+		}
 		break;
 	case 3370:	/* waiting for IDENTITY RESPONSE */
 		if (mm->num_T_exp >= 5) {
@@ -2242,7 +2258,8 @@ static void mmctx_timer_cb(void *_mm)
 		}
 		/* re-tranmit IDENTITY REQUEST and re-start timer */
 		gsm48_tx_gmm_id_req(mm, mm->t3370_id_type);
-		osmo_timer_schedule(&mm->timer, sgsn->cfg.timers.T3370, 0);
+		seconds = osmo_tdef_get(sgsn->cfg.T_defs, 3370, OSMO_TDEF_S, -1);
+		osmo_timer_schedule(&mm->timer, seconds, 0);
 		break;
 	default:
 		LOGMMCTXP(LOGL_ERROR, mm, "timer expired in unknown mode %u\n",
@@ -2255,16 +2272,17 @@ static void mmctx_timer_cb(void *_mm)
 static void pdpctx_timer_cb(void *_mm);
 
 
-static void pdpctx_timer_rearm(struct sgsn_pdp_ctx *pdp, unsigned int T, unsigned int seconds)
+static void pdpctx_timer_rearm(struct sgsn_pdp_ctx *pdp, unsigned int T)
 {
+	unsigned long seconds;
 	if (osmo_timer_pending(&pdp->timer))
 		LOGPDPCTXP(LOGL_ERROR, pdp, "Scheduling PDP timer %u while old "
 			"timer %u pending\n", T, pdp->T);
+	seconds = osmo_tdef_get(sgsn->cfg.T_defs, T, OSMO_TDEF_S, -1);
 	osmo_timer_schedule(&pdp->timer, seconds, 0);
 }
 
-static void pdpctx_timer_start(struct sgsn_pdp_ctx *pdp, unsigned int T,
-				unsigned int seconds)
+static void pdpctx_timer_start(struct sgsn_pdp_ctx *pdp, unsigned int T)
 {
 	if (osmo_timer_pending(&pdp->timer))
 		LOGPDPCTXP(LOGL_ERROR, pdp, "Starting PDP timer %u while old "
@@ -2273,7 +2291,7 @@ static void pdpctx_timer_start(struct sgsn_pdp_ctx *pdp, unsigned int T,
 	pdp->num_T_exp = 0;
 
 	osmo_timer_setup(&pdp->timer, pdpctx_timer_cb, pdp);
-	pdpctx_timer_rearm(pdp, pdp->T, seconds);
+	pdpctx_timer_rearm(pdp, pdp->T);
 }
 
 static void pdpctx_timer_stop(struct sgsn_pdp_ctx *pdp, unsigned int T)
@@ -2410,7 +2428,7 @@ static int _gsm48_tx_gsm_deact_pdp_req(struct sgsn_mm_ctx *mm, uint8_t tid,
 }
 int gsm48_tx_gsm_deact_pdp_req(struct sgsn_pdp_ctx *pdp, uint8_t sm_cause, bool teardown)
 {
-	pdpctx_timer_start(pdp, 3395, sgsn->cfg.timers.T3395);
+	pdpctx_timer_start(pdp, 3395);
 
 	return _gsm48_tx_gsm_deact_pdp_req(pdp->mm, pdp->ti, sm_cause, teardown);
 }
@@ -2826,7 +2844,7 @@ static void pdpctx_timer_cb(void *_pdp)
 			break;
 		}
 		_gsm48_tx_gsm_deact_pdp_req(pdp->mm, pdp->ti, GSM_CAUSE_NET_FAIL, true);
-		pdpctx_timer_rearm(pdp, 3395, sgsn->cfg.timers.T3395);
+		pdpctx_timer_rearm(pdp, 3395);
 		break;
 	default:
 		LOGPDPCTXP(LOGL_ERROR, pdp, "timer expired in unknown mode %u\n",

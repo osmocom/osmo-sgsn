@@ -28,6 +28,7 @@
 #include <osmocom/core/talloc.h>
 #include <osmocom/core/utils.h>
 #include <osmocom/core/rate_ctr.h>
+#include <osmocom/core/tdef.h>
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 #include <osmocom/gsm/apn.h>
 
@@ -39,6 +40,7 @@
 #include <osmocom/sgsn/vty.h>
 #include <osmocom/gsupclient/gsup_client.h>
 
+#include <osmocom/vty/tdef_vty.h>
 #include <osmocom/vty/command.h>
 #include <osmocom/vty/vty.h>
 #include <osmocom/vty/misc.h>
@@ -88,39 +90,42 @@ const struct value_string sgsn_auth_pol_strs[] = {
 #define GSM0408_T3395_SECS	8	/* wait for DEACT PDP CTX ACK */
 #define GSM0408_T3397_SECS	8	/* wait for DEACT AA PDP CTX ACK */
 
-#define DECLARE_TIMER(number, doc) \
-    DEFUN(cfg_sgsn_T##number,					\
-      cfg_sgsn_T##number##_cmd,					\
-      "timer t" #number  " <0-65535>",				\
-      "Configure GPRS Timers\n"					\
-      doc "\nTimer Value in seconds\n")				\
-{								\
-	int value = atoi(argv[0]);				\
-								\
-	if (value < 0 || value > 65535) {			\
-		vty_out(vty, "Timer value %s out of range.%s",	\
-		        argv[0], VTY_NEWLINE);			\
-		return CMD_WARNING;				\
-	}							\
-								\
-	g_cfg->timers.T##number = value;			\
-	return CMD_SUCCESS;					\
+
+static struct osmo_tdef sgsn_T_defs[] = {
+	{ .T=3312, .default_val=GSM0408_T3312_SECS, .desc="Periodic RA Update timer (s)" },
+	{ .T=3313, .default_val=GSM0408_T3313_SECS, .desc="Waiting for paging response timer (s)" },
+	{ .T=3314, .default_val=GSM0408_T3314_SECS, .desc="Force to STANDBY on expiry timer (s)" },
+	{ .T=3316, .default_val=GSM0408_T3316_SECS, .desc="AA-Ready timer (s)" },
+	{ .T=3322, .default_val=GSM0408_T3322_SECS, .desc="Detach request -> accept timer (s)" },
+	{ .T=3350, .default_val=GSM0408_T3350_SECS, .desc="Waiting for ATT/RAU/TMSI_COMPL timer (s)" },
+	{ .T=3360, .default_val=GSM0408_T3360_SECS, .desc="Waiting for AUTH/CIPH response timer (s)" },
+	{ .T=3370, .default_val=GSM0408_T3370_SECS, .desc="Waiting for IDENTITY response timer (s)" },
+	{ .T=3385, .default_val=GSM0408_T3385_SECS, .desc="Wait for ACT PDP CTX REQ timer (s)" },
+	{ .T=3386, .default_val=GSM0408_T3386_SECS, .desc="Wait for MODIFY PDP CTX ACK timer (s)" },
+	{ .T=3395, .default_val=GSM0408_T3395_SECS, .desc="Wait for DEACT PDP CTX ACK timer (s)" },
+	{ .T=3397, .default_val=GSM0408_T3397_SECS, .desc="Wait for DEACT AA PDP CTX ACK timer (s)" },
+	{}
+};
+
+DEFUN(show_timer, show_timer_cmd,
+      "show timer " OSMO_TDEF_VTY_ARG_T_OPTIONAL,
+      SHOW_STR "Show timers\n"
+      OSMO_TDEF_VTY_DOC_T)
+{
+	const char *T_arg = argc > 0 ? argv[0] : NULL;
+	return osmo_tdef_vty_show_cmd(vty, g_cfg->T_defs, T_arg, NULL);
 }
 
-DECLARE_TIMER(3312, "Periodic RA Update timer (s)")
-DECLARE_TIMER(3322, "Detach request -> accept timer (s)")
-DECLARE_TIMER(3350, "Waiting for ATT/RAU/TMSI_COMPL timer (s)")
-DECLARE_TIMER(3360, "Waiting for AUTH/CIPH response timer (s)")
-DECLARE_TIMER(3370, "Waiting for IDENTITY response timer (s)")
-
-DECLARE_TIMER(3313, "Waiting for paging response timer (s)")
-DECLARE_TIMER(3314, "Force to STANDBY on expiry timer (s)")
-DECLARE_TIMER(3316, "AA-Ready timer (s)")
-
-DECLARE_TIMER(3385, "Wait for ACT PDP CTX REQ timer (s)")
-DECLARE_TIMER(3386, "Wait for MODIFY PDP CTX ACK timer (s)")
-DECLARE_TIMER(3395, "Wait for DEACT PDP CTX ACK timer (s)")
-DECLARE_TIMER(3397, "Wait for DEACT AA PDP CTX ACK timer (s)")
+DEFUN(cfg_sgsn_timer, cfg_sgsn_timer_cmd,
+      "timer " OSMO_TDEF_VTY_ARG_SET_OPTIONAL,
+      "Configure or show timers\n"
+      OSMO_TDEF_VTY_DOC_SET)
+{
+	/* If any arguments are missing, redirect to 'show' */
+	if (argc < 2)
+		return show_timer(self, vty, argc, argv);
+	return osmo_tdef_vty_set_cmd(vty, g_cfg->T_defs, argv);
+}
 
 char *gprs_pdpaddr2str(uint8_t *pdpa, uint8_t len)
 {
@@ -253,18 +258,7 @@ static int config_write_sgsn(struct vty *vty)
 		vty_out(vty, " no cdr trap%s", VTY_NEWLINE);
 	vty_out(vty, " cdr interval %d%s", g_cfg->cdr.interval, VTY_NEWLINE);
 
-	vty_out(vty, " timer t3312 %d%s", g_cfg->timers.T3312, VTY_NEWLINE);
-	vty_out(vty, " timer t3322 %d%s", g_cfg->timers.T3322, VTY_NEWLINE);
-	vty_out(vty, " timer t3350 %d%s", g_cfg->timers.T3350, VTY_NEWLINE);
-	vty_out(vty, " timer t3360 %d%s", g_cfg->timers.T3360, VTY_NEWLINE);
-	vty_out(vty, " timer t3370 %d%s", g_cfg->timers.T3370, VTY_NEWLINE);
-	vty_out(vty, " timer t3313 %d%s", g_cfg->timers.T3313, VTY_NEWLINE);
-	vty_out(vty, " timer t3314 %d%s", g_cfg->timers.T3314, VTY_NEWLINE);
-	vty_out(vty, " timer t3316 %d%s", g_cfg->timers.T3316, VTY_NEWLINE);
-	vty_out(vty, " timer t3385 %d%s", g_cfg->timers.T3385, VTY_NEWLINE);
-	vty_out(vty, " timer t3386 %d%s", g_cfg->timers.T3386, VTY_NEWLINE);
-	vty_out(vty, " timer t3395 %d%s", g_cfg->timers.T3395, VTY_NEWLINE);
-	vty_out(vty, " timer t3397 %d%s", g_cfg->timers.T3397, VTY_NEWLINE);
+	osmo_tdef_vty_write(vty, g_cfg->T_defs, " timer ");
 
 	if (g_cfg->pcomp_rfc1144.active) {
 		vty_out(vty, " compression rfc1144 active slots %d%s",
@@ -1388,12 +1382,16 @@ int sgsn_vty_init(struct sgsn_config *cfg)
 {
 	g_cfg = cfg;
 
+	g_cfg->T_defs = sgsn_T_defs;
+	osmo_tdefs_reset(g_cfg->T_defs);
+
 	install_element_ve(&show_sgsn_cmd);
 	//install_element_ve(&show_mmctx_tlli_cmd);
 	install_element_ve(&show_mmctx_imsi_cmd);
 	install_element_ve(&show_mmctx_all_cmd);
 	install_element_ve(&show_pdpctx_all_cmd);
 	install_element_ve(&show_subscr_cache_cmd);
+	install_element_ve(&show_timer_cmd);
 
 	install_element(ENABLE_NODE, &update_subscr_insert_auth_triplet_cmd);
 	install_element(ENABLE_NODE, &update_subscr_create_cmd);
@@ -1433,18 +1431,7 @@ int sgsn_vty_init(struct sgsn_config *cfg)
 	install_element(SGSN_NODE, &cfg_ggsn_dynamic_lookup_cmd);
 	install_element(SGSN_NODE, &cfg_grx_ggsn_cmd);
 
-	install_element(SGSN_NODE, &cfg_sgsn_T3312_cmd);
-	install_element(SGSN_NODE, &cfg_sgsn_T3322_cmd);
-	install_element(SGSN_NODE, &cfg_sgsn_T3350_cmd);
-	install_element(SGSN_NODE, &cfg_sgsn_T3360_cmd);
-	install_element(SGSN_NODE, &cfg_sgsn_T3370_cmd);
-	install_element(SGSN_NODE, &cfg_sgsn_T3313_cmd);
-	install_element(SGSN_NODE, &cfg_sgsn_T3314_cmd);
-	install_element(SGSN_NODE, &cfg_sgsn_T3316_cmd);
-	install_element(SGSN_NODE, &cfg_sgsn_T3385_cmd);
-	install_element(SGSN_NODE, &cfg_sgsn_T3386_cmd);
-	install_element(SGSN_NODE, &cfg_sgsn_T3395_cmd);
-	install_element(SGSN_NODE, &cfg_sgsn_T3397_cmd);
+	install_element(SGSN_NODE, &cfg_sgsn_timer_cmd);
 
 	install_element(SGSN_NODE, &cfg_no_comp_rfc1144_cmd);
 	install_element(SGSN_NODE, &cfg_comp_rfc1144_cmd);
@@ -1465,19 +1452,6 @@ int sgsn_parse_config(const char *config_file)
 
 	/* make sure sgsn_vty_init() was called before this */
 	OSMO_ASSERT(g_cfg);
-
-	g_cfg->timers.T3312 = GSM0408_T3312_SECS;
-	g_cfg->timers.T3322 = GSM0408_T3322_SECS;
-	g_cfg->timers.T3350 = GSM0408_T3350_SECS;
-	g_cfg->timers.T3360 = GSM0408_T3360_SECS;
-	g_cfg->timers.T3370 = GSM0408_T3370_SECS;
-	g_cfg->timers.T3313 = GSM0408_T3313_SECS;
-	g_cfg->timers.T3314 = GSM0408_T3314_SECS;
-	g_cfg->timers.T3316 = GSM0408_T3316_SECS;
-	g_cfg->timers.T3385 = GSM0408_T3385_SECS;
-	g_cfg->timers.T3386 = GSM0408_T3386_SECS;
-	g_cfg->timers.T3395 = GSM0408_T3395_SECS;
-	g_cfg->timers.T3397 = GSM0408_T3397_SECS;
 
 	rc = vty_read_config_file(config_file, NULL);
 	if (rc < 0) {

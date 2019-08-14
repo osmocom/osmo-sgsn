@@ -37,6 +37,7 @@
 #include <osmocom/core/msgb.h>
 #include <osmocom/core/rate_ctr.h>
 #include <osmocom/core/utils.h>
+#include <osmocom/vty/vty.h>
 
 #include <stdio.h>
 
@@ -1646,6 +1647,10 @@ static struct log_info info = {
 	.num_cat = ARRAY_SIZE(gprs_categories),
 };
 
+static struct vty_app_info vty_info = {
+	.name 		= "testSGSN",
+};
+
 int main(int argc, char **argv)
 {
 	void *osmo_sgsn_ctx;
@@ -1659,6 +1664,8 @@ int main(int argc, char **argv)
 	sgsn_rate_ctr_init();
 	sgsn_auth_init(sgsn);
 	gprs_subscr_init(sgsn);
+	vty_init(&vty_info);
+	sgsn_vty_init(&sgsn->cfg);
 
 	test_llme();
 	test_subscriber();

@@ -1,3 +1,5 @@
+#include <osmocom/core/tdef.h>
+
 #include <osmocom/sgsn/gprs_gmm_attach.h>
 
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
@@ -9,6 +11,18 @@
 
 static int require_identity_imei = 1;
 static int require_auth = 1;
+
+static const struct osmo_tdef_state_timeout gmm_attach_fsm_timeouts[32] = {
+	[ST_IDENTIY] = { .T=3370 },
+	[ST_AUTH] = { .T=3360 },
+	[ST_ACCEPT] = { .T=3350 },
+	[ST_ASK_VLR] = { .T=3350 },
+	[ST_IU_SECURITY_CMD] = { .T=3350 },
+};
+
+#define gmm_attach_fsm_state_chg(fi, NEXT_STATE) \
+	osmo_tdef_fsm_inst_state_chg(fi, NEXT_STATE, gmm_attach_fsm_timeouts, sgsn->cfg.T_defs, -1)
+
 
 static void st_init(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
@@ -33,14 +47,14 @@ static void st_init(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 
 	if (require_identity_imei) {
 		ctx->gmm_att_req.id_type = GSM_MI_TYPE_IMEI;
-		osmo_fsm_inst_state_chg(fi, ST_IDENTIY, sgsn->cfg.timers.T3370, 3370);
+		gmm_attach_fsm_state_chg(fi, ST_IDENTIY);
 	} else if (!strlen(ctx->imsi)) {
 		ctx->gmm_att_req.id_type = GSM_MI_TYPE_IMSI;
-		osmo_fsm_inst_state_chg(fi, ST_IDENTIY, sgsn->cfg.timers.T3370, 3370);
+		gmm_attach_fsm_state_chg(fi, ST_IDENTIY);
 	} else if (require_auth)
-		osmo_fsm_inst_state_chg(fi, ST_AUTH, sgsn->cfg.timers.T3360, 3360);
+		gmm_attach_fsm_state_chg(fi, ST_AUTH);
 	else
-		osmo_fsm_inst_state_chg(fi, ST_ACCEPT, sgsn->cfg.timers.T3350, 3350);
+		gmm_attach_fsm_state_chg(fi, ST_ACCEPT);
 }
 
 static void st_identity_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state)
@@ -94,11 +108,11 @@ static void st_identity(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 
 	if (type == GSM_MI_TYPE_IMEI && !strlen(ctx->imsi)) {
 		ctx->gmm_att_req.id_type = GSM_MI_TYPE_IMSI;
-		osmo_fsm_inst_state_chg(fi, ST_IDENTIY, sgsn->cfg.timers.T3370, 3370);
+		gmm_attach_fsm_state_chg(fi, ST_IDENTIY);
 	} else if (require_auth)
-		osmo_fsm_inst_state_chg(fi, ST_AUTH, sgsn->cfg.timers.T3360, 3360);
+		gmm_attach_fsm_state_chg(fi, ST_AUTH);
 	else
-		osmo_fsm_inst_state_chg(fi, ST_ACCEPT, sgsn->cfg.timers.T3350, 3350);
+		gmm_attach_fsm_state_chg(fi, ST_ACCEPT);
 }
 
 static void st_auth_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state)
@@ -124,19 +138,19 @@ static void st_auth_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state)
 	switch(auth_state) {
 	case SGSN_AUTH_UMTS_RESYNC: /* ask the vlr for a new vector to match the simcards seq */
 	case SGSN_AUTH_UNKNOWN: /* the SGSN doesn know this MS */
-		osmo_fsm_inst_state_chg(fi, ST_ASK_VLR, sgsn->cfg.timers.T3350, 3350);
+		gmm_attach_fsm_state_chg(fi, ST_ASK_VLR);
 		break;
 	case SGSN_AUTH_REJECTED:
 		/* TODO: correct GMM cause */
 		osmo_fsm_inst_dispatch(fi, E_REJECT, (void *) GMM_CAUSE_GPRS_NOTALLOWED);
 		break;
 	case SGSN_AUTH_ACCEPTED:
-		osmo_fsm_inst_state_chg(fi, ST_ACCEPT, sgsn->cfg.timers.T3350, 3350);
+		gmm_attach_fsm_state_chg(fi, ST_ACCEPT);
 		break;
 	case SGSN_AUTH_AUTHENTICATE:
 		if (ctx->auth_triplet.key_seq == GSM_KEY_SEQ_INVAL) {
 			/* invalid key material */
-			osmo_fsm_inst_state_chg(fi, ST_ASK_VLR, sgsn->cfg.timers.T3350, 3350);
+			gmm_attach_fsm_state_chg(fi, ST_ASK_VLR);
 		}
 
 		struct gsm_auth_tuple *at = &ctx->auth_triplet;
@@ -159,14 +173,14 @@ static void st_auth(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 		sgsn_auth_request(ctx);
 #ifdef BUILD_IU
 		if (ctx->ran_type == MM_CTX_T_UTRAN_Iu && !ctx->iu.ue_ctx->integrity_active)
-			osmo_fsm_inst_state_chg(fi, ST_IU_SECURITY_CMD, sgsn->cfg.timers.T3350, 3350);
+			gmm_attach_fsm_state_chg(fi, ST_IU_SECURITY_CMD);
 		else
 #endif /* BUILD_IU */
-			osmo_fsm_inst_state_chg(fi, ST_ACCEPT, sgsn->cfg.timers.T3350, 3350);
+			gmm_attach_fsm_state_chg(fi, ST_ACCEPT);
 		break;
 	case E_AUTH_RESP_RECV_RESYNC:
 		if (ctx->gmm_att_req.auth_reattempt <= 1)
-			osmo_fsm_inst_state_chg(fi, ST_ASK_VLR, sgsn->cfg.timers.T3350, 3350);
+			gmm_attach_fsm_state_chg(fi, ST_ASK_VLR);
 		else
 			osmo_fsm_inst_dispatch(fi, E_REJECT, (void *) GMM_CAUSE_SYNC_FAIL);
 		break;
@@ -234,7 +248,7 @@ static void st_ask_vlr(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	switch(event) {
 	case E_VLR_ANSWERED:
-		osmo_fsm_inst_state_chg(fi, ST_AUTH, sgsn->cfg.timers.T3360, 3360);
+		gmm_attach_fsm_state_chg(fi, ST_AUTH);
 		break;
 	}
 }
@@ -246,7 +260,7 @@ static void st_iu_security_cmd_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_
 
 	/* TODO: shouldn't this set always? not only when the integrity_active? */
 	if (ctx->iu.ue_ctx->integrity_active) {
-		osmo_fsm_inst_state_chg(fi, ST_ACCEPT, sgsn->cfg.timers.T3350, 3350);
+		gmm_attach_fsm_state_chg(fi, ST_ACCEPT);
 		return;
 	}
 
@@ -259,7 +273,7 @@ static void st_iu_security_cmd(struct osmo_fsm_inst *fi, uint32_t event, void *d
 {
 	switch(event) {
 	case E_IU_SECURITY_CMD_COMPLETE:
-		osmo_fsm_inst_state_chg(fi, ST_ACCEPT, sgsn->cfg.timers.T3350, 3350);
+		gmm_attach_fsm_state_chg(fi, ST_ACCEPT);
 		break;
 	}
 }
@@ -373,6 +387,7 @@ int gmm_attach_timer_cb(struct osmo_fsm_inst *fi)
 {
 	struct sgsn_mm_ctx *ctx = fi->priv;
 	struct gsm_auth_tuple *at = &ctx->auth_triplet;
+	unsigned long t_secs;
 
 	ctx->num_T_exp++;
 
@@ -392,7 +407,9 @@ int gmm_attach_timer_cb(struct osmo_fsm_inst *fi)
 			break;
 		}
 		gsm48_tx_gmm_id_req(ctx, ctx->gmm_att_req.id_type);
-		osmo_timer_schedule(&fi->timer, sgsn->cfg.timers.T3370, 0);
+		t_secs = osmo_tdef_get(sgsn->cfg.T_defs, 3370, OSMO_TDEF_S, -1);
+		osmo_timer_schedule(&fi->timer, t_secs, 0);
+
 		break;
 	case ST_AUTH:
 		/* T3360 */
@@ -401,7 +418,8 @@ int gmm_attach_timer_cb(struct osmo_fsm_inst *fi)
 			break;
 		}
 		gsm48_tx_gmm_auth_ciph_req(ctx, &at->vec, at->key_seq, false);
-		osmo_timer_schedule(&fi->timer, sgsn->cfg.timers.T3360, 0);
+		t_secs = osmo_tdef_get(sgsn->cfg.T_defs, 3360, OSMO_TDEF_S, -1);
+		osmo_timer_schedule(&fi->timer, t_secs, 0);
 		break;
 	case ST_ACCEPT:
 		/* T3350 */
@@ -410,7 +428,8 @@ int gmm_attach_timer_cb(struct osmo_fsm_inst *fi)
 			break;
 		}
 		gsm48_tx_gmm_att_ack(ctx);
-		osmo_timer_schedule(&fi->timer, sgsn->cfg.timers.T3350, 0);
+		t_secs = osmo_tdef_get(sgsn->cfg.T_defs, 3350, OSMO_TDEF_S, -1);
+		osmo_timer_schedule(&fi->timer, t_secs, 0);
 		break;
 	}
 
