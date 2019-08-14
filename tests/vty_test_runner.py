@@ -266,6 +266,15 @@ class TestVTYSGSN(TestVTYBase):
         self.assert_(res.find(" cdr interval 900") > 0)
         self.assertEquals(res.find(" cdr interval 600"), -1)
 
+    def testVtyTimers(self):
+        self.vty.enable()
+        self.assertTrue(self.vty.verify('configure terminal', ['']))
+        self.assertEquals(self.vty.node(), 'config')
+        self.assertTrue(self.vty.verify('sgsn', ['']))
+        self.assertEquals(self.vty.node(), 'config-sgsn')
+
+        for t in [3312, 3322, 3350, 3360, 3370, 3313, 3314, 3316, 3385, 3395, 3397]:
+            self.assertTrue(self.vty.verify('timer t%d 10' % t, ['']))
 
 def add_gbproxy_test(suite, workdir):
     if not os.path.isfile(os.path.join(workdir, "src/gprs/osmo-gbproxy")):
