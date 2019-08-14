@@ -262,6 +262,28 @@ static inline bool sgsn_mm_ctx_is_authenticated(struct sgsn_mm_ctx *ctx)
 	LOGP(DMM, level, "MM(%s/%08x) " fmt, (mm) ? (mm)->imsi : "---", \
 	     (mm) ? (mm)->p_tmsi : GSM_RESERVED_TMSI, ## args)
 
+#ifdef BUILD_IU
+#define LOGIUP(ue, level, fmt, args...) \
+	LOGP(DMM, level, "UE(0x%x){%s} " fmt, ue->conn_id, osmo_rai_name(&(ue)->ra_id), ## args)
+#else
+#define LOGIUP(ue, level, fmt, args...) \
+	LOGP(DMM, level, "UE(%p){NOTSUPPORTED} " fmt, ue, ## args)
+#endif
+
+#define LOGGBP(llme, level, fmt, args...) \
+	LOGP(DMM, level, "LLME(%08x/%08x){%s} " fmt, (llme)->old_tlli, \
+	     (llme)->tlli, get_value_string_or_null(gprs_llc_llme_state_names, (llme)->state), ## args);
+
+#define LOGGBIUP(llme, msg, level, fmt, args...) \
+	do { \
+	struct ranap_ue_conn_ctx * _ue; \
+	if (llme) { \
+		LOGGBP(llme, level, fmt, ## args); \
+	} else if ((msg) && (_ue = MSG_IU_UE_CTX(msg))) { \
+		LOGIUP(_ue, level, fmt, ## args); \
+	} else { OSMO_ASSERT(0); } \
+	} while (0)
+
 /* look-up a SGSN MM context based on TLLI + RAI */
 struct sgsn_mm_ctx *sgsn_mm_ctx_by_tlli(uint32_t tlli,
 					const struct gprs_ra_id *raid);

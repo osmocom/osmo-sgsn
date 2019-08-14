@@ -186,7 +186,7 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 
 #define REQUIRE_MM \
 	if (!mm) { \
-		LOGP(DRANAP, LOGL_NOTICE, "Cannot find mm ctx for IU event %d\n", type); \
+		LOGIUP(ctx, LOGL_NOTICE, "Cannot find mm ctx for IU event %d\n", type); \
 		return rc; \
 	}
 
@@ -202,8 +202,7 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 		if (mm)
 			LOGMMCTXP(LOGL_INFO, mm, "IU release for imsi %s\n", mm->imsi);
 		else
-			LOGMMCTXP(LOGL_INFO, mm, "IU release for UE conn 0x%x\n",
-				  ctx->conn_id);
+			LOGIUP(ctx, LOGL_INFO, "IU release\n");
 		if (mm && mm->pmm_state == PMM_CONNECTED)
 			mmctx_set_pmm_state(mm, PMM_IDLE);
 		rc = 0;
@@ -220,7 +219,10 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 			osmo_fsm_inst_dispatch(mm->gmm_att_req.fsm, E_IU_SECURITY_CMD_COMPLETE, NULL);
 		break;
 	default:
-		LOGP(DRANAP, LOGL_NOTICE, "Unknown event received: %i\n", type);
+		if (mm)
+			LOGMMCTXP(LOGL_NOTICE, mm, "Unknown event received: %i\n", type);
+		else
+			LOGIUP(ctx, LOGL_NOTICE, "Unknown event received: %i\n", type);
 		rc = -1;
 		break;
 	}
@@ -630,7 +632,7 @@ int gsm48_tx_gmm_auth_ciph_req(struct sgsn_mm_ctx *mm,
 	/* 3GPP TS 24.008 § 10.5.5.19: */
 	rc = osmo_get_rand_id(&rbyte, 1);
 	if (rc < 0) {
-		LOGP(DMM, LOGL_ERROR, "osmo_get_rand_id() failed for A&C ref: %s\n", strerror(-rc));
+		LOGMMCTXP(LOGL_ERROR, mm, "osmo_get_rand_id() failed for A&C ref: %s\n", strerror(-rc));
 		return rc;
 	}
 
@@ -1659,7 +1661,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	upd_type = *cur++ & 0x07;
 
 	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_GPRS_ROUTING_AREA_REQUEST]);
-	LOGP(DMM, LOGL_INFO, "-> GMM RA UPDATE REQUEST type=\"%s\"\n",
+	LOGMMCTXP(LOGL_INFO, mmctx, "-> GMM RA UPDATE REQUEST type=\"%s\"\n",
 		get_value_string(gprs_upd_t_strs, upd_type));
 
 	/* Old routing area identification 10.5.5.15 */
@@ -1669,7 +1671,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	/* MS Radio Access Capability 10.5.5.12a */
 	ms_ra_acc_cap_len = *cur++;
 	if (ms_ra_acc_cap_len > 52) {
-		LOGP(DMM, LOGL_ERROR,
+		LOGMMCTXP(LOGL_ERROR, mmctx,
 		     "Rejecting GMM RA Update Request: MS Radio Access Capability too long"
 		     " (ms_ra_acc_cap_len = %u > 52)\n", ms_ra_acc_cap_len);
 		reject_cause = GMM_CAUSE_PROTO_ERR_UNSPEC;
@@ -1685,7 +1687,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	switch (upd_type) {
 	case GPRS_UPD_T_RA_LA:
 	case GPRS_UPD_T_RA_LA_IMSI_ATT:
-		LOGP(DMM, LOGL_NOTICE, "Update type %i unsupported in Mode III, is your SI13 corrupt?\n", upd_type);
+		LOGMMCTXP(LOGL_NOTICE, mmctx, "Update type %i unsupported in Mode III, is your SI13 corrupt?\n", upd_type);
 		reject_cause = GMM_CAUSE_PROTO_ERR_UNSPEC;
 		goto rejected;
 	case GPRS_UPD_T_RA:
@@ -1722,7 +1724,8 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 				mmctx = sgsn_mm_ctx_by_ptmsi(tmsi);
 			}
 #else
-			LOGP(DMM, LOGL_ERROR, "Rejecting GMM RA Update Request: No Iu support\n");
+			LOGIUP(MSG_IU_UE_CTX(msg), LOGL_ERROR,
+			       "Rejecting GMM RA Update Request: No Iu support\n");
 			goto rejected;
 #endif
 		}
@@ -1758,13 +1761,13 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		if (llme) {
 			/* send a XID reset to re-set all LLC sequence numbers
 			 * in the MS */
-			LOGMMCTXP(LOGL_NOTICE, mmctx, "LLC XID RESET\n");
+			LOGGBP(llme, LOGL_NOTICE, "LLC XID RESET\n");
 			gprs_llgmm_reset(llme);
 		}
 		/* The MS has to perform GPRS attach */
 		/* Device is still IMSI attached for CS but initiate GPRS ATTACH,
 		 * see GSM 04.08, 4.7.5.1.4 and G.6 */
-		LOGMMCTXP(LOGL_ERROR, mmctx, "Rejecting GMM RA Update Request: MS should GMM Attach first\n");
+		LOGGBIUP(llme, msg, LOGL_ERROR, "Rejecting GMM RA Update Request: MS should GMM Attach first\n");
 		reject_cause = GMM_CAUSE_IMPL_DETACHED;
 		goto rejected;
 	}
@@ -1986,7 +1989,7 @@ static int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	if (llme && !mmctx &&
 	    gh->msg_type != GSM48_MT_GMM_ATTACH_REQ &&
 	    gh->msg_type != GSM48_MT_GMM_RA_UPD_REQ) {
-		LOGP(DMM, LOGL_NOTICE, "Cannot handle GMM for unknown MM CTX\n");
+		LOGGBP(llme, LOGL_NOTICE, "Cannot handle GMM for unknown MM CTX\n");
 		/* 4.7.10 */
 		if (gh->msg_type == GSM48_MT_GMM_STATUS) {
 			/* TLLI unassignment */
@@ -2168,7 +2171,7 @@ static int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	return rc;
 
 null_mmctx:
-	LOGP(DMM, LOGL_ERROR,
+	LOGGBIUP(llme, msg, LOGL_ERROR,
 	     "Received GSM 04.08 message type 0x%02x,"
 	     " but no MM context available\n",
 	     gh->msg_type);
@@ -2842,7 +2845,7 @@ static int gsm0408_rcv_gsm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	/* MMCTX can be NULL when called */
 
 	if (!mmctx) {
-		LOGP(DMM, LOGL_NOTICE, "Cannot handle SM for unknown MM CTX\n");
+		LOGGBIUP(llme, msg, LOGL_NOTICE, "Cannot handle SM for unknown MM CTX\n");
 		/* 6.1.3.6 */
 		if (gh->msg_type == GSM48_MT_GSM_STATUS)
 			return 0;

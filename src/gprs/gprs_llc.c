@@ -41,6 +41,12 @@
 #include <osmocom/sgsn/gprs_sndcp_comp.h>
 #include <osmocom/sgsn/gprs_sndcp.h>
 
+const struct value_string gprs_llc_llme_state_names[] = {
+	{ GPRS_LLMS_UNASSIGNED,	"UNASSIGNED" },
+	{ GPRS_LLMS_ASSIGNED,	"ASSIGNED" },
+	{ 0, NULL }
+};
+
 static struct gprs_llc_llme *llme_alloc(uint32_t tlli);
 static int gprs_llc_tx_xid(struct gprs_llc_lle *lle, struct msgb *msg,
 			   int command);

@@ -96,6 +96,7 @@ enum gprs_llc_llme_state {
 	GPRS_LLMS_UNASSIGNED	= 1,	/* No TLLI yet */
 	GPRS_LLMS_ASSIGNED	= 2,	/* TLLI assigned */
 };
+extern const struct value_string gprs_llc_llme_state_names[];
 
 /* Section 8.9.9 LLC layer parameter default values */
 struct gprs_llc_params {
