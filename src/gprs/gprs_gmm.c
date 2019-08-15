@@ -1827,9 +1827,8 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	{
 		/* We cannot use the mmctx */
 		LOGMMCTXP(LOGL_INFO, mmctx,
-			"The MM context cannot be used, RA: %03d-%0*d-%d-%d\n",
-			mmctx->ra.mcc, mmctx->ra.mnc_3_digits, mmctx->ra.mnc,
-			mmctx->ra.lac, mmctx->ra.rac);
+			"The MM context cannot be used, RA: %s\n",
+			osmo_rai_name(&mmctx->ra));
 		/* mmctx is set to NULL and gprs_llgmm_unassign(llme) will be
 		   called below, let's make sure we don't keep dangling llme
 		   pointers in mmctx (OS#3957). */
