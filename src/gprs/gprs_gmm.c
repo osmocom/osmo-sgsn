@@ -209,9 +209,18 @@ static void mmctx_set_pmm_state(struct sgsn_mm_ctx *ctx, enum gprs_pmm_state sta
 		  get_value_string(gprs_pmm_state_names, state));
 
 	switch (state) {
+	case PMM_DETACHED:
+		mmctx_change_gtpu_endpoints_to_sgsn(ctx);
+		if (ctx->iu.ue_ctx) {
+			ranap_iu_free_ue(ctx->iu.ue_ctx);
+			ctx->iu.ue_ctx = NULL;
+		}
+		break;
 	case PMM_IDLE:
 		/* TODO: start RA Upd timer */
 		mmctx_change_gtpu_endpoints_to_sgsn(ctx);
+		if (ctx->iu.ue_ctx)
+			ranap_iu_tx_release(ctx->iu.ue_ctx, NULL);
 		break;
 	case PMM_CONNECTED:
 		break;
@@ -1745,6 +1754,29 @@ bool pdp_status_has_active_nsapis(const uint8_t *pdp_status, const size_t pdp_st
 	return false;
 }
 
+static void mmctx_cleanup_utran(struct sgsn_mm_ctx *mmctx)
+{
+	if (mmctx->ran_type != MM_CTX_T_UTRAN_Iu)
+		return;
+
+	if (mmctx->pmm_state == PMM_DETACHED)
+		return;
+
+	mmctx_set_pmm_state(mmctx, PMM_IDLE);
+	mmctx_set_pmm_state(mmctx, PMM_DETACHED);
+}
+
+static void mmctx_cleanup_geran(struct sgsn_mm_ctx *mmctx)
+{
+	if (mmctx->ran_type != MM_CTX_T_GERAN_Gb)
+		return;
+
+	if (mmctx->pmm_state == PMM_DETACHED)
+		return;
+
+	mmctx_set_mm_state(mmctx, MM_IDLE);
+}
+
 /* Chapter 9.4.14: Routing area update request */
 static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 				   struct gprs_llc_llme *llme)
@@ -1844,6 +1876,16 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 				mmctx->p_tmsi, mmctx->p_tmsi_old,
 				mmctx->gb.tlli, mmctx->gb.tlli_new,
 				osmo_rai_name(&mmctx->ra));
+
+			/* Iu -> GERAN transition */
+			if (mmctx->ran_type == MM_CTX_T_UTRAN_Iu &&
+					!MSG_IU_UE_CTX(msg)) {
+				mmctx_cleanup_utran(mmctx);
+			} else if (mmctx->ran_type == MM_CTX_T_GERAN_Gb &&
+				   MSG_IU_UE_CTX(msg)) {
+				/* 2G -> 3G transition */
+				mmctx_cleanup_geran(mmctx);
+			}
 
 			mmctx->gmm_state = GMM_COMMON_PROC_INIT;
 		}
