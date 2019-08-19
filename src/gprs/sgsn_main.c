@@ -500,7 +500,9 @@ int main(int argc, char **argv)
 
 #if BUILD_IU
 	/* Note that these are mostly defaults and can be overriden from the VTY */
-	sccp = osmo_sccp_simple_client_on_ss7_id(tall_sgsn_ctx, 0, "OsmoSGSN",
+	sccp = osmo_sccp_simple_client_on_ss7_id(tall_sgsn_ctx,
+						 sgsn->cfg.iu.cs7_instance,
+						 "OsmoSGSN",
 						 (23 << 3) + 4,
 						 OSMO_SS7_ASP_PROT_M3UA,
 						 0, NULL,

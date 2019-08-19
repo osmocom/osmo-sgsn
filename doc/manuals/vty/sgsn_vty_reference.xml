@@ -2502,6 +2502,12 @@
         <param name='passive' doc='Compression is available on request' />
       </params>
     </command>
+    <command id='cs7-instance-iu &lt;0-15&gt;'>
+      <params>
+        <param name='cs7-instance-iu' doc='Set SS7 to be used by the Iu-Interface.' />
+        <param name='&lt;0-15&gt;' doc='SS7 instance reference number (default: 0)' />
+      </params>
+    </command>
     <command id='iu rab-assign-addr-enc (x213|v4raw)'>
       <params>
         <param name='iu' doc='Iu interface protocol options' />

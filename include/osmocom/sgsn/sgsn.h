@@ -112,6 +112,7 @@ struct sgsn_config {
 #if BUILD_IU
 	struct {
 		enum ranap_nsap_addr_enc rab_assign_addr_enc;
+		uint32_t cs7_instance;
 	} iu;
 #endif
 

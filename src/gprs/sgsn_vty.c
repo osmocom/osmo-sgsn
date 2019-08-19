@@ -289,6 +289,8 @@ static int config_write_sgsn(struct vty *vty)
 		vty_out(vty, " no compression v42bis%s", VTY_NEWLINE);
 
 #ifdef BUILD_IU
+	vty_out(vty, " cs7-instance-iu %u%s", g_cfg->iu.cs7_instance,
+		VTY_NEWLINE);
 	ranap_iu_vty_config_write(vty, " ");
 #endif
 
@@ -1378,6 +1380,17 @@ DEFUN(cfg_comp_v42bisp, cfg_comp_v42bisp_cmd,
 	return CMD_SUCCESS;
 }
 
+#if BUILD_IU
+DEFUN(cfg_sgsn_cs7_instance_iu,
+      cfg_sgsn_cs7_instance_iu_cmd,
+      "cs7-instance-iu <0-15>",
+      "Set SS7 to be used by the Iu-Interface.\n" "SS7 instance reference number (default: 0)\n")
+{
+	g_cfg->iu.cs7_instance = atoi(argv[0]);
+	return CMD_SUCCESS;
+}
+#endif
+
 int sgsn_vty_init(struct sgsn_config *cfg)
 {
 	g_cfg = cfg;
@@ -1441,6 +1454,7 @@ int sgsn_vty_init(struct sgsn_config *cfg)
 	install_element(SGSN_NODE, &cfg_comp_v42bisp_cmd);
 
 #ifdef BUILD_IU
+	install_element(SGSN_NODE, &cfg_sgsn_cs7_instance_iu_cmd);
 	ranap_iu_vty_init(SGSN_NODE, &g_cfg->iu.rab_assign_addr_enc);
 #endif
 	return 0;
