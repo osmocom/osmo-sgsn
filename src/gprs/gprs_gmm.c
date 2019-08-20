@@ -1888,10 +1888,15 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 			if (mmctx->ran_type == MM_CTX_T_UTRAN_Iu &&
 					!MSG_IU_UE_CTX(msg)) {
 				mmctx_cleanup_utran(mmctx);
+				mmctx->ran_type = MM_CTX_T_GERAN_Gb;
+				if (!mmctx->gb.llme)
+					mmctx->gb.llme = llme;
 			} else if (mmctx->ran_type == MM_CTX_T_GERAN_Gb &&
 				   MSG_IU_UE_CTX(msg)) {
 				/* 2G -> 3G transition */
 				mmctx_cleanup_geran(mmctx);
+				mmctx->iu.ue_ctx = MSG_IU_UE_CTX(msg);
+				mmctx->ran_type = MM_CTX_T_UTRAN_Iu;
 			}
 
 			mmctx->gmm_state = GMM_COMMON_PROC_INIT;
