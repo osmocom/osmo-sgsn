@@ -250,6 +250,10 @@ static void mmctx_set_mm_state(struct sgsn_mm_ctx *ctx, enum gprs_pmm_state stat
 	case MM_IDLE:
 		if (ctx->pmm_state == MM_READY)
 			mmctx_state_timer_stop(ctx, 3314);
+		if (ctx->gb.llme) {
+			gprs_llgmm_unassign(ctx->gb.llme);
+			ctx->gb.llme = NULL;
+		}
 		break;
 	case MM_STANDBY:
 		if (ctx->pmm_state == MM_READY)
@@ -257,6 +261,11 @@ static void mmctx_set_mm_state(struct sgsn_mm_ctx *ctx, enum gprs_pmm_state stat
 		break;
 	default:
 		/* when changing to state != MM_READY */
+		break;
+	}
+
+	switch (state) {
+	case MM_IDLE:
 		break;
 	}
 
