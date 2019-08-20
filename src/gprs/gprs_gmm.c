@@ -219,8 +219,6 @@ static void mmctx_set_pmm_state(struct sgsn_mm_ctx *ctx, enum gprs_pmm_state sta
 	case PMM_IDLE:
 		/* TODO: start RA Upd timer */
 		mmctx_change_gtpu_endpoints_to_sgsn(ctx);
-		if (ctx->iu.ue_ctx)
-			ranap_iu_tx_release(ctx->iu.ue_ctx, NULL);
 		break;
 	case PMM_CONNECTED:
 		break;
