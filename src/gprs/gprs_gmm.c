@@ -2455,7 +2455,8 @@ int gsm48_tx_gsm_act_pdp_rej(struct sgsn_mm_ctx *mm, uint8_t tid,
 	struct gsm48_hdr *gh;
 	uint8_t transaction_id = tid ^ 0x8; /* flip */
 
-	LOGMMCTXP(LOGL_NOTICE, mm, "<- ACTIVATE PDP CONTEXT REJ(cause=%u)\n", cause);
+	LOGMMCTXP(LOGL_NOTICE, mm, "<- ACTIVATE PDP CONTEXT REJ: %s\n",
+		  get_value_string(gsm48_gsm_cause_names, cause));
 	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_PDP_ACTIVATE_REJECT]);
 
 	mmctx2msgid(msg, mm);
