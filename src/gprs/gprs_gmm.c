@@ -674,7 +674,7 @@ static bool mmctx_is_r99(const struct sgsn_mm_ctx *mm)
 	return false;
 }
 
-/* 3GPP TS 24.008 Section 9.4.9: Authentication and Ciphering Request */
+/* 3GPP TS 24.008 § 9.4.9: Authentication and Ciphering Request */
 int gsm48_tx_gmm_auth_ciph_req(struct sgsn_mm_ctx *mm,
 				      const struct osmo_auth_vector *vec,
 				      uint8_t key_seq, bool force_standby)
@@ -742,7 +742,7 @@ int gsm48_tx_gmm_auth_ciph_req(struct sgsn_mm_ctx *mm,
 	return gsm48_gmm_sendmsg(msg, 1, mm, false);
 }
 
-/* Section 9.4.11: Authentication and Ciphering Reject */
+/* 3GPP TS 24.008 § 9.4.11: Authentication and Ciphering Reject */
 static int gsm48_tx_gmm_auth_ciph_rej(struct sgsn_mm_ctx *mm)
 {
 	struct msgb *msg = gsm48_msgb_alloc_name("GSM 04.08 AUTH CIPH REJ");
@@ -815,7 +815,7 @@ auth_mismatch:
 	return OSMO_AUTH_TYPE_NONE;
 }
 
-/* Section 9.4.10: Authentication and Ciphering Response */
+/* 3GPP TS 24.008 § 9.4.10: Authentication and Ciphering Response */
 static int gsm48_rx_gmm_auth_ciph_resp(struct sgsn_mm_ctx *ctx,
 					struct msgb *msg)
 {
@@ -892,7 +892,7 @@ static int gsm48_rx_gmm_auth_ciph_resp(struct sgsn_mm_ctx *ctx,
 	return osmo_fsm_inst_dispatch(ctx->gmm_att_req.fsm, E_AUTH_RESP_RECV_SUCCESS, NULL);
 }
 
-/* Section 9.4.10: Authentication and Ciphering Failure */
+/* 3GPP TS 24.008 § 9.4.10: Authentication and Ciphering Failure */
 static int gsm48_rx_gmm_auth_ciph_fail(struct sgsn_mm_ctx *ctx,
 					struct msgb *msg)
 {
@@ -1357,7 +1357,7 @@ static inline void ptmsi_update(struct sgsn_mm_ctx *ctx)
 	ctx->gmm_state = GMM_COMMON_PROC_INIT;
 }
 
-/* Section 9.4.1 Attach request */
+/* 3GPP TS 24.008 § 9.4.1 Attach request */
 static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 				struct gprs_llc_llme *llme)
 {
@@ -1569,7 +1569,7 @@ int gprs_gmm_attach_req_ies(struct msgb *a, struct msgb *b)
 	return !!memcmp(gh_a, gh_b, GMM_ATTACH_REQ_LEN);
 }
 
-/* Section 4.7.4.1 / 9.4.5.2 MO Detach request */
+/* 3GPP TS 24.008 § 4.7.4.1 / 9.4.5.2 MO Detach request */
 static int gsm48_rx_gmm_det_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 {
 	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
@@ -1707,7 +1707,7 @@ static void process_ms_ctx_status(struct sgsn_mm_ctx *mmctx,
 	}
 }
 
-/* 3GPP TS 24.008 Section 4.7.13.4 Service request procedure not accepted by the
+/* 3GPP TS 24.008 § 4.7.13.4 Service request procedure not accepted by the
  * network. Returns true if MS has active PDP contexts in pdp_status */
 bool pdp_status_has_active_nsapis(const uint8_t *pdp_status, const size_t pdp_status_len)
 {
@@ -1919,7 +1919,7 @@ rejected:
 	return rc;
 }
 
-/* 3GPP TS 24.008 Section 9.4.20 Service request.
+/* 3GPP TS 24.008 § 9.4.20 Service request.
  * In Iu, a UE in PMM-IDLE mode can use GSM48_MT_GMM_SERVICE_REQ to switch back
  * to PMM-CONNECTED mode. */
 static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
@@ -2009,7 +2009,7 @@ static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 
 		process_ms_ctx_status(ctx, pdp_status);
 
-		/* 3GPP TS 24.008 Section 4.7.13.4 Service request procedure not
+		/* 3GPP TS 24.008 § 4.7.13.4 Service request procedure not
 		 * accepted by the network. Cause #40. If MS has PDP Contexts in
 		 * Active state in pdp_status but there is no PDP contexts on
 		 * SGSN side then Reject with the cause will force the mobile to
@@ -2403,7 +2403,7 @@ static void msgb_put_pdp_addr_ppp(struct msgb *msg)
 }
 #endif
 
-/* Section 9.5.2: Activate PDP Context Accept */
+/* 3GPP TS 24.008 § 9.5.2: Activate PDP Context Accept */
 int gsm48_tx_gsm_act_pdp_acc(struct sgsn_pdp_ctx *pdp)
 {
 	struct msgb *msg = gsm48_msgb_alloc_name("GSM 04.08 PDP ACC");
@@ -2447,7 +2447,7 @@ int gsm48_tx_gsm_act_pdp_acc(struct sgsn_pdp_ctx *pdp)
 	return gsm48_gmm_sendmsg(msg, 0, pdp->mm, true);
 }
 
-/* Section 9.5.3: Activate PDP Context reject */
+/* 3GPP TS 24.008 § 9.5.3: Activate PDP Context reject */
 int gsm48_tx_gsm_act_pdp_rej(struct sgsn_mm_ctx *mm, uint8_t tid,
 			     uint8_t cause, uint8_t pco_len, uint8_t *pco_v)
 {
@@ -2472,7 +2472,7 @@ int gsm48_tx_gsm_act_pdp_rej(struct sgsn_mm_ctx *mm, uint8_t tid,
 	return gsm48_gmm_sendmsg(msg, 0, mm, true);
 }
 
-/* Section 9.5.8: Deactivate PDP Context Request */
+/* 3GPP TS 24.008 § 9.5.8: Deactivate PDP Context Request */
 static int _gsm48_tx_gsm_deact_pdp_req(struct sgsn_mm_ctx *mm, uint8_t tid,
 					uint8_t sm_cause, bool teardown)
 {
@@ -2502,7 +2502,7 @@ int gsm48_tx_gsm_deact_pdp_req(struct sgsn_pdp_ctx *pdp, uint8_t sm_cause, bool 
 	return _gsm48_tx_gsm_deact_pdp_req(pdp->mm, pdp->ti, sm_cause, teardown);
 }
 
-/* Section 9.5.9: Deactivate PDP Context Accept */
+/* 3GPP TS 24.008 § 9.5.9: Deactivate PDP Context Accept */
 static int _gsm48_tx_gsm_deact_pdp_acc(struct sgsn_mm_ctx *mm, uint8_t tid)
 {
 	struct msgb *msg = gsm48_msgb_alloc_name("GSM 04.08 PDP DET ACC");
@@ -2800,7 +2800,7 @@ no_context:
 					gsm_cause, 0, NULL);
 }
 
-/* Section 9.5.1: Activate PDP Context Request */
+/* 3GPP TS 24.008 § 9.5.1: Activate PDP Context Request */
 static int gsm48_rx_gsm_act_pdp_req(struct sgsn_mm_ctx *mmctx,
 				    struct msgb *_msg)
 {
@@ -2837,7 +2837,7 @@ static int gsm48_rx_gsm_act_pdp_req(struct sgsn_mm_ctx *mmctx,
 	return rc;
 }
 
-/* Section 9.5.8: Deactivate PDP Context Request */
+/* 3GPP TS 24.008 § 9.5.8: Deactivate PDP Context Request */
 static int gsm48_rx_gsm_deact_pdp_req(struct sgsn_mm_ctx *mm, struct msgb *msg)
 {
 	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
@@ -2859,7 +2859,7 @@ static int gsm48_rx_gsm_deact_pdp_req(struct sgsn_mm_ctx *mm, struct msgb *msg)
 	return sgsn_delete_pdp_ctx(pdp);
 }
 
-/* Section 9.5.9: Deactivate PDP Context Accept */
+/* 3GPP TS 24.008 § 9.5.9: Deactivate PDP Context Accept */
 static int gsm48_rx_gsm_deact_pdp_ack(struct sgsn_mm_ctx *mm, struct msgb *msg)
 {
 	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
