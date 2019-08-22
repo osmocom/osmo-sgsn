@@ -304,6 +304,9 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 		LOGMMCTXP(LOGL_INFO, mm, "IU release for imsi %s\n", mm->imsi);
 		mmctx_free_ue_ctx(mm);
 
+		if (mm->gmm_att_req.fsm->state != ST_INIT)
+			osmo_fsm_inst_dispatch(mm->gmm_att_req.fsm, E_REJECT, (void *) GMM_DISCARD_MS_WITHOUT_REJECT);
+
 		if (mm->pmm_state == PMM_CONNECTED)
 			mmctx_set_pmm_state(mm, PMM_IDLE);
 		rc = 0;
