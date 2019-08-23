@@ -125,6 +125,46 @@ static const struct value_string gprs_pmm_state_names[] = {
 
 static int gsm48_gmm_authorize(struct sgsn_mm_ctx *ctx);
 
+
+/* Our implementation, should be kept in SGSN */
+
+static void mmctx_timer_cb(void *_mm);
+
+static void mmctx_timer_start(struct sgsn_mm_ctx *mm, unsigned int T)
+{
+	unsigned long seconds;
+	if (osmo_timer_pending(&mm->timer))
+		LOGMMCTXP(LOGL_ERROR, mm, "Starting MM timer %u while old "
+			"timer %u pending\n", T, mm->T);
+
+	seconds = osmo_tdef_get(sgsn->cfg.T_defs, T, OSMO_TDEF_S, -1);
+
+	mm->T = T;
+	mm->num_T_exp = 0;
+
+	/* FIXME: we should do this only once ? */
+	osmo_timer_setup(&mm->timer, mmctx_timer_cb, mm);
+	osmo_timer_schedule(&mm->timer, seconds, 0);
+}
+
+static void mmctx_timer_stop(struct sgsn_mm_ctx *mm, unsigned int T)
+{
+	if (mm->T != T)
+		LOGMMCTXP(LOGL_ERROR, mm, "Stopping MM timer %u but "
+			"%u is running\n", T, mm->T);
+	osmo_timer_del(&mm->timer);
+}
+
+time_t gprs_max_time_to_idle(void)
+{
+	unsigned long T3314, T3312;
+
+	T3314 = osmo_tdef_get(sgsn->cfg.T_defs, 3314, OSMO_TDEF_S, -1);
+	T3312 = osmo_tdef_get(sgsn->cfg.T_defs, 3312, OSMO_TDEF_S, -1);
+	return T3314 + (T3312 + 4 * 60);
+}
+
+
 static void mmctx_change_gtpu_endpoints_to_sgsn(struct sgsn_mm_ctx *mm_ctx)
 {
 	struct sgsn_pdp_ctx *pdp;
@@ -219,6 +259,11 @@ static void mmctx_set_pmm_state(struct sgsn_mm_ctx *ctx, enum gprs_pmm_state sta
 	case PMM_IDLE:
 		/* TODO: start RA Upd timer */
 		mmctx_change_gtpu_endpoints_to_sgsn(ctx);
+
+		/* if T3350 still running, stop it */
+		if (ctx->T == 3350 && osmo_timer_pending(&ctx->timer))
+			mmctx_timer_stop(ctx, 3350);
+
 		break;
 	case PMM_CONNECTED:
 		break;
@@ -337,44 +382,6 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 }
 #endif
 
-
-/* Our implementation, should be kept in SGSN */
-
-static void mmctx_timer_cb(void *_mm);
-
-static void mmctx_timer_start(struct sgsn_mm_ctx *mm, unsigned int T)
-{
-	unsigned long seconds;
-	if (osmo_timer_pending(&mm->timer))
-		LOGMMCTXP(LOGL_ERROR, mm, "Starting MM timer %u while old "
-			"timer %u pending\n", T, mm->T);
-
-	seconds = osmo_tdef_get(sgsn->cfg.T_defs, T, OSMO_TDEF_S, -1);
-
-	mm->T = T;
-	mm->num_T_exp = 0;
-
-	/* FIXME: we should do this only once ? */
-	osmo_timer_setup(&mm->timer, mmctx_timer_cb, mm);
-	osmo_timer_schedule(&mm->timer, seconds, 0);
-}
-
-static void mmctx_timer_stop(struct sgsn_mm_ctx *mm, unsigned int T)
-{
-	if (mm->T != T)
-		LOGMMCTXP(LOGL_ERROR, mm, "Stopping MM timer %u but "
-			"%u is running\n", T, mm->T);
-	osmo_timer_del(&mm->timer);
-}
-
-time_t gprs_max_time_to_idle(void)
-{
-	unsigned long T3314, T3312;
-
-	T3314 = osmo_tdef_get(sgsn->cfg.T_defs, 3314, OSMO_TDEF_S, -1);
-	T3312 = osmo_tdef_get(sgsn->cfg.T_defs, 3312, OSMO_TDEF_S, -1);
-	return T3314 + (T3312 + 4 * 60);
-}
 
 /* Send a message through the underlying layer.
  * For param encryptable, see 3GPP TS 24.008 § 4.7.1.2 and
