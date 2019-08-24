@@ -465,6 +465,30 @@ static void mm_ctx_cleanup_free(struct sgsn_mm_ctx *ctx, const char *log_text)
 	sgsn_mm_ctx_cleanup_free(ctx);
 }
 
+
+static void mmctx_cleanup_utran(struct sgsn_mm_ctx *mmctx)
+{
+	if (mmctx->ran_type != MM_CTX_T_UTRAN_Iu)
+		return;
+
+	if (mmctx->pmm_state == PMM_DETACHED)
+		return;
+
+	mmctx_set_pmm_state(mmctx, PMM_IDLE);
+	mmctx_set_pmm_state(mmctx, PMM_DETACHED);
+}
+
+static void mmctx_cleanup_geran(struct sgsn_mm_ctx *mmctx)
+{
+	if (mmctx->ran_type != MM_CTX_T_GERAN_Gb)
+		return;
+
+	if (mmctx->pmm_state == PMM_DETACHED)
+		return;
+
+	mmctx_set_mm_state(mmctx, MM_IDLE);
+}
+
 /* Chapter 9.4.18 */
 static int _tx_status(struct msgb *msg, uint8_t cause,
 		      struct sgsn_mm_ctx *mmctx, int sm)
@@ -1769,29 +1793,6 @@ bool pdp_status_has_active_nsapis(const uint8_t *pdp_status, const size_t pdp_st
 			return true;
 
 	return false;
-}
-
-static void mmctx_cleanup_utran(struct sgsn_mm_ctx *mmctx)
-{
-	if (mmctx->ran_type != MM_CTX_T_UTRAN_Iu)
-		return;
-
-	if (mmctx->pmm_state == PMM_DETACHED)
-		return;
-
-	mmctx_set_pmm_state(mmctx, PMM_IDLE);
-	mmctx_set_pmm_state(mmctx, PMM_DETACHED);
-}
-
-static void mmctx_cleanup_geran(struct sgsn_mm_ctx *mmctx)
-{
-	if (mmctx->ran_type != MM_CTX_T_GERAN_Gb)
-		return;
-
-	if (mmctx->pmm_state == PMM_DETACHED)
-		return;
-
-	mmctx_set_mm_state(mmctx, MM_IDLE);
 }
 
 /* Chapter 9.4.14: Routing area update request */
