@@ -1561,6 +1561,21 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 		goto rejected;
 	}
 
+	/* Iu -> GERAN transition */
+	if (ctx->ran_type == MM_CTX_T_UTRAN_Iu &&
+			!MSG_IU_UE_CTX(msg)) {
+		mmctx_cleanup_utran(ctx);
+		ctx->ran_type = MM_CTX_T_GERAN_Gb;
+		if (!ctx->gb.llme)
+			ctx->gb.llme = llme;
+	} else if (ctx->ran_type == MM_CTX_T_GERAN_Gb &&
+		   MSG_IU_UE_CTX(msg)) {
+		/* 2G -> 3G transition */
+		mmctx_cleanup_geran(ctx);
+		ctx->iu.ue_ctx = MSG_IU_UE_CTX(msg);
+		ctx->ran_type = MM_CTX_T_UTRAN_Iu;
+	}
+
 	msgid2mmctx(ctx, msg);
 	/* Update MM Context with currient RA and Cell ID */
 	ctx->ra = ra_id;
