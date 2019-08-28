@@ -759,6 +759,11 @@ int sgsn_ggsn_ctx_drop_all_pdp_except(struct sgsn_ggsn_ctx *ggsn, struct sgsn_pd
 	return num;
 }
 
+int sgsn_ggsn_ctx_drop_all_pdp(struct sgsn_ggsn_ctx *ggsn)
+{
+	return sgsn_ggsn_ctx_drop_all_pdp_except(ggsn, NULL);
+}
+
 void sgsn_ggsn_ctx_add_pdp(struct sgsn_ggsn_ctx *ggc, struct sgsn_pdp_ctx *pdp)
 {
 	llist_add(&pdp->ggsn_list, &ggc->pdp_list);

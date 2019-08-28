@@ -469,7 +469,8 @@ void sgsn_pdp_upd_gtp_u(struct sgsn_pdp_ctx *pdp, void *addr, size_t alen)
 
 void sgsn_ggsn_echo_req(struct sgsn_ggsn_ctx *ggc)
 {
-	gtp_echo_req(ggc->gsn, ggc->gtp_version, NULL, &ggc->remote_addr);
+	LOGGGSN(ggc, LOGL_INFO, "GTP Tx Echo Request\n");
+	gtp_echo_req(ggc->gsn, ggc->gtp_version, ggc, &ggc->remote_addr);
 }
 
 #ifdef BUILD_IU
@@ -579,13 +580,15 @@ static int delete_pdp_conf(struct pdp_t *pdp, void *cbp, int cause)
 }
 
 /* Confirmation of an GTP ECHO request */
-static int echo_conf(struct pdp_t *pdp, void *cbp, int recovery)
+static int echo_conf(void *cbp, bool timeout)
 {
-	if (recovery < 0) {
-		LOGP(DGPRS, LOGL_NOTICE, "GTP Echo Request timed out\n");
+	struct sgsn_ggsn_ctx *ggc = (struct sgsn_ggsn_ctx *)cbp;
+	if (timeout) {
+		LOGGGSN(ggc, LOGL_NOTICE, "GTP Echo Request timed out\n");
 		/* FIXME: if version == 1, retry with version 0 */
+		sgsn_ggsn_ctx_drop_all_pdp(ggc);
 	} else {
-		DEBUGP(DGPRS, "GTP Rx Echo Response\n");
+		LOGGGSN(ggc, LOGL_INFO, "GTP Rx Echo Response\n");
 	}
 	return 0;
 }
@@ -630,8 +633,8 @@ static int cb_conf(int type, int cause, struct pdp_t *pdp, void *cbp)
 
 	switch (type) {
 	case GTP_ECHO_REQ:
-		/* libgtp hands us the RECOVERY number instead of a cause */
-		return echo_conf(pdp, cbp, cause);
+		/* libgtp hands us the RECOVERY number instead of a cause (EOF on timeout) */
+		return echo_conf(cbp, cause == EOF);
 	case GTP_CREATE_PDP_REQ:
 		return create_pdp_conf(pdp, cbp, cause);
 	case GTP_DELETE_PDP_REQ:
