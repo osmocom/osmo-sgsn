@@ -39,6 +39,7 @@ enum {
 	DVLR,
 	DIUCS,
 	DSIGTRAN,
+	DGTP,
 	Debug_LastEntry,
 };
 

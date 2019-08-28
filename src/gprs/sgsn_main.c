@@ -340,7 +340,12 @@ static struct log_info_cat gprs_categories[] = {
 		.name = "DV42BIS",
 		.description = "V.42bis data compression (SNDCP)",
 		.enabled = 1, .loglevel = LOGL_NOTICE,
-	}
+	},
+	[DGTP] = {
+		.name = "DGTP",
+		.description = "GPRS Tunnelling Protocol (GTP)",
+		.enabled = 1, .loglevel = LOGL_NOTICE,
+	},
 };
 
 static const struct log_info gprs_log_info = {

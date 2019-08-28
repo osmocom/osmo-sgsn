@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <netinet/in.h>
+#include <inttypes.h>
 
 #include <osmocom/core/fsm.h>
 #include <osmocom/core/timer.h>
@@ -404,6 +405,11 @@ int sgsn_ggsn_ctx_drop_all_pdp_except(struct sgsn_ggsn_ctx *ggsn, struct sgsn_pd
 void sgsn_ggsn_ctx_add_pdp(struct sgsn_ggsn_ctx *ggc, struct sgsn_pdp_ctx *pdp);
 void sgsn_ggsn_ctx_remove_pdp(struct sgsn_ggsn_ctx *ggc, struct sgsn_pdp_ctx *pdp);
 void sgsn_ggsn_ctx_check_echo_timer(struct sgsn_ggsn_ctx *ggc);
+
+#define LOGGGSN(ggc, level, fmt, args...) { \
+	char _buf[INET_ADDRSTRLEN]; \
+	LOGP(DGTP, level, "GGSN(%" PRIu32 ":%s): " fmt, (ggc)->id, inet_ntop(AF_INET, &(ggc)->remote_addr, _buf, sizeof(_buf)), ## args); \
+	} while (0)
 
 struct apn_ctx {
 	struct llist_head list;
