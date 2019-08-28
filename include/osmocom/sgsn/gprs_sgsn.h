@@ -392,7 +392,7 @@ struct sgsn_ggsn_ctx {
 	struct gsn_t *gsn;
 	struct llist_head pdp_list;	/* list of associated pdp ctx (struct sgsn_pdp_ctx*) */
 	struct osmo_timer_list echo_timer;
-	int echo_interval;
+	unsigned int echo_interval;
 };
 struct sgsn_ggsn_ctx *sgsn_ggsn_ctx_alloc(uint32_t id);
 void sgsn_ggsn_ctx_free(struct sgsn_ggsn_ctx *ggc);

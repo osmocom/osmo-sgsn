@@ -190,8 +190,8 @@ static int config_write_sgsn(struct vty *vty)
 			inet_ntoa(gctx->remote_addr), VTY_NEWLINE);
 		vty_out(vty, " ggsn %u gtp-version %u%s", gctx->id,
 			gctx->gtp_version, VTY_NEWLINE);
-		if (gctx->echo_interval != -1)
-			vty_out(vty, " ggsn %u echo-interval %"PRId32"%s",
+		if (gctx->echo_interval)
+			vty_out(vty, " ggsn %u echo-interval %u%s",
 				gctx->id, gctx->echo_interval, VTY_NEWLINE);
 		else
 			vty_out(vty, " ggsn %u no echo-interval%s",
@@ -395,7 +395,7 @@ DEFUN(cfg_ggsn_no_echo_interval, cfg_ggsn_no_echo_interval_cmd,
 	uint32_t id = atoi(argv[0]);
 	struct sgsn_ggsn_ctx *ggc = sgsn_ggsn_ctx_find_alloc(id);
 
-	ggc->echo_interval = -1;
+	ggc->echo_interval = 0;
 	sgsn_ggsn_ctx_check_echo_timer(ggc);
 
 	return CMD_SUCCESS;

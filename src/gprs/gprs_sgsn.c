@@ -500,7 +500,7 @@ void sgsn_ggsn_ctx_check_echo_timer(struct sgsn_ggsn_ctx *ggc)
 	bool pending = osmo_timer_pending(&ggc->echo_timer);
 
 	/* Only enable if allowed by policy and at least 1 pdp ctx exists against ggsn */
-	if (!llist_empty(&ggc->pdp_list) && ggc->echo_interval > 0) {
+	if (!llist_empty(&ggc->pdp_list) && ggc->echo_interval) {
 		if (!pending)
 			osmo_timer_schedule(&ggc->echo_timer, ggc->echo_interval, 0);
 	} else {
@@ -528,7 +528,6 @@ struct sgsn_ggsn_ctx *sgsn_ggsn_ctx_alloc(uint32_t id)
 	ggc->id = id;
 	ggc->gtp_version = 1;
 	ggc->remote_restart_ctr = -1;
-	ggc->echo_interval = -1;
 	/* if we are called from config file parse, this gsn doesn't exist yet */
 	ggc->gsn = sgsn->gsn;
 	INIT_LLIST_HEAD(&ggc->pdp_list);
