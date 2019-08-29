@@ -214,9 +214,8 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_by_imsi(const char *imsi)
 
 }
 
-/* Allocate a new SGSN MM context for GERAN_Gb */
-struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_gb(uint32_t tlli,
-					const struct gprs_ra_id *raid)
+/* Allocate a new SGSN MM context, generic part */
+struct sgsn_mm_ctx *sgsn_mm_ctx_alloc(uint32_t rate_ctr_id)
 {
 	struct sgsn_mm_ctx *ctx;
 
@@ -224,16 +223,9 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_gb(uint32_t tlli,
 	if (!ctx)
 		return NULL;
 
-	memcpy(&ctx->ra, raid, sizeof(ctx->ra));
-	ctx->ran_type = MM_CTX_T_GERAN_Gb;
-	ctx->gb.tlli = tlli;
 	ctx->gmm_state = GMM_DEREGISTERED;
-	ctx->gb.mm_state = MM_IDLE;
 	ctx->auth_triplet.key_seq = GSM_KEY_SEQ_INVAL;
-	ctx->ciph_algo = sgsn->cfg.cipher;
-	LOGMMCTXP(LOGL_DEBUG, ctx, "Allocated with %s cipher.\n",
-		  get_value_string(gprs_cipher_names, ctx->ciph_algo));
-	ctx->ctrg = rate_ctr_group_alloc(ctx, &mmctx_ctrg_desc, tlli);
+	ctx->ctrg = rate_ctr_group_alloc(ctx, &mmctx_ctrg_desc, rate_ctr_id);
 	if (!ctx->ctrg) {
 		LOGMMCTXP(LOGL_ERROR, ctx, "Cannot allocate counter group\n");
 		talloc_free(ctx);
@@ -246,40 +238,45 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_gb(uint32_t tlli,
 
 	return ctx;
 }
+/* Allocate a new SGSN MM context for GERAN_Gb */
+struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_gb(uint32_t tlli,
+					 const struct gprs_ra_id *raid)
+{
+	struct sgsn_mm_ctx *ctx;
 
-/* Allocate a new SGSN MM context */
+	ctx = sgsn_mm_ctx_alloc(tlli);
+	if (!ctx)
+		return NULL;
+
+	memcpy(&ctx->ra, raid, sizeof(ctx->ra));
+	ctx->ran_type = MM_CTX_T_GERAN_Gb;
+	ctx->gb.tlli = tlli;
+	ctx->gb.mm_state = MM_IDLE;
+	ctx->ciph_algo = sgsn->cfg.cipher;
+
+	LOGMMCTXP(LOGL_DEBUG, ctx, "Allocated with %s cipher.\n",
+		  get_value_string(gprs_cipher_names, ctx->ciph_algo));
+	return ctx;
+}
+
+/* Allocate a new SGSN MM context for UTRAN_Iu */
 struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_iu(void *uectx)
 {
 #if BUILD_IU
 	struct sgsn_mm_ctx *ctx;
 	struct ranap_ue_conn_ctx *ue_ctx = uectx;
 
-	ctx = talloc_zero(tall_sgsn_ctx, struct sgsn_mm_ctx);
+	ctx = sgsn_mm_ctx_alloc(ue_ctx->conn_id);
 	if (!ctx)
 		return NULL;
 
+	/* Need to get RAID from IU conn */
+	ctx->ra = ue_ctx->ra_id;
 	ctx->ran_type = MM_CTX_T_UTRAN_Iu;
 	ctx->iu.ue_ctx = ue_ctx;
 	ctx->iu.ue_ctx->rab_assign_addr_enc = sgsn->cfg.iu.rab_assign_addr_enc;
 	ctx->iu.new_key = 1;
-	ctx->gmm_state = GMM_DEREGISTERED;
 	ctx->iu.mm_state = PMM_DETACHED;
-	ctx->auth_triplet.key_seq = GSM_KEY_SEQ_INVAL;
-	ctx->ctrg = rate_ctr_group_alloc(ctx, &mmctx_ctrg_desc, ue_ctx->conn_id);
-	if (!ctx->ctrg) {
-		LOGMMCTXP(LOGL_ERROR, ctx, "Cannot allocate counter group for %s.%u\n",
-			  mmctx_ctrg_desc.group_name_prefix, ue_ctx->conn_id);
-		talloc_free(ctx);
-		return NULL;
-	}
-	ctx->gmm_att_req.fsm = osmo_fsm_inst_alloc(&gmm_attach_req_fsm, ctx, ctx, LOGL_DEBUG, "gb_gmm_req");
-
-	/* Need to get RAID from IU conn */
-	ctx->ra = ctx->iu.ue_ctx->ra_id;
-
-	INIT_LLIST_HEAD(&ctx->pdp_list);
-
-	llist_add(&ctx->list, &sgsn_mm_ctxts);
 
 	return ctx;
 #else
