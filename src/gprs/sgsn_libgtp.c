@@ -649,8 +649,9 @@ static int cb_delete_context(struct pdp_t *pdp)
 
 	LOGPDPX(DGPRS, LOGL_INFO, pdp, "Context %p was deleted\n", pdp);
 
-	/* unlink the now non-existing library handle from the pdp
-	 * context */
+	/* unlink the now non-existing library handle from the pdp context.
+	   This way we avoid calling pdp_freepdp() on it, since after returning
+	   from cb_delete_context callback, libgtp is already doing so. */
 	pctx->lib = NULL;
 
 	sgsn_ggsn_ctx_drop_pdp(pctx);
