@@ -102,13 +102,17 @@ static const struct tlv_definition gsm48_sm_att_tlvdef = {
 	},
 };
 
-static const struct value_string gprs_pmm_state_names[] = {
-	OSMO_VALUE_STRING(PMM_DETACHED),
-	OSMO_VALUE_STRING(PMM_CONNECTED),
-	OSMO_VALUE_STRING(PMM_IDLE),
+static const struct value_string gprs_mm_state_gb_names[] = {
 	OSMO_VALUE_STRING(MM_IDLE),
 	OSMO_VALUE_STRING(MM_READY),
 	OSMO_VALUE_STRING(MM_STANDBY),
+	{ 0, NULL }
+};
+
+static const struct value_string gprs_mm_state_iu_names[] = {
+	OSMO_VALUE_STRING(PMM_DETACHED),
+	OSMO_VALUE_STRING(PMM_CONNECTED),
+	OSMO_VALUE_STRING(PMM_IDLE),
 	{ 0, NULL }
 };
 
@@ -130,14 +134,14 @@ static void mmctx_state_timer_cb(void *_mm)
 
 	switch (mm->gb.state_T) {
 	case 3314:
-		switch (mm->pmm_state) {
+		switch (mm->gb.mm_state) {
 		case MM_READY:
 			LOGMMCTXP(LOGL_INFO, mm, "T3314 expired\n");
 			mmctx_set_mm_state(mm, MM_STANDBY);
 			break;
 		default:
 			LOGMMCTXP(LOGL_ERROR, mm, "T3314 expired in state %s != MM_READY\n",
-				  get_value_string(gprs_pmm_state_names, mm->pmm_state));
+				  get_value_string(gprs_mm_state_gb_names, mm->gb.mm_state));
 			break;
 		}
 		break;
@@ -174,16 +178,16 @@ static void mmctx_state_timer_stop(struct sgsn_mm_ctx *mm, unsigned int T)
 	mm->gb.state_T = 0;
 }
 
-void mmctx_set_pmm_state(struct sgsn_mm_ctx *ctx, enum gprs_pmm_state state)
+void mmctx_set_pmm_state(struct sgsn_mm_ctx *ctx, enum gprs_mm_state_iu state)
 {
 	OSMO_ASSERT(ctx->ran_type == MM_CTX_T_UTRAN_Iu);
 
-	if (ctx->pmm_state == state)
+	if (ctx->iu.mm_state == state)
 		return;
 
 	LOGMMCTXP(LOGL_INFO, ctx, "Changing PMM state from %s to %s\n",
-		  get_value_string(gprs_pmm_state_names, ctx->pmm_state),
-		  get_value_string(gprs_pmm_state_names, state));
+		  get_value_string(gprs_mm_state_iu_names, ctx->iu.mm_state),
+		  get_value_string(gprs_mm_state_iu_names, state));
 
 	switch (state) {
 	case PMM_IDLE:
@@ -192,23 +196,23 @@ void mmctx_set_pmm_state(struct sgsn_mm_ctx *ctx, enum gprs_pmm_state state)
 		break;
 	case PMM_CONNECTED:
 		break;
-	default:
+	case PMM_DETACHED:
 		break;
 	}
 
-	ctx->pmm_state = state;
+	ctx->iu.mm_state = state;
 }
 
-void mmctx_set_mm_state(struct sgsn_mm_ctx *ctx, enum gprs_pmm_state state)
+void mmctx_set_mm_state(struct sgsn_mm_ctx *ctx, enum gprs_mm_state_gb state)
 {
 	OSMO_ASSERT(ctx->ran_type == MM_CTX_T_GERAN_Gb);
 
-	if (ctx->pmm_state == state)
+	if (ctx->gb.mm_state == state)
 		return;
 
 	LOGMMCTXP(LOGL_INFO, ctx, "Changing MM state from %s to %s\n",
-		  get_value_string(gprs_pmm_state_names, ctx->pmm_state),
-		  get_value_string(gprs_pmm_state_names, state));
+		  get_value_string(gprs_mm_state_gb_names, ctx->gb.mm_state),
+		  get_value_string(gprs_mm_state_gb_names, state));
 
 	switch (state) {
 	case MM_READY:
@@ -216,19 +220,16 @@ void mmctx_set_mm_state(struct sgsn_mm_ctx *ctx, enum gprs_pmm_state state)
 		mmctx_state_timer_start(ctx, 3314);
 		break;
 	case MM_IDLE:
-		if (ctx->pmm_state == MM_READY)
+		if (ctx->gb.mm_state == MM_READY)
 			mmctx_state_timer_stop(ctx, 3314);
 		break;
 	case MM_STANDBY:
-		if (ctx->pmm_state == MM_READY)
+		if (ctx->gb.mm_state == MM_READY)
 			mmctx_state_timer_stop(ctx, 3314);
-		break;
-	default:
-		/* when changing to state != MM_READY */
 		break;
 	}
 
-	ctx->pmm_state = state;
+	ctx->gb.mm_state = state;
 }
 
 /* Our implementation, should be kept in SGSN */

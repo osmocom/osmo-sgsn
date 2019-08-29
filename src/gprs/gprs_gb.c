@@ -35,7 +35,7 @@
 /* Update the MM context state */
 static void gsm0408_gprs_notify_pdu_gb(struct sgsn_mm_ctx *mmctx)
 {
-	switch (mmctx->pmm_state) {
+	switch (mmctx->gb.mm_state) {
 	case MM_STANDBY:
 		mmctx_set_mm_state(mmctx, MM_READY);
 		break;

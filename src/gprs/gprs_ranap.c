@@ -138,7 +138,7 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 			LOGMMCTXP(LOGL_INFO, mm, "IU release for imsi %s\n", mm->imsi);
 		else
 			LOGIUP(ctx, LOGL_INFO, "IU release\n");
-		if (mm && mm->pmm_state == PMM_CONNECTED)
+		if (mm && mm->iu.mm_state == PMM_CONNECTED)
 			mmctx_set_pmm_state(mm, PMM_IDLE);
 		rc = 0;
 		break;

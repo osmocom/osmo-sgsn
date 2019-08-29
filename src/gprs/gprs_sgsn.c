@@ -228,7 +228,7 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_gb(uint32_t tlli,
 	ctx->ran_type = MM_CTX_T_GERAN_Gb;
 	ctx->gb.tlli = tlli;
 	ctx->gmm_state = GMM_DEREGISTERED;
-	ctx->pmm_state = MM_IDLE;
+	ctx->gb.mm_state = MM_IDLE;
 	ctx->auth_triplet.key_seq = GSM_KEY_SEQ_INVAL;
 	ctx->ciph_algo = sgsn->cfg.cipher;
 	LOGMMCTXP(LOGL_DEBUG, ctx, "Allocated with %s cipher.\n",
@@ -263,7 +263,7 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_iu(void *uectx)
 	ctx->iu.ue_ctx->rab_assign_addr_enc = sgsn->cfg.iu.rab_assign_addr_enc;
 	ctx->iu.new_key = 1;
 	ctx->gmm_state = GMM_DEREGISTERED;
-	ctx->pmm_state = PMM_DETACHED;
+	ctx->iu.mm_state = PMM_DETACHED;
 	ctx->auth_triplet.key_seq = GSM_KEY_SEQ_INVAL;
 	ctx->ctrg = rate_ctr_group_alloc(ctx, &mmctx_ctrg_desc, ue_ctx->conn_id);
 	if (!ctx->ctrg) {

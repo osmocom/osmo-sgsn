@@ -32,14 +32,17 @@ enum gprs_gmm_state {
 	GMM_DEREGISTERED_INIT,		/* 4.1.3.3.1.4 */
 };
 
-/* TS 23.060 6.1.1 and 6.1.2 Mobility management states A/Gb and Iu mode */
-enum gprs_pmm_state {
-	PMM_DETACHED,
-	PMM_CONNECTED,
-	PMM_IDLE,
+/* TS 23.060 6.1.1 Mobility Management States (A/Gb mode) */
+enum gprs_mm_state_gb {
 	MM_IDLE,
 	MM_READY,
-	MM_STANDBY,
+	MM_STANDBY
+};
+/* TS 23.060 6.1.2 Mobility Management States (Iu mode) */
+enum gprs_mm_state_iu {
+	PMM_DETACHED,
+	PMM_CONNECTED,
+	PMM_IDLE
 };
 
 enum gprs_mm_ctr {
@@ -138,7 +141,6 @@ struct sgsn_mm_ctx {
 
 	char 			imsi[GSM23003_IMSI_MAX_DIGITS+1];
 	enum gprs_gmm_state	gmm_state;
-	enum gprs_pmm_state	pmm_state;	/* Iu: page when in PMM-IDLE mode */
 	uint32_t 		p_tmsi;
 	uint32_t 		p_tmsi_old;	/* old P-TMSI before new is confirmed */
 	uint32_t 		p_tmsi_sig;
@@ -158,9 +160,11 @@ struct sgsn_mm_ctx {
 		uint32_t		tlli;
 		uint32_t		tlli_new;
 
+		/* TS 23.060 6.1.1 Mobility Management States (A/Gb mode) */
+		enum gprs_mm_state_gb	mm_state;
 		/* timer for mm state. state=READY: T3314 (aka TS 23.060 "READY timer") */
 		struct osmo_timer_list  state_timer;
-		unsigned int		state_T;	/* Txxxx number but only used for pmm_states */
+		unsigned int		state_T;	/* Txxxx number but only used for mm_state */
 	} gb;
 	struct {
 		int			new_key;
@@ -175,6 +179,8 @@ struct sgsn_mm_ctx {
 		/* Voice Support Match Indicator */
 		struct ranap_ue_conn_ctx	*ue_ctx;
 		struct service_info	service;
+		/* TS 23.060 6.1.2 Mobility Management States (Iu mode) */
+		enum gprs_mm_state_iu	mm_state;
 	} iu;
 	struct {
 		struct osmo_fsm_inst *fsm;
