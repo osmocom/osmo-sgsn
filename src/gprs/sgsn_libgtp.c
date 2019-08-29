@@ -50,11 +50,7 @@
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/gprs_subscriber.h>
 #include <osmocom/sgsn/gprs_sndcp.h>
-
-#ifdef BUILD_IU
-#include <osmocom/ranap/iu_client.h>
-#include <osmocom/ranap/ranap_ies_defs.h>
-#endif
+#include <osmocom/sgsn/gprs_ranap.h>
 
 #include <gtp.h>
 #include <pdp.h>
@@ -359,7 +355,7 @@ static const struct cause_map gtp2sm_cause_map[] = {
 	{ 0, 0 }
 };
 
-static int send_act_pdp_cont_acc(struct sgsn_pdp_ctx *pctx)
+int send_act_pdp_cont_acc(struct sgsn_pdp_ctx *pctx)
 {
 	struct sgsn_signal_data sig_data;
 	int rc;
@@ -472,72 +468,6 @@ void sgsn_ggsn_echo_req(struct sgsn_ggsn_ctx *ggc)
 	LOGGGSN(ggc, LOGL_INFO, "GTP Tx Echo Request\n");
 	gtp_echo_req(ggc->gsn, ggc->gtp_version, ggc, &ggc->remote_addr);
 }
-
-#ifdef BUILD_IU
-/* Callback for RAB assignment response */
-int sgsn_ranap_rab_ass_resp(struct sgsn_mm_ctx *ctx, RANAP_RAB_SetupOrModifiedItemIEs_t *setup_ies)
-{
-	uint8_t rab_id;
-	bool require_pdp_update = false;
-	struct sgsn_pdp_ctx *pdp = NULL;
-	RANAP_RAB_SetupOrModifiedItem_t *item = &setup_ies->raB_SetupOrModifiedItem;
-
-	rab_id = item->rAB_ID.buf[0];
-
-	pdp = sgsn_pdp_ctx_by_nsapi(ctx, rab_id);
-	if (!pdp) {
-		LOGP(DRANAP, LOGL_ERROR, "RAB Assignment Response for unknown RAB/NSAPI=%u\n", rab_id);
-		return -1;
-	}
-
-	if (item->transportLayerAddress) {
-		LOGPC(DRANAP, LOGL_INFO, " Setup: (%u/%s)", rab_id, osmo_hexdump(item->transportLayerAddress->buf,
-								     item->transportLayerAddress->size));
-		switch (item->transportLayerAddress->size) {
-		case 7:
-			/* It must be IPv4 inside a X213 NSAP */
-			memcpy(pdp->lib->gsnlu.v, &item->transportLayerAddress->buf[3], 4);
-			break;
-		case 4:
-			/* It must be a raw IPv4 address */
-			memcpy(pdp->lib->gsnlu.v, item->transportLayerAddress->buf, 4);
-			break;
-		case 16:
-			/* TODO: It must be a raw IPv6 address */
-		case 19:
-			/* TODO: It must be IPv6 inside a X213 NSAP */
-		default:
-			LOGP(DRANAP, LOGL_ERROR, "RAB Assignment Resp: Unknown "
-				"transport layer address size %u\n",
-				item->transportLayerAddress->size);
-			return -1;
-		}
-		require_pdp_update = true;
-	}
-
-	/* The TEI on the RNC side might have changed, too */
-	if (item->iuTransportAssociation &&
-	    item->iuTransportAssociation->present == RANAP_IuTransportAssociation_PR_gTP_TEI &&
-	    item->iuTransportAssociation->choice.gTP_TEI.buf &&
-	    item->iuTransportAssociation->choice.gTP_TEI.size >= 4) {
-		uint32_t tei = osmo_load32be(item->iuTransportAssociation->choice.gTP_TEI.buf);
-		LOGP(DRANAP, LOGL_DEBUG, "Updating TEID on RNC side from 0x%08x to 0x%08x\n",
-			pdp->lib->teid_own, tei);
-		pdp->lib->teid_own = tei;
-		require_pdp_update = true;
-	}
-
-	if (require_pdp_update)
-		gtp_update_context(pdp->ggsn->gsn, pdp->lib, pdp, &pdp->lib->hisaddr0);
-
-	if (pdp->state != PDP_STATE_CR_CONF) {
-		send_act_pdp_cont_acc(pdp);
-		pdp->state = PDP_STATE_CR_CONF;
-	}
-	return 0;
-
-}
-#endif
 
 /* Confirmation of a PDP Context Delete */
 static int delete_pdp_conf(struct pdp_t *pdp, void *cbp, int cause)

@@ -57,6 +57,7 @@
 #include <osmocom/sgsn/sgsn.h>
 #include <osmocom/sgsn/gprs_llc.h>
 #include <osmocom/sgsn/gprs_gmm.h>
+#include <osmocom/sgsn/gprs_ranap.h>
 
 #include <osmocom/ctrl/control_if.h>
 #include <osmocom/ctrl/ports.h>
@@ -353,10 +354,6 @@ static const struct log_info gprs_log_info = {
 	.cat = gprs_categories,
 	.num_cat = ARRAY_SIZE(gprs_categories),
 };
-
-#if BUILD_IU
-int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type type, void *data);
-#endif
 
 static bool file_exists(const char *path)
 {

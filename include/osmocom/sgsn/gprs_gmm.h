@@ -17,8 +17,10 @@ int gsm48_tx_gmm_auth_ciph_req(struct sgsn_mm_ctx *mm,
 
 int gsm0408_gprs_rcvmsg_gb(struct msgb *msg, struct gprs_llc_llme *llme,
 			   bool drop_cipherable);
-int gsm0408_gprs_rcvmsg_iu(struct msgb *msg, struct gprs_ra_id *ra_id,
-			   uint16_t *sai);
+int gsm0408_rcv_gsm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
+			   struct gprs_llc_llme *llme);
+int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
+			   struct gprs_llc_llme *llme, bool drop_cipherable);
 int gsm0408_gprs_force_reattach(struct sgsn_mm_ctx *mmctx);
 int gsm0408_gprs_force_reattach_oldmsg(struct msgb *msg,
 				       struct gprs_llc_llme *llme);
@@ -33,8 +35,6 @@ int gprs_gmm_rx_resume(struct gprs_ra_id *raid, uint32_t tlli,
 
 time_t gprs_max_time_to_idle(void);
 
-int iu_rab_act_ps(uint8_t rab_id, struct sgsn_pdp_ctx *pdp);
-
 int gsm48_tx_gmm_id_req(struct sgsn_mm_ctx *mm, uint8_t id_type);
 int gsm48_tx_gmm_att_rej(struct sgsn_mm_ctx *mm,
 				uint8_t gmm_cause);
@@ -42,9 +42,12 @@ int gsm48_tx_gmm_att_ack(struct sgsn_mm_ctx *mm);
 
 int gprs_gmm_attach_req_ies(struct msgb *a, struct msgb *b);
 
+int gsm48_gmm_authorize(struct sgsn_mm_ctx *ctx);
 /* TODO: move extract_subscr_* when gsm48_gmm_authorize() got removed */
 void extract_subscr_msisdn(struct sgsn_mm_ctx *ctx);
 void extract_subscr_hlr(struct sgsn_mm_ctx *ctx);
 
 void pdp_ctx_detach_mm_ctx(struct sgsn_pdp_ctx *pdp);
+
+void mmctx_set_pmm_state(struct sgsn_mm_ctx *ctx, enum gprs_pmm_state state);
 #endif /* _GPRS_GMM_H */

@@ -50,10 +50,6 @@
 
 #include "../../bscconfig.h"
 
-#if BUILD_IU
-#include <osmocom/ranap/iu_client.h>
-#endif
-
 #define GPRS_LLME_CHECK_TICK 30
 
 extern struct sgsn_instance *sgsn;

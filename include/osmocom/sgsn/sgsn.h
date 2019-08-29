@@ -161,7 +161,7 @@ char *sgsn_gtp_ntoa(struct ul16_t *ul);
 /* Main input function for Gb proxy */
 int sgsn_rcvmsg(struct msgb *msg, struct gprs_nsvc *nsvc, uint16_t ns_bvci);
 
-
+/* sgsn_libgtp.c */
 struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
 					 struct sgsn_mm_ctx *mmctx,
 					 uint16_t nsapi,
@@ -169,6 +169,7 @@ struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
 int sgsn_delete_pdp_ctx(struct sgsn_pdp_ctx *pctx);
 void sgsn_pdp_upd_gtp_u(struct sgsn_pdp_ctx *pdp, void *addr, size_t alen);
 void sgsn_ggsn_echo_req(struct sgsn_ggsn_ctx *ggc);
+int send_act_pdp_cont_acc(struct sgsn_pdp_ctx *pctx);
 
 /* gprs_sndcp.c */
 
