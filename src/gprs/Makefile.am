@@ -60,6 +60,7 @@ osmo_gbproxy_LDADD = \
 	$(NULL)
 
 osmo_sgsn_SOURCES = \
+	gprs_gb.c \
 	gprs_gmm_attach.c \
 	gprs_gmm.c \
 	gprs_ranap.c \

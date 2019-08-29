@@ -45,6 +45,7 @@ sgsn_test_LDADD = \
 	$(top_builddir)/src/gprs/gprs_llc_parse.o \
 	$(top_builddir)/src/gprs/gprs_llc.o \
 	$(top_builddir)/src/gprs/crc24.o \
+	$(top_builddir)/src/gprs/gprs_gb.o \
 	$(top_builddir)/src/gprs/gprs_ranap.o \
 	$(top_builddir)/src/gprs/gprs_sndcp.o \
 	$(top_builddir)/src/gprs/gprs_gmm_attach.o \

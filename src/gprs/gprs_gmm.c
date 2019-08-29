@@ -124,7 +124,6 @@ static void mmctx_change_gtpu_endpoints_to_sgsn(struct sgsn_mm_ctx *mm_ctx)
 	}
 }
 
-static void mmctx_set_mm_state(struct sgsn_mm_ctx *ctx, enum gprs_pmm_state state);
 static void mmctx_state_timer_cb(void *_mm)
 {
 	struct sgsn_mm_ctx *mm = _mm;
@@ -149,7 +148,7 @@ static void mmctx_state_timer_cb(void *_mm)
 	}
 }
 
-static void mmctx_state_timer_start(struct sgsn_mm_ctx *mm, unsigned int T)
+void mmctx_state_timer_start(struct sgsn_mm_ctx *mm, unsigned int T)
 {
 	unsigned long seconds;
 
@@ -200,7 +199,7 @@ void mmctx_set_pmm_state(struct sgsn_mm_ctx *ctx, enum gprs_pmm_state state)
 	ctx->pmm_state = state;
 }
 
-static void mmctx_set_mm_state(struct sgsn_mm_ctx *ctx, enum gprs_pmm_state state)
+void mmctx_set_mm_state(struct sgsn_mm_ctx *ctx, enum gprs_pmm_state state)
 {
 	OSMO_ASSERT(ctx->ran_type == MM_CTX_T_GERAN_Gb);
 
@@ -304,7 +303,7 @@ static void gmm_copy_id(struct msgb *msg, const struct msgb *old)
 }
 
 /* Store BVCI/NSEI in MM context */
-static void msgid2mmctx(struct sgsn_mm_ctx *mm, const struct msgb *msg)
+void msgid2mmctx(struct sgsn_mm_ctx *mm, const struct msgb *msg)
 {
 	/* check for Iu or Gb */
 	if (!MSG_IU_UE_CTX(msg)) {
@@ -2922,64 +2921,6 @@ int gsm0408_gprs_force_reattach(struct sgsn_mm_ctx *mmctx)
 		mmctx, GPRS_DET_T_MT_REATT_REQ, GMM_CAUSE_IMPL_DETACHED);
 
 	mm_ctx_cleanup_free(mmctx, "forced reattach");
-
-	return rc;
-}
-
-/* Update the MM context state */
-static void gsm0408_gprs_notify_pdu_gb(struct sgsn_mm_ctx *mmctx)
-{
-	switch (mmctx->pmm_state) {
-	case MM_STANDBY:
-		mmctx_set_mm_state(mmctx, MM_READY);
-		break;
-	case MM_READY: /* RE-arm the timer upon receival of Gb PDUs */
-		mmctx_state_timer_start(mmctx, 3314);
-		break;
-	default:
-		break;
-	}
-}
-
-/* Main entry point for incoming 04.08 GPRS messages from Gb */
-int gsm0408_gprs_rcvmsg_gb(struct msgb *msg, struct gprs_llc_llme *llme,
-			   bool drop_cipherable)
-{
-	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
-	uint8_t pdisc = gsm48_hdr_pdisc(gh);
-	struct sgsn_mm_ctx *mmctx;
-	struct gprs_ra_id ra_id;
-	int rc = -EINVAL;
-
-	bssgp_parse_cell_id(&ra_id, msgb_bcid(msg));
-	mmctx = sgsn_mm_ctx_by_tlli(msgb_tlli(msg), &ra_id);
-	if (mmctx) {
-		msgid2mmctx(mmctx, msg);
-		rate_ctr_inc(&mmctx->ctrg->ctr[GMM_CTR_PKTS_SIG_IN]);
-		mmctx->gb.llme = llme;
-	}
-
-	/* MMCTX can be NULL */
-
-	if (mmctx)
-		gsm0408_gprs_notify_pdu_gb(mmctx);
-
-	switch (pdisc) {
-	case GSM48_PDISC_MM_GPRS:
-		rc = gsm0408_rcv_gmm(mmctx, msg, llme, drop_cipherable);
-		break;
-	case GSM48_PDISC_SM_GPRS:
-		rc = gsm0408_rcv_gsm(mmctx, msg, llme);
-		break;
-	default:
-		LOGMMCTXP(LOGL_NOTICE, mmctx,
-			"Unknown GSM 04.08 discriminator 0x%02x: %s\n",
-			pdisc, osmo_hexdump((uint8_t *)gh, msgb_l3len(msg)));
-		/* FIXME: return status message */
-		break;
-	}
-
-	/* MMCTX can be invalid */
 
 	return rc;
 }
