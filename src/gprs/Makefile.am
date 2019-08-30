@@ -35,6 +35,25 @@ OSMO_LIBS = \
 	$(LIBGTP_LIBS) \
 	$(NULL)
 
+noinst_LTLIBRARIES = libcommon.la
+
+libcommon_la_SOURCES = \
+	gprs_gb_parse.c \
+	gprs_llc_parse.c \
+	crc24.c \
+	gprs_utils.c \
+	sgsn_ares.c \
+	$(NULL)
+
+libcommon_la_LIBADD = \
+	$(LIBOSMOCORE_LIBS) \
+	$(LIBOSMOGSM_LIBS) \
+	$(LIBOSMOVTY_LIBS) \
+	$(LIBGTP_LIBS) \
+	$(LIBOSMOSIGTRAN_LIBS) \
+	$(LIBCARES_LIBS) \
+	$(NULL)
+
 bin_PROGRAMS = \
 	osmo-gbproxy \
 	osmo-sgsn \
@@ -49,12 +68,9 @@ osmo_gbproxy_SOURCES = \
 	gb_proxy_patch.c \
 	gb_proxy_tlli.c \
 	gb_proxy_peer.c \
-	gprs_gb_parse.c \
-	gprs_llc_parse.c \
-	crc24.c \
-	gprs_utils.c \
 	$(NULL)
 osmo_gbproxy_LDADD = \
+	libcommon.la \
 	$(OSMO_LIBS) \
 	-lrt \
 	$(NULL)
@@ -77,20 +93,17 @@ osmo_sgsn_SOURCES = \
 	sgsn_vty.c \
 	sgsn_libgtp.c \
 	gprs_llc.c \
-	gprs_llc_parse.c \
 	gprs_llc_vty.c \
-	crc24.c \
 	sgsn_ctrl.c \
 	sgsn_auth.c \
 	gprs_subscriber.c \
-	gprs_utils.c \
 	sgsn_cdr.c \
-	sgsn_ares.c \
 	slhc.c \
 	gprs_llc_xid.c \
 	v42bis.c \
 	$(NULL)
 osmo_sgsn_LDADD = \
+	libcommon.la \
 	$(OSMO_LIBS) \
 	$(LIBOSMOABIS_LIBS) \
 	$(LIBOSMOGSUPCLIENT_LIBS) \
@@ -113,10 +126,9 @@ osmo_gtphub_SOURCES = \
 	gtphub_sock.c \
 	gtphub_ares.c \
 	gtphub_vty.c \
-	sgsn_ares.c \
-	gprs_utils.c \
 	$(NULL)
 osmo_gtphub_LDADD = \
+	libcommon.la \
 	$(LIBOSMOCORE_LIBS) \
 	$(LIBOSMOGSM_LIBS) \
 	$(LIBOSMOVTY_LIBS) \

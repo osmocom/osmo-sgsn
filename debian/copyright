@@ -81,17 +81,19 @@ Files:     include/osmocom/sgsn/a_reset.h
            include/osmocom/sgsn/gprs_utils.h
            include/osmocom/sgsn/gtphub.h
            include/osmocom/sgsn/signal.h
+           src/gprs/gprs_llc_parse.c
            src/gprs/crc24.c
+           src/gprs/gprs_gb_parse.c
+           src/gprs/gprs_utils.c
+           src/gprs/sgsn_ares.c
            src/gprs/gb_proxy.c
            src/gprs/gb_proxy_main.c
            src/gprs/gb_proxy_patch.c
            src/gprs/gb_proxy_peer.c
            src/gprs/gb_proxy_tlli.c
            src/gprs/gb_proxy_vty.c
-           src/gprs/gprs_gb_parse.c
            src/gprs/gprs_gmm.c
            src/gprs/gprs_llc.c
-           src/gprs/gprs_llc_parse.c
            src/gprs/gprs_llc_vty.c
            src/gprs/gprs_llc_xid.c
            src/gprs/gprs_sgsn.c
@@ -102,11 +104,9 @@ Files:     include/osmocom/sgsn/a_reset.h
            src/gprs/gprs_sndcp_vty.c
            src/gprs/gprs_sndcp_xid.c
            src/gprs/gprs_subscriber.c
-           src/gprs/gprs_utils.c
            src/gprs/gtphub.c
            src/gprs/gtphub_main.c
            src/gprs/gtphub_vty.c
-           src/gprs/sgsn_ares.c
            src/gprs/sgsn_auth.c
            src/gprs/sgsn_cdr.c
            src/gprs/sgsn_ctrl.c
