@@ -153,9 +153,9 @@ static int cdr_snprintf_pdp(char *buf, size_t size, const char *ev,
 			struct sgsn_pdp_ctx *pdp)
 {
 	char apni[(pdp->lib ? pdp->lib->apn_use.l : 0) + 1];
-	char ggsn_addr[INET_ADDRSTRLEN + 1];
-	char sgsn_addr[INET_ADDRSTRLEN + 1];
-	char eua_addr[INET6_ADDRSTRLEN + 1];
+	char ggsn_addr[INET_ADDRSTRLEN];
+	char sgsn_addr[INET_ADDRSTRLEN];
+	char eua_addr[INET6_ADDRSTRLEN];
 	struct tm tm;
 	struct timeval tv;
 	time_t duration;
