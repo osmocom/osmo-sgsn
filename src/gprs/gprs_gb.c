@@ -28,24 +28,10 @@
 
 #include "bscconfig.h"
 
+#include <osmocom/sgsn/gprs_mm_state_gb_fsm.h>
 #include <osmocom/sgsn/gprs_sgsn.h>
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/debug.h>
-
-/* Update the MM context state */
-static void gsm0408_gprs_notify_pdu_gb(struct sgsn_mm_ctx *mmctx)
-{
-	switch (mmctx->gb.mm_state) {
-	case MM_STANDBY:
-		mmctx_set_mm_state(mmctx, MM_READY);
-		break;
-	case MM_READY: /* RE-arm the timer upon receival of Gb PDUs */
-		mmctx_state_timer_start(mmctx, 3314);
-		break;
-	default:
-		break;
-	}
-}
 
 /* Main entry point for incoming 04.08 GPRS messages from Gb */
 int gsm0408_gprs_rcvmsg_gb(struct msgb *msg, struct gprs_llc_llme *llme,
@@ -63,12 +49,10 @@ int gsm0408_gprs_rcvmsg_gb(struct msgb *msg, struct gprs_llc_llme *llme,
 		msgid2mmctx(mmctx, msg);
 		rate_ctr_inc(&mmctx->ctrg->ctr[GMM_CTR_PKTS_SIG_IN]);
 		mmctx->gb.llme = llme;
+		osmo_fsm_inst_dispatch(mmctx->gb.mm_state_fsm, E_MM_PDU_RECEPTION, NULL);
 	}
 
 	/* MMCTX can be NULL */
-
-	if (mmctx)
-		gsm0408_gprs_notify_pdu_gb(mmctx);
 
 	switch (pdisc) {
 	case GSM48_PDISC_MM_GPRS:

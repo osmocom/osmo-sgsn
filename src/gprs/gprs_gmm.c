@@ -55,6 +55,7 @@
 #include <osmocom/sgsn/gprs_subscriber.h>
 #include <osmocom/sgsn/sgsn.h>
 #include <osmocom/sgsn/gprs_gmm_attach.h>
+#include <osmocom/sgsn/gprs_mm_state_gb_fsm.h>
 #include <osmocom/sgsn/signal.h>
 #include <osmocom/sgsn/gprs_sndcp.h>
 #include <osmocom/sgsn/gprs_ranap.h>
@@ -102,13 +103,6 @@ static const struct tlv_definition gsm48_sm_att_tlvdef = {
 	},
 };
 
-static const struct value_string gprs_mm_state_gb_names[] = {
-	OSMO_VALUE_STRING(MM_IDLE),
-	OSMO_VALUE_STRING(MM_READY),
-	OSMO_VALUE_STRING(MM_STANDBY),
-	{ 0, NULL }
-};
-
 static const struct value_string gprs_mm_state_iu_names[] = {
 	OSMO_VALUE_STRING(PMM_DETACHED),
 	OSMO_VALUE_STRING(PMM_CONNECTED),
@@ -128,56 +122,6 @@ static void mmctx_change_gtpu_endpoints_to_sgsn(struct sgsn_mm_ctx *mm_ctx)
 				   &sgsn->cfg.gtp_listenaddr.sin_addr,
 				   sizeof(sgsn->cfg.gtp_listenaddr.sin_addr));
 	}
-}
-
-static void mmctx_state_timer_cb(void *_mm)
-{
-	struct sgsn_mm_ctx *mm = _mm;
-
-	switch (mm->gb.state_T) {
-	case 3314:
-		switch (mm->gb.mm_state) {
-		case MM_READY:
-			LOGMMCTXP(LOGL_INFO, mm, "T3314 expired\n");
-			mmctx_set_mm_state(mm, MM_STANDBY);
-			break;
-		default:
-			LOGMMCTXP(LOGL_ERROR, mm, "T3314 expired in state %s != MM_READY\n",
-				  get_value_string(gprs_mm_state_gb_names, mm->gb.mm_state));
-			break;
-		}
-		break;
-	default:
-		LOGMMCTXP(LOGL_ERROR, mm, "state timer expired in unknown mode %u\n",
-			mm->gb.state_T);
-		break;
-	}
-}
-
-void mmctx_state_timer_start(struct sgsn_mm_ctx *mm, unsigned int T)
-{
-	unsigned long seconds;
-
-	if (mm->gb.state_T && mm->gb.state_T != T)
-		LOGMMCTXP(LOGL_ERROR, mm, "Attempting to start timer %u but %u is active!\n",
-			  T, mm->gb.state_T);
-
-	mm->gb.state_T = T;
-	mm->gb.state_timer.data = mm;
-	mm->gb.state_timer.cb = &mmctx_state_timer_cb;
-
-	seconds = osmo_tdef_get(sgsn->cfg.T_defs, T, OSMO_TDEF_S, -1);
-	osmo_timer_schedule(&mm->gb.state_timer, seconds, 0);
-}
-
-static void mmctx_state_timer_stop(struct sgsn_mm_ctx *mm, unsigned int T)
-{
-	if (mm->gb.state_T == T)
-		osmo_timer_del(&mm->gb.state_timer);
-	else
-		LOGMMCTXP(LOGL_ERROR, mm, "Attempting to stop timer %u but %u is active!\n",
-			  T, mm->gb.state_T);
-	mm->gb.state_T = 0;
 }
 
 void mmctx_set_pmm_state(struct sgsn_mm_ctx *ctx, enum gprs_mm_state_iu state)
@@ -203,35 +147,6 @@ void mmctx_set_pmm_state(struct sgsn_mm_ctx *ctx, enum gprs_mm_state_iu state)
 	}
 
 	ctx->iu.mm_state = state;
-}
-
-void mmctx_set_mm_state(struct sgsn_mm_ctx *ctx, enum gprs_mm_state_gb state)
-{
-	OSMO_ASSERT(ctx->ran_type == MM_CTX_T_GERAN_Gb);
-
-	if (ctx->gb.mm_state == state)
-		return;
-
-	LOGMMCTXP(LOGL_INFO, ctx, "Changing MM state from %s to %s\n",
-		  get_value_string(gprs_mm_state_gb_names, ctx->gb.mm_state),
-		  get_value_string(gprs_mm_state_gb_names, state));
-
-	switch (state) {
-	case MM_READY:
-		/* on expiration, T3314 moves mm state back to MM_STANDBY */
-		mmctx_state_timer_start(ctx, 3314);
-		break;
-	case MM_IDLE:
-		if (ctx->gb.mm_state == MM_READY)
-			mmctx_state_timer_stop(ctx, 3314);
-		break;
-	case MM_STANDBY:
-		if (ctx->gb.mm_state == MM_READY)
-			mmctx_state_timer_stop(ctx, 3314);
-		break;
-	}
-
-	ctx->gb.mm_state = state;
 }
 
 /* Our implementation, should be kept in SGSN */
@@ -348,7 +263,7 @@ static void mm_ctx_cleanup_free(struct sgsn_mm_ctx *ctx, const char *log_text)
 		mmctx_set_pmm_state(ctx, PMM_DETACHED);
 		break;
 	case MM_CTX_T_GERAN_Gb:
-		mmctx_set_mm_state(ctx, MM_IDLE);
+		osmo_fsm_inst_dispatch(ctx->gb.mm_state_fsm, E_MM_IMPLICIT_DETACH, NULL);
 		break;
 	}
 
@@ -2107,7 +2022,7 @@ int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 			gprs_llme_copy_key(mmctx, mmctx->gb.llme);
 			gprs_llgmm_assign(mmctx->gb.llme, TLLI_UNASSIGNED,
 					  mmctx->gb.tlli_new);
-			mmctx_set_mm_state(mmctx, MM_READY);
+			osmo_fsm_inst_dispatch(mmctx->gb.mm_state_fsm, E_MM_GPRS_ATTACH, NULL);
 			break;
 		}
 		rc = 0;
@@ -2136,7 +2051,7 @@ int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 			mmctx->gb.tlli = mmctx->gb.tlli_new;
 			gprs_llgmm_assign(mmctx->gb.llme, TLLI_UNASSIGNED,
 					  mmctx->gb.tlli_new);
-			mmctx_set_mm_state(mmctx, MM_READY);
+			osmo_fsm_inst_dispatch(mmctx->gb.mm_state_fsm, E_MM_RA_UPDATE, NULL);
 			break;
 		}
 		rc = 0;

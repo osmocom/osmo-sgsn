@@ -42,6 +42,7 @@
 #include <osmocom/sgsn/gprs_utils.h>
 #include <osmocom/sgsn/signal.h>
 #include <osmocom/sgsn/gprs_gmm_attach.h>
+#include <osmocom/sgsn/gprs_mm_state_gb_fsm.h>
 #include <osmocom/sgsn/gprs_llc.h>
 
 #include <pdp.h>
@@ -243,6 +244,7 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_gb(uint32_t tlli,
 					 const struct gprs_ra_id *raid)
 {
 	struct sgsn_mm_ctx *ctx;
+	char buf[32];
 
 	ctx = sgsn_mm_ctx_alloc(tlli);
 	if (!ctx)
@@ -251,8 +253,9 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_gb(uint32_t tlli,
 	memcpy(&ctx->ra, raid, sizeof(ctx->ra));
 	ctx->ran_type = MM_CTX_T_GERAN_Gb;
 	ctx->gb.tlli = tlli;
-	ctx->gb.mm_state = MM_IDLE;
 	ctx->ciph_algo = sgsn->cfg.cipher;
+	snprintf(buf, sizeof(buf), "%" PRIu32, tlli);
+	ctx->gb.mm_state_fsm = osmo_fsm_inst_alloc(&mm_state_gb_fsm, ctx, ctx, LOGL_DEBUG, buf);
 
 	LOGMMCTXP(LOGL_DEBUG, ctx, "Allocated with %s cipher.\n",
 		  get_value_string(gprs_cipher_names, ctx->ciph_algo));
@@ -334,11 +337,6 @@ void sgsn_mm_ctx_cleanup_free(struct sgsn_mm_ctx *mm)
 		osmo_timer_del(&mm->timer);
 	}
 
-	if (osmo_timer_pending(&mm->gb.state_timer)) {
-		LOGMMCTXP(LOGL_INFO, mm, "Cancelling MM state timer %u\n", mm->gb.state_T);
-		osmo_timer_del(&mm->gb.state_timer);
-	}
-
 	memset(&sig_data, 0, sizeof(sig_data));
 	sig_data.mm = mm;
 	osmo_signal_dispatch(SS_SGSN, S_SGSN_MM_FREE, &sig_data);
@@ -353,6 +351,8 @@ void sgsn_mm_ctx_cleanup_free(struct sgsn_mm_ctx *mm)
 
 	if (mm->gmm_att_req.fsm)
 		gmm_att_req_free(mm);
+	if (mm->gb.mm_state_fsm)
+		osmo_fsm_inst_free(mm->gb.mm_state_fsm);
 
 	sgsn_mm_ctx_free(mm);
 	mm = NULL;

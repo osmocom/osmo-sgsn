@@ -32,12 +32,6 @@ enum gprs_gmm_state {
 	GMM_DEREGISTERED_INIT,		/* 4.1.3.3.1.4 */
 };
 
-/* TS 23.060 6.1.1 Mobility Management States (A/Gb mode) */
-enum gprs_mm_state_gb {
-	MM_IDLE,
-	MM_READY,
-	MM_STANDBY
-};
 /* TS 23.060 6.1.2 Mobility Management States (Iu mode) */
 enum gprs_mm_state_iu {
 	PMM_DETACHED,
@@ -161,10 +155,7 @@ struct sgsn_mm_ctx {
 		uint32_t		tlli_new;
 
 		/* TS 23.060 6.1.1 Mobility Management States (A/Gb mode) */
-		enum gprs_mm_state_gb	mm_state;
-		/* timer for mm state. state=READY: T3314 (aka TS 23.060 "READY timer") */
-		struct osmo_timer_list  state_timer;
-		unsigned int		state_T;	/* Txxxx number but only used for mm_state */
+		struct osmo_fsm_inst	*mm_state_fsm;
 	} gb;
 	struct {
 		int			new_key;
