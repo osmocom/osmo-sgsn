@@ -118,10 +118,12 @@ static const struct value_string gprs_mm_state_iu_names[] = {
 
 static void mmctx_change_gtpu_endpoints_to_sgsn(struct sgsn_mm_ctx *mm_ctx)
 {
+	char buf[INET_ADDRSTRLEN];
 	struct sgsn_pdp_ctx *pdp;
 	llist_for_each_entry(pdp, &mm_ctx->pdp_list, list) {
 		LOGMMCTXP(LOGL_INFO, mm_ctx, "Changing GTP-U endpoints %s -> %s\n",
-			  sgsn_gtp_ntoa(&pdp->lib->gsnlu), inet_ntoa(sgsn->cfg.gtp_listenaddr.sin_addr));
+			  sgsn_gtp_ntoa(&pdp->lib->gsnlu),
+			  inet_ntop(AF_INET, &sgsn->cfg.gtp_listenaddr.sin_addr, buf, sizeof(buf)));
 		sgsn_pdp_upd_gtp_u(pdp,
 				   &sgsn->cfg.gtp_listenaddr.sin_addr,
 				   sizeof(sgsn->cfg.gtp_listenaddr.sin_addr));
@@ -2479,6 +2481,7 @@ static void ggsn_lookup_cb(void *arg, int status, int timeouts, struct hostent *
 	struct sgsn_ggsn_ctx *ggsn;
 	struct sgsn_ggsn_lookup *lookup = arg;
 	struct in_addr *addr = NULL;
+	char buf[INET_ADDRSTRLEN];
 
 	/* The context is gone while we made a request */
 	if (!lookup->mmctx) {
@@ -2535,7 +2538,8 @@ static void ggsn_lookup_cb(void *arg, int status, int timeouts, struct hostent *
 	}
 	ggsn->remote_addr = *addr;
 	LOGMMCTXP(LOGL_NOTICE, lookup->mmctx,
-		"Selected %s as GGSN.\n", inet_ntoa(*addr));
+		  "Selected %s as GGSN.\n",
+		  inet_ntop(AF_INET, addr, buf, sizeof(buf)));
 
 	/* forget about the ggsn look-up */
 	lookup->mmctx->ggsn_lookup = NULL;
@@ -2571,6 +2575,7 @@ static int do_act_pdp_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg, bool *del
 	char *hostname;
 	int rc;
 	struct gprs_llc_lle *lle;
+	char buf[INET_ADDRSTRLEN];
 
 	LOGMMCTXP(LOGL_INFO, mmctx, "-> ACTIVATE PDP CONTEXT REQ: SAPI=%u NSAPI=%u ",
 		act_req->req_llc_sapi, act_req->req_nsapi);
@@ -2599,7 +2604,7 @@ static int do_act_pdp_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg, bool *del
 		if (req_pdpa_len >= 6) {
 			struct in_addr ia;
 			ia.s_addr = ntohl(*((uint32_t *) (req_pdpa+2)));
-			DEBUGPC(DMM, "%s ", inet_ntoa(ia));
+			DEBUGPC(DMM, "%s ", inet_ntop(AF_INET, &ia, buf, sizeof(buf)));
 		}
 		break;
 	case 0x57:
