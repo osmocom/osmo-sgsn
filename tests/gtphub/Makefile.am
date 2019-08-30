@@ -31,7 +31,7 @@ gtphub_test_LDFLAGS = \
 	$(NULL)
 
 gtphub_test_LDADD = \
-	$(top_builddir)/src/gprs/gtphub.o \
+	$(top_builddir)/src/gtphub/gtphub.o \
 	$(top_builddir)/src/gprs/gprs_utils.o \
 	$(LIBOSMOCORE_LIBS) \
 	$(LIBOSMOGSM_LIBS) \

@@ -59,7 +59,7 @@ The LD_LIBRARY_PATH below may be needed if OpenGGSN installed to /usr/local.
 2. GTPHub:
 
     cd <your-test-dir>
-    path/to/openbsc/openbsc/src/gprs/osmo-gtphub -c gtphub.conf #-e 1 #for DEBUG level
+    path/to/openbsc/openbsc/src/gtphub/osmo-gtphub -c gtphub.conf #-e 1 #for DEBUG level
 
 3. SGSN tests:
 

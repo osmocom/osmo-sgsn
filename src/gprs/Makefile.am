@@ -56,7 +56,6 @@ libcommon_la_LIBADD = \
 
 bin_PROGRAMS = \
 	osmo-sgsn \
-	osmo-gtphub \
 	$(NULL)
 
 osmo_sgsn_SOURCES = \
@@ -103,21 +102,3 @@ osmo_sgsn_LDADD += \
 	$(LIBASN1C_LIBS) \
 	$(NULL)
 endif
-
-osmo_gtphub_SOURCES = \
-	gtphub_main.c \
-	gtphub.c \
-	gtphub_sock.c \
-	gtphub_ares.c \
-	gtphub_vty.c \
-	$(NULL)
-osmo_gtphub_LDADD = \
-	libcommon.la \
-	$(LIBOSMOCORE_LIBS) \
-	$(LIBOSMOGSM_LIBS) \
-	$(LIBOSMOVTY_LIBS) \
-	$(LIBCARES_LIBS) \
-	$(LIBGTP_LIBS) \
-	$(LIBOSMOSIGTRAN_LIBS) \
-	-lrt \
-	$(NULL)
