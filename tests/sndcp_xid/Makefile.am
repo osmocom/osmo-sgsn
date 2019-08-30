@@ -8,7 +8,7 @@ noinst_PROGRAMS = sndcp_xid_test
 sndcp_xid_test_SOURCES = sndcp_xid_test.c
 
 sndcp_xid_test_LDADD = \
-	$(top_builddir)/src/gprs/gprs_sndcp_xid.o \
+	$(top_builddir)/src/sgsn/gprs_sndcp_xid.o \
 	$(LIBOSMOABIS_LIBS) \
 	$(LIBOSMOCORE_LIBS) \
 	$(LIBOSMOGSM_LIBS) \

@@ -145,11 +145,11 @@ class TestCtrlBase(unittest.TestCase):
 
 class TestCtrlSGSN(TestCtrlBase):
     def ctrl_command(self):
-        return ["./src/gprs/osmo-sgsn", "-c",
+        return ["./src/sgsn/osmo-sgsn", "-c",
                 "doc/examples/osmo-sgsn/osmo-sgsn.cfg"]
 
     def ctrl_app(self):
-        return (4251, "./src/gprs/osmo-sgsn", "OsmoSGSN", "sgsn")
+        return (4251, "./src/sgsn/osmo-sgsn", "OsmoSGSN", "sgsn")
 
     def testListSubscribers(self):
         # TODO. Add command to mark a subscriber as active
@@ -159,7 +159,7 @@ class TestCtrlSGSN(TestCtrlBase):
         self.assertEquals(r['value'], None)
 
 def add_sgsn_test(suite, workdir):
-    if not os.path.isfile(os.path.join(workdir, "src/gprs/osmo-sgsn")):
+    if not os.path.isfile(os.path.join(workdir, "src/sgsn/osmo-sgsn")):
         print("Skipping the SGSN test")
         return
     test = unittest.TestLoader().loadTestsFromTestCase(TestCtrlSGSN)

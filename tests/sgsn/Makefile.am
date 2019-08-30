@@ -42,31 +42,31 @@ sgsn_test_LDFLAGS = \
 	$(NULL)
 
 sgsn_test_LDADD = \
-	$(top_builddir)/src/gprs/gprs_llc_parse.o \
-	$(top_builddir)/src/gprs/gprs_llc.o \
-	$(top_builddir)/src/gprs/crc24.o \
-	$(top_builddir)/src/gprs/gprs_gb.o \
-	$(top_builddir)/src/gprs/gprs_ranap.o \
-	$(top_builddir)/src/gprs/gprs_sndcp.o \
-	$(top_builddir)/src/gprs/gprs_gmm_attach.o \
-	$(top_builddir)/src/gprs/gprs_gmm.o \
-	$(top_builddir)/src/gprs/gprs_mm_state_gb_fsm.o \
-	$(top_builddir)/src/gprs/gprs_mm_state_iu_fsm.o \
-	$(top_builddir)/src/gprs/gprs_sgsn.o \
-	$(top_builddir)/src/gprs/sgsn_vty.o \
-	$(top_builddir)/src/gprs/sgsn_libgtp.o \
-	$(top_builddir)/src/gprs/sgsn_auth.o \
-	$(top_builddir)/src/gprs/sgsn_ares.o \
+	$(top_builddir)/src/sgsn/gprs_llc.o \
+	$(top_builddir)/src/sgsn/gprs_gb.o \
+	$(top_builddir)/src/sgsn/gprs_ranap.o \
+	$(top_builddir)/src/sgsn/gprs_sndcp.o \
+	$(top_builddir)/src/sgsn/gprs_gmm_attach.o \
+	$(top_builddir)/src/sgsn/gprs_gmm.o \
+	$(top_builddir)/src/sgsn/gprs_mm_state_gb_fsm.o \
+	$(top_builddir)/src/sgsn/gprs_mm_state_iu_fsm.o \
+	$(top_builddir)/src/sgsn/gprs_sgsn.o \
+	$(top_builddir)/src/sgsn/sgsn_vty.o \
+	$(top_builddir)/src/sgsn/sgsn_libgtp.o \
+	$(top_builddir)/src/sgsn/sgsn_auth.o \
+	$(top_builddir)/src/sgsn/gprs_subscriber.o \
+        $(top_builddir)/src/sgsn/gprs_llc_xid.o \
+	$(top_builddir)/src/sgsn/gprs_sndcp_xid.o \
+        $(top_builddir)/src/sgsn/slhc.o \
+        $(top_builddir)/src/sgsn/gprs_sndcp_comp.o \
+        $(top_builddir)/src/sgsn/gprs_sndcp_pcomp.o \
+        $(top_builddir)/src/sgsn/v42bis.o \
+        $(top_builddir)/src/sgsn/gprs_sndcp_dcomp.o \
 	$(top_builddir)/src/gprs/gprs_utils.o \
-	$(top_builddir)/src/gprs/gprs_subscriber.o \
+	$(top_builddir)/src/gprs/gprs_llc_parse.o \
 	$(top_builddir)/src/gprs/gprs_gb_parse.o \
-        $(top_builddir)/src/gprs/gprs_llc_xid.o \
-	$(top_builddir)/src/gprs/gprs_sndcp_xid.o \
-        $(top_builddir)/src/gprs/slhc.o \
-        $(top_builddir)/src/gprs/gprs_sndcp_comp.o \
-        $(top_builddir)/src/gprs/gprs_sndcp_pcomp.o \
-        $(top_builddir)/src/gprs/v42bis.o \
-        $(top_builddir)/src/gprs/gprs_sndcp_dcomp.o \
+	$(top_builddir)/src/gprs/crc24.o \
+	$(top_builddir)/src/gprs/sgsn_ares.o \
 	$(LIBOSMOABIS_LIBS) \
 	$(LIBOSMOCORE_LIBS) \
 	$(LIBOSMOGSM_LIBS) \

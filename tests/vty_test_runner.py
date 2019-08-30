@@ -119,11 +119,11 @@ class TestVTYGbproxy(TestVTYBase):
 class TestVTYSGSN(TestVTYBase):
 
     def vty_command(self):
-        return ["./src/gprs/osmo-sgsn", "-c",
+        return ["./src/sgsn/osmo-sgsn", "-c",
                 "doc/examples/osmo-sgsn/osmo-sgsn-accept-all.cfg"]
 
     def vty_app(self):
-        return (4245, "./src/gprs/osmo-sgsn", "OsmoSGSN", "sgsn")
+        return (4245, "./src/sgsn/osmo-sgsn", "OsmoSGSN", "sgsn")
 
     def testVtyTree(self):
         self.vty.enable()
@@ -284,7 +284,7 @@ def add_gbproxy_test(suite, workdir):
     suite.addTest(test)
 
 def add_sgsn_test(suite, workdir):
-    if not os.path.isfile(os.path.join(workdir, "src/gprs/osmo-sgsn")):
+    if not os.path.isfile(os.path.join(workdir, "src/sgsn/osmo-sgsn")):
         print("Skipping the SGSN test")
         return
     test = unittest.TestLoader().loadTestsFromTestCase(TestVTYSGSN)

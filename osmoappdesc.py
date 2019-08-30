@@ -24,11 +24,11 @@ app_configs = {
 
 
 apps = [(4246, "src/gbproxy/osmo-gbproxy", "OsmoGbProxy", "gbproxy"),
-        (4245, "src/gprs/osmo-sgsn", "OsmoSGSN", "sgsn"),
+        (4245, "src/sgsn/osmo-sgsn", "OsmoSGSN", "sgsn"),
         (4253, "src/gtphub/osmo-gtphub", "OsmoGTPhub", "gtphub")
         ]
 
-vty_command = ["./src/gprs/osmo-sgsn", "-c",
+vty_command = ["./src/sgsn/osmo-sgsn", "-c",
                "doc/examples/osmo-sgsn/osmo-sgsn.cfg"]
 
 vty_app = apps[1]

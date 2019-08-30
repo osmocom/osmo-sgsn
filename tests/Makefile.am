@@ -63,7 +63,7 @@ vty-python-test: $(BUILT_SOURCES)
 vty-transcript-test:
 	osmo_verify_transcript_vty.py -v \
 		-n OsmoSGSN -p 4245 \
-		-r "$(top_builddir)/src/gprs/osmo-sgsn -c $(top_srcdir)/doc/examples/osmo-sgsn/osmo-sgsn.cfg" \
+		-r "$(top_builddir)/src/sgsn/osmo-sgsn -c $(top_srcdir)/doc/examples/osmo-sgsn/osmo-sgsn.cfg" \
 		$(U) $${T:-$(srcdir)/*.vty}
 	rm -f $(builddir)/sms.db $(builddir)/gsn_restart
 

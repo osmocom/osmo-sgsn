@@ -92,27 +92,27 @@ Files:     include/osmocom/sgsn/a_reset.h
            src/gbproxy/gb_proxy_peer.c
            src/gbproxy/gb_proxy_tlli.c
            src/gbproxy/gb_proxy_vty.c
-           src/gprs/gprs_gmm.c
-           src/gprs/gprs_llc.c
-           src/gprs/gprs_llc_vty.c
-           src/gprs/gprs_llc_xid.c
-           src/gprs/gprs_sgsn.c
-           src/gprs/gprs_sndcp.c
-           src/gprs/gprs_sndcp_comp.c
-           src/gprs/gprs_sndcp_dcomp.c
-           src/gprs/gprs_sndcp_pcomp.c
-           src/gprs/gprs_sndcp_vty.c
-           src/gprs/gprs_sndcp_xid.c
-           src/gprs/gprs_subscriber.c
            src/gtphub/gtphub.c
            src/gtphub/gtphub_main.c
            src/gtphub/gtphub_vty.c
-           src/gprs/sgsn_auth.c
-           src/gprs/sgsn_cdr.c
-           src/gprs/sgsn_ctrl.c
-           src/gprs/sgsn_libgtp.c
-           src/gprs/sgsn_main.c
-           src/gprs/sgsn_vty.c
+           src/sgsn/gprs_gmm.c
+           src/sgsn/gprs_llc.c
+           src/sgsn/gprs_llc_vty.c
+           src/sgsn/gprs_llc_xid.c
+           src/sgsn/gprs_sgsn.c
+           src/sgsn/gprs_sndcp.c
+           src/sgsn/gprs_sndcp_comp.c
+           src/sgsn/gprs_sndcp_dcomp.c
+           src/sgsn/gprs_sndcp_pcomp.c
+           src/sgsn/gprs_sndcp_vty.c
+           src/sgsn/gprs_sndcp_xid.c
+           src/sgsn/gprs_subscriber.c
+           src/sgsn/sgsn_auth.c
+           src/sgsn/sgsn_cdr.c
+           src/sgsn/sgsn_ctrl.c
+           src/sgsn/sgsn_libgtp.c
+           src/sgsn/sgsn_main.c
+           src/sgsn/sgsn_vty.c
            tests/gtphub/gtphub_test.c
            tests/sgsn/sgsn_test.c
            tests/slhc/slhc_test.c
