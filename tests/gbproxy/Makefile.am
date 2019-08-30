@@ -32,10 +32,10 @@ gbproxy_test_LDFLAGS = \
 	$(NULL)
 
 gbproxy_test_LDADD = \
-	$(top_builddir)/src/gprs/gb_proxy.o \
-	$(top_builddir)/src/gprs/gb_proxy_patch.o \
-	$(top_builddir)/src/gprs/gb_proxy_peer.o \
-	$(top_builddir)/src/gprs/gb_proxy_tlli.o \
+	$(top_builddir)/src/gbproxy/gb_proxy.o \
+	$(top_builddir)/src/gbproxy/gb_proxy_patch.o \
+	$(top_builddir)/src/gbproxy/gb_proxy_peer.o \
+	$(top_builddir)/src/gbproxy/gb_proxy_tlli.o \
 	$(top_builddir)/src/gprs/gprs_gb_parse.o \
 	$(top_builddir)/src/gprs/gprs_llc_parse.o \
 	$(top_builddir)/src/gprs/crc24.o \

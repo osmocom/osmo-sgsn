@@ -55,24 +55,8 @@ libcommon_la_LIBADD = \
 	$(NULL)
 
 bin_PROGRAMS = \
-	osmo-gbproxy \
 	osmo-sgsn \
 	osmo-gtphub \
-	$(NULL)
-
-osmo_gbproxy_SOURCES = \
-	gb_proxy.c \
-	gb_proxy_main.c \
-	gb_proxy_vty.c \
-	gb_proxy_ctrl.c \
-	gb_proxy_patch.c \
-	gb_proxy_tlli.c \
-	gb_proxy_peer.c \
-	$(NULL)
-osmo_gbproxy_LDADD = \
-	libcommon.la \
-	$(OSMO_LIBS) \
-	-lrt \
 	$(NULL)
 
 osmo_sgsn_SOURCES = \

@@ -71,11 +71,11 @@ class TestVTYBase(unittest.TestCase):
 class TestVTYGbproxy(TestVTYBase):
 
     def vty_command(self):
-        return ["./src/gprs/osmo-gbproxy", "-c",
+        return ["./src/gbproxy/osmo-gbproxy", "-c",
                 "doc/examples/osmo-gbproxy/osmo-gbproxy.cfg"]
 
     def vty_app(self):
-        return (4246, "./src/gprs/osmo-gbproxy", "OsmoGbProxy", "gbproxy")
+        return (4246, "./src/gbproxy/osmo-gbproxy", "OsmoGbProxy", "gbproxy")
 
     def testVtyTree(self):
         self.vty.enable()
@@ -277,7 +277,7 @@ class TestVTYSGSN(TestVTYBase):
             self.assertTrue(self.vty.verify('timer t%d 10' % t, ['']))
 
 def add_gbproxy_test(suite, workdir):
-    if not os.path.isfile(os.path.join(workdir, "src/gprs/osmo-gbproxy")):
+    if not os.path.isfile(os.path.join(workdir, "src/gbproxy/osmo-gbproxy")):
         print("Skipping the Gb-Proxy test")
         return
     test = unittest.TestLoader().loadTestsFromTestCase(TestVTYGbproxy)

@@ -1,3 +1,4 @@
 SUBDIRS = \
 	gprs \
+	gbproxy \
 	$(NULL)

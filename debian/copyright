@@ -86,12 +86,12 @@ Files:     include/osmocom/sgsn/a_reset.h
            src/gprs/gprs_gb_parse.c
            src/gprs/gprs_utils.c
            src/gprs/sgsn_ares.c
-           src/gprs/gb_proxy.c
-           src/gprs/gb_proxy_main.c
-           src/gprs/gb_proxy_patch.c
-           src/gprs/gb_proxy_peer.c
-           src/gprs/gb_proxy_tlli.c
-           src/gprs/gb_proxy_vty.c
+           src/gbproxy/gb_proxy.c
+           src/gbproxy/gb_proxy_main.c
+           src/gbproxy/gb_proxy_patch.c
+           src/gbproxy/gb_proxy_peer.c
+           src/gbproxy/gb_proxy_tlli.c
+           src/gbproxy/gb_proxy_vty.c
            src/gprs/gprs_gmm.c
            src/gprs/gprs_llc.c
            src/gprs/gprs_llc_vty.c

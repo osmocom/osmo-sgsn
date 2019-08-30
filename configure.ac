@@ -247,6 +247,7 @@ AC_OUTPUT(
     include/osmocom/sgsn/Makefile
     src/Makefile
     src/gprs/Makefile
+    src/gbproxy/Makefile
     tests/Makefile
     tests/atlocal
     tests/gprs/Makefile

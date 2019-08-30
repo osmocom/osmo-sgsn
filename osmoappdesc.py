@@ -23,7 +23,7 @@ app_configs = {
 }
 
 
-apps = [(4246, "src/gprs/osmo-gbproxy", "OsmoGbProxy", "gbproxy"),
+apps = [(4246, "src/gbproxy/osmo-gbproxy", "OsmoGbProxy", "gbproxy"),
         (4245, "src/gprs/osmo-sgsn", "OsmoSGSN", "sgsn"),
         (4253, "src/gprs/osmo-gtphub", "OsmoGTPhub", "gtphub")
         ]
