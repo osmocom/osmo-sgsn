@@ -533,7 +533,7 @@ static void vty_dump_mmctx(struct vty *vty, const char *pfx,
 		pfx, get_value_string(gprs_mm_st_strs, mm->gmm_state),
 		osmo_rai_name(&mm->ra), mm->gb.cell_id, VTY_NEWLINE);
 
-	vty_out_rate_ctr_group(vty, " ", mm->ctrg);
+	vty_out_rate_ctr_group(vty, "  ", mm->ctrg);
 
 	if (pdp) {
 		struct sgsn_pdp_ctx *pdp;
