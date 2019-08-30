@@ -49,7 +49,5 @@ void extract_subscr_hlr(struct sgsn_mm_ctx *ctx);
 
 void pdp_ctx_detach_mm_ctx(struct sgsn_pdp_ctx *pdp);
 
-void mmctx_set_pmm_state(struct sgsn_mm_ctx *ctx, enum gprs_mm_state_iu state);
-
 void msgid2mmctx(struct sgsn_mm_ctx *mm, const struct msgb *msg);
 #endif /* _GPRS_GMM_H */

@@ -32,13 +32,6 @@ enum gprs_gmm_state {
 	GMM_DEREGISTERED_INIT,		/* 4.1.3.3.1.4 */
 };
 
-/* TS 23.060 6.1.2 Mobility Management States (Iu mode) */
-enum gprs_mm_state_iu {
-	PMM_DETACHED,
-	PMM_CONNECTED,
-	PMM_IDLE
-};
-
 enum gprs_mm_ctr {
 	GMM_CTR_PKTS_SIG_IN,
 	GMM_CTR_PKTS_SIG_OUT,
@@ -171,7 +164,7 @@ struct sgsn_mm_ctx {
 		struct ranap_ue_conn_ctx	*ue_ctx;
 		struct service_info	service;
 		/* TS 23.060 6.1.2 Mobility Management States (Iu mode) */
-		enum gprs_mm_state_iu	mm_state;
+		struct osmo_fsm_inst	*mm_state_fsm;
 	} iu;
 	struct {
 		struct osmo_fsm_inst *fsm;

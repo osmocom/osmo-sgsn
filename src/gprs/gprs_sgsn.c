@@ -43,6 +43,7 @@
 #include <osmocom/sgsn/signal.h>
 #include <osmocom/sgsn/gprs_gmm_attach.h>
 #include <osmocom/sgsn/gprs_mm_state_gb_fsm.h>
+#include <osmocom/sgsn/gprs_mm_state_iu_fsm.h>
 #include <osmocom/sgsn/gprs_llc.h>
 
 #include <pdp.h>
@@ -266,6 +267,7 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_gb(uint32_t tlli,
 struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_iu(void *uectx)
 {
 #if BUILD_IU
+	char buf[32];
 	struct sgsn_mm_ctx *ctx;
 	struct ranap_ue_conn_ctx *ue_ctx = uectx;
 
@@ -279,7 +281,9 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_iu(void *uectx)
 	ctx->iu.ue_ctx = ue_ctx;
 	ctx->iu.ue_ctx->rab_assign_addr_enc = sgsn->cfg.iu.rab_assign_addr_enc;
 	ctx->iu.new_key = 1;
-	ctx->iu.mm_state = PMM_DETACHED;
+	snprintf(buf, sizeof(buf), "%" PRIu32, ue_ctx->conn_id);
+	ctx->iu.mm_state_fsm = osmo_fsm_inst_alloc(&mm_state_iu_fsm, ctx, ctx, LOGL_DEBUG, buf);
+
 
 	return ctx;
 #else
@@ -353,6 +357,8 @@ void sgsn_mm_ctx_cleanup_free(struct sgsn_mm_ctx *mm)
 		gmm_att_req_free(mm);
 	if (mm->gb.mm_state_fsm)
 		osmo_fsm_inst_free(mm->gb.mm_state_fsm);
+	if (mm->iu.mm_state_fsm)
+		osmo_fsm_inst_free(mm->iu.mm_state_fsm);
 
 	sgsn_mm_ctx_free(mm);
 	mm = NULL;

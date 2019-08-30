@@ -36,6 +36,7 @@
 #include <osmocom/sgsn/sgsn.h>
 #include <osmocom/sgsn/gprs_ranap.h>
 #include <osmocom/sgsn/gprs_gmm_attach.h>
+#include <osmocom/sgsn/gprs_mm_state_iu_fsm.h>
 
 /* Send RAB activation requests for all PDP contexts */
 void activate_pdp_rabs(struct sgsn_mm_ctx *ctx)
@@ -134,12 +135,11 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 		/* fall thru */
 	case RANAP_IU_EVENT_LINK_INVALIDATED:
 		/* Clean up ranap_ue_conn_ctx here */
-		if (mm)
+		if (mm) {
 			LOGMMCTXP(LOGL_INFO, mm, "IU release for imsi %s\n", mm->imsi);
-		else
+			osmo_fsm_inst_dispatch(mm->iu.mm_state_fsm, E_PMM_PS_CONN_RELEASE, NULL);
+		} else
 			LOGIUP(ctx, LOGL_INFO, "IU release\n");
-		if (mm && mm->iu.mm_state == PMM_CONNECTED)
-			mmctx_set_pmm_state(mm, PMM_IDLE);
 		rc = 0;
 		break;
 	case RANAP_IU_EVENT_SECURITY_MODE_COMPLETE:

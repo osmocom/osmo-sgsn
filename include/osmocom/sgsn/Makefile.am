@@ -8,6 +8,7 @@ noinst_HEADERS = \
 	gprs_gmm.h \
 	gprs_gmm_attach.h \
 	gprs_mm_state_gb_fsm.h \
+	gprs_mm_state_iu_fsm.h \
 	gprs_llc.h \
 	gprs_llc_xid.h \
 	gprs_ranap.h \

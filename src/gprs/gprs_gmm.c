@@ -56,6 +56,7 @@
 #include <osmocom/sgsn/sgsn.h>
 #include <osmocom/sgsn/gprs_gmm_attach.h>
 #include <osmocom/sgsn/gprs_mm_state_gb_fsm.h>
+#include <osmocom/sgsn/gprs_mm_state_iu_fsm.h>
 #include <osmocom/sgsn/signal.h>
 #include <osmocom/sgsn/gprs_sndcp.h>
 #include <osmocom/sgsn/gprs_ranap.h>
@@ -102,52 +103,6 @@ static const struct tlv_definition gsm48_sm_att_tlvdef = {
 		[GSM48_IE_GSM_LSA_ID]		= { TLV_TYPE_TLV, 0 },
 	},
 };
-
-static const struct value_string gprs_mm_state_iu_names[] = {
-	OSMO_VALUE_STRING(PMM_DETACHED),
-	OSMO_VALUE_STRING(PMM_CONNECTED),
-	OSMO_VALUE_STRING(PMM_IDLE),
-	{ 0, NULL }
-};
-
-static void mmctx_change_gtpu_endpoints_to_sgsn(struct sgsn_mm_ctx *mm_ctx)
-{
-	char buf[INET_ADDRSTRLEN];
-	struct sgsn_pdp_ctx *pdp;
-	llist_for_each_entry(pdp, &mm_ctx->pdp_list, list) {
-		LOGMMCTXP(LOGL_INFO, mm_ctx, "Changing GTP-U endpoints %s -> %s\n",
-			  sgsn_gtp_ntoa(&pdp->lib->gsnlu),
-			  inet_ntop(AF_INET, &sgsn->cfg.gtp_listenaddr.sin_addr, buf, sizeof(buf)));
-		sgsn_pdp_upd_gtp_u(pdp,
-				   &sgsn->cfg.gtp_listenaddr.sin_addr,
-				   sizeof(sgsn->cfg.gtp_listenaddr.sin_addr));
-	}
-}
-
-void mmctx_set_pmm_state(struct sgsn_mm_ctx *ctx, enum gprs_mm_state_iu state)
-{
-	OSMO_ASSERT(ctx->ran_type == MM_CTX_T_UTRAN_Iu);
-
-	if (ctx->iu.mm_state == state)
-		return;
-
-	LOGMMCTXP(LOGL_INFO, ctx, "Changing PMM state from %s to %s\n",
-		  get_value_string(gprs_mm_state_iu_names, ctx->iu.mm_state),
-		  get_value_string(gprs_mm_state_iu_names, state));
-
-	switch (state) {
-	case PMM_IDLE:
-		/* TODO: start RA Upd timer */
-		mmctx_change_gtpu_endpoints_to_sgsn(ctx);
-		break;
-	case PMM_CONNECTED:
-		break;
-	case PMM_DETACHED:
-		break;
-	}
-
-	ctx->iu.mm_state = state;
-}
 
 /* Our implementation, should be kept in SGSN */
 
@@ -260,7 +215,7 @@ static void mm_ctx_cleanup_free(struct sgsn_mm_ctx *ctx, const char *log_text)
 
 	switch(ctx->ran_type) {
 	case MM_CTX_T_UTRAN_Iu:
-		mmctx_set_pmm_state(ctx, PMM_DETACHED);
+		osmo_fsm_inst_dispatch(ctx->iu.mm_state_fsm, E_PMM_IMPLICIT_DETACH, NULL);
 		break;
 	case MM_CTX_T_GERAN_Gb:
 		osmo_fsm_inst_dispatch(ctx->gb.mm_state_fsm, E_MM_IMPLICIT_DETACH, NULL);
@@ -1019,7 +974,7 @@ int gsm48_gmm_authorize(struct sgsn_mm_ctx *ctx)
 #ifdef BUILD_IU
 	case GSM48_MT_GMM_SERVICE_REQ:
 		ctx->pending_req = 0;
-		mmctx_set_pmm_state(ctx, PMM_CONNECTED);
+		osmo_fsm_inst_dispatch(ctx->iu.mm_state_fsm, E_PMM_PS_ATTACH, NULL);
 		rc = gsm48_tx_gmm_service_ack(ctx);
 
 		if (ctx->iu.service.type != GPRS_SERVICE_T_SIGNALLING)
@@ -2014,7 +1969,7 @@ int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		mmctx->gmm_state = GMM_REGISTERED_NORMAL;
 		switch(mmctx->ran_type) {
 		case MM_CTX_T_UTRAN_Iu:
-			mmctx_set_pmm_state(mmctx, PMM_CONNECTED);
+			osmo_fsm_inst_dispatch(mmctx->iu.mm_state_fsm, E_PMM_PS_ATTACH, NULL);
 			break;
 		case MM_CTX_T_GERAN_Gb:
 			/* Unassign the old TLLI */
@@ -2044,7 +1999,7 @@ int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		mmctx->gmm_state = GMM_REGISTERED_NORMAL;
 		switch(mmctx->ran_type) {
 		case MM_CTX_T_UTRAN_Iu:
-			mmctx_set_pmm_state(mmctx, PMM_CONNECTED);
+			osmo_fsm_inst_dispatch(mmctx->iu.mm_state_fsm, E_PMM_RA_UPDATE, NULL);
 			break;
 		case MM_CTX_T_GERAN_Gb:
 			/* Unassign the old TLLI */

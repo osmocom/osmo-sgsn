@@ -51,6 +51,7 @@ sgsn_test_LDADD = \
 	$(top_builddir)/src/gprs/gprs_gmm_attach.o \
 	$(top_builddir)/src/gprs/gprs_gmm.o \
 	$(top_builddir)/src/gprs/gprs_mm_state_gb_fsm.o \
+	$(top_builddir)/src/gprs/gprs_mm_state_iu_fsm.o \
 	$(top_builddir)/src/gprs/gprs_sgsn.o \
 	$(top_builddir)/src/gprs/sgsn_vty.o \
 	$(top_builddir)/src/gprs/sgsn_libgtp.o \
