@@ -104,6 +104,7 @@ enum sgsn_ran_type {
 	MM_CTX_T_GERAN_Iu,
 #endif
 };
+extern const struct value_string sgsn_ran_type_names[];
 
 struct service_info {
 	uint8_t type;

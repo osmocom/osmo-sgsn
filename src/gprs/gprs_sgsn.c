@@ -62,6 +62,15 @@ LLIST_HEAD(sgsn_ggsn_ctxts);
 LLIST_HEAD(sgsn_apn_ctxts);
 LLIST_HEAD(sgsn_pdp_ctxts);
 
+const struct value_string sgsn_ran_type_names[] = {
+	{ MM_CTX_T_GERAN_Gb, "GPRS/EDGE via Gb" },
+	{ MM_CTX_T_UTRAN_Iu, "UMTS via Iu" },
+#if 0
+	{ MM_CTX_T_GERAN_Iu, "GPRS/EDGE via Iu" },
+#endif
+	{ 0, NULL }
+};
+
 static const struct rate_ctr_desc mmctx_ctr_description[] = {
 	{ "sign:packets:in",	"Signalling Messages ( In)" },
 	{ "sign:packets:out",	"Signalling Messages (Out)" },

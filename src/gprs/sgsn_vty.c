@@ -526,15 +526,18 @@ static void vty_dump_mmctx(struct vty *vty, const char *pfx,
 			   struct sgsn_mm_ctx *mm, int pdp)
 {
 	uint32_t id = 0;
+	const char *mm_state_name = NULL;
 
 	switch(mm->ran_type) {
 	case MM_CTX_T_UTRAN_Iu:
 #if BUILD_IU
 		id = mm->iu.ue_ctx->conn_id;
+		mm_state_name = osmo_fsm_inst_state_name(mm->iu.mm_state_fsm);
 #endif
 		break;
 	case MM_CTX_T_GERAN_Gb:
 		id = mm->gb.tlli;
+		mm_state_name = osmo_fsm_inst_state_name(mm->gb.mm_state_fsm);
 		break;
 	}
 
@@ -542,9 +545,11 @@ static void vty_dump_mmctx(struct vty *vty, const char *pfx,
 		pfx, mm->imsi, mm->imei, mm->p_tmsi, VTY_NEWLINE);
 	vty_out(vty, "%s  MSISDN: %s, TLLI: %08x%s HLR: %s",
 		pfx, mm->msisdn, id, mm->hlr, VTY_NEWLINE);
-	vty_out(vty, "%s  MM State: %s, Routeing Area: %s, Cell ID: %u%s",
+	vty_out(vty, "%s  GMM State: %s, Routeing Area: %s, Cell ID: %u%s",
 		pfx, get_value_string(gprs_mm_st_strs, mm->gmm_state),
 		osmo_rai_name(&mm->ra), mm->gb.cell_id, VTY_NEWLINE);
+	vty_out(vty, "%s  MM State: %s, RAN Type: %s%s", pfx, mm_state_name,
+		get_value_string(sgsn_ran_type_names, mm->ran_type), VTY_NEWLINE);
 
 	vty_out_rate_ctr_group(vty, "  ", mm->ctrg);
 
