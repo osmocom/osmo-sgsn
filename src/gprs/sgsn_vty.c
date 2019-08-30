@@ -525,10 +525,23 @@ static void vty_dump_pdp(struct vty *vty, const char *pfx,
 static void vty_dump_mmctx(struct vty *vty, const char *pfx,
 			   struct sgsn_mm_ctx *mm, int pdp)
 {
+	uint32_t id = 0;
+
+	switch(mm->ran_type) {
+	case MM_CTX_T_UTRAN_Iu:
+#if BUILD_IU
+		id = mm->iu.ue_ctx->conn_id;
+#endif
+		break;
+	case MM_CTX_T_GERAN_Gb:
+		id = mm->gb.tlli;
+		break;
+	}
+
 	vty_out(vty, "%sMM Context for IMSI %s, IMEI %s, P-TMSI %08x%s",
 		pfx, mm->imsi, mm->imei, mm->p_tmsi, VTY_NEWLINE);
 	vty_out(vty, "%s  MSISDN: %s, TLLI: %08x%s HLR: %s",
-		pfx, mm->msisdn, mm->gb.tlli, mm->hlr, VTY_NEWLINE);
+		pfx, mm->msisdn, id, mm->hlr, VTY_NEWLINE);
 	vty_out(vty, "%s  MM State: %s, Routeing Area: %s, Cell ID: %u%s",
 		pfx, get_value_string(gprs_mm_st_strs, mm->gmm_state),
 		osmo_rai_name(&mm->ra), mm->gb.cell_id, VTY_NEWLINE);
