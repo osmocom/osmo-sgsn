@@ -1343,6 +1343,45 @@ rejected:
 
 }
 
+/* 3GPP TS 24.008 § 9.4.3 Attach complete */
+static int gsm48_rx_gmm_att_compl(struct sgsn_mm_ctx *mmctx)
+{
+	struct sgsn_signal_data sig_data;
+	/* only in case SGSN offered new P-TMSI */
+	LOGMMCTXP(LOGL_INFO, mmctx, "-> ATTACH COMPLETE\n");
+
+	#ifdef BUILD_IU
+	if (mmctx->iu.ue_ctx) {
+		ranap_iu_tx_release(mmctx->iu.ue_ctx, NULL);
+	}
+	#endif
+
+	mmctx_timer_stop(mmctx, 3350);
+	mmctx->t3350_mode = GMM_T3350_MODE_NONE;
+	mmctx->p_tmsi_old = 0;
+	mmctx->pending_req = 0;
+	mmctx->gmm_state = GMM_REGISTERED_NORMAL;
+	switch(mmctx->ran_type) {
+	case MM_CTX_T_UTRAN_Iu:
+		osmo_fsm_inst_dispatch(mmctx->iu.mm_state_fsm, E_PMM_PS_ATTACH, NULL);
+		break;
+	case MM_CTX_T_GERAN_Gb:
+		/* Unassign the old TLLI */
+		mmctx->gb.tlli = mmctx->gb.tlli_new;
+		gprs_llme_copy_key(mmctx, mmctx->gb.llme);
+		gprs_llgmm_assign(mmctx->gb.llme, TLLI_UNASSIGNED,
+				  mmctx->gb.tlli_new);
+		osmo_fsm_inst_dispatch(mmctx->gb.mm_state_fsm, E_MM_GPRS_ATTACH, NULL);
+		break;
+	}
+
+	osmo_fsm_inst_dispatch(mmctx->gmm_att_req.fsm, E_ATTACH_COMPLETE_RECV, 0);
+	memset(&sig_data, 0, sizeof(sig_data));
+	sig_data.mm = mmctx;
+	osmo_signal_dispatch(SS_SGSN, S_SGSN_ATTACH, &sig_data);
+
+	return 0;
+}
 
 /* Checks if two attach request contain the IEs and IE values
  * return 0 if equal
@@ -1953,39 +1992,7 @@ int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	case GSM48_MT_GMM_ATTACH_COMPL:
 		if (!mmctx)
 			goto null_mmctx;
-		/* only in case SGSN offered new P-TMSI */
-		LOGMMCTXP(LOGL_INFO, mmctx, "-> ATTACH COMPLETE\n");
-
-#ifdef BUILD_IU
-		if (mmctx->iu.ue_ctx) {
-			ranap_iu_tx_release(mmctx->iu.ue_ctx, NULL);
-		}
-#endif
-
-		mmctx_timer_stop(mmctx, 3350);
-		mmctx->t3350_mode = GMM_T3350_MODE_NONE;
-		mmctx->p_tmsi_old = 0;
-		mmctx->pending_req = 0;
-		mmctx->gmm_state = GMM_REGISTERED_NORMAL;
-		switch(mmctx->ran_type) {
-		case MM_CTX_T_UTRAN_Iu:
-			osmo_fsm_inst_dispatch(mmctx->iu.mm_state_fsm, E_PMM_PS_ATTACH, NULL);
-			break;
-		case MM_CTX_T_GERAN_Gb:
-			/* Unassign the old TLLI */
-			mmctx->gb.tlli = mmctx->gb.tlli_new;
-			gprs_llme_copy_key(mmctx, mmctx->gb.llme);
-			gprs_llgmm_assign(mmctx->gb.llme, TLLI_UNASSIGNED,
-					  mmctx->gb.tlli_new);
-			osmo_fsm_inst_dispatch(mmctx->gb.mm_state_fsm, E_MM_GPRS_ATTACH, NULL);
-			break;
-		}
-		rc = 0;
-
-		osmo_fsm_inst_dispatch(mmctx->gmm_att_req.fsm, E_ATTACH_COMPLETE_RECV, 0);
-		memset(&sig_data, 0, sizeof(sig_data));
-		sig_data.mm = mmctx;
-		osmo_signal_dispatch(SS_SGSN, S_SGSN_ATTACH, &sig_data);
+		rc = gsm48_rx_gmm_att_compl(mmctx);
 		break;
 	case GSM48_MT_GMM_RA_UPD_COMPL:
 		if (!mmctx)
