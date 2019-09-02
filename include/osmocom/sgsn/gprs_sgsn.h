@@ -23,7 +23,7 @@ struct gprs_subscr;
 
 enum gsm48_gsm_cause;
 
-/* TS 04.08 4.1.3.3 GMM mobility management states on the network side */
+/* 3GPP TS 24.008 § 4.1.3.3 GMM mobility management states on the network side */
 enum gprs_gmm_state {
 	GMM_DEREGISTERED,		/* 4.1.3.3.1.1 */
 	GMM_COMMON_PROC_INIT,		/* 4.1.3.3.1.2 */
