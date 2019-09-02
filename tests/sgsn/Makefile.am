@@ -59,6 +59,7 @@ sgsn_test_LDADD = \
         $(top_builddir)/src/sgsn/gprs_llc_xid.o \
 	$(top_builddir)/src/sgsn/gprs_sndcp_xid.o \
         $(top_builddir)/src/sgsn/slhc.o \
+	$(top_builddir)/src/sgsn/gprs_sm.o \
         $(top_builddir)/src/sgsn/gprs_sndcp_comp.o \
         $(top_builddir)/src/sgsn/gprs_sndcp_pcomp.o \
         $(top_builddir)/src/sgsn/v42bis.o \

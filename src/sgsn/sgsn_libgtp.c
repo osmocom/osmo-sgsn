@@ -48,6 +48,7 @@
 #include <osmocom/sgsn/gprs_llc.h>
 #include <osmocom/sgsn/gprs_sgsn.h>
 #include <osmocom/sgsn/gprs_gmm.h>
+#include <osmocom/sgsn/gprs_sm.h>
 #include <osmocom/sgsn/gprs_subscriber.h>
 #include <osmocom/sgsn/gprs_sndcp.h>
 #include <osmocom/sgsn/gprs_ranap.h>

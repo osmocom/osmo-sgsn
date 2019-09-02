@@ -32,6 +32,7 @@
 #include <osmocom/ranap/ranap_common.h>
 
 #include <osmocom/sgsn/gprs_gmm.h>
+#include <osmocom/sgsn/gprs_sm.h>
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/sgsn.h>
 #include <osmocom/sgsn/gprs_ranap.h>

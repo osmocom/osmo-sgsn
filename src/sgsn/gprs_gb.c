@@ -31,6 +31,7 @@
 #include <osmocom/sgsn/gprs_mm_state_gb_fsm.h>
 #include <osmocom/sgsn/gprs_sgsn.h>
 #include <osmocom/sgsn/gprs_gmm.h>
+#include <osmocom/sgsn/gprs_sm.h>
 #include <osmocom/sgsn/debug.h>
 
 /* Main entry point for incoming 04.08 GPRS messages from Gb */

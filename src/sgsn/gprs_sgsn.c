@@ -39,6 +39,7 @@
 #include <osmocom/sgsn/gprs_sgsn.h>
 #include <osmocom/sgsn/sgsn.h>
 #include <osmocom/sgsn/gprs_gmm.h>
+#include <osmocom/sgsn/gprs_sm.h>
 #include <osmocom/sgsn/gprs_utils.h>
 #include <osmocom/sgsn/signal.h>
 #include <osmocom/sgsn/gprs_gmm_attach.h>

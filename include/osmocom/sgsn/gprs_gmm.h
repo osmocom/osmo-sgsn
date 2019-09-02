@@ -6,21 +6,16 @@
 
 #include <stdbool.h>
 
-int gsm48_tx_gsm_deact_pdp_req(struct sgsn_pdp_ctx *pdp, uint8_t sm_cause, bool teardown);
-int gsm48_tx_gsm_act_pdp_rej(struct sgsn_mm_ctx *mm, uint8_t tid,
-			     uint8_t cause, uint8_t pco_len, uint8_t *pco_v);
-int gsm48_tx_gsm_act_pdp_acc(struct sgsn_pdp_ctx *pdp);
-int gsm48_tx_gsm_deact_pdp_acc(struct sgsn_pdp_ctx *pdp);
 int gsm48_tx_gmm_auth_ciph_req(struct sgsn_mm_ctx *mm,
 				      const struct osmo_auth_vector *vec,
 				      uint8_t key_seq, bool force_standby);
 
 int gsm0408_gprs_rcvmsg_gb(struct msgb *msg, struct gprs_llc_llme *llme,
 			   bool drop_cipherable);
-int gsm0408_rcv_gsm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
-			   struct gprs_llc_llme *llme);
 int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 			   struct gprs_llc_llme *llme, bool drop_cipherable);
+int gsm48_gmm_sendmsg(struct msgb *msg, int command,
+			     struct sgsn_mm_ctx *mm, bool encryptable);
 int gsm0408_gprs_force_reattach(struct sgsn_mm_ctx *mmctx);
 int gsm0408_gprs_force_reattach_oldmsg(struct msgb *msg,
 				       struct gprs_llc_llme *llme);
@@ -47,7 +42,6 @@ int gsm48_gmm_authorize(struct sgsn_mm_ctx *ctx);
 void extract_subscr_msisdn(struct sgsn_mm_ctx *ctx);
 void extract_subscr_hlr(struct sgsn_mm_ctx *ctx);
 
-void pdp_ctx_detach_mm_ctx(struct sgsn_pdp_ctx *pdp);
-
 void msgid2mmctx(struct sgsn_mm_ctx *mm, const struct msgb *msg);
+void mmctx2msgid(struct msgb *msg, const struct sgsn_mm_ctx *mm);
 #endif /* _GPRS_GMM_H */
