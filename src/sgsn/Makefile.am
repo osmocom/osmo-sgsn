@@ -43,6 +43,7 @@ osmo_sgsn_SOURCES = \
 	gprs_gb.c \
 	gprs_gmm_attach.c \
 	gprs_gmm.c \
+	gprs_gmm_fsm.c \
 	gprs_mm_state_gb_fsm.c \
 	gprs_mm_state_iu_fsm.c \
 	gprs_ranap.c \

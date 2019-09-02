@@ -57,6 +57,7 @@
 #include <osmocom/sgsn/gprs_gmm_attach.h>
 #include <osmocom/sgsn/gprs_mm_state_gb_fsm.h>
 #include <osmocom/sgsn/gprs_mm_state_iu_fsm.h>
+#include <osmocom/sgsn/gprs_gmm_fsm.h>
 #include <osmocom/sgsn/signal.h>
 #include <osmocom/sgsn/gprs_sndcp.h>
 #include <osmocom/sgsn/gprs_ranap.h>
@@ -211,7 +212,7 @@ static void mm_ctx_cleanup_free(struct sgsn_mm_ctx *ctx, const char *log_text)
 	LOGMMCTXP(LOGL_INFO, ctx, "Cleaning MM context due to %s\n", log_text);
 
 	/* Mark MM state as deregistered */
-	ctx->gmm_state = GMM_DEREGISTERED;
+	osmo_fsm_inst_dispatch(ctx->gmm_fsm, E_GMM_CLEANUP, NULL);
 
 	switch(ctx->ran_type) {
 	case MM_CTX_T_UTRAN_Iu:
@@ -967,7 +968,7 @@ int gsm48_gmm_authorize(struct sgsn_mm_ctx *ctx)
 		memset(&sig_data, 0, sizeof(sig_data));
 		sig_data.mm = mmctx;
 		osmo_signal_dispatch(SS_SGSN, S_SGSN_ATTACH, &sig_data);
-		ctx->gmm_state = GMM_REGISTERED_NORMAL;
+		osmo_fsm_inst_dispatch(mm->gmm_fsm, E_GMM_ATTACH_SUCCESS, NULL);
 #endif
 
 		return gsm48_tx_gmm_att_ack(ctx);
@@ -1009,8 +1010,8 @@ void gsm0408_gprs_authenticate(struct sgsn_mm_ctx *ctx)
 
 void gsm0408_gprs_access_granted(struct sgsn_mm_ctx *ctx)
 {
-	switch (ctx->gmm_state) {
-	case GMM_COMMON_PROC_INIT:
+	switch (ctx->gmm_fsm->state) {
+	case ST_GMM_COMMON_PROC_INIT:
 		LOGMMCTXP(LOGL_NOTICE, ctx,
 		     "Authorized, continuing procedure, IMSI=%s\n",
 		     ctx->imsi);
@@ -1030,8 +1031,8 @@ void gsm0408_gprs_access_denied(struct sgsn_mm_ctx *ctx, int gmm_cause)
 	if (gmm_cause == SGSN_ERROR_CAUSE_NONE)
 		gmm_cause = GMM_CAUSE_GPRS_NOTALLOWED;
 
-	switch (ctx->gmm_state) {
-	case GMM_COMMON_PROC_INIT:
+	switch (ctx->gmm_fsm->state) {
+	case ST_GMM_COMMON_PROC_INIT:
 		LOGMMCTXP(LOGL_NOTICE, ctx,
 			  "Not authorized, rejecting ATTACH REQUEST "
 			  "with cause '%s' (%d)\n",
@@ -1040,8 +1041,8 @@ void gsm0408_gprs_access_denied(struct sgsn_mm_ctx *ctx, int gmm_cause)
 		if (ctx->gmm_att_req.fsm->state != ST_INIT)
 			osmo_fsm_inst_dispatch(ctx->gmm_att_req.fsm, E_REJECT, (void *) (long) gmm_cause);
 		break;
-	case GMM_REGISTERED_NORMAL:
-	case GMM_REGISTERED_SUSPENDED:
+	case ST_GMM_REGISTERED_NORMAL:
+	case ST_GMM_REGISTERED_SUSPENDED:
 		LOGMMCTXP(LOGL_NOTICE, ctx,
 			  "Authorization lost, detaching "
 			  "with cause '%s' (%d)\n",
@@ -1142,7 +1143,7 @@ static inline void ptmsi_update(struct sgsn_mm_ctx *ctx)
 {
 	uint32_t ptmsi;
 	/* Don't change the P-TMSI if a P-TMSI re-assignment is under way */
-	if (ctx->gmm_state != GMM_COMMON_PROC_INIT) {
+	if (ctx->gmm_fsm->state != ST_GMM_COMMON_PROC_INIT) {
 		ptmsi = sgsn_alloc_ptmsi();
 		if (ptmsi != GSM_RESERVED_TMSI) {
 			ctx->p_tmsi_old = ctx->p_tmsi;
@@ -1150,7 +1151,7 @@ static inline void ptmsi_update(struct sgsn_mm_ctx *ctx)
 		} else
 			LOGMMCTXP(LOGL_ERROR, ctx, "P-TMSI allocation failure: using old one.\n");
 	}
-	ctx->gmm_state = GMM_COMMON_PROC_INIT;
+	osmo_fsm_inst_dispatch(ctx->gmm_fsm, E_GMM_COMMON_PROC_INIT_REQ, NULL);
 }
 
 /* 3GPP TS 24.008 § 9.4.1 Attach request */
@@ -1360,7 +1361,7 @@ static int gsm48_rx_gmm_att_compl(struct sgsn_mm_ctx *mmctx)
 	mmctx->t3350_mode = GMM_T3350_MODE_NONE;
 	mmctx->p_tmsi_old = 0;
 	mmctx->pending_req = 0;
-	mmctx->gmm_state = GMM_REGISTERED_NORMAL;
+	osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_GMM_ATTACH_SUCCESS, NULL);
 	switch(mmctx->ran_type) {
 	case MM_CTX_T_UTRAN_Iu:
 		osmo_fsm_inst_dispatch(mmctx->iu.mm_state_fsm, E_PMM_PS_ATTACH, NULL);
@@ -1658,11 +1659,10 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 				mmctx->p_tmsi, mmctx->p_tmsi_old,
 				mmctx->gb.tlli, mmctx->gb.tlli_new,
 				osmo_rai_name(&mmctx->ra));
-
-			mmctx->gmm_state = GMM_COMMON_PROC_INIT;
+			osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_GMM_COMMON_PROC_INIT_REQ, NULL);
 		}
 	} else if (!gprs_ra_id_equals(&mmctx->ra, &old_ra_id) ||
-		mmctx->gmm_state == GMM_DEREGISTERED)
+		mmctx->gmm_fsm->state == ST_GMM_DEREGISTERED)
 	{
 		/* We cannot use the mmctx */
 		LOGMMCTXP(LOGL_INFO, mmctx,
@@ -1715,7 +1715,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	mmctx_timer_start(mmctx, 3350);
 #else
 	/* Make sure we are NORMAL (i.e. not SUSPENDED anymore) */
-	mmctx->gmm_state = GMM_REGISTERED_NORMAL;
+	osmo_fsm_inst_dispatch(mm->gmm_fsm, E_GMM_ATTACH_SUCCESS, NULL);
 
 	memset(&sig_data, 0, sizeof(sig_data));
 	sig_data.mm = mmctx;
@@ -1768,7 +1768,7 @@ static int gsm48_rx_gmm_ra_upd_compl(struct sgsn_mm_ctx *mmctx)
 	mmctx->t3350_mode = GMM_T3350_MODE_NONE;
 	mmctx->p_tmsi_old = 0;
 	mmctx->pending_req = 0;
-	mmctx->gmm_state = GMM_REGISTERED_NORMAL;
+	osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_GMM_COMMON_PROC_SUCCESS, NULL);
 	switch(mmctx->ran_type) {
 	case MM_CTX_T_UTRAN_Iu:
 		osmo_fsm_inst_dispatch(mmctx->iu.mm_state_fsm, E_PMM_RA_UPDATE, NULL);
@@ -1883,7 +1883,7 @@ static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 		goto rejected;
 	}
 
-	ctx->gmm_state = GMM_COMMON_PROC_INIT;
+	osmo_fsm_inst_dispatch(ctx->gmm_fsm, E_GMM_COMMON_PROC_INIT_REQ, NULL);
 
 	ctx->iu.service.type = service_type;
 
@@ -2832,15 +2832,14 @@ int gprs_gmm_rx_suspend(struct gprs_ra_id *raid, uint32_t tlli)
 		return -EINVAL;
 	}
 
-	if (mmctx->gmm_state != GMM_REGISTERED_NORMAL &&
-	    mmctx->gmm_state != GMM_REGISTERED_SUSPENDED) {
+	if (!gmm_fsm_is_registered(mmctx->gmm_fsm)) {
 		LOGMMCTXP(LOGL_NOTICE, mmctx, "SUSPEND request while state "
 			"!= REGISTERED (TLLI=%08x)\n", tlli);
 		return -EINVAL;
 	}
 
 	/* Transition from REGISTERED_NORMAL to REGISTERED_SUSPENDED */
-	mmctx->gmm_state = GMM_REGISTERED_SUSPENDED;
+	osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_GMM_SUSPEND, NULL);
 	return 0;
 }
 
@@ -2858,8 +2857,7 @@ int gprs_gmm_rx_resume(struct gprs_ra_id *raid, uint32_t tlli,
 		return -EINVAL;
 	}
 
-	if (mmctx->gmm_state != GMM_REGISTERED_NORMAL &&
-	    mmctx->gmm_state != GMM_REGISTERED_SUSPENDED) {
+	if (!gmm_fsm_is_registered(mmctx->gmm_fsm)) {
 		LOGMMCTXP(LOGL_NOTICE, mmctx, "RESUME request while state "
 			"!= SUSPENDED (TLLI=%08x)\n", tlli);
 		/* FIXME: should we not simply ignore it? */
@@ -2867,6 +2865,6 @@ int gprs_gmm_rx_resume(struct gprs_ra_id *raid, uint32_t tlli,
 	}
 
 	/* Transition from SUSPENDED to NORMAL */
-	mmctx->gmm_state = GMM_REGISTERED_NORMAL;
+	osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_GMM_RESUME, NULL);
 	return 0;
 }

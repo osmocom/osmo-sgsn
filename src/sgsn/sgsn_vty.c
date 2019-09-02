@@ -476,15 +476,6 @@ DEFUN(cfg_apn_imsi_ggsn, cfg_apn_imsi_ggsn_cmd,
 	return add_apn_ggsn_mapping(vty, argv[0], argv[1], atoi(argv[2]));
 }
 
-const struct value_string gprs_mm_st_strs[] = {
-	{ GMM_DEREGISTERED, "DEREGISTERED" },
-	{ GMM_COMMON_PROC_INIT, "COMMON PROCEDURE (INIT)" },
-	{ GMM_REGISTERED_NORMAL, "REGISTERED (NORMAL)" },
-	{ GMM_REGISTERED_SUSPENDED, "REGISTERED (SUSPENDED)" },
-	{ GMM_DEREGISTERED_INIT, "DEREGISTERED (INIT)" },
-	{ 0, NULL }
-};
-
 char *sgsn_gtp_ntoa(struct ul16_t *ul)
 {
 	struct in_addr ia;
@@ -546,7 +537,7 @@ static void vty_dump_mmctx(struct vty *vty, const char *pfx,
 	vty_out(vty, "%s  MSISDN: %s, TLLI: %08x%s HLR: %s",
 		pfx, mm->msisdn, id, mm->hlr, VTY_NEWLINE);
 	vty_out(vty, "%s  GMM State: %s, Routeing Area: %s, Cell ID: %u%s",
-		pfx, get_value_string(gprs_mm_st_strs, mm->gmm_state),
+		pfx, osmo_fsm_inst_state_name(mm->gmm_fsm),
 		osmo_rai_name(&mm->ra), mm->gb.cell_id, VTY_NEWLINE);
 	vty_out(vty, "%s  MM State: %s, RAN Type: %s%s", pfx, mm_state_name,
 		get_value_string(sgsn_ran_type_names, mm->ran_type), VTY_NEWLINE);

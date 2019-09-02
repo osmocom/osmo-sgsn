@@ -51,6 +51,7 @@
 #include <osmocom/sgsn/gprs_subscriber.h>
 #include <osmocom/sgsn/gprs_sndcp.h>
 #include <osmocom/sgsn/gprs_ranap.h>
+#include <osmocom/sgsn/gprs_gmm_fsm.h>
 
 #include <gtp.h>
 #include <pdp.h>
@@ -655,8 +656,8 @@ static int cb_data_ind(struct pdp_t *lib, void *packet, unsigned int len)
 	msgb_bvci(msg) = mm->gb.bvci;
 	msgb_nsei(msg) = mm->gb.nsei;
 
-	switch (mm->gmm_state) {
-	case GMM_REGISTERED_SUSPENDED:
+	switch (mm->gmm_fsm->state) {
+	case ST_GMM_REGISTERED_SUSPENDED:
 		/* initiate PS PAGING procedure */
 		memset(&pinfo, 0, sizeof(pinfo));
 		pinfo.mode = BSSGP_PAGING_PS;
@@ -670,11 +671,11 @@ static int cb_data_ind(struct pdp_t *lib, void *packet, unsigned int len)
 		rate_ctr_inc(&mm->ctrg->ctr[GMM_CTR_PAGING_PS]);
 		/* FIXME: queue the packet we received from GTP */
 		break;
-	case GMM_REGISTERED_NORMAL:
+	case ST_GMM_REGISTERED_NORMAL:
 		break;
 	default:
 		LOGP(DGPRS, LOGL_ERROR, "GTP DATA IND for TLLI %08X in state "
-			"%u\n", mm->gb.tlli, mm->gmm_state);
+			"%s\n", mm->gb.tlli, osmo_fsm_inst_state_name(mm->gmm_fsm));
 		msgb_free(msg);
 		return -1;
 	}

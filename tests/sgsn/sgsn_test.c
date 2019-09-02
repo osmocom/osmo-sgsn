@@ -28,6 +28,7 @@
 #include <osmocom/gsupclient/gsup_client.h>
 #include <osmocom/sgsn/gprs_utils.h>
 #include <osmocom/sgsn/gprs_gb_parse.h>
+#include <osmocom/sgsn/gprs_gmm_fsm.h>
 
 #include <osmocom/gprs/gprs_bssgp.h>
 
@@ -192,7 +193,6 @@ static struct sgsn_mm_ctx *alloc_mm_ctx(uint32_t tlli, struct gprs_ra_id *raid)
 
 	lle = gprs_lle_get_or_create(tlli, 3);
 	ctx = sgsn_mm_ctx_alloc_gb(tlli, raid);
-	ctx->gmm_state = GMM_REGISTERED_NORMAL;
 	ctx->gb.llme = lle->llme;
 
 	ictx = sgsn_mm_ctx_by_tlli(tlli, raid);
@@ -1286,7 +1286,7 @@ static void test_gmm_cancel(void)
 
 	ctx = sgsn_mm_ctx_by_tlli(foreign_tlli, &raid);
 	OSMO_ASSERT(ctx != NULL);
-	OSMO_ASSERT(ctx->gmm_state == GMM_COMMON_PROC_INIT);
+	OSMO_ASSERT(ctx->gmm_fsm->state == ST_GMM_COMMON_PROC_INIT);
 
 	/* we expect an identity request (IMEI) */
 	OSMO_ASSERT(sgsn_tx_counter == 1);
@@ -1306,7 +1306,7 @@ static void test_gmm_cancel(void)
 	 * authorization */
 	OSMO_ASSERT(ctx == sgsn_mm_ctx_by_tlli(foreign_tlli, &raid));
 
-	OSMO_ASSERT(ctx->gmm_state == GMM_COMMON_PROC_INIT);
+	OSMO_ASSERT(ctx->gmm_fsm->state == ST_GMM_COMMON_PROC_INIT);
 
 	/* we expect an attach accept/reject */
 	OSMO_ASSERT(sgsn_tx_counter == 1);
@@ -1320,7 +1320,7 @@ static void test_gmm_cancel(void)
 	send_0408_message(ctx->gb.llme, foreign_tlli, &raid,
 			  attach_compl, ARRAY_SIZE(attach_compl));
 
-	OSMO_ASSERT(ctx->gmm_state == GMM_REGISTERED_NORMAL);
+	OSMO_ASSERT(ctx->gmm_fsm->state == ST_GMM_REGISTERED_NORMAL);
 
 	/* we don't expect a response */
 	OSMO_ASSERT(sgsn_tx_counter == 0);

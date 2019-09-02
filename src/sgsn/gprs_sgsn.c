@@ -44,6 +44,7 @@
 #include <osmocom/sgsn/gprs_gmm_attach.h>
 #include <osmocom/sgsn/gprs_mm_state_gb_fsm.h>
 #include <osmocom/sgsn/gprs_mm_state_iu_fsm.h>
+#include <osmocom/sgsn/gprs_gmm_fsm.h>
 #include <osmocom/sgsn/gprs_llc.h>
 
 #include <pdp.h>
@@ -234,7 +235,6 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_alloc(uint32_t rate_ctr_id)
 	if (!ctx)
 		return NULL;
 
-	ctx->gmm_state = GMM_DEREGISTERED;
 	ctx->auth_triplet.key_seq = GSM_KEY_SEQ_INVAL;
 	ctx->ctrg = rate_ctr_group_alloc(ctx, &mmctx_ctrg_desc, rate_ctr_id);
 	if (!ctx->ctrg) {
@@ -242,6 +242,7 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_alloc(uint32_t rate_ctr_id)
 		talloc_free(ctx);
 		return NULL;
 	}
+	ctx->gmm_fsm = osmo_fsm_inst_alloc(&gmm_fsm, ctx, ctx, LOGL_DEBUG, "gmm_fsm");
 	ctx->gmm_att_req.fsm = osmo_fsm_inst_alloc(&gmm_attach_req_fsm, ctx, ctx, LOGL_DEBUG, "gb_gmm_req");
 	INIT_LLIST_HEAD(&ctx->pdp_list);
 
@@ -368,6 +369,8 @@ void sgsn_mm_ctx_cleanup_free(struct sgsn_mm_ctx *mm)
 		osmo_fsm_inst_free(mm->gb.mm_state_fsm);
 	if (mm->iu.mm_state_fsm)
 		osmo_fsm_inst_free(mm->iu.mm_state_fsm);
+	if (mm->gmm_fsm)
+		osmo_fsm_inst_free(mm->gmm_fsm);
 
 	sgsn_mm_ctx_free(mm);
 	mm = NULL;
@@ -736,7 +739,7 @@ void sgsn_ggsn_ctx_drop_pdp(struct sgsn_pdp_ctx *pctx)
 {
 	/* the MM context can be deleted while the GGSN is not reachable or
 	 * if has been crashed. */
-	if (pctx->mm && pctx->mm->gmm_state == GMM_REGISTERED_NORMAL) {
+	if (pctx->mm && pctx->mm->gmm_fsm->state == ST_GMM_REGISTERED_NORMAL) {
 		gsm48_tx_gsm_deact_pdp_req(pctx, GSM_CAUSE_NET_FAIL, true);
 		sgsn_ggsn_ctx_remove_pdp(pctx->ggsn, pctx);
 	} else  {
