@@ -1758,6 +1758,37 @@ rejected:
 	return rc;
 }
 
+/* 3GPP TS 24.008 § 9.4.16: Routing area update complete */
+static int gsm48_rx_gmm_ra_upd_compl(struct sgsn_mm_ctx *mmctx)
+{
+	struct sgsn_signal_data sig_data;
+	/* only in case SGSN offered new P-TMSI */
+	LOGMMCTXP(LOGL_INFO, mmctx, "-> ROUTING AREA UPDATE COMPLETE\n");
+	mmctx_timer_stop(mmctx, 3350);
+	mmctx->t3350_mode = GMM_T3350_MODE_NONE;
+	mmctx->p_tmsi_old = 0;
+	mmctx->pending_req = 0;
+	mmctx->gmm_state = GMM_REGISTERED_NORMAL;
+	switch(mmctx->ran_type) {
+	case MM_CTX_T_UTRAN_Iu:
+		osmo_fsm_inst_dispatch(mmctx->iu.mm_state_fsm, E_PMM_RA_UPDATE, NULL);
+		break;
+	case MM_CTX_T_GERAN_Gb:
+		/* Unassign the old TLLI */
+		mmctx->gb.tlli = mmctx->gb.tlli_new;
+		gprs_llgmm_assign(mmctx->gb.llme, TLLI_UNASSIGNED,
+				  mmctx->gb.tlli_new);
+		osmo_fsm_inst_dispatch(mmctx->gb.mm_state_fsm, E_MM_RA_UPDATE, NULL);
+		break;
+	}
+
+	memset(&sig_data, 0, sizeof(sig_data));
+	sig_data.mm = mmctx;
+	osmo_signal_dispatch(SS_SGSN, S_SGSN_UPDATE, &sig_data);
+
+	return 0;
+}
+
 /* 3GPP TS 24.008 § 9.4.20 Service request.
  * In Iu, a UE in PMM-IDLE mode can use GSM48_MT_GMM_SERVICE_REQ to switch back
  * to PMM-CONNECTED mode. */
@@ -1893,7 +1924,6 @@ static int gsm48_rx_gmm_status(struct sgsn_mm_ctx *mmctx, struct msgb *msg)
 int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 			   struct gprs_llc_llme *llme, bool drop_cipherable)
 {
-	struct sgsn_signal_data sig_data;
 	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
 	int rc;
 
@@ -1997,30 +2027,7 @@ int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	case GSM48_MT_GMM_RA_UPD_COMPL:
 		if (!mmctx)
 			goto null_mmctx;
-		/* only in case SGSN offered new P-TMSI */
-		LOGMMCTXP(LOGL_INFO, mmctx, "-> ROUTING AREA UPDATE COMPLETE\n");
-		mmctx_timer_stop(mmctx, 3350);
-		mmctx->t3350_mode = GMM_T3350_MODE_NONE;
-		mmctx->p_tmsi_old = 0;
-		mmctx->pending_req = 0;
-		mmctx->gmm_state = GMM_REGISTERED_NORMAL;
-		switch(mmctx->ran_type) {
-		case MM_CTX_T_UTRAN_Iu:
-			osmo_fsm_inst_dispatch(mmctx->iu.mm_state_fsm, E_PMM_RA_UPDATE, NULL);
-			break;
-		case MM_CTX_T_GERAN_Gb:
-			/* Unassign the old TLLI */
-			mmctx->gb.tlli = mmctx->gb.tlli_new;
-			gprs_llgmm_assign(mmctx->gb.llme, TLLI_UNASSIGNED,
-					  mmctx->gb.tlli_new);
-			osmo_fsm_inst_dispatch(mmctx->gb.mm_state_fsm, E_MM_RA_UPDATE, NULL);
-			break;
-		}
-		rc = 0;
-
-		memset(&sig_data, 0, sizeof(sig_data));
-		sig_data.mm = mmctx;
-		osmo_signal_dispatch(SS_SGSN, S_SGSN_UPDATE, &sig_data);
+		rc = gsm48_rx_gmm_ra_upd_compl(mmctx);
 		break;
 	case GSM48_MT_GMM_PTMSI_REALL_COMPL:
 		if (!mmctx)
