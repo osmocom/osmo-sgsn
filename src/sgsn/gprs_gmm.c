@@ -1789,6 +1789,22 @@ static int gsm48_rx_gmm_ra_upd_compl(struct sgsn_mm_ctx *mmctx)
 	return 0;
 }
 
+/* 3GPP TS 24.008 § 9.4.8: P-TMSI reallocation complete */
+static int gsm48_rx_gmm_ptmsi_reall_compl(struct sgsn_mm_ctx *mmctx)
+{
+	LOGMMCTXP(LOGL_INFO, mmctx, "-> PTMSI REALLOCATION COMPLETE\n");
+	mmctx_timer_stop(mmctx, 3350);
+	mmctx->t3350_mode = GMM_T3350_MODE_NONE;
+	mmctx->p_tmsi_old = 0;
+	mmctx->pending_req = 0;
+	if (mmctx->ran_type == MM_CTX_T_GERAN_Gb) {
+		/* Unassign the old TLLI */
+		mmctx->gb.tlli = mmctx->gb.tlli_new;
+		//gprs_llgmm_assign(mmctx->gb.llme, TLLI_UNASSIGNED, mmctx->gb.tlli_new, GPRS_ALGO_GEA0, NULL);
+	}
+	return 0;
+}
+
 /* 3GPP TS 24.008 § 9.4.20 Service request.
  * In Iu, a UE in PMM-IDLE mode can use GSM48_MT_GMM_SERVICE_REQ to switch back
  * to PMM-CONNECTED mode. */
@@ -2032,17 +2048,7 @@ int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	case GSM48_MT_GMM_PTMSI_REALL_COMPL:
 		if (!mmctx)
 			goto null_mmctx;
-		LOGMMCTXP(LOGL_INFO, mmctx, "-> PTMSI REALLOCATION COMPLETE\n");
-		mmctx_timer_stop(mmctx, 3350);
-		mmctx->t3350_mode = GMM_T3350_MODE_NONE;
-		mmctx->p_tmsi_old = 0;
-		mmctx->pending_req = 0;
-		if (mmctx->ran_type == MM_CTX_T_GERAN_Gb) {
-			/* Unassign the old TLLI */
-			mmctx->gb.tlli = mmctx->gb.tlli_new;
-			//gprs_llgmm_assign(mmctx->gb.llme, TLLI_UNASSIGNED, mmctx->gb.tlli_new, GPRS_ALGO_GEA0, NULL);
-		}
-		rc = 0;
+		rc = gsm48_rx_gmm_ptmsi_reall_compl(mmctx);
 		break;
 	case GSM48_MT_GMM_AUTH_CIPH_RESP:
 		if (!mmctx)
