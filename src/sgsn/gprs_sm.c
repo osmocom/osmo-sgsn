@@ -491,6 +491,11 @@ static int do_act_pdp_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg, bool *del
 	/* Check if NSAPI is already in use */
 	pdp = sgsn_pdp_ctx_by_nsapi(mmctx, act_req->req_nsapi);
 	if (pdp) {
+		/* Make sure pdp ctx was not already torn down on GTP side */
+		if (!pdp->lib) {
+			gsm_cause = GSM_CAUSE_REACT_RQD;
+			goto no_context;
+		}
 		/* We already have a PDP context for this TLLI + NSAPI tuple */
 		if (pdp->sapi == act_req->req_llc_sapi &&
 		    pdp->ti == transaction_id) {
