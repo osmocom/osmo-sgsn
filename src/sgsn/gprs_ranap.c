@@ -120,31 +120,24 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 	int rc = -1;
 
 	mm = sgsn_mm_ctx_by_ue_ctx(ctx);
-
-#define REQUIRE_MM \
-	if (!mm) { \
-		LOGIUP(ctx, LOGL_NOTICE, "Cannot find mm ctx for IU event %d\n", type); \
-		return rc; \
+	if (!mm) {
+		LOGIUP(ctx, LOGL_NOTICE, "Cannot find mm ctx for IU event %d\n", type);
+		return rc;
 	}
 
 	switch (type) {
 	case RANAP_IU_EVENT_RAB_ASSIGN:
-		REQUIRE_MM
 		rc = sgsn_ranap_rab_ass_resp(mm, (RANAP_RAB_SetupOrModifiedItemIEs_t *)data);
 		break;
 	case RANAP_IU_EVENT_IU_RELEASE:
 		/* fall thru */
 	case RANAP_IU_EVENT_LINK_INVALIDATED:
 		/* Clean up ranap_ue_conn_ctx here */
-		if (mm) {
-			LOGMMCTXP(LOGL_INFO, mm, "IU release for imsi %s\n", mm->imsi);
-			osmo_fsm_inst_dispatch(mm->iu.mm_state_fsm, E_PMM_PS_CONN_RELEASE, NULL);
-		} else
-			LOGIUP(ctx, LOGL_INFO, "IU release\n");
+		LOGMMCTXP(LOGL_INFO, mm, "IU release for imsi %s\n", mm->imsi);
+		osmo_fsm_inst_dispatch(mm->iu.mm_state_fsm, E_PMM_PS_CONN_RELEASE, NULL);
 		rc = 0;
 		break;
 	case RANAP_IU_EVENT_SECURITY_MODE_COMPLETE:
-		REQUIRE_MM
 		/* Continue authentication here */
 		mm->iu.ue_ctx->integrity_active = 1;
 		ranap_iu_tx_common_id(mm->iu.ue_ctx, mm->imsi);
@@ -156,10 +149,7 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 			osmo_fsm_inst_dispatch(mm->gmm_att_req.fsm, E_IU_SECURITY_CMD_COMPLETE, NULL);
 		break;
 	default:
-		if (mm)
-			LOGMMCTXP(LOGL_NOTICE, mm, "Unknown event received: %i\n", type);
-		else
-			LOGIUP(ctx, LOGL_NOTICE, "Unknown event received: %i\n", type);
+		LOGMMCTXP(LOGL_NOTICE, mm, "Unknown event received: %i\n", type);
 		rc = -1;
 		break;
 	}
