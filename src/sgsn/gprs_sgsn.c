@@ -459,7 +459,8 @@ void sgsn_pdp_ctx_terminate(struct sgsn_pdp_ctx *pdp)
 
 	if (pdp->mm->ran_type == MM_CTX_T_GERAN_Gb) {
 		/* Force the deactivation of the SNDCP layer */
-		sndcp_sm_deactivate_ind(&pdp->mm->gb.llme->lle[pdp->sapi], pdp->nsapi);
+		if (pdp->mm->gb.llme)
+			sndcp_sm_deactivate_ind(&pdp->mm->gb.llme->lle[pdp->sapi], pdp->nsapi);
 	}
 
 	memset(&sig_data, 0, sizeof(sig_data));
