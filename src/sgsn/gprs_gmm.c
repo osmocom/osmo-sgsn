@@ -961,8 +961,8 @@ void gsm0408_gprs_access_granted(struct sgsn_mm_ctx *ctx)
 		     "Authorized, continuing procedure, IMSI=%s\n",
 		     ctx->imsi);
 		/* Continue with the authorization */
-		if (ctx->gmm_att_req.fsm->state != ST_INIT)
-			osmo_fsm_inst_dispatch(ctx->gmm_att_req.fsm, E_VLR_ANSWERED, (void *) 0);
+		osmo_fsm_inst_dispatch(ctx->gmm_att_req.fsm, E_UPDATE_LOCATION_RESP_RECV_SUCCESS, (void *) 0);
+
 		break;
 	default:
 		LOGMMCTXP(LOGL_INFO, ctx,

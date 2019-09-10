@@ -170,19 +170,43 @@ static void st_auth(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 
 	switch (event) {
 	case E_AUTH_RESP_RECV_SUCCESS:
-		sgsn_auth_request(ctx);
-#ifdef BUILD_IU
-		if (ctx->ran_type == MM_CTX_T_UTRAN_Iu && !ctx->iu.ue_ctx->integrity_active)
-			gmm_attach_fsm_state_chg(fi, ST_IU_SECURITY_CMD);
-		else
-#endif /* BUILD_IU */
+		if (sgsn_auth_needs_update_location(ctx)) {
+			LOGMMCTXP(LOGL_INFO, ctx,
+				  "Missing information, requesting subscriber data\n");
+			gmm_attach_fsm_state_chg(fi, ST_WAIT_UPDATE_LOCATION);
+		} else {
 			gmm_attach_fsm_state_chg(fi, ST_ACCEPT);
+		}
 		break;
 	case E_AUTH_RESP_RECV_RESYNC:
 		if (ctx->gmm_att_req.auth_reattempt <= 1)
 			gmm_attach_fsm_state_chg(fi, ST_ASK_VLR);
 		else
 			osmo_fsm_inst_dispatch(fi, E_REJECT, (void *) GMM_CAUSE_SYNC_FAIL);
+		break;
+	}
+}
+
+static void st_wait_lu_resp_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state)
+{
+	struct sgsn_mm_ctx *ctx = fi->priv;
+	int rc = gprs_subscr_request_update_location(ctx);
+	if (rc < 0)
+		LOGMMCTXP(LOGL_INFO, ctx, "Failed requesting Update Location\n");
+}
+
+static void st_wait_lu_resp(struct osmo_fsm_inst *fi, uint32_t event, void *data)
+{
+	struct sgsn_mm_ctx *ctx = fi->priv;
+
+	switch (event) {
+	case E_UPDATE_LOCATION_RESP_RECV_SUCCESS:
+#ifdef BUILD_IU
+		if (ctx->ran_type == MM_CTX_T_UTRAN_Iu && !ctx->iu.ue_ctx->integrity_active)
+			gmm_attach_fsm_state_chg(fi, ST_IU_SECURITY_CMD);
+		else
+#endif /* BUILD_IU */
+			gmm_attach_fsm_state_chg(fi, ST_ACCEPT);
 		break;
 	}
 }
@@ -208,12 +232,6 @@ static void st_accept(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 		extract_subscr_msisdn(ctx);
 		extract_subscr_hlr(ctx);
 		osmo_fsm_inst_state_chg(fi, ST_INIT, 0, 0);
-		break;
-	case E_VLR_ANSWERED:
-		extract_subscr_msisdn(ctx);
-		extract_subscr_hlr(ctx);
-		LOGMMCTXP(LOGL_NOTICE, ctx,
-			  "Unusual event: if MS got no data connection, check that it has APN configured.\n");
 		break;
 	}
 }
@@ -302,10 +320,17 @@ static struct osmo_fsm_state gmm_attach_req_fsm_states[] = {
 	},
 	[ST_AUTH] = {
 		.in_event_mask = X(E_AUTH_RESP_RECV_SUCCESS) | X(E_AUTH_RESP_RECV_RESYNC),
-		.out_state_mask = X(ST_INIT) | X(ST_AUTH) | X(ST_IU_SECURITY_CMD) | X(ST_ACCEPT) | X(ST_ASK_VLR) | X(ST_REJECT),
+		.out_state_mask = X(ST_INIT) | X(ST_AUTH) | X(ST_IU_SECURITY_CMD) | X(ST_ACCEPT) | X(ST_ASK_VLR) | X(ST_WAIT_UPDATE_LOCATION) | X(ST_REJECT),
 		.name = "Authenticate",
 		.onenter = st_auth_on_enter,
 		.action = st_auth,
+	},
+	[ST_WAIT_UPDATE_LOCATION] = {
+		.in_event_mask = X(E_UPDATE_LOCATION_RESP_RECV_SUCCESS),
+		.out_state_mask = X(ST_INIT) | X(ST_ACCEPT) | X(ST_IU_SECURITY_CMD) | X(ST_REJECT),
+		.name = "WaitLocationUpdateResp",
+		.onenter = st_wait_lu_resp_on_enter,
+		.action = st_wait_lu_resp,
 	},
 	[ST_IU_SECURITY_CMD] = {
 		.in_event_mask = X(E_IU_SECURITY_CMD_COMPLETE),
@@ -315,7 +340,7 @@ static struct osmo_fsm_state gmm_attach_req_fsm_states[] = {
 		.action = st_iu_security_cmd,
 	},
 	[ST_ACCEPT] = {
-		.in_event_mask = X(E_ATTACH_COMPLETE_RECV) | X(E_VLR_ANSWERED),
+		.in_event_mask = X(E_ATTACH_COMPLETE_RECV),
 		.out_state_mask = X(ST_INIT) | X(ST_REJECT),
 		.name = "WaitAttachComplete",
 		.onenter = st_accept_on_enter,
@@ -338,6 +363,7 @@ const struct value_string gmm_attach_req_fsm_event_names[] = {
 	OSMO_VALUE_STRING(E_ATTACH_ACCEPT_SENT),
 	OSMO_VALUE_STRING(E_ATTACH_COMPLETE_RECV),
 	OSMO_VALUE_STRING(E_IU_SECURITY_CMD_COMPLETE),
+	OSMO_VALUE_STRING(E_UPDATE_LOCATION_RESP_RECV_SUCCESS),
 	OSMO_VALUE_STRING(E_REJECT),
 	OSMO_VALUE_STRING(E_VLR_ANSWERED),
 	{ 0, NULL }

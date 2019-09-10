@@ -33,6 +33,7 @@
 #include <osmocom/sgsn/gprs_sgsn.h>
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/gprs_utils.h>
+#include <osmocom/sgsn/gprs_gmm_attach.h>
 
 #include <osmocom/sgsn/debug.h>
 
