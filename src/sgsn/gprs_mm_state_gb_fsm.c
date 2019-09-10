@@ -1,6 +1,7 @@
 #include <osmocom/core/tdef.h>
 
 #include <osmocom/sgsn/gprs_mm_state_gb_fsm.h>
+#include <osmocom/sgsn/gprs_llc.h>
 
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/sgsn.h>
@@ -15,6 +16,15 @@ static const struct osmo_tdef_state_timeout mm_state_gb_fsm_timeouts[32] = {
 
 #define mm_state_gb_fsm_state_chg(fi, NEXT_STATE) \
 	osmo_tdef_fsm_inst_state_chg(fi, NEXT_STATE, mm_state_gb_fsm_timeouts, sgsn->cfg.T_defs, -1)
+
+static void st_mm_idle_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state) {
+	struct sgsn_mm_ctx *ctx = fi->priv;
+
+	if (ctx->gb.llme) {
+		gprs_llgmm_unassign(ctx->gb.llme);
+		ctx->gb.llme = NULL;
+	}
+}
 
 static void st_mm_idle(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
@@ -59,6 +69,7 @@ static struct osmo_fsm_state mm_state_gb_fsm_states[] = {
 	[ST_MM_IDLE] = {
 		.in_event_mask = X(E_MM_GPRS_ATTACH) | X(E_MM_PDU_RECEPTION),
 		.out_state_mask = X(ST_MM_READY),
+		.onenter = st_mm_idle_on_enter,
 		.name = "Idle",
 		.action = st_mm_idle,
 	},
