@@ -119,6 +119,7 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 	mm = sgsn_mm_ctx_by_ue_ctx(ctx);
 	if (!mm) {
 		LOGIUP(ctx, LOGL_NOTICE, "Cannot find mm ctx for IU event %d\n", type);
+		ranap_iu_free_ue(ctx);
 		return rc;
 	}
 
@@ -131,7 +132,11 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 	case RANAP_IU_EVENT_LINK_INVALIDATED:
 		/* Clean up ranap_ue_conn_ctx here */
 		LOGMMCTXP(LOGL_INFO, mm, "IU release for imsi %s\n", mm->imsi);
-		osmo_fsm_inst_dispatch(mm->iu.mm_state_fsm, E_PMM_PS_CONN_RELEASE, NULL);
+		if (mm->iu.mm_state_fsm->state == ST_PMM_CONNECTED)
+			osmo_fsm_inst_dispatch(mm->iu.mm_state_fsm, E_PMM_PS_CONN_RELEASE, NULL);
+		else
+			sgsn_ranap_iu_free(mm);
+
 		rc = 0;
 		break;
 	case RANAP_IU_EVENT_SECURITY_MODE_COMPLETE:
@@ -151,6 +156,35 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 		break;
 	}
 	return rc;
+}
+
+/* TODO: use timers */
+#define TIMEOUT_RANAP_RELEASE_SEC 5
+void sgsn_ranap_iu_free(struct sgsn_mm_ctx *ctx)
+{
+	if (!ctx)
+		return;
+
+	if (!ctx->iu.ue_ctx)
+		return;
+
+	ranap_iu_free_ue(ctx->iu.ue_ctx);
+	ctx->iu.ue_ctx = NULL;
+}
+
+void sgsn_ranap_iu_release_free(struct sgsn_mm_ctx *ctx,
+				const struct RANAP_Cause *cause)
+{
+	if (!ctx)
+		return;
+
+	if (!ctx->iu.ue_ctx)
+		return;
+
+	ranap_iu_tx_release_free(ctx->iu.ue_ctx,
+				 cause,
+				 TIMEOUT_RANAP_RELEASE_SEC);
+	ctx->iu.ue_ctx = NULL;
 }
 
 int iu_rab_act_ps(uint8_t rab_id, struct sgsn_pdp_ctx *pdp)

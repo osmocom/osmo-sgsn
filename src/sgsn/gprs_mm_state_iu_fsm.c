@@ -6,6 +6,7 @@
 
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/sgsn.h>
+#include <osmocom/sgsn/gprs_ranap.h>
 
 #define X(s) (1 << (s))
 
@@ -45,11 +46,15 @@ static void st_pmm_detached(struct osmo_fsm_inst *fi, uint32_t event, void *data
 
 static void st_pmm_connected(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
+	struct sgsn_mm_ctx *ctx = fi->priv;
+
 	switch(event) {
 	case E_PMM_PS_CONN_RELEASE:
+		sgsn_ranap_iu_free(ctx);
 		mm_state_iu_fsm_state_chg(fi, ST_PMM_IDLE);
 		break;
 	case E_PMM_IMPLICIT_DETACH:
+		sgsn_ranap_iu_release_free(ctx, NULL);
 		mm_state_iu_fsm_state_chg(fi, ST_PMM_DETACHED);
 		break;
 	case E_PMM_RA_UPDATE:
