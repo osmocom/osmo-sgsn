@@ -145,6 +145,13 @@ enum sgsn_auth_state sgsn_auth_state(struct sgsn_mm_ctx *mmctx)
 	return SGSN_AUTH_REJECTED;
 }
 
+bool sgsn_auth_needs_update_location(struct sgsn_mm_ctx *mmctx)
+{
+	return sgsn->cfg.require_update_location &&
+	       (mmctx->subscr == NULL ||
+		mmctx->pending_req == GSM48_MT_GMM_ATTACH_REQ);
+}
+
 /*
  * This function is directly called by e.g. the GMM layer. It returns either
  * after calling sgsn_auth_update directly or after triggering an asynchronous
@@ -164,9 +171,7 @@ int sgsn_auth_request(struct sgsn_mm_ctx *mmctx)
 		return 0;
 	}
 
-	need_update_location = sgsn->cfg.require_update_location &&
-		(mmctx->subscr == NULL ||
-		 mmctx->pending_req == GSM48_MT_GMM_ATTACH_REQ);
+	need_update_location = sgsn_auth_needs_update_location(mmctx);
 
 	/* This has the side effect of registering the subscr with the mmctx */
 	subscr = gprs_subscr_get_or_create_by_mmctx(mmctx);

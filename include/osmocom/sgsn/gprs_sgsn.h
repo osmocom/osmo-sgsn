@@ -480,6 +480,7 @@ int sgsn_acl_del(const char *imsi, struct sgsn_config *cfg);
 /* Request authorization */
 int sgsn_auth_request(struct sgsn_mm_ctx *mm);
 enum sgsn_auth_state sgsn_auth_state(struct sgsn_mm_ctx *mm);
+bool sgsn_auth_needs_update_location(struct sgsn_mm_ctx *mm);
 void sgsn_auth_update(struct sgsn_mm_ctx *mm);
 struct gsm_auth_tuple *sgsn_auth_get_tuple(struct sgsn_mm_ctx *mmctx,
 					   unsigned key_seq);
