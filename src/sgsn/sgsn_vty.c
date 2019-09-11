@@ -104,6 +104,8 @@ static struct osmo_tdef sgsn_T_defs[] = {
 	{ .T=3386, .default_val=GSM0408_T3386_SECS, .desc="Wait for MODIFY PDP CTX ACK timer (s)" },
 	{ .T=3395, .default_val=GSM0408_T3395_SECS, .desc="Wait for DEACT PDP CTX ACK timer (s)" },
 	{ .T=3397, .default_val=GSM0408_T3397_SECS, .desc="Wait for DEACT AA PDP CTX ACK timer (s)" },
+	/* non spec timers */
+	{ .T=-3314, .default_val=GSM0408_T3314_SECS, .desc="Iu User inactivity timer. On expiry release Iu connection (s)" },
 	{}
 };
 

@@ -12,6 +12,7 @@ T3385 = 8 s	Wait for ACT PDP CTX REQ timer (s) (default: 8 s)
 T3386 = 8 s	Wait for MODIFY PDP CTX ACK timer (s) (default: 8 s)
 T3395 = 8 s	Wait for DEACT PDP CTX ACK timer (s) (default: 8 s)
 T3397 = 8 s	Wait for DEACT AA PDP CTX ACK timer (s) (default: 8 s)
+X3314 = 44 s	Iu User inactivity timer. On expiry release Iu connection (s) (default: 44 s)
 OsmoSGSN# configure terminal
 OsmoSGSN(config)# list
 ...
