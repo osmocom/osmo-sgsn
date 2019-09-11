@@ -1109,6 +1109,23 @@ static bool mmctx_did_rat_change(struct sgsn_mm_ctx *mmctx, struct msgb *msg)
 	return false;
 }
 
+/* Notify the FSM of a RAT change */
+static void mmctx_handle_rat_change(struct sgsn_mm_ctx *mmctx, struct msgb *msg, struct gprs_llc_llme *llme)
+{
+	struct gmm_rat_change_data rat_chg = {
+		.llme = llme
+	};
+
+	rat_chg.new_ran_type = MSG_IU_UE_CTX(msg) ? MM_CTX_T_UTRAN_Iu : MM_CTX_T_GERAN_Gb;
+
+	if (rat_chg.new_ran_type != mmctx->ran_type)
+		osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_GMM_RAT_CHANGE, (void *) &rat_chg);
+	else
+		LOGMMCTXP(LOGL_ERROR, mmctx, "RAT didn't change or not implemented (ran_type=%u, "
+				"msg_iu_ue_ctx=%p\n", mmctx->ran_type, MSG_IU_UE_CTX(msg));
+
+}
+
 /* 3GPP TS 24.008 § 9.4.1 Attach request */
 static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 				struct gprs_llc_llme *llme)
@@ -1233,6 +1250,9 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 		reject_cause = GMM_CAUSE_MS_ID_NOT_DERIVED;
 		goto rejected;
 	}
+
+	if (mmctx_did_rat_change(ctx, msg))
+		mmctx_handle_rat_change(ctx, msg, llme);
 
 	if (ctx->ran_type == MM_CTX_T_GERAN_Gb) {
 		ctx->gb.tlli = msgb_tlli(msg);
@@ -1614,7 +1634,12 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 				mmctx->p_tmsi, mmctx->p_tmsi_old,
 				mmctx->gb.tlli, mmctx->gb.tlli_new,
 				osmo_rai_name(&mmctx->ra));
-			osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_GMM_COMMON_PROC_INIT_REQ, NULL);
+			/* A RAT change will trigger the common procedure
+			 * below after handling the RAT change. Protect it
+			 * here from being called twice */
+			if (!mmctx_did_rat_change(mmctx, msg))
+				osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_GMM_COMMON_PROC_INIT_REQ, NULL);
+
 		}
 	} else if (!gprs_ra_id_equals(&mmctx->ra, &old_ra_id) ||
 		mmctx->gmm_fsm->state == ST_GMM_DEREGISTERED)
@@ -1644,6 +1669,11 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		LOGGBIUP(llme, msg, LOGL_ERROR, "Rejecting GMM RA Update Request: MS should GMM Attach first\n");
 		reject_cause = GMM_CAUSE_IMPL_DETACHED;
 		goto rejected;
+	}
+
+	if (mmctx_did_rat_change(mmctx, msg)) {
+		mmctx_handle_rat_change(mmctx, msg, llme);
+		osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_GMM_COMMON_PROC_INIT_REQ, NULL);
 	}
 
 	/* Store new BVCI/NSEI in MM context (FIXME: delay until we ack?) */

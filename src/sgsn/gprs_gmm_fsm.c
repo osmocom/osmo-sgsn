@@ -1,6 +1,8 @@
 #include <osmocom/core/tdef.h>
 
 #include <osmocom/sgsn/gprs_gmm_fsm.h>
+#include <osmocom/sgsn/gprs_mm_state_gb_fsm.h>
+#include <osmocom/sgsn/gprs_mm_state_iu_fsm.h>
 
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/sgsn.h>
@@ -149,11 +151,32 @@ const struct value_string gmm_fsm_event_names[] = {
 	/* OSMO_VALUE_STRING(E_GMM_DETACH_ACCEPTED), */
 	OSMO_VALUE_STRING(E_GMM_SUSPEND),
 	OSMO_VALUE_STRING(E_GMM_CLEANUP),
+	OSMO_VALUE_STRING(E_GMM_RAT_CHANGE),
 	{ 0, NULL }
 };
 
 void gmm_fsm_allstate_action(struct osmo_fsm_inst *fi, uint32_t event, void *data) {
+	struct sgsn_mm_ctx *mmctx = fi->priv;
+	struct gmm_rat_change_data *rat_chg = (struct gmm_rat_change_data *)data;
+
 	switch (event) {
+	case E_GMM_RAT_CHANGE:
+
+		switch (fi->state) {
+		case ST_GMM_COMMON_PROC_INIT:
+			gmm_fsm_state_chg(fi, ST_GMM_DEREGISTERED);
+		default:
+			if (mmctx->ran_type == MM_CTX_T_GERAN_Gb)
+				osmo_fsm_inst_dispatch(mmctx->gb.mm_state_fsm, E_MM_IMPLICIT_DETACH, NULL);
+			else if (mmctx->ran_type == MM_CTX_T_UTRAN_Iu) {
+				osmo_fsm_inst_dispatch(mmctx->iu.mm_state_fsm, E_PMM_IMPLICIT_DETACH, NULL);
+				mmctx->gb.llme = rat_chg->llme;
+			}
+
+			mmctx->ran_type = rat_chg->new_ran_type;
+			break;
+		}
+
 	case E_GMM_CLEANUP:
 		switch (fi->state) {
 		case ST_GMM_DEREGISTERED:
@@ -175,7 +198,7 @@ struct osmo_fsm gmm_fsm = {
 	.states = gmm_fsm_states,
 	.num_states = ARRAY_SIZE(gmm_fsm_states),
 	.event_names = gmm_fsm_event_names,
-	.allstate_event_mask = X(E_GMM_CLEANUP),
+	.allstate_event_mask = X(E_GMM_CLEANUP) | X(E_GMM_RAT_CHANGE),
 	.allstate_action = gmm_fsm_allstate_action,
 	.log_subsys = DMM,
 	.timer_cb = gmm_fsm_timer_cb,

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <osmocom/core/fsm.h>
+#include <osmocom/sgsn/gprs_sgsn.h>
+
 
 /* 3GPP TS 24.008 § 4.1.3.3 GMM mobility management states on the network side */
 enum gmm_fsm_states {
@@ -23,6 +25,12 @@ enum gmm_fsm_events {
 	E_GMM_SUSPEND,
 	E_GMM_RESUME,
 	E_GMM_CLEANUP,
+	E_GMM_RAT_CHANGE,
+};
+
+struct gmm_rat_change_data {
+	enum sgsn_ran_type new_ran_type;
+	struct gprs_llc_llme *llme;
 };
 
 static inline bool gmm_fsm_is_registered(struct osmo_fsm_inst *fi)
