@@ -147,6 +147,7 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 		REQUIRE_MM
 		/* Continue authentication here */
 		mm->iu.ue_ctx->integrity_active = 1;
+		ranap_iu_tx_common_id(mm->iu.ue_ctx, mm->imsi);
 
 		/* FIXME: remove gmm_authorize */
 		if (mm->pending_req != GSM48_MT_GMM_ATTACH_REQ)
