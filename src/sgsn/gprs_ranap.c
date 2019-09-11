@@ -137,6 +137,9 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 		else
 			sgsn_ranap_iu_free(mm);
 
+		/* TODO: move this into FSM */
+		if (mm->ran_type == MM_CTX_T_UTRAN_Iu && mm->gmm_att_req.fsm->state != ST_INIT)
+			osmo_fsm_inst_dispatch(mm->gmm_att_req.fsm, E_REJECT, (void *) GMM_DISCARD_MS_WITHOUT_REJECT);
 		rc = 0;
 		break;
 	case RANAP_IU_EVENT_SECURITY_MODE_COMPLETE:
