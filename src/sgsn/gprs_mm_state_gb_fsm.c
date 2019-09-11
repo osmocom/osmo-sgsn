@@ -20,6 +20,10 @@ static const struct osmo_tdef_state_timeout mm_state_gb_fsm_timeouts[32] = {
 static void st_mm_idle_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state) {
 	struct sgsn_mm_ctx *ctx = fi->priv;
 
+	/* FIXME: remove this timer when RAU has it's own fsm */
+	if (ctx->T == 3350 && osmo_timer_pending(&ctx->timer))
+		osmo_timer_del(&ctx->timer);
+
 	if (ctx->gb.llme) {
 		gprs_llgmm_unassign(ctx->gb.llme);
 		ctx->gb.llme = NULL;
