@@ -34,6 +34,12 @@
 #include <osmocom/sgsn/gprs_sm.h>
 #include <osmocom/sgsn/debug.h>
 
+/* Has to be called whenever any PDU (signaling, data, ...) has been received */
+void gprs_gb_recv_pdu(struct sgsn_mm_ctx *mmctx) {
+	if (mmctx->gb.llme)
+		osmo_fsm_inst_dispatch(mmctx->gb.mm_state_fsm, E_MM_PDU_RECEPTION, NULL);
+}
+
 /* Main entry point for incoming 04.08 GPRS messages from Gb */
 int gsm0408_gprs_rcvmsg_gb(struct msgb *msg, struct gprs_llc_llme *llme,
 			   bool drop_cipherable)
@@ -50,7 +56,7 @@ int gsm0408_gprs_rcvmsg_gb(struct msgb *msg, struct gprs_llc_llme *llme,
 		msgid2mmctx(mmctx, msg);
 		rate_ctr_inc(&mmctx->ctrg->ctr[GMM_CTR_PKTS_SIG_IN]);
 		mmctx->gb.llme = llme;
-		osmo_fsm_inst_dispatch(mmctx->gb.mm_state_fsm, E_MM_PDU_RECEPTION, NULL);
+		gprs_gb_recv_pdu(mmctx);
 	}
 
 	/* MMCTX can be NULL */

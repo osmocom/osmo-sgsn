@@ -31,6 +31,7 @@
 #include <osmocom/gprs/gprs_bssgp.h>
 
 #include <osmocom/sgsn/debug.h>
+#include <osmocom/sgsn/gprs_gb.h>
 #include <osmocom/sgsn/gprs_llc.h>
 #include <osmocom/sgsn/sgsn.h>
 #include <osmocom/sgsn/gprs_sndcp.h>
@@ -745,6 +746,7 @@ int sndcp_llunitdata_ind(struct msgb *msg, struct gprs_llc_lle *lle,
 	struct sndcp_common_hdr *sch = (struct sndcp_common_hdr *)hdr;
 	struct sndcp_comp_hdr *scomph = NULL;
 	struct sndcp_udata_hdr *suh;
+	struct sgsn_mm_ctx *mmctx;
 	uint8_t *npdu;
 	uint16_t npdu_num __attribute__((unused));
 	int npdu_len;
@@ -777,6 +779,15 @@ int sndcp_llunitdata_ind(struct msgb *msg, struct gprs_llc_lle *lle,
 	}
 	/* FIXME: move this RA_ID up to the LLME or even higher */
 	bssgp_parse_cell_id(&sne->ra_id, msgb_bcid(msg));
+
+	mmctx = sgsn_mm_ctx_by_tlli(msgb_tlli(msg), &sne->ra_id);
+	if (!mmctx) {
+		LOGP(DSNDCP, LOGL_ERROR, "Message for non-existing MM ctx "
+				"(lle=%p, TLLI=%08x, SAPI=%u, NSAPI=%u)\n",
+				lle, lle->llme->tlli, lle->sapi, sch->nsapi);
+		return -EIO;
+	}
+	gprs_gb_recv_pdu(mmctx);
 
 	if (scomph) {
 		sne->defrag.pcomp = scomph->pcomp;
