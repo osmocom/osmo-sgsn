@@ -45,6 +45,7 @@
 #include <osmocom/sgsn/signal.h>
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/sgsn.h>
+#include <osmocom/sgsn/gprs_gb.h>
 #include <osmocom/sgsn/gprs_llc.h>
 #include <osmocom/sgsn/gprs_sgsn.h>
 #include <osmocom/sgsn/gprs_gmm.h>
@@ -614,7 +615,6 @@ static int cb_extheader_ind(struct sockaddr_in *peer)
 /* Called whenever we receive a DATA packet */
 static int cb_data_ind(struct pdp_t *lib, void *packet, unsigned int len)
 {
-	struct bssgp_paging_info pinfo;
 	struct sgsn_pdp_ctx *pdp;
 	struct sgsn_mm_ctx *mm;
 	struct msgb *msg;
@@ -660,16 +660,7 @@ static int cb_data_ind(struct pdp_t *lib, void *packet, unsigned int len)
 	switch (mm->gmm_fsm->state) {
 	case ST_GMM_REGISTERED_SUSPENDED:
 		/* initiate PS PAGING procedure */
-		memset(&pinfo, 0, sizeof(pinfo));
-		pinfo.mode = BSSGP_PAGING_PS;
-		pinfo.scope = BSSGP_PAGING_BVCI;
-		pinfo.bvci = mm->gb.bvci;
-		pinfo.imsi = mm->imsi;
-		pinfo.ptmsi = &mm->p_tmsi;
-		pinfo.drx_params = mm->drx_parms;
-		pinfo.qos[0] = 0; // FIXME
-		bssgp_tx_paging(mm->gb.nsei, 0, &pinfo);
-		rate_ctr_inc(&mm->ctrg->ctr[GMM_CTR_PAGING_PS]);
+		gprs_gb_page_ps_ra(mm);
 		/* FIXME: queue the packet we received from GTP */
 		break;
 	case ST_GMM_REGISTERED_NORMAL:

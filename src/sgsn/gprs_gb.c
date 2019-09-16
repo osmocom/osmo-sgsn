@@ -80,3 +80,26 @@ int gsm0408_gprs_rcvmsg_gb(struct msgb *msg, struct gprs_llc_llme *llme,
 
 	return rc;
 }
+
+
+int gprs_gb_page_ps_ra(struct sgsn_mm_ctx *mmctx)
+{
+	struct bssgp_paging_info pinfo;
+	int rc;
+
+	/* FIXME: page whole routing area, not only the last known cell */
+
+	/* initiate PS PAGING procedure */
+	memset(&pinfo, 0, sizeof(pinfo));
+	pinfo.mode = BSSGP_PAGING_PS;
+	pinfo.scope = BSSGP_PAGING_BVCI;
+	pinfo.bvci = mmctx->gb.bvci;
+	pinfo.imsi = mmctx->imsi;
+	pinfo.ptmsi = &mmctx->p_tmsi;
+	pinfo.drx_params = mmctx->drx_parms;
+	pinfo.qos[0] = 0; // FIXME
+	rc = bssgp_tx_paging(mmctx->gb.nsei, 0, &pinfo);
+	rate_ctr_inc(&mmctx->ctrg->ctr[GMM_CTR_PAGING_PS]);
+
+	return rc;
+}
