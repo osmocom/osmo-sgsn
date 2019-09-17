@@ -245,6 +245,10 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_alloc(uint32_t rate_ctr_id)
 	}
 	ctx->gmm_fsm = osmo_fsm_inst_alloc(&gmm_fsm, ctx, ctx, LOGL_DEBUG, "gmm_fsm");
 	ctx->gmm_att_req.fsm = osmo_fsm_inst_alloc(&gmm_attach_req_fsm, ctx, ctx, LOGL_DEBUG, "gb_gmm_req");
+	ctx->gb.mm_state_fsm = osmo_fsm_inst_alloc(&mm_state_gb_fsm, ctx, ctx, LOGL_DEBUG, NULL);
+#ifdef BUILD_IU
+	ctx->iu.mm_state_fsm = osmo_fsm_inst_alloc(&mm_state_iu_fsm, ctx, ctx, LOGL_DEBUG, NULL);
+#endif
 	INIT_LLIST_HEAD(&ctx->pdp_list);
 
 	llist_add(&ctx->list, &sgsn_mm_ctxts);
@@ -256,7 +260,6 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_gb(uint32_t tlli,
 					 const struct gprs_ra_id *raid)
 {
 	struct sgsn_mm_ctx *ctx;
-	char buf[32];
 
 	ctx = sgsn_mm_ctx_alloc(tlli);
 	if (!ctx)
@@ -266,8 +269,7 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_gb(uint32_t tlli,
 	ctx->ran_type = MM_CTX_T_GERAN_Gb;
 	ctx->gb.tlli = tlli;
 	ctx->ciph_algo = sgsn->cfg.cipher;
-	snprintf(buf, sizeof(buf), "%" PRIu32, tlli);
-	ctx->gb.mm_state_fsm = osmo_fsm_inst_alloc(&mm_state_gb_fsm, ctx, ctx, LOGL_DEBUG, buf);
+	osmo_fsm_inst_update_id_f(ctx->gb.mm_state_fsm, "%" PRIu32, tlli);
 
 	LOGMMCTXP(LOGL_DEBUG, ctx, "Allocated with %s cipher.\n",
 		  get_value_string(gprs_cipher_names, ctx->ciph_algo));
@@ -278,7 +280,6 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_gb(uint32_t tlli,
 struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_iu(void *uectx)
 {
 #if BUILD_IU
-	char buf[32];
 	struct sgsn_mm_ctx *ctx;
 	struct ranap_ue_conn_ctx *ue_ctx = uectx;
 
@@ -292,8 +293,7 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_iu(void *uectx)
 	ctx->iu.ue_ctx = ue_ctx;
 	ctx->iu.ue_ctx->rab_assign_addr_enc = sgsn->cfg.iu.rab_assign_addr_enc;
 	ctx->iu.new_key = 1;
-	snprintf(buf, sizeof(buf), "%" PRIu32, ue_ctx->conn_id);
-	ctx->iu.mm_state_fsm = osmo_fsm_inst_alloc(&mm_state_iu_fsm, ctx, ctx, LOGL_DEBUG, buf);
+	osmo_fsm_inst_update_id_f(ctx->iu.mm_state_fsm, "%" PRIu32, ue_ctx->conn_id);
 
 
 	return ctx;
