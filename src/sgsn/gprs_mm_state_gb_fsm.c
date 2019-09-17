@@ -47,8 +47,10 @@ static void st_mm_ready(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 
 	switch(event) {
 	case E_MM_READY_TIMER_EXPIRY:
-	case E_MM_IMPLICIT_DETACH:
 		mm_state_gb_fsm_state_chg(fi, ST_MM_STANDBY);
+		break;
+	case E_MM_IMPLICIT_DETACH:
+		mm_state_gb_fsm_state_chg(fi, ST_MM_IDLE);
 		break;
 	case E_MM_PDU_RECEPTION:
 		/* RE-arm the READY timer upon receival of Gb PDUs */
