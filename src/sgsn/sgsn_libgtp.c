@@ -753,28 +753,6 @@ static int sgsn_gtp_fd_cb(struct osmo_fd *fd, unsigned int what)
 	return rc;
 }
 
-static void sgsn_gtp_tmr_start(struct sgsn_instance *sgi)
-{
-	struct timeval next;
-
-	/* Retrieve next retransmission as struct timeval */
-	gtp_retranstimeout(sgi->gsn, &next);
-
-	/* re-schedule the timer */
-	osmo_timer_schedule(&sgi->gtp_timer, next.tv_sec, next.tv_usec/1000);
-}
-
-/* timer callback for libgtp retransmissions and ping */
-static void sgsn_gtp_tmr_cb(void *data)
-{
-	struct sgsn_instance *sgi = data;
-
-	/* Do all the retransmissions as needed */
-	gtp_retrans(sgi->gsn);
-
-	sgsn_gtp_tmr_start(sgi);
-}
-
 int sgsn_gtp_init(struct sgsn_instance *sgi)
 {
 	int rc;
@@ -824,10 +802,6 @@ int sgsn_gtp_init(struct sgsn_instance *sgi)
 		osmo_fd_unregister(&sgi->gtp_fd1c);
 		return rc;
 	}
-
-	/* Start GTP re-transmission timer */
-	osmo_timer_setup(&sgi->gtp_timer, sgsn_gtp_tmr_cb, sgi);
-	sgsn_gtp_tmr_start(sgi);
 
 	/* Register callbackcs with libgtp */
 	gtp_set_cb_delete_context(gsn, cb_delete_context);

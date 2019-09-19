@@ -130,8 +130,6 @@ struct sgsn_instance {
 	struct osmo_fd gtp_fd0;
 	struct osmo_fd gtp_fd1c;
 	struct osmo_fd gtp_fd1u;
-	/* Timer for libGTP */
-	struct osmo_timer_list gtp_timer;
 	/* GSN instance for libgtp */
 	struct gsn_t *gsn;
 	/* Subscriber */
