@@ -45,8 +45,6 @@ osmo_sgsn_SOURCES = \
 	gprs_gmm.c \
 	gprs_gmm_fsm.c \
 	gprs_mm_state_gb_fsm.c \
-	gprs_mm_state_iu_fsm.c \
-	gprs_ranap.c \
 	gprs_sgsn.c \
 	gprs_sm.c \
 	gprs_sndcp.c \
@@ -87,4 +85,9 @@ osmo_sgsn_LDADD += \
 	$(LIBOSMORANAP_LIBS) \
 	$(LIBASN1C_LIBS) \
 	$(NULL)
+
+osmo_sgsn_SOURCES += \
+	gprs_mm_state_iu_fsm.c \
+	gprs_ranap.c
+
 endif

@@ -44,13 +44,11 @@ sgsn_test_LDFLAGS = \
 sgsn_test_LDADD = \
 	$(top_builddir)/src/sgsn/gprs_llc.o \
 	$(top_builddir)/src/sgsn/gprs_gb.o \
-	$(top_builddir)/src/sgsn/gprs_ranap.o \
 	$(top_builddir)/src/sgsn/gprs_sndcp.o \
 	$(top_builddir)/src/sgsn/gprs_gmm_attach.o \
 	$(top_builddir)/src/sgsn/gprs_gmm.o \
 	$(top_builddir)/src/sgsn/gprs_gmm_fsm.o \
 	$(top_builddir)/src/sgsn/gprs_mm_state_gb_fsm.o \
-	$(top_builddir)/src/sgsn/gprs_mm_state_iu_fsm.o \
 	$(top_builddir)/src/sgsn/gprs_sgsn.o \
 	$(top_builddir)/src/sgsn/sgsn_vty.o \
 	$(top_builddir)/src/sgsn/sgsn_libgtp.o \
@@ -82,6 +80,8 @@ sgsn_test_LDADD = \
 
 if BUILD_IU
 sgsn_test_LDADD += \
+	$(top_builddir)/src/sgsn/gprs_ranap.o \
+	$(top_builddir)/src/sgsn/gprs_mm_state_iu_fsm.o \
 	$(LIBOSMORANAP_LIBS) \
 	$(LIBOSMOSIGTRAN_LIBS) \
 	$(LIBASN1C_LIBS) \

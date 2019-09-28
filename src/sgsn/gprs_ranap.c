@@ -22,9 +22,6 @@
  */
 
 #include "bscconfig.h"
-
-#ifdef BUILD_IU
-
 #include <gtp.h>
 
 #include <osmocom/core/rate_ctr.h>
@@ -220,4 +217,3 @@ int gsm0408_gprs_rcvmsg_iu(struct msgb *msg, struct gprs_ra_id *ra_id,
 
 	return rc;
 }
-#endif
