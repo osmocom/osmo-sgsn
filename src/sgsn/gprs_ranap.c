@@ -25,6 +25,7 @@
 #include <gtp.h>
 
 #include <osmocom/core/rate_ctr.h>
+#include <osmocom/core/tdef.h>
 
 #include <osmocom/ranap/ranap_common.h>
 
@@ -162,8 +163,6 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 	return rc;
 }
 
-/* TODO: use timers */
-#define TIMEOUT_RANAP_RELEASE_SEC 5
 void sgsn_ranap_iu_free(struct sgsn_mm_ctx *ctx)
 {
 	if (!ctx)
@@ -179,15 +178,19 @@ void sgsn_ranap_iu_free(struct sgsn_mm_ctx *ctx)
 void sgsn_ranap_iu_release_free(struct sgsn_mm_ctx *ctx,
 				const struct RANAP_Cause *cause)
 {
+	unsigned long X1001;
+
 	if (!ctx)
 		return;
 
 	if (!ctx->iu.ue_ctx)
 		return;
 
+	X1001 = osmo_tdef_get(sgsn->cfg.T_defs, -1001, OSMO_TDEF_S, -1);
+
 	ranap_iu_tx_release_free(ctx->iu.ue_ctx,
 				 cause,
-				 TIMEOUT_RANAP_RELEASE_SEC);
+				 (int) X1001);
 	ctx->iu.ue_ctx = NULL;
 }
 

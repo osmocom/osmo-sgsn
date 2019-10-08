@@ -90,6 +90,9 @@ const struct value_string sgsn_auth_pol_strs[] = {
 #define GSM0408_T3395_SECS	8	/* wait for DEACT PDP CTX ACK */
 #define GSM0408_T3397_SECS	8	/* wait for DEACT AA PDP CTX ACK */
 
+/* Non spec timer */
+#define NONSPEC_X1001_SECS     5       /* wait for a RANAP Release Complete */
+
 
 static struct osmo_tdef sgsn_T_defs[] = {
 	{ .T=3312, .default_val=GSM0408_T3312_SECS, .desc="Periodic RA Update timer (s)" },
@@ -105,6 +108,8 @@ static struct osmo_tdef sgsn_T_defs[] = {
 	{ .T=3395, .default_val=GSM0408_T3395_SECS, .desc="Wait for DEACT PDP CTX ACK timer (s)" },
 	{ .T=3397, .default_val=GSM0408_T3397_SECS, .desc="Wait for DEACT AA PDP CTX ACK timer (s)" },
 	/* non spec timers */
+	{ .T=-1001, .default_val=NONSPEC_X1001_SECS, .desc="RANAP Release timeout. Wait for RANAP Release Complete."
+							   "On expiry release Iu connection (s)" },
 	{ .T=-3314, .default_val=GSM0408_T3314_SECS, .desc="Iu User inactivity timer. On expiry release Iu connection (s)" },
 	{}
 };
