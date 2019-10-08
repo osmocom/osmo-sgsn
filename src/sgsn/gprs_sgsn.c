@@ -243,17 +243,42 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_alloc(uint32_t rate_ctr_id)
 		talloc_free(ctx);
 		return NULL;
 	}
+
 	ctx->gmm_fsm = osmo_fsm_inst_alloc(&gmm_fsm, ctx, ctx, LOGL_DEBUG, "gmm_fsm");
+	if (!ctx->gmm_fsm)
+		goto out;
 	ctx->gmm_att_req.fsm = osmo_fsm_inst_alloc(&gmm_attach_req_fsm, ctx, ctx, LOGL_DEBUG, "gb_gmm_req");
+	if (!ctx->gmm_att_req.fsm)
+		goto out;
 	ctx->gb.mm_state_fsm = osmo_fsm_inst_alloc(&mm_state_gb_fsm, ctx, ctx, LOGL_DEBUG, NULL);
+	if (!ctx->gb.mm_state_fsm)
+		goto out;
 #ifdef BUILD_IU
 	ctx->iu.mm_state_fsm = osmo_fsm_inst_alloc(&mm_state_iu_fsm, ctx, ctx, LOGL_DEBUG, NULL);
+	if (!ctx->iu.mm_state_fsm)
+		goto out;
 #endif
+
 	INIT_LLIST_HEAD(&ctx->pdp_list);
 
 	llist_add(&ctx->list, &sgsn_mm_ctxts);
 
 	return ctx;
+
+out:
+	if (ctx->iu.mm_state_fsm)
+		osmo_fsm_inst_free(ctx->iu.mm_state_fsm);
+	if (ctx->gb.mm_state_fsm)
+		osmo_fsm_inst_free(ctx->gb.mm_state_fsm);
+	if (ctx->gmm_att_req.fsm)
+		osmo_fsm_inst_free(ctx->gmm_att_req.fsm);
+	if (ctx->gmm_fsm)
+		osmo_fsm_inst_free(ctx->gmm_fsm);
+
+	rate_ctr_group_free(ctx->ctrg);
+	talloc_free(ctx);
+
+	return NULL;
 }
 /* Allocate a new SGSN MM context for GERAN_Gb */
 struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_gb(uint32_t tlli,
