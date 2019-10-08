@@ -152,6 +152,7 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 			gsm48_gmm_authorize(mm);
 		else
 			osmo_fsm_inst_dispatch(mm->gmm_att_req.fsm, E_IU_SECURITY_CMD_COMPLETE, NULL);
+		rc = 0;
 		break;
 	default:
 		LOGMMCTXP(LOGL_NOTICE, mm, "Unknown event received: %i\n", type);
