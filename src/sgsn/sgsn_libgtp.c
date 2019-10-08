@@ -54,6 +54,7 @@
 #include <osmocom/sgsn/gprs_sndcp.h>
 #include <osmocom/sgsn/gprs_ranap.h>
 #include <osmocom/sgsn/gprs_gmm_fsm.h>
+#include <osmocom/sgsn/gprs_mm_state_gb_fsm.h>
 
 #include <gtp.h>
 #include <pdp.h>
@@ -664,6 +665,11 @@ static int cb_data_ind(struct pdp_t *lib, void *packet, unsigned int len)
 		/* FIXME: queue the packet we received from GTP */
 		break;
 	case ST_GMM_REGISTERED_NORMAL:
+		OSMO_ASSERT(mm->gb.mm_state_fsm->state != ST_MM_IDLE);
+		if (mm->gb.mm_state_fsm->state == ST_MM_STANDBY)
+			gprs_gb_page_ps_ra(mm);
+
+		/* FIXME: queue the packet we received from GTP */
 		break;
 	default:
 		LOGP(DGPRS, LOGL_ERROR, "GTP DATA IND for TLLI %08X in state "
