@@ -140,6 +140,7 @@ struct osmo_fsm mm_state_iu_fsm = {
 	.states = mm_state_iu_fsm_states,
 	.num_states = ARRAY_SIZE(mm_state_iu_fsm_states),
 	.event_names = mm_state_iu_fsm_event_names,
+	.timer_cb = pmm_state_fsm_timer_cb,
 	.log_subsys = DMM,
 };
 
