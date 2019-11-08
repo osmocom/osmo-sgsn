@@ -1615,9 +1615,9 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 			osmo_rai_name(&mmctx->ra));
 		/* mmctx is set to NULL and gprs_llgmm_unassign(llme) will be
 		   called below, let's make sure we don't keep dangling llme
-		   pointers in mmctx (OS#3957). */
+		   pointers in mmctx (OS#3957, OS#4245). */
 		if (mmctx->ran_type == MM_CTX_T_GERAN_Gb)
-			OSMO_ASSERT(mmctx->gb.llme == NULL);
+			mmctx->gb.llme = NULL;
 		mmctx = NULL;
 	}
 
