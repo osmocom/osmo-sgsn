@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <inttypes.h>
 
 #include <osmocom/core/msgb.h>
 #include <osmocom/core/linuxlist.h>
@@ -528,7 +529,7 @@ static struct gprs_llc_lle *lle_for_rx_by_tlli_sapi(const uint32_t tlli,
 		struct gprs_llc_llme *llme;
 		/* FIXME: don't use the TLLI but the 0xFFFF unassigned? */
 		llme = llme_alloc(tlli);
-		LOGP(DLLC, LOGL_NOTICE, "LLC RX: unknown TLLI 0x%08x, "
+		LOGGBP(llme, DLLC, LOGL_NOTICE, "LLC RX: unknown TLLI 0x%08x, "
 			"creating LLME on the fly\n", tlli);
 		lle = &llme->lle[sapi];
 		return lle;
@@ -1047,6 +1048,10 @@ int gprs_llgmm_assign(struct gprs_llc_llme *llme,
 		      uint32_t old_tlli, uint32_t new_tlli)
 {
 	unsigned int i;
+	bool free = false;
+
+	LOGGBP(llme, DLLC, LOGL_NOTICE, "LLGM Assign pre (%08x => %08x)\n",
+	       old_tlli, new_tlli);
 
 	if (old_tlli == TLLI_UNASSIGNED && new_tlli != TLLI_UNASSIGNED) {
 		/* TLLI Assignment 8.3.1 */
@@ -1087,9 +1092,15 @@ int gprs_llgmm_assign(struct gprs_llc_llme *llme,
 			struct gprs_llc_lle *l = &llme->lle[i];
 			l->state = GPRS_LLES_UNASSIGNED;
 		}
-		llme_free(llme);
+		free = true;
 	} else
 		return -EINVAL;
+
+	LOGGBP(llme, DLLC, LOGL_NOTICE, "LLGM Assign post (%08x => %08x)\n",
+	       old_tlli, new_tlli);
+
+	if (free)
+		llme_free(llme);
 
 	return 0;
 }
@@ -1109,11 +1120,13 @@ int gprs_llgmm_reset(struct gprs_llc_llme *llme)
 	int xid_bytes_len, rc;
 	uint8_t *xid;
 
-	LOGP(DLLC, LOGL_NOTICE, "LLGM Reset\n");
+	LOGGBP(llme, DLLC, LOGL_NOTICE, "LLGM Reset\n");
 
 	rc = osmo_get_rand_id((uint8_t *) &llme->iov_ui, 4);
 	if (rc < 0) {
-		LOGP(DLLC, LOGL_ERROR, "osmo_get_rand_id() failed for LLC XID reset: %s\n", strerror(-rc));
+		LOGGBP(llme, DLLC, LOGL_ERROR,
+		       "osmo_get_rand_id() failed for LLC XID reset: %s\n",
+		       strerror(-rc));
 		return rc;
 	}
 
@@ -1144,11 +1157,13 @@ int gprs_llgmm_reset_oldmsg(struct msgb* oldmsg, uint8_t sapi,
 	int xid_bytes_len, rc;
 	uint8_t *xid;
 
-	LOGP(DLLC, LOGL_NOTICE, "LLGM Reset\n");
+	LOGGBP(llme, DLLC, LOGL_NOTICE, "LLGM Reset (SAPI=%" PRIu8 ")\n", sapi);
 
 	rc = osmo_get_rand_id((uint8_t *) &llme->iov_ui, 4);
 	if (rc < 0) {
-		LOGP(DLLC, LOGL_ERROR, "osmo_get_rand_id() failed for LLC XID reset: %s\n", strerror(-rc));
+		LOGGBP(llme, DLLC, LOGL_ERROR,
+		       "osmo_get_rand_id() failed for LLC XID reset: %s\n",
+		       strerror(-rc));
 		return rc;
 	}
 

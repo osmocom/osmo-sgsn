@@ -1625,7 +1625,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		if (llme) {
 			/* send a XID reset to re-set all LLC sequence numbers
 			 * in the MS */
-			LOGGBP(llme, LOGL_NOTICE, "LLC XID RESET\n");
+			LOGGBP(llme, DMM, LOGL_NOTICE, "LLC XID RESET\n");
 			gprs_llgmm_reset(llme);
 		}
 		/* The MS has to perform GPRS attach */
@@ -1905,7 +1905,7 @@ int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	if (llme && !mmctx &&
 	    gh->msg_type != GSM48_MT_GMM_ATTACH_REQ &&
 	    gh->msg_type != GSM48_MT_GMM_RA_UPD_REQ) {
-		LOGGBP(llme, LOGL_NOTICE, "Cannot handle GMM for unknown MM CTX\n");
+		LOGGBP(llme, DMM, LOGL_NOTICE, "Cannot handle GMM for unknown MM CTX\n");
 		/* 4.7.10 */
 		if (gh->msg_type == GSM48_MT_GMM_STATUS) {
 			/* TLLI unassignment */
