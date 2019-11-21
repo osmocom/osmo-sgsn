@@ -1616,8 +1616,12 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		/* mmctx is set to NULL and gprs_llgmm_unassign(llme) will be
 		   called below, let's make sure we don't keep dangling llme
 		   pointers in mmctx (OS#3957, OS#4245). */
-		if (mmctx->ran_type == MM_CTX_T_GERAN_Gb)
+		if (mmctx->ran_type == MM_CTX_T_GERAN_Gb) {
 			mmctx->gb.llme = NULL;
+			//mmctx->gb.llme->tlli = msgb_tlli(msg);
+			/* Update the MM context with the new (i.e. foreign) TLLI */
+			//mmctx->gb.tlli = msgb_tlli(msg);
+		}
 		mmctx = NULL;
 	}
 
@@ -1626,7 +1630,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 			/* send a XID reset to re-set all LLC sequence numbers
 			 * in the MS */
 			LOGGBP(llme, DMM, LOGL_NOTICE, "LLC XID RESET\n");
-			gprs_llgmm_reset(llme);
+			gprs_llgmm_reset_oldmsg(msg, GPRS_SAPI_GMM, llme);
 		}
 		/* The MS has to perform GPRS attach */
 		/* Device is still IMSI attached for CS but initiate GPRS ATTACH,
