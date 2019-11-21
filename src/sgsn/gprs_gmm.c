@@ -1626,7 +1626,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 			/* send a XID reset to re-set all LLC sequence numbers
 			 * in the MS */
 			LOGGBP(llme, DMM, LOGL_NOTICE, "LLC XID RESET\n");
-			gprs_llgmm_reset(llme);
+			gprs_llgmm_reset_oldmsg(msg, GPRS_SAPI_GMM, llme);
 		}
 		/* The MS has to perform GPRS attach */
 		/* Device is still IMSI attached for CS but initiate GPRS ATTACH,
