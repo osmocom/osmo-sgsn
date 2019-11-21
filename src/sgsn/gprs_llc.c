@@ -1115,7 +1115,7 @@ int gprs_llgmm_unassign(struct gprs_llc_llme *llme)
 int gprs_llgmm_reset(struct gprs_llc_llme *llme)
 {
 	struct msgb *msg = msgb_alloc_headroom(4096, 1024, "LLC_XID");
-	struct gprs_llc_lle *lle = &llme->lle[1];
+	struct gprs_llc_lle *lle = &llme->lle[GPRS_SAPI_GMM];
 	uint8_t xid_bytes[1024];
 	int xid_bytes_len, rc;
 	uint8_t *xid;
