@@ -393,7 +393,7 @@ int main(int argc, char **argv)
 	ctrl_vty_init(tall_sgsn_ctx);
 
 #if BUILD_IU
-	osmo_ss7_init();
+	OSMO_ASSERT(osmo_ss7_init() == 0);
 	osmo_ss7_vty_init_asp(tall_sgsn_ctx);
 	osmo_sccp_vty_init();
 #endif
