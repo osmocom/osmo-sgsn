@@ -146,5 +146,5 @@ struct osmo_fsm mm_state_iu_fsm = {
 
 static __attribute__((constructor)) void mm_state_iu_fsm_init(void)
 {
-	osmo_fsm_register(&mm_state_iu_fsm);
+	OSMO_ASSERT(osmo_fsm_register(&mm_state_iu_fsm) == 0);
 }

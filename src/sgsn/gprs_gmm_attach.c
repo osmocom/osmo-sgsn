@@ -449,7 +449,7 @@ struct osmo_fsm gmm_attach_req_fsm = {
 
 static __attribute__((constructor)) void gprs_gmm_fsm_init(void)
 {
-	osmo_fsm_register(&gmm_attach_req_fsm);
+	OSMO_ASSERT(osmo_fsm_register(&gmm_attach_req_fsm) == 0);
 }
 
 void gmm_att_req_free(struct sgsn_mm_ctx *mm) {

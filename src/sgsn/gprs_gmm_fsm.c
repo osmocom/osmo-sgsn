@@ -183,5 +183,5 @@ struct osmo_fsm gmm_fsm = {
 
 static __attribute__((constructor)) void gmm_fsm_init(void)
 {
-	osmo_fsm_register(&gmm_fsm);
+	OSMO_ASSERT(osmo_fsm_register(&gmm_fsm) == 0);
 }
