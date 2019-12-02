@@ -39,9 +39,9 @@ ltmain.sh
 
 
 # apps and app data
-src/gprs/osmo-sgsn
-src/gprs/osmo-gbproxy
-src/gprs/osmo-gtphub
+src/sgsn/osmo-sgsn
+src/gbproxy/osmo-gbproxy
+src/gtphub/osmo-gtphub
 src/libcommon/gsup_test_client
 
 #tests
