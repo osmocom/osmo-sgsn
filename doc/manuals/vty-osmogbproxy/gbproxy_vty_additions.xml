@@ -1,0 +1,5 @@
+<vtydoc xmlns='urn:osmocom:xml:libosmocore:vty:doc:1.0'>
+    <node id='config-gbproxy'>
+	    <description>Configure the Gb proxy</description>
+    </node>
+</vtydoc>
