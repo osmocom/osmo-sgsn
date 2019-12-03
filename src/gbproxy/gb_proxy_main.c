@@ -196,6 +196,11 @@ static void handle_options(int argc, char **argv)
 			break;
 		}
 	}
+
+	if (argc > optind) {
+		fprintf(stderr, "Unsupported positional arguments on command line\n");
+		exit(2);
+	}
 }
 
 int gbproxy_vty_is_config_node(struct vty *vty, int node)

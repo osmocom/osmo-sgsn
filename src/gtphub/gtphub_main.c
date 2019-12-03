@@ -322,6 +322,11 @@ static void handle_options(struct cmdline_cfg *ccfg, int argc, char **argv)
 			break;
 		}
 	}
+
+	if (argc > optind) {
+		fprintf(stderr, "Unsupported positional arguments on command line\n");
+		exit(2);
+	}
 }
 
 int main(int argc, char **argv)
