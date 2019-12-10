@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # (C) 2013 by Jacob Erlbeck <jerlbeck@sysmocom.de>
 # (C) 2014 by Holger Hans Peter Freyther
@@ -53,8 +53,8 @@ class TestCtrlBase(unittest.TestCase):
         try:
             self.proc = osmoutil.popen_devnull(osmo_ctrl_cmd)
         except OSError:
-            print >> sys.stderr, "Current directory: %s" % os.getcwd()
-            print >> sys.stderr, "Consider setting -b"
+            print("Current directory: %s" % os.getcwd(), file=sys.stderr)
+            print("Consider setting -b", file=sys.stderr)
         time.sleep(2)
 
         appstring = self.ctrl_app()[2]
@@ -72,7 +72,7 @@ class TestCtrlBase(unittest.TestCase):
 
     def connect(self, host, port):
         if verbose:
-            print "Connecting to host %s:%i" % (host, port)
+            print("Connecting to host %s:%i" % (host, port))
 
         retries = 30
         while True:
@@ -92,7 +92,7 @@ class TestCtrlBase(unittest.TestCase):
 
     def send(self, data):
         if verbose:
-            print "Sending \"%s\"" %(data)
+            print("Sending \"%s\"" %(data))
         data = Ctrl().add_header(data)
         return self.sock.send(data) == len(data)
 
@@ -121,9 +121,9 @@ class TestCtrlBase(unittest.TestCase):
         data = self.sock.recv(4096)
         while (len(data)>0):
             (head, data) = IPA().split_combined(data)
-            answer = Ctrl().rem_header(head)
+            answer = Ctrl().rem_header(head).decode()
             if verbose:
-                print "Got message:", answer
+                print("Got message:", answer)
             (mtype, id, msg) = answer.split(None, 2)
             id = int(id)
             rsp = {'mtype': mtype, 'id': id}
@@ -139,7 +139,7 @@ class TestCtrlBase(unittest.TestCase):
             responses[id] = rsp
 
         if verbose:
-            print "Decoded replies: ", responses
+            print("Decoded replies: ", responses)
 
         return responses
 
@@ -154,9 +154,9 @@ class TestCtrlSGSN(TestCtrlBase):
     def testListSubscribers(self):
         # TODO. Add command to mark a subscriber as active
         r = self.do_get('subscriber-list-active-v1')
-        self.assertEquals(r['mtype'], 'GET_REPLY')
-        self.assertEquals(r['var'], 'subscriber-list-active-v1')
-        self.assertEquals(r['value'], None)
+        self.assertEqual(r['mtype'], 'GET_REPLY')
+        self.assertEqual(r['var'], 'subscriber-list-active-v1')
+        self.assertEqual(r['value'], None)
 
 def add_sgsn_test(suite, workdir):
     if not os.path.isfile(os.path.join(workdir, "src/sgsn/osmo-sgsn")):
@@ -191,9 +191,9 @@ if __name__ == '__main__':
     if args.p:
         confpath = args.p
 
-    print "confpath %s, workdir %s" % (confpath, workdir)
+    print("confpath %s, workdir %s" % (confpath, workdir))
     os.chdir(workdir)
-    print "Running tests for specific control commands"
+    print("Running tests for specific control commands")
     suite = unittest.TestSuite()
     add_sgsn_test(suite, workdir)
     res = unittest.TextTestRunner(verbosity=verbose_level).run(suite)
