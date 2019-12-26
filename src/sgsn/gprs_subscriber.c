@@ -812,7 +812,7 @@ static int gprs_subscr_query_auth_info(struct gprs_subscr *subscr,
 	return gprs_subscr_tx_gsup_message(subscr, &gsup_msg);
 }
 
-int gprs_subscr_location_update(struct gprs_subscr *subscr)
+int gprs_subscr_location_update(struct gprs_subscr *subscr, enum sgsn_ran_type ran_type)
 {
 	struct osmo_gsup_message gsup_msg = {0};
 
@@ -820,6 +820,20 @@ int gprs_subscr_location_update(struct gprs_subscr *subscr)
 		"subscriber data is not available\n");
 
 	gsup_msg.message_type = OSMO_GSUP_MSGT_UPDATE_LOCATION_REQUEST;
+
+	switch (ran_type) {
+	case MM_CTX_T_GERAN_Gb:
+		gsup_msg.supported_rat_types[0] = OSMO_RAT_GERAN_A;
+		gsup_msg.supported_rat_types_len = 1;
+		break;
+	case MM_CTX_T_UTRAN_Iu:
+		gsup_msg.supported_rat_types[0] = OSMO_RAT_UTRAN_IU;
+		gsup_msg.supported_rat_types_len = 1;
+		break;
+	default:
+		break;
+	}
+
 	return gprs_subscr_tx_gsup_message(subscr, &gsup_msg);
 }
 
@@ -884,7 +898,7 @@ int gprs_subscr_request_update_location(struct sgsn_mm_ctx *mmctx)
 
 	subscr->flags |= GPRS_SUBSCRIBER_UPDATE_LOCATION_PENDING;
 
-	rc = gprs_subscr_location_update(subscr);
+	rc = gprs_subscr_location_update(subscr, mmctx->ran_type);
 	gprs_subscr_put(subscr);
 	return rc;
 }
