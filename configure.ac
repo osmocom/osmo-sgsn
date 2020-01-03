@@ -54,14 +54,14 @@ AC_ARG_ENABLE([iu], [AS_HELP_STRING([--enable-iu], [Build 3G support, aka IuPS a
 if test "x$osmo_ac_iu" = "xyes" ; then
     PKG_CHECK_MODULES(LIBOSMOSIGTRAN, libosmo-sigtran >= 1.0.0)
     PKG_CHECK_MODULES(LIBASN1C, libasn1c >= 0.9.30)
-    PKG_CHECK_MODULES(LIBOSMORANAP, libosmo-ranap >= 0.4.0)
+    PKG_CHECK_MODULES(LIBOSMORANAP, libosmo-ranap >= 0.6.0)
     AC_DEFINE(BUILD_IU, 1, [Define if we want to build IuPS and IuCS interfaces support])
 fi
 AM_CONDITIONAL(BUILD_IU, test "x$osmo_ac_iu" = "xyes")
 AC_SUBST(osmo_ac_iu)
 
 
-PKG_CHECK_MODULES(LIBGTP, libgtp >= 1.4.0)
+PKG_CHECK_MODULES(LIBGTP, libgtp >= 1.5.0)
 PKG_CHECK_MODULES(LIBCARES, libcares)
 
 dnl checks for header files

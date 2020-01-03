@@ -1,3 +1,110 @@
+osmo-sgsn (1.6.0) unstable; urgency=medium
+
+  [ Pau Espin Pedrol ]
+  * gprs_gmm: Introduce macros to access msgb's associated IU UE ctx
+  * gprs_llc.h: Improve documentation of some structs
+  * gprs_gmm.c: Improve doc on nullable parameters
+  * gprs_gmm.c: Drop unneeded brackets
+  * Introduce define TLLI_UNASSIGNED
+  * gprs_sgsn.c: Warn upon llme free unexpected scenarios
+  * gprs_gmm: Clarify comment during TLLI assignment
+  * gprs_sgsn.c: Remove recently introduced assert
+  * gprs_gmm: Introduce assert to guard against unexpected condition
+  * gprs_gmm.c: Use correct function to set MM_IDLE state during cleanup
+  * gprs_sgsn.h: Flag MM_CTX_T_GERAN_Iu as not supported
+  * gprs_gmm.c: Flag mmctx_set_(p)mm_state() functions static
+  * sgsn: use sccp_simple_client API to setup ss7 id 0 instead of 1
+  * gprs_gmm.c: Fix typo in log message
+  * gprs_gmm.c: Call mmctx_set_(p)mm_state only on related ran_type
+  * Introduce and use log macros when no mm ctx available
+  * gprs_gmm: Avoid spaces in fsm events and enum strings
+  * tests: Verify that timers can be set over VTY
+  * Replace own timer infra with libosmocore osmo_tdef
+  * tests: Introduce vty-transcript-test tests
+  * gprs_gmm.c: Use osmo_rai_name() in log line
+  * examples: Add osmo-sgsn_custom-sccp.cfg
+  * vty: Introduce cs7-instance-iu
+  * gprs_gmm.c: Print value_string of reject cause
+  * gprs_gmm.c: Add spec document to function documentation
+  * gtp: make echo_interval unsigned
+  * gtp: cb_delete_context(): Clarify why pdp->lib is set to NULL
+  * Introduce log helper LOGGGSN and log category DGTP
+  * sgsn: gtp: Drop related pdp contexts on echo timeout against GGSN
+  * Move lots of Iu/ranap specific code into its own file
+  * Move llc->MM/SM Gb specific glue code to its own file
+  * Split enum gprs_pmm_state into Iu and Gb counterparts
+  * Merge common allocation steps for Gb and Iu ctx
+  * gprs_gmm.c: Replace inet_ntoa with inet_ntop
+  * sgsn_cdr.c: Fix ip addr string buffer size
+  * sgsn_vty: Fix mmctx rate_ctr output indentation
+  * sgsn_vty: Print correct Iu mmctx id in 'show mm-context'
+  * Introduce FSM mm_state_gb_fsm
+  * Introduce FSM mm_state_iu_fsm
+  * vty: Print MM state and RAN type in show mm-context
+  * src/gprs/Makefile.am: Move build of shared .c files to an internal lib
+  * Move out gbproxy to its own subdir
+  * Move out gtphub to its own subdir
+  * Move out sgsn to its own subdir
+  * gmm: Move code handling GMM Attach Complete to its own function
+  * gmm: Move code handling GMM Routing Area Update Complete to its own function
+  * gmm: Move code handling GMM PTMSI Realloc Complete to its own function
+  * enum gprs_gmm_state: Fix spec reference
+  * Implement GMM State using osmocom FSM
+  * Split out GPRS SM layer into its own file
+  * sgsn: Reject PdpActReq if no GTP pdp ctx exists
+  * Introduce TODO-RELEASE file
+  * sgsn_libgtp.c: Drop use of deprecated libgtp APIs gtp_retrans*()
+  * gmm: Fix assertion hit during RA UPD REQ before completting gmm attach
+  * Improve logging in gprs_llc.c code
+  * gprs_llc.c: Use enum instead of hardcoded value
+  * gprs_gmm.c: Send XID reset with received TLLI
+
+  [ Alexander Couzens ]
+  * gprs/gprs_gmm: implement T3314. Timeout to reset MM state READY->STANDBY
+  * gprs_gmm: only update gb/iu cell information when Iu/Gb present
+  * gprs_gmm: clarify comment of Iu follow-on request
+  * gprs_gmm: gsm48_rx_gmm_att_req(): refactor duplicated code
+  * sgsn_pdp_ctx_terminate: check llme before accessing
+  * gprs_ranap: send CommonId after receiving Security Mode Complete
+  * mm_gb_fsm: unassign the llme when entering MM_IDLE
+  * gprs_ranap: refactor REQUIRE_MM define
+  * sgsn: when receiving data PDU notify the Gb GMM fsm
+  * Avoid compiling unneeded files when building without Iu
+  * gprs_ranap: release Iu UE Context when exiting PMM Connected
+  * Iu: implement a user inactivity timer
+  * gprs_ranap: on Iu release, stop the attach fsm if running
+  * gprs_mm_state_gb_fsm: ensure T3350 is not running when entering IDLE
+  * gprs_ranap: add missing rc = 0
+  * gprs_sgsn: always allocate Gb/Iu mm fsm
+  * sgsn: MM Gb Fsm: fix event handling for implicit detach
+  * ranap: add non-spec X1001
+  * gprs_gmm: release Iu connection on RAU failures
+  * sgsn_mm_ctx_alloc(): check for unallocated fsms
+  * sgsn_libgtp: refactor ps paging into gprs_gb
+  * sgsn: Gb: implementing PS Paging when MS is MM_STANDBY
+
+  [ Vadim Yanitskiy ]
+  * gprs_mm_state_iu_fsm.c: fix: assign timer_cb to mm_state_iu_fsm
+
+  [ Max ]
+  * Use libosmocore constant for IMSI length in ACL entry
+
+  [ Harald Welte ]
+  * LLC: Don't use hard-coded N201-U / N201-I values in XID
+  * Initial OsmoGbPROXY user manual
+  * check for osmo_fsm_register() error return values
+  * check for osmo_ss7_init() error return value
+  * manual: Fix copy+paste error
+  * exit(2) on unsupported positional arguments on command line
+
+  [ Oliver Smith ]
+  * gitignore: fix paths to binaries
+  * doc: add OsmoGbProxy VTY reference
+  * regen_doc.sh: support gbproxy, run without docker
+  * osmoappdesc.py, tests: switch to python 3
+
+ -- Pau Espin Pedrol <pespin@sysmocom.de>  Fri, 03 Jan 2020 19:17:56 +0100
+
 osmo-sgsn (1.5.0) unstable; urgency=medium
 
   [ Max ]

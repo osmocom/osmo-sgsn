@@ -1,4 +1,1 @@
 #component	what		description / commit summary line
-osmo-sgsn	libgtp		We dropped libgtp gtp_retranstimeout timer code which became a
-				no-op in osmo-ggsn.git c94837c6a401bf0f80791b619a9b4cfbe9160afd,
-				which means next osmo-sgsn release will require libgtp > 1.4.0.
