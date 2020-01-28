@@ -68,6 +68,9 @@ static void st_mm_standby(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 	case E_MM_PDU_RECEPTION:
 		mm_state_gb_fsm_state_chg(fi, ST_MM_READY);
 		break;
+	case E_MM_IMPLICIT_DETACH:
+		mm_state_gb_fsm_state_chg(fi, ST_MM_IDLE);
+		break;
 	}
 }
 
@@ -86,7 +89,7 @@ static struct osmo_fsm_state mm_state_gb_fsm_states[] = {
 		.action = st_mm_ready,
 	},
 	[ST_MM_STANDBY] = {
-		.in_event_mask = X(E_MM_PDU_RECEPTION),
+		.in_event_mask = X(E_MM_PDU_RECEPTION) | X(E_MM_IMPLICIT_DETACH),
 		.out_state_mask = X(ST_MM_IDLE) | X(ST_MM_READY),
 		.name = "Standby",
 		.action = st_mm_standby,
