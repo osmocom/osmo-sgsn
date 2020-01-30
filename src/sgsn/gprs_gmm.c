@@ -1099,6 +1099,16 @@ static inline void ptmsi_update(struct sgsn_mm_ctx *ctx)
 	osmo_fsm_inst_dispatch(ctx->gmm_fsm, E_GMM_COMMON_PROC_INIT_REQ, NULL);
 }
 
+/* Detect if RAT has changed */
+static bool mmctx_did_rat_change(struct sgsn_mm_ctx *mmctx, struct msgb *msg)
+{
+	if (MSG_IU_UE_CTX(msg) && mmctx->ran_type != MM_CTX_T_UTRAN_Iu)
+		return true;
+	if (!MSG_IU_UE_CTX(msg) && mmctx->ran_type != MM_CTX_T_GERAN_Gb)
+		return true;
+	return false;
+}
+
 /* 3GPP TS 24.008 § 9.4.1 Attach request */
 static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 				struct gprs_llc_llme *llme)
@@ -1942,6 +1952,23 @@ int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		/* TLLI unassignment */
 		gprs_llgmm_unassign(llme);
 		return rc;
+	}
+
+	/* A RAT change is only expected/allowed for RAU/Attach Req */
+	if (mmctx && mmctx_did_rat_change(mmctx, msg)) {
+		switch (gh->msg_type) {
+		case GSM48_MT_GMM_RA_UPD_REQ:
+		case GSM48_MT_GMM_ATTACH_REQ:
+			break;
+		default:
+			/* This shouldn't happen with other message types and
+			 * we need to error out to prevent a crash */
+			LOGMMCTXP(LOGL_NOTICE, mmctx, "Dropping GMM %s which was received on different "
+				       "RAT (mmctx ran_type=%u, msg_iu_ue_ctx=%p\n",
+				       get_value_string(gprs_msgt_gmm_names, gh->msg_type),
+				       mmctx->ran_type, MSG_IU_UE_CTX(msg));
+			return -EINVAL;
+		}
 	}
 
 	/*
