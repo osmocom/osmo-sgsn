@@ -356,3 +356,23 @@ sgsn
 sgsn
  encryption GEA0
 ----
+
+=== Configure SCCP/M3UA to accept _IuPS_ links
+
+OsmoSGSN acts as client to contact an STP instance and establish an SCCP/M3UA
+link.
+
+An example configuration of OsmoSGSN's SCCP link:
+
+----
+cs7 instance 0
+ point-code 0.23.4
+ asp asp-clnt-OsmoSGSN 2905 0 m3ua
+  remote-ip 127.0.0.1
+  sctp-role client
+ as as-clnt-OsmoSGSN m3ua
+  asp asp-clnt-OsmoSGSN
+  routing-key 0 0.23.4
+----
+
+This configuration is explained in detail in <<cs7_config>>.

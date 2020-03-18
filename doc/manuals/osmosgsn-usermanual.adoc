@@ -19,6 +19,8 @@ include::./common/chapters/logging.adoc[]
 
 include::{srcdir}/chapters/configuration.adoc[]
 
+include::./common/chapters/cs7-config.adoc[]
+
 include::./common/chapters/gb.adoc[]
 
 include::./common/chapters/control_if.adoc[]
