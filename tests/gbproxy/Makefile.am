@@ -46,5 +46,6 @@ gbproxy_test_LDADD = \
 	$(LIBOSMOVTY_LIBS) \
 	$(LIBOSMOABIS_LIBS) \
 	$(LIBRARY_DL) \
+	$(LIBRARY_DLSYM) \
 	-lrt \
 	$(NULL)

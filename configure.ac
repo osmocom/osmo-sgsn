@@ -38,6 +38,9 @@ dnl checks for libraries
 AC_SEARCH_LIBS([dlopen], [dl dld], [LIBRARY_DL="$LIBS";LIBS=""])
 AC_SUBST(LIBRARY_DL)
 
+AC_SEARCH_LIBS([dlsym], [dl dld], [LIBRARY_DLSYM="$LIBS";LIBS=""])
+AC_SUBST(LIBRARY_DLSYM)
+
 
 PKG_CHECK_MODULES(LIBOSMOCORE, libosmocore >= 1.2.0)
 PKG_CHECK_MODULES(LIBOSMOVTY, libosmovty >= 1.2.0)
