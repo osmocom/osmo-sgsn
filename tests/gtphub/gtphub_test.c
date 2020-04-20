@@ -54,7 +54,7 @@
 void gtphub_init(struct gtphub *hub);
 void gtphub_free(struct gtphub *hub);
 
-void *osmo_gtphub_ctx;
+extern void *osmo_gtphub_ctx;
 
 static void nr_mapping_free(struct expiring_item *e)
 {
