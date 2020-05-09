@@ -51,8 +51,8 @@ static int ares_osmo_fd_cb(struct osmo_fd *fd, unsigned int what)
 	LOGP(DGPRS, LOGL_DEBUG, "C-ares fd(%d) ready(%d)\n", fd->fd, what);
 
 	ares_process_fd(sgsn->ares_channel,
-			(what & BSC_FD_READ) ? fd->fd : ARES_SOCKET_BAD,
-			(what & BSC_FD_WRITE) ? fd->fd : ARES_SOCKET_BAD);
+			(what & OSMO_FD_READ) ? fd->fd : ARES_SOCKET_BAD,
+			(what & OSMO_FD_WRITE) ? fd->fd : ARES_SOCKET_BAD);
 	osmo_ares_reschedule(sgsn);
 	return 0;
 }
@@ -120,14 +120,14 @@ static void setup_ares_osmo_fd(void *data, int fd, int read, int write)
 
 update_fd:
 	if (read)
-		ufd->fd.when |= BSC_FD_READ;
+		ufd->fd.when |= OSMO_FD_READ;
 	else
-		ufd->fd.when &= ~BSC_FD_READ;
+		ufd->fd.when &= ~OSMO_FD_READ;
 
 	if (write)
-		ufd->fd.when |= BSC_FD_WRITE;
+		ufd->fd.when |= OSMO_FD_WRITE;
 	else
-		ufd->fd.when &= ~BSC_FD_WRITE;
+		ufd->fd.when &= ~OSMO_FD_WRITE;
 
 	osmo_ares_reschedule(sgsn);
 }

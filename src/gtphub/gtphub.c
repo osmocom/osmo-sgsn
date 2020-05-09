@@ -853,7 +853,7 @@ static int gtphub_sock_init(struct osmo_fd *ofd,
 		return -1;
 	}
 
-	ofd->when = BSC_FD_READ;
+	ofd->when = OSMO_FD_READ;
 	ofd->cb = cb;
 	ofd->data = data;
 	ofd->priv_nr = ofd_id;
@@ -1948,7 +1948,7 @@ static int from_sgsns_read_cb(struct osmo_fd *from_sgsns_ofd, unsigned int what)
 	LOG(LOGL_DEBUG, "=== reading from SGSN (%s)\n",
 	    gtphub_plane_idx_names[plane_idx]);
 
-	if (!(what & BSC_FD_READ))
+	if (!(what & OSMO_FD_READ))
 		return 0;
 
 	struct gtphub *hub = from_sgsns_ofd->data;
@@ -1979,7 +1979,7 @@ static int from_ggsns_read_cb(struct osmo_fd *from_ggsns_ofd, unsigned int what)
 	OSMO_ASSERT(plane_idx < GTPH_PLANE_N);
 	LOG(LOGL_DEBUG, "=== reading from GGSN (%s)\n",
 	    gtphub_plane_idx_names[plane_idx]);
-	if (!(what & BSC_FD_READ))
+	if (!(what & OSMO_FD_READ))
 		return 0;
 
 	struct gtphub *hub = from_ggsns_ofd->data;
