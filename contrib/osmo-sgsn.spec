@@ -12,17 +12,13 @@
 # license that conforms to the Open Source Definition (Version 1.9)
 # published by the Open Source Initiative.
 
-# Please submit bugfixes or comments via http://bugs.opensuse.org/
-#
-
-
 ## Disable LTO for now since it breaks compilation of the tests
 ## https://osmocom.org/issues/4116
 %define _lto_cflags %{nil}
 
 %define with_iu 1
 Name:           osmo-sgsn
-Version:        1.6.0.9
+Version:        0.0.0
 Release:        0
 Summary:        Osmocom's SGSN for 2G and 3G packet-switched mobile networks
 License:        AGPL-3.0-or-later AND GPL-2.0-or-later
@@ -33,7 +29,11 @@ BuildRequires:  autoconf
 BuildRequires:  automake
 BuildRequires:  libtool
 BuildRequires:  pkgconfig
+%if 0%{?centos_ver}
+BuildRequires:  systemd
+%else
 BuildRequires:  systemd-rpm-macros
+%endif
 BuildRequires:  pkgconfig(libcares)
 BuildRequires:  pkgconfig(libcrypto) >= 0.9.5
 BuildRequires:  pkgconfig(libgtp) >= 1.4.0
@@ -88,6 +88,7 @@ make %{?_smp_mflags}
 %install
 %make_install
 
+%if 0%{?suse_version}
 %preun  %service_del_preun  %{name}.service
 %postun %service_del_postun %{name}.service
 %pre    %service_add_pre    %{name}.service
@@ -100,6 +101,7 @@ make %{?_smp_mflags}
 %postun -n osmo-gbproxy %service_del_postun osmo-gbproxy.service
 %pre    -n osmo-gbproxy %service_add_pre    osmo-gbproxy.service
 %post   -n osmo-gbproxy %service_add_post   osmo-gbproxy.service
+%endif
 
 %check
 make %{?_smp_mflags} check || (find . -name testsuite.log -exec cat {} +)
