@@ -280,8 +280,10 @@ int gsm48_tx_gmm_att_ack(struct sgsn_mm_ctx *mm)
 	struct msgb *msg = gsm48_msgb_alloc_name("GSM 04.08 ATT ACK");
 	struct gsm48_hdr *gh;
 	struct gsm48_attach_ack *aa;
-	uint8_t *mid;
 	unsigned long t;
+	struct osmo_mobile_identity mi;
+	uint8_t *l;
+	int rc;
 #if 0
 	uint8_t *ptsig;
 #endif
@@ -321,9 +323,18 @@ int gsm48_tx_gmm_att_ack(struct sgsn_mm_ctx *mm)
 
 #ifdef PTMSI_ALLOC
 	/* Optional: Allocated P-TMSI */
-	mid = msgb_put(msg, GSM48_MID_TMSI_LEN);
-	gsm48_generate_mid_from_tmsi(mid, mm->p_tmsi);
-	mid[0] = GSM48_IE_GMM_ALLOC_PTMSI;
+	mi = (struct osmo_mobile_identity){
+		.type = GSM_MI_TYPE_TMSI,
+		.tmsi = mm->p_tmsi,
+	};
+	l = msgb_tl_put(msg, GSM48_IE_GMM_ALLOC_PTMSI);
+	rc = osmo_mobile_identity_encode_msgb(msg, &mi, false);
+	if (rc < 0) {
+		LOGMMCTXP(LOGL_ERROR, mm, "Cannot encode Mobile Identity\n");
+		msgb_free(msg);
+		return -EINVAL;
+	}
+	*l = rc;
 #endif
 
 	/* Optional: MS-identity (combined attach) */
@@ -1026,31 +1037,35 @@ void gsm0408_gprs_access_cancelled(struct sgsn_mm_ctx *ctx, int gmm_cause)
 static int gsm48_rx_gmm_id_resp(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 {
 	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
-	uint8_t mi_type = gh->data[1] & GSM_MI_TYPE_MASK;
-	long mi_typel = mi_type;
-	char mi_string[GSM48_MI_SIZE];
+	long mi_typel;
+	char mi_log_string[32];
+	struct osmo_mobile_identity mi;
 
-	gsm48_mi_to_string(mi_string, sizeof(mi_string), &gh->data[1], gh->data[0]);
 	if (!ctx) {
 		DEBUGP(DMM, "from unknown TLLI 0x%08x?!? This should not happen\n", msgb_tlli(msg));
 		return -EINVAL;
 	}
 
-	LOGMMCTXP(LOGL_DEBUG, ctx, "-> GMM IDENTITY RESPONSE: MI(%s)=%s\n",
-		gsm48_mi_type_name(mi_type), mi_string);
+	if (osmo_mobile_identity_decode(&mi, &gh->data[1], gh->data[0], false)) {
+		LOGMMCTXP(LOGL_ERROR, ctx, "-> GMM IDENTITY RESPONSE: cannot decode Mobile Identity\n");
+		return -EINVAL;
+	}
+	osmo_mobile_identity_to_str_buf(mi_log_string, sizeof(mi_log_string), &mi);
+
+	LOGMMCTXP(LOGL_DEBUG, ctx, "-> GMM IDENTITY RESPONSE: MI=%s\n", mi_log_string);
 
 	if (ctx->t3370_id_type == GSM_MI_TYPE_NONE) {
 		LOGMMCTXP(LOGL_NOTICE, ctx,
-			  "Got unexpected IDENTITY RESPONSE: MI(%s)=%s, "
+			  "Got unexpected IDENTITY RESPONSE: MI=%s, "
 			  "ignoring message\n",
-			  gsm48_mi_type_name(mi_type), mi_string);
+			  mi_log_string);
 		return -EINVAL;
 	}
 
-	if (mi_type == ctx->t3370_id_type)
+	if (mi.type == ctx->t3370_id_type)
 		mmctx_timer_stop(ctx, 3370);
 
-	switch (mi_type) {
+	switch (mi.type) {
 	case GSM_MI_TYPE_IMSI:
 		/* we already have a mm context with current TLLI, but no
 		 * P-TMSI / IMSI yet.  What we now need to do is to fill
@@ -1058,7 +1073,7 @@ static int gsm48_rx_gmm_id_resp(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 		if (strlen(ctx->imsi) == 0) {
 			/* Check if we already have a MM context for this IMSI */
 			struct sgsn_mm_ctx *ictx;
-			ictx = sgsn_mm_ctx_by_imsi(mi_string);
+			ictx = sgsn_mm_ctx_by_imsi(mi.imsi);
 			if (ictx) {
 				/* Handle it like in gsm48_rx_gmm_det_req,
 				 * except that no messages are sent to the BSS */
@@ -1070,16 +1085,17 @@ static int gsm48_rx_gmm_id_resp(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 				mm_ctx_cleanup_free(ictx, "GPRS IMSI re-use");
 			}
 		}
-		osmo_strlcpy(ctx->imsi, mi_string, sizeof(ctx->imsi));
+		OSMO_STRLCPY_ARRAY(ctx->imsi, mi.imsi);
 		break;
 	case GSM_MI_TYPE_IMEI:
-		osmo_strlcpy(ctx->imei, mi_string, sizeof(ctx->imei));
+		OSMO_STRLCPY_ARRAY(ctx->imei, mi.imei);
 		break;
 	case GSM_MI_TYPE_IMEISV:
 		break;
 	}
 
 	/* Check if we can let the mobile station enter */
+	mi_typel = mi.type;
 	return osmo_fsm_inst_dispatch(ctx->gmm_att_req.fsm, E_IDEN_RESP_RECV, (void *)mi_typel);
 }
 
@@ -1131,14 +1147,14 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 				struct gprs_llc_llme *llme)
 {
 	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
-	uint8_t *cur = gh->data, *msnc, *mi, *ms_ra_acc_cap;
-	uint8_t msnc_len, att_type, mi_len, mi_type, ms_ra_acc_cap_len;
+	uint8_t *cur = gh->data, *msnc, *mi_data, *ms_ra_acc_cap;
+	uint8_t msnc_len, att_type, mi_len, ms_ra_acc_cap_len;
 	uint16_t drx_par;
-	uint32_t tmsi;
-	char mi_string[GSM48_MI_SIZE];
+	char mi_log_string[32];
 	struct gprs_ra_id ra_id;
 	uint16_t cid = 0;
 	enum gsm48_gmm_cause reject_cause;
+	struct osmo_mobile_identity mi;
 	int rc;
 
 	LOGMMCTXP(LOGL_INFO, ctx, "-> GMM ATTACH REQUEST ");
@@ -1182,15 +1198,15 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 
 	/* Mobile Identity (P-TMSI or IMSI) 10.5.1.4 */
 	mi_len = *cur++;
-	mi = cur;
-	if (mi_len > 8)
-		goto err_inval;
-	mi_type = *mi & GSM_MI_TYPE_MASK;
+	mi_data = cur;
 	cur += mi_len;
 
-	gsm48_mi_to_string(mi_string, sizeof(mi_string), mi, mi_len);
+	rc = osmo_mobile_identity_decode(&mi, mi_data, mi_len, false);
+	if (rc)
+		goto err_inval;
+	osmo_mobile_identity_to_str_buf(mi_log_string, sizeof(mi_log_string), &mi);
 
-	DEBUGPC(DMM, "MI(%s) type=\"%s\" ", mi_string,
+	DEBUGPC(DMM, "MI(%s) type=\"%s\" ", mi_log_string,
 		get_value_string(gprs_att_t_strs, att_type));
 
 	/* Old routing area identification 10.5.5.15. Skip it */
@@ -1207,11 +1223,11 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 
 	/* Optional: Old P-TMSI Signature, Requested READY timer, TMSI Status */
 
-	switch (mi_type) {
+	switch (mi.type) {
 	case GSM_MI_TYPE_IMSI:
 		/* Try to find MM context based on IMSI */
 		if (!ctx)
-			ctx = sgsn_mm_ctx_by_imsi(mi_string);
+			ctx = sgsn_mm_ctx_by_imsi(mi.imsi);
 		if (!ctx) {
 			if (MSG_IU_UE_CTX(msg))
 				ctx = sgsn_mm_ctx_alloc_iu(MSG_IU_UE_CTX(msg));
@@ -1221,15 +1237,13 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 				reject_cause = GMM_CAUSE_NET_FAIL;
 				goto rejected;
 			}
-			osmo_strlcpy(ctx->imsi, mi_string, sizeof(ctx->imsi));
+			OSMO_STRLCPY_ARRAY(ctx->imsi, mi.imsi);
 		}
 		break;
 	case GSM_MI_TYPE_TMSI:
-		memcpy(&tmsi, mi+1, 4);
-		tmsi = ntohl(tmsi);
 		/* Try to find MM context based on P-TMSI */
 		if (!ctx)
-			ctx = sgsn_mm_ctx_by_ptmsi(tmsi);
+			ctx = sgsn_mm_ctx_by_ptmsi(mi.tmsi);
 		if (!ctx) {
 			/* Allocate a context as most of our code expects one.
 			 * Context will not have an IMSI ultil ID RESP is received */
@@ -1241,12 +1255,12 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 				reject_cause = GMM_CAUSE_NET_FAIL;
 				goto rejected;
 			}
-			ctx->p_tmsi = tmsi;
+			ctx->p_tmsi = mi.tmsi;
 		}
 		break;
 	default:
 		LOGMMCTXP(LOGL_NOTICE, ctx, "Rejecting ATTACH REQUEST with "
-			"MI type %s\n", gsm48_mi_type_name(mi_type));
+			"MI %s\n", mi_log_string);
 		reject_cause = GMM_CAUSE_MS_ID_NOT_DERIVED;
 		goto rejected;
 	}
@@ -1275,8 +1289,8 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 					   ctx->ciph_algo)) {
 		reject_cause = GMM_CAUSE_PROTO_ERR_UNSPEC;
 		LOGMMCTXP(LOGL_NOTICE, ctx, "Rejecting ATTACH REQUEST with MI "
-			  "type %s because MS do not support required %s "
-			  "encryption\n", gsm48_mi_type_name(mi_type),
+			  "%s because MS do not support required %s "
+			  "encryption\n", mi_log_string,
 			  get_value_string(gprs_cipher_names,ctx->ciph_algo));
 		goto rejected;
 	}
@@ -1423,8 +1437,10 @@ static int gsm48_tx_gmm_ra_upd_ack(struct sgsn_mm_ctx *mm)
 	struct msgb *msg = gsm48_msgb_alloc_name("GSM 04.08 UPD ACK");
 	struct gsm48_hdr *gh;
 	struct gsm48_ra_upd_ack *rua;
-	uint8_t *mid;
 	unsigned long t;
+	uint8_t *l;
+	int rc;
+	struct osmo_mobile_identity mi;
 
 	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_GPRS_ROUTING_AREA_ACKED]);
 	LOGMMCTXP(LOGL_INFO, mm, "<- ROUTING AREA UPDATE ACCEPT\n");
@@ -1454,9 +1470,17 @@ static int gsm48_tx_gmm_ra_upd_ack(struct sgsn_mm_ctx *mm)
 
 #ifdef PTMSI_ALLOC
 	/* Optional: Allocated P-TMSI */
-	mid = msgb_put(msg, GSM48_MID_TMSI_LEN);
-	gsm48_generate_mid_from_tmsi(mid, mm->p_tmsi);
-	mid[0] = GSM48_IE_GMM_ALLOC_PTMSI;
+	mi = (struct osmo_mobile_identity){
+		.type = GSM_MI_TYPE_TMSI,
+		.tmsi = mm->p_tmsi,
+	};
+	l = msgb_tl_put(msg, GSM48_IE_GMM_ALLOC_PTMSI);
+	rc = osmo_mobile_identity_encode_msgb(msg, &mi, false);
+	if (rc < 0) {
+		msgb_free(msg);
+		return -EINVAL;
+	}
+	*l = rc;
 #endif
 
 	/* Optional: Negotiated READY timer value */
@@ -1606,19 +1630,14 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		} else if (TLVP_PRESENT(&tp, GSM48_IE_GMM_ALLOC_PTMSI)) {
 #ifdef BUILD_IU
 			/* In Iu mode search only for ptmsi */
-			char mi_string[GSM48_MI_SIZE];
-			uint8_t mi_len = TLVP_LEN(&tp, GSM48_IE_GMM_ALLOC_PTMSI);
-			const uint8_t *mi = TLVP_VAL(&tp, GSM48_IE_GMM_ALLOC_PTMSI);
-			uint8_t mi_type = *mi & GSM_MI_TYPE_MASK;
-			uint32_t tmsi;
-
-			gsm48_mi_to_string(mi_string, sizeof(mi_string), mi, mi_len);
-
-			if (mi_type == GSM_MI_TYPE_TMSI) {
-				memcpy(&tmsi, mi+1, 4);
-				tmsi = ntohl(tmsi);
-				mmctx = sgsn_mm_ctx_by_ptmsi(tmsi);
+			struct osmo_mobile_identity mi;
+			if (osmo_mobile_identity_decode(&mi, TLVP_VAL(&tp, GSM48_IE_GMM_ALLOC_PTMSI),
+							TLVP_LEN(&tp, GSM48_IE_GMM_ALLOC_PTMSI), false)
+			    || mi.type != GSM_MI_TYPE_TMSI) {
+				LOGIUP(MSG_IU_UE_CTX(msg), LOGL_ERROR, "Cannot decode P-TMSI\n");
+				goto rejected;
 			}
+			mmctx = sgsn_mm_ctx_by_ptmsi(mi.tmsi);
 #else
 			LOGIUP(MSG_IU_UE_CTX(msg), LOGL_ERROR,
 			       "Rejecting GMM RA Update Request: No Iu support\n");
@@ -1802,11 +1821,11 @@ static int gsm48_rx_gmm_ptmsi_reall_compl(struct sgsn_mm_ctx *mmctx)
 static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 {
 	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
-	uint8_t *cur = gh->data, *mi;
-	uint8_t service_type, mi_len, mi_type;
-	uint32_t tmsi;
+	uint8_t *cur = gh->data, *mi_data;
+	uint8_t service_type, mi_len;
 	struct tlv_parsed tp;
-	char mi_string[GSM48_MI_SIZE];
+	struct osmo_mobile_identity mi;
+	char mi_log_string[32];
 	enum gsm48_gmm_cause reject_cause;
 	int rc;
 
@@ -1826,15 +1845,14 @@ static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 
 	/* Mobile Identity (P-TMSI or IMSI) 10.5.1.4 */
 	mi_len = *cur++;
-	mi = cur;
-	if (mi_len > 8)
-		goto err_inval;
-	mi_type = *mi & GSM_MI_TYPE_MASK;
+	mi_data = cur;
 	cur += mi_len;
+	rc = osmo_mobile_identity_decode(&mi, mi_data, mi_len, false);
+	if (rc)
+		goto err_inval;
+	osmo_mobile_identity_to_str_buf(mi_log_string, sizeof(mi_log_string), &mi);
 
-	gsm48_mi_to_string(mi_string, sizeof(mi_string), mi, mi_len);
-
-	DEBUGPC(DMM, "MI(%s) type=\"%s\" ", mi_string,
+	DEBUGPC(DMM, "MI(%s) type=\"%s\" ", mi_log_string,
 		get_value_string(gprs_service_t_strs, service_type));
 
 	LOGPC(DMM, LOGL_INFO, "\n");
@@ -1842,11 +1860,11 @@ static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 	/* Optional: PDP context status, MBMS context status, Uplink data status, Device properties */
 	tlv_parse(&tp, &gsm48_gmm_att_tlvdef, cur, (msg->data + msg->len) - cur, 0, 0);
 
-	switch (mi_type) {
+	switch (mi.type) {
 	case GSM_MI_TYPE_IMSI:
 		/* Try to find MM context based on IMSI */
 		if (!ctx)
-			ctx = sgsn_mm_ctx_by_imsi(mi_string);
+			ctx = sgsn_mm_ctx_by_imsi(mi.imsi);
 		if (!ctx) {
 			/* FIXME: We need to have a context for service request? */
 			reject_cause = GMM_CAUSE_IMPL_DETACHED;
@@ -1855,11 +1873,9 @@ static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 		msgid2mmctx(ctx, msg);
 		break;
 	case GSM_MI_TYPE_TMSI:
-		memcpy(&tmsi, mi+1, 4);
-		tmsi = ntohl(tmsi);
 		/* Try to find MM context based on P-TMSI */
 		if (!ctx)
-			ctx = sgsn_mm_ctx_by_ptmsi(tmsi);
+			ctx = sgsn_mm_ctx_by_ptmsi(mi.tmsi);
 		if (!ctx) {
 			/* FIXME: We need to have a context for service request? */
 			reject_cause = GMM_CAUSE_IMPL_DETACHED;
@@ -1869,7 +1885,7 @@ static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 		break;
 	default:
 		LOGMMCTXP(LOGL_NOTICE, ctx, "Rejecting SERVICE REQUEST with "
-			"MI type %s\n", gsm48_mi_type_name(mi_type));
+			"MI %s\n", mi_log_string);
 		reject_cause = GMM_CAUSE_MS_ID_NOT_DERIVED;
 		goto rejected;
 	}

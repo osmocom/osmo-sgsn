@@ -436,28 +436,26 @@ int gbproxy_set_patch_filter(struct gbproxy_match *match, const char *filter,
 int gbproxy_check_imsi(struct gbproxy_match *match,
 		       const uint8_t *imsi, size_t imsi_len)
 {
-	char mi_buf[200];
 	int rc;
+	struct osmo_mobile_identity mi;
 
 	if (!match->enable)
 		return 1;
 
-	rc = gprs_is_mi_imsi(imsi, imsi_len);
-	if (rc > 0)
-		rc = gsm48_mi_to_string(mi_buf, sizeof(mi_buf), imsi, imsi_len);
-	if (rc <= 0) {
+	rc = osmo_mobile_identity_decode(&mi, imsi, imsi_len, false);
+	if (rc || mi.type != GSM_MI_TYPE_IMSI) {
 		LOGP(DGPRS, LOGL_NOTICE, "Invalid IMSI %s\n",
 		     osmo_hexdump(imsi, imsi_len));
 		return -1;
 	}
 
-	LOGP(DGPRS, LOGL_DEBUG, "Checking IMSI '%s' (%d)\n", mi_buf, rc);
+	LOGP(DGPRS, LOGL_DEBUG, "Checking IMSI '%s' (%d)\n", mi.imsi, rc);
 
-	rc = regexec(&match->re_comp, mi_buf, 0, NULL, 0);
+	rc = regexec(&match->re_comp, mi.imsi, 0, NULL, 0);
 	if (rc == REG_NOMATCH) {
 		LOGP(DGPRS, LOGL_INFO,
 		       "IMSI '%s' doesn't match pattern '%s'\n",
-		       mi_buf, match->re_str);
+		       mi.imsi, match->re_str);
 		return 0;
 	}
 

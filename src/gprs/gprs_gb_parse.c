@@ -604,13 +604,12 @@ void gprs_gb_log_parse_context(int log_level,
 	}
 
 	if (parse_ctx->imsi) {
-		char mi_buf[200];
-		mi_buf[0] = '\0';
-		gsm48_mi_to_string(mi_buf, sizeof(mi_buf),
-				   parse_ctx->imsi, parse_ctx->imsi_len);
-		LOGPC(DGPRS, log_level, "%s IMSI %s",
-		     sep, mi_buf);
-		sep = ",";
+		struct osmo_mobile_identity mi;
+		if (osmo_mobile_identity_decode(&mi, parse_ctx->imsi, parse_ctx->imsi_len, false) == 0
+		    && mi.type == GSM_MI_TYPE_IMSI) {
+			LOGPC(DGPRS, log_level, "%s IMSI %s", sep, mi.imsi);
+			sep = ",";
+		}
 	}
 	if (parse_ctx->invalidate_tlli) {
 		LOGPC(DGPRS, log_level, "%s invalidate", sep);

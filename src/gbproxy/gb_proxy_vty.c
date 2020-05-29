@@ -554,7 +554,6 @@ DEFUN(show_gbproxy_links, show_gbproxy_links_cmd, "show gbproxy links",
        SHOW_STR "Display information about the Gb proxy\n" "Show logical links\n")
 {
 	struct gbproxy_peer *peer;
-	char mi_buf[200];
 	time_t now;
 	struct timespec ts = {0,};
 
@@ -569,17 +568,20 @@ DEFUN(show_gbproxy_links, show_gbproxy_links_cmd, "show gbproxy links",
 
 		llist_for_each_entry(link_info, &state->logical_links, list) {
 			time_t age = now - link_info->timestamp;
+			struct osmo_mobile_identity mi;
+			const char *imsi_str;
 
 			if (link_info->imsi > 0) {
-				snprintf(mi_buf, sizeof(mi_buf), "(invalid)");
-				gsm48_mi_to_string(mi_buf, sizeof(mi_buf),
-						   link_info->imsi,
-						   link_info->imsi_len);
+				if (osmo_mobile_identity_decode(&mi, link_info->imsi, link_info->imsi_len, false)
+				    || mi.type != GSM_MI_TYPE_IMSI)
+					imsi_str = "(invalid)";
+				else
+					imsi_str = mi.imsi;
 			} else {
-				snprintf(mi_buf, sizeof(mi_buf), "(none)");
+				imsi_str = "(none)";
 			}
 			vty_out(vty, "  TLLI %08x, IMSI %s, AGE %d",
-				link_info->tlli.current, mi_buf, (int)age);
+				link_info->tlli.current, imsi_str, (int)age);
 
 			if (link_info->stored_msgs_len)
 				vty_out(vty, ", STORED %"PRIu32"/%"PRIu32,
@@ -708,7 +710,6 @@ DEFUN(delete_gb_link_by_id, delete_gb_link_by_id_cmd,
 	struct gbproxy_peer *peer = 0;
 	struct gbproxy_link_info *link_info, *nxt;
 	struct gbproxy_patch_state *state;
-	char mi_buf[200];
 	int found = 0;
 
 	match = argv[1][0];
@@ -729,6 +730,8 @@ DEFUN(delete_gb_link_by_id, delete_gb_link_by_id_cmd,
 	state = &peer->patch_state;
 
 	llist_for_each_entry_safe(link_info, nxt, &state->logical_links, list) {
+		struct osmo_mobile_identity mi;
+
 		switch (match) {
 		case MATCH_TLLI:
 			if (link_info->tlli.current != ident)
@@ -741,12 +744,10 @@ DEFUN(delete_gb_link_by_id, delete_gb_link_by_id_cmd,
 		case MATCH_IMSI:
 			if (!link_info->imsi)
 				continue;
-			mi_buf[0] = '\0';
-			gsm48_mi_to_string(mi_buf, sizeof(mi_buf),
-					   link_info->imsi,
-					   link_info->imsi_len);
-
-			if (strcmp(mi_buf, imsi) != 0)
+			if (osmo_mobile_identity_decode(&mi, link_info->imsi, link_info->imsi_len, false)
+			    || mi.type != GSM_MI_TYPE_IMSI)
+				continue;
+			if (strcmp(mi.imsi, imsi) != 0)
 				continue;
 			break;
 		}

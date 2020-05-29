@@ -401,14 +401,16 @@ static void gbproxy_assign_imsi(struct gbproxy_peer *peer,
 		peer, parse_ctx->imsi, parse_ctx->imsi_len);
 
 	if (other_link_info && other_link_info != link_info) {
-		char mi_buf[200];
-		mi_buf[0] = '\0';
-		gsm48_mi_to_string(mi_buf, sizeof(mi_buf),
-				   parse_ctx->imsi, parse_ctx->imsi_len);
-		LOGP(DGPRS, LOGL_INFO,
-		     "Removing TLLI %08x from list (IMSI %s re-used)\n",
-		     other_link_info->tlli.current, mi_buf);
-		gbproxy_delete_link_info(peer, other_link_info);
+		struct osmo_mobile_identity mi;
+		if (osmo_mobile_identity_decode(&mi, parse_ctx->imsi, parse_ctx->imsi_len, false)
+		    || mi.type != GSM_MI_TYPE_IMSI) {
+			LOGP(DGPRS, LOGL_ERROR, "Failed to decode Mobile Identity\n");
+		} else {
+			LOGP(DGPRS, LOGL_INFO,
+			     "Removing TLLI %08x from list (IMSI %s re-used)\n",
+			     other_link_info->tlli.current, mi.imsi);
+			gbproxy_delete_link_info(peer, other_link_info);
+		}
 	}
 
 	/* Update the IMSI field */

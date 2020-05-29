@@ -158,7 +158,8 @@ static int dump_peers(FILE *stream, int indent, time_t now,
 		fprintf(stream, "%*s    TLLI-Cache: %d\n",
 			indent, "", state->logical_link_count);
 		llist_for_each_entry(link_info, &state->logical_links, list) {
-			char mi_buf[200];
+			struct osmo_mobile_identity mi;
+			const char *imsi_str;
 			time_t age = now ? now - link_info->timestamp : 0;
 			int stored_msgs = 0;
 			struct llist_head *iter;
@@ -166,13 +167,14 @@ static int dump_peers(FILE *stream, int indent, time_t now,
 			llist_for_each(iter, &link_info->stored_msgs)
 				stored_msgs++;
 
-			if (link_info->imsi_len > 0) {
-				snprintf(mi_buf, sizeof(mi_buf), "(invalid)");
-				gsm48_mi_to_string(mi_buf, sizeof(mi_buf),
-						   link_info->imsi,
-						   link_info->imsi_len);
+			if (link_info->imsi > 0) {
+				if (osmo_mobile_identity_decode(&mi, link_info->imsi, link_info->imsi_len, false)
+				    || mi.type != GSM_MI_TYPE_IMSI)
+					imsi_str = "(invalid)";
+				else
+					imsi_str = mi.imsi;
 			} else {
-				snprintf(mi_buf, sizeof(mi_buf), "(none)");
+				imsi_str = "(none)";
 			}
 			fprintf(stream, "%*s      TLLI %08x",
 				     indent, "", link_info->tlli.current);
@@ -186,7 +188,7 @@ static int dump_peers(FILE *stream, int indent, time_t now,
 						link_info->sgsn_tlli.assigned);
 			}
 			fprintf(stream, ", IMSI %s, AGE %d",
-				mi_buf, (int)age);
+				imsi_str, (int)age);
 
 			if (stored_msgs)
 				fprintf(stream, ", STORED %d", stored_msgs);
@@ -4809,10 +4811,7 @@ static void test_gbproxy_imsi_matching(void)
 
 	OSMO_ASSERT(gbproxy_check_imsi(&match, imsi1, ARRAY_SIZE(imsi1)) == 1);
 	OSMO_ASSERT(gbproxy_check_imsi(&match, imsi2, ARRAY_SIZE(imsi2)) == 1);
-	/* imsi3_bad contains 0xE and 0xF digits, but the conversion function
-	 * doesn't complain, so gbproxy_check_imsi() doesn't return -1 in this
-	 * case. */
-	OSMO_ASSERT(gbproxy_check_imsi(&match, imsi3_bad, ARRAY_SIZE(imsi3_bad)) == 0);
+	OSMO_ASSERT(gbproxy_check_imsi(&match, imsi3_bad, ARRAY_SIZE(imsi3_bad)) == -1);
 	OSMO_ASSERT(gbproxy_check_imsi(&match, tmsi1, ARRAY_SIZE(tmsi1)) == -1);
 	OSMO_ASSERT(gbproxy_check_imsi(&match, tmsi2_bad, ARRAY_SIZE(tmsi2_bad)) == -1);
 	OSMO_ASSERT(gbproxy_check_imsi(&match, imei1, ARRAY_SIZE(imei1)) == -1);
@@ -4823,7 +4822,7 @@ static void test_gbproxy_imsi_matching(void)
 
 	OSMO_ASSERT(gbproxy_check_imsi(&match, imsi1, ARRAY_SIZE(imsi1)) == 0);
 	OSMO_ASSERT(gbproxy_check_imsi(&match, imsi2, ARRAY_SIZE(imsi2)) == 0);
-	OSMO_ASSERT(gbproxy_check_imsi(&match, imsi3_bad, ARRAY_SIZE(imsi3_bad)) == 0);
+	OSMO_ASSERT(gbproxy_check_imsi(&match, imsi3_bad, ARRAY_SIZE(imsi3_bad)) == -1);
 	OSMO_ASSERT(gbproxy_check_imsi(&match, tmsi1, ARRAY_SIZE(tmsi1)) == -1);
 	OSMO_ASSERT(gbproxy_check_imsi(&match, tmsi2_bad, ARRAY_SIZE(tmsi2_bad)) == -1);
 	OSMO_ASSERT(gbproxy_check_imsi(&match, imei1, ARRAY_SIZE(imei1)) == -1);
