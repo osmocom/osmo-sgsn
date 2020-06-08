@@ -366,6 +366,10 @@ static int defrag_segments(struct gprs_sndcp_entity *sne)
 	rc = sgsn_rx_sndcp_ud_ind(&sne->ra_id, sne->lle->llme->tlli,
 				  sne->nsapi, msg, npdu_len, expnd);
 
+	/* we must free the memory we allocated above; ownership is not transferred
+	 * downwards in the call above */
+	msgb_free(msg);
+
 	if (any_pcomp_or_dcomp_active(sgsn))
 		talloc_free(expnd);
 
