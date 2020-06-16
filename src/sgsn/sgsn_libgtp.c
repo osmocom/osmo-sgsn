@@ -661,13 +661,19 @@ static int cb_data_ind(struct pdp_t *lib, void *packet, unsigned int len)
 	switch (mm->gmm_fsm->state) {
 	case ST_GMM_REGISTERED_SUSPENDED:
 		/* initiate PS PAGING procedure */
+		LOGMMCTXP(LOGL_INFO, mm, "Paging MS in GMM state %s\n",
+			  osmo_fsm_inst_state_name(mm->gmm_fsm));
 		gprs_gb_page_ps_ra(mm);
 		/* FIXME: queue the packet we received from GTP */
 		break;
 	case ST_GMM_REGISTERED_NORMAL:
 		OSMO_ASSERT(mm->gb.mm_state_fsm->state != ST_MM_IDLE);
-		if (mm->gb.mm_state_fsm->state == ST_MM_STANDBY)
+		if (mm->gb.mm_state_fsm->state == ST_MM_STANDBY) {
+			LOGMMCTXP(LOGL_INFO, mm, "Paging MS in GMM state %s, MM state %s\n",
+				  osmo_fsm_inst_state_name(mm->gmm_fsm),
+				  osmo_fsm_inst_state_name(mm->gb.mm_state_fsm));
 			gprs_gb_page_ps_ra(mm);
+		}
 
 		/* FIXME: queue the packet we received from GTP */
 		break;
