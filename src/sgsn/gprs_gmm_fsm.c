@@ -69,8 +69,11 @@ static void st_gmm_registered_normal(struct osmo_fsm_inst *fi, uint32_t event, v
 static void st_gmm_registered_suspended(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	switch(event) {
-	case E_GMM_RESUME:
+	case E_GMM_RESUME:		/* explicit BSSGP RESUME from BSS */
 		gmm_fsm_state_chg(fi, ST_GMM_REGISTERED_NORMAL);
+		break;
+	case E_GMM_COMMON_PROC_INIT_REQ: /* implicit resume from MS */
+		gmm_fsm_state_chg(fi, ST_GMM_COMMON_PROC_INIT);
 		break;
 	}
 }
@@ -123,10 +126,12 @@ static struct osmo_fsm_state gmm_fsm_states[] = {
 		.action = st_gmm_registered_normal,
 	},
 	[ST_GMM_REGISTERED_SUSPENDED] = {
-		.in_event_mask = X(E_GMM_RESUME),
+		.in_event_mask = X(E_GMM_RESUME) |
+				 X(E_GMM_COMMON_PROC_INIT_REQ),
 		.out_state_mask =
 			X(ST_GMM_DEREGISTERED) |
-			X(ST_GMM_REGISTERED_NORMAL),
+			X(ST_GMM_REGISTERED_NORMAL) |
+			X(ST_GMM_COMMON_PROC_INIT),
 		.name = "Registered.SUSPENDED",
 		.action = st_gmm_registered_suspended,
 	},
