@@ -115,7 +115,7 @@ make %{?_smp_mflags} check || (find . -name testsuite.log -exec cat {} +)
 %{_docdir}/%{name}/examples/osmo-sgsn/osmo-sgsn_custom-sccp.cfg
 %{_bindir}/osmo-sgsn
 %dir %{_sysconfdir}/osmocom
-%config %{_sysconfdir}/osmocom/osmo-sgsn.cfg
+%config(noreplace) %{_sysconfdir}/osmocom/osmo-sgsn.cfg
 %{_unitdir}/%{name}.service
 
 %files -n osmo-gtphub
@@ -125,7 +125,7 @@ make %{?_smp_mflags} check || (find . -name testsuite.log -exec cat {} +)
 %{_docdir}/%{name}/examples/osmo-gtphub/osmo-gtphub.cfg
 %{_bindir}/osmo-gtphub
 %dir %{_sysconfdir}/osmocom
-%config %{_sysconfdir}/osmocom/osmo-gtphub.cfg
+%config(noreplace) %{_sysconfdir}/osmocom/osmo-gtphub.cfg
 %{_unitdir}/osmo-gtphub.service
 
 %files -n osmo-gbproxy
@@ -135,7 +135,7 @@ make %{?_smp_mflags} check || (find . -name testsuite.log -exec cat {} +)
 %{_docdir}/%{name}/examples/osmo-gbproxy/osmo-gbproxy.cfg
 %{_bindir}/osmo-gbproxy
 %dir %{_sysconfdir}/osmocom
-%config %{_sysconfdir}/osmocom/osmo-gbproxy.cfg
+%config(noreplace) %{_sysconfdir}/osmocom/osmo-gbproxy.cfg
 %{_unitdir}/osmo-gbproxy.service
 
 %changelog
