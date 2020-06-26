@@ -42,6 +42,7 @@
 
 #include <osmocom/gprs/gprs_ns.h>
 #include <osmocom/gprs/gprs_bssgp.h>
+#include <osmocom/gprs/gprs_bssgp_bss.h>
 
 #include <osmocom/vty/telnet_interface.h>
 #include <osmocom/vty/logging.h>
@@ -197,6 +198,23 @@ int sgsn_vty_go_parent(struct vty *vty)
 	vty->index = NULL;
 	return 0;
 #endif
+}
+
+static void bvc_reset_persistent_nsvcs(void)
+{
+	/* Send BVC-RESET on all persistent NSVCs */
+	struct gprs_nsvc *nsvc;
+
+	llist_for_each_entry(nsvc, &sgsn_nsi->gprs_nsvcs, list) {
+		struct bssgp_bvc_ctx bctx = {
+			.nsei = nsvc->nsei,
+		};
+		if (!nsvc->persistent)
+			continue;
+		/* if it is not marked ALIVE, we cannot send any data over it. */
+		nsvc->state |= NSE_S_ALIVE;
+		bssgp_tx_bvc_reset2(&bctx, BVCI_SIGNALLING, BSSGP_CAUSE_EQUIP_FAIL, false);
+	}
 }
 
 static struct vty_app_info vty_info = {
@@ -521,6 +539,8 @@ int main(int argc, char **argv)
 
 	ranap_iu_init(tall_sgsn_ctx, DRANAP, "OsmoSGSN-IuPS", sccp, gsm0408_gprs_rcvmsg_iu, sgsn_ranap_iu_event);
 #endif
+
+	bvc_reset_persistent_nsvcs();
 
 	if (daemonize) {
 		rc = osmo_daemonize();
