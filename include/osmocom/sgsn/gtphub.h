@@ -35,14 +35,14 @@
 
 /* TODO move to osmocom/core/socket.c ? */
 #include <netdb.h> /* for IPPROTO_* etc */
-struct osmo_sockaddr {
+struct sgsn_sockaddr {
 	struct sockaddr_storage a;
 	socklen_t l;
 };
 
 /* TODO move to osmocom/core/socket.c ? */
 /*! \brief Initialize a sockaddr
- * \param[out] addr  Valid osmo_sockaddr pointer to write result to
+ * \param[out] addr  Valid sgsn_sockaddr pointer to write result to
  * \param[in] family  Address Family like AF_INET, AF_INET6, AF_UNSPEC
  * \param[in] type  Socket type like SOCK_DGRAM, SOCK_STREAM
  * \param[in] proto  Protocol like IPPROTO_TCP, IPPROTO_UDP
@@ -53,16 +53,16 @@ struct osmo_sockaddr {
  * Copy the first result from a getaddrinfo() call with the given parameters to
  * *addr and *addr_len. On error, do not change *addr and return nonzero.
  */
-int osmo_sockaddr_init(struct osmo_sockaddr *addr,
+int sgsn_sockaddr_init(struct sgsn_sockaddr *addr,
 		       uint16_t family, uint16_t type, uint8_t proto,
 		       const char *host, uint16_t port);
 
 /* Conveniently pass AF_UNSPEC, SOCK_DGRAM and IPPROTO_UDP to
- * osmo_sockaddr_init(). */
-static inline int osmo_sockaddr_init_udp(struct osmo_sockaddr *addr,
+ * sgsn_sockaddr_init(). */
+static inline int sgsn_sockaddr_init_udp(struct sgsn_sockaddr *addr,
 					 const char *host, uint16_t port)
 {
-	return osmo_sockaddr_init(addr, AF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP,
+	return sgsn_sockaddr_init(addr, AF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP,
 				  host, port);
 }
 
@@ -71,25 +71,25 @@ static inline int osmo_sockaddr_init_udp(struct osmo_sockaddr *addr,
  * \param[in] addr_str_len  Size of buffer addr_str points at.
  * \param[out] port_str  Valid pointer to a buffer of length port_str_len.
  * \param[in] port_str_len  Size of buffer port_str points at.
- * \param[in] addr  Binary representation as returned by osmo_sockaddr_init().
+ * \param[in] addr  Binary representation as returned by sgsn_sockaddr_init().
  * \param[in] flags  flags as passed to getnameinfo().
  * \returns  0 on success, an error code on error.
  *
  * Return the IPv4 or IPv6 address string and the port (a.k.a. service) string
- * representations of the given struct osmo_sockaddr in two caller provided
+ * representations of the given struct sgsn_sockaddr in two caller provided
  * char buffers. Flags of (NI_NUMERICHOST | NI_NUMERICSERV) return numeric
  * address and port. Either one of addr_str or port_str may be NULL, in which
  * case nothing is returned there.
  *
- * See also osmo_sockaddr_to_str() (less flexible, but much more convenient). */
-int osmo_sockaddr_to_strs(char *addr_str, size_t addr_str_len,
+ * See also sgsn_sockaddr_to_str() (less flexible, but much more convenient). */
+int sgsn_sockaddr_to_strs(char *addr_str, size_t addr_str_len,
 			  char *port_str, size_t port_str_len,
-			  const struct osmo_sockaddr *addr,
+			  const struct sgsn_sockaddr *addr,
 			  int flags);
 
 
-/*! \brief concatenate the parts returned by osmo_sockaddr_to_strs().
- * \param[in] addr  Binary representation as returned by osmo_sockaddr_init().
+/*! \brief concatenate the parts returned by sgsn_sockaddr_to_strs().
+ * \param[in] addr  Binary representation as returned by sgsn_sockaddr_init().
  * \param[in] buf  A buffer to use for string operations.
  * \param[in] buf_len  Length of the buffer.
  * \returns  Address string (in buffer).
@@ -98,33 +98,33 @@ int osmo_sockaddr_to_strs(char *addr_str, size_t addr_str_len,
  * the form "<ip-addr> port <port>". The returned string is valid until the
  * next invocation of this function.
  */
-const char *osmo_sockaddr_to_strb(const struct osmo_sockaddr *addr,
+const char *sgsn_sockaddr_to_strb(const struct sgsn_sockaddr *addr,
 				  char *buf, size_t buf_len);
 
-/*! \brief conveniently return osmo_sockaddr_to_strb() in a static buffer.
- * \param[in] addr  Binary representation as returned by osmo_sockaddr_init().
+/*! \brief conveniently return sgsn_sockaddr_to_strb() in a static buffer.
+ * \param[in] addr  Binary representation as returned by sgsn_sockaddr_init().
  * \returns  Address string in static buffer.
  *
- * See osmo_sockaddr_to_strb().
+ * See sgsn_sockaddr_to_strb().
  *
- * Note: only one osmo_sockaddr_to_str() call will work per print/log
- * statement. For two or more, use osmo_sockaddr_to_strb() with a separate
+ * Note: only one sgsn_sockaddr_to_str() call will work per print/log
+ * statement. For two or more, use sgsn_sockaddr_to_strb() with a separate
  * buffer each.
  */
-const char *osmo_sockaddr_to_str(const struct osmo_sockaddr *addr);
+const char *sgsn_sockaddr_to_str(const struct sgsn_sockaddr *addr);
 
-/*! \brief compare two osmo_sockaddr.
+/*! \brief compare two sgsn_sockaddr.
  * \param[in] a  The first address to compare.
  * \param[in] b  The other address to compare.
  * \returns 0 if equal, otherwise -1 or 1.
  */
-int osmo_sockaddr_cmp(const struct osmo_sockaddr *a,
-		      const struct osmo_sockaddr *b);
+int sgsn_sockaddr_cmp(const struct sgsn_sockaddr *a,
+		      const struct sgsn_sockaddr *b);
 
 /*! \brief Overwrite *dst with *src.
  * Like memcpy(), but copy only the valid bytes. */
-void osmo_sockaddr_copy(struct osmo_sockaddr *dst,
-			const struct osmo_sockaddr *src);
+void sgsn_sockaddr_copy(struct sgsn_sockaddr *dst,
+			const struct sgsn_sockaddr *src);
 
 
 /* general */
@@ -179,7 +179,7 @@ int gsn_addr_same(const struct gsn_addr *a, const struct gsn_addr *b);
 /* Decode sa to gsna. Return 0 on success. If port is non-NULL, the port number
  * from sa is also returned. */
 int gsn_addr_from_sockaddr(struct gsn_addr *gsna, uint16_t *port,
-			   const struct osmo_sockaddr *sa);
+			   const struct sgsn_sockaddr *sa);
 
 /* expiry */
 
@@ -389,7 +389,7 @@ struct gtphub_peer_port {
 	struct gtphub_peer_addr *peer_addr;
 	uint16_t port;
 	unsigned int ref_count; /* references from other peers' seq_maps */
-	struct osmo_sockaddr sa; /* a "cache" for (peer_addr->addr, port) */
+	struct sgsn_sockaddr sa; /* a "cache" for (peer_addr->addr, port) */
 	int last_restart_count; /* 0..255 = valid, all else means unknown */
 
 	struct rate_ctr_group *counters_io;
@@ -496,13 +496,13 @@ int gtphub_tunnel_complete(struct gtphub_tunnel *tun);
 int gtphub_handle_buf(struct gtphub *hub,
 		      unsigned int side_idx,
 		      unsigned int port_idx,
-		      const struct osmo_sockaddr *from_addr,
+		      const struct sgsn_sockaddr *from_addr,
 		      uint8_t *buf,
 		      size_t received,
 		      time_t now,
 		      uint8_t **reply_buf,
 		      struct osmo_fd **to_ofd,
-		      struct osmo_sockaddr *to_addr);
+		      struct sgsn_sockaddr *to_addr);
 
 struct gtphub_peer_port *gtphub_port_have(struct gtphub *hub,
 					  struct gtphub_bind *bind,
@@ -510,7 +510,7 @@ struct gtphub_peer_port *gtphub_port_have(struct gtphub *hub,
 					  uint16_t port);
 
 struct gtphub_peer_port *gtphub_port_find_sa(const struct gtphub_bind *bind,
-					     const struct osmo_sockaddr *addr);
+					     const struct sgsn_sockaddr *addr);
 
 void gtphub_resolved_ggsn(struct gtphub *hub, const char *apn_oi_str,
 			  struct gsn_addr *resolved_addr,
@@ -519,5 +519,5 @@ void gtphub_resolved_ggsn(struct gtphub *hub, const char *apn_oi_str,
 const char *gtphub_port_str(struct gtphub_peer_port *port);
 
 int gtphub_write(const struct osmo_fd *to,
-		 const struct osmo_sockaddr *to_addr,
+		 const struct sgsn_sockaddr *to_addr,
 		 const uint8_t *buf, size_t buf_len);

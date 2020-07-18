@@ -378,37 +378,37 @@ static void test_expiry(void)
 char resolve_ggsn_got_imsi[GSM23003_IMSI_MAX_DIGITS+1];
 char resolve_ggsn_got_ni[GSM_APN_LENGTH];
 
-struct osmo_sockaddr resolved_ggsn_addr;
+struct sgsn_sockaddr resolved_ggsn_addr;
 static int resolve_to_ggsn(const char *addr, uint16_t port)
 {
-	LVL2_ASSERT(osmo_sockaddr_init_udp(&resolved_ggsn_addr,
+	LVL2_ASSERT(sgsn_sockaddr_init_udp(&resolved_ggsn_addr,
 					   addr, port)
 		    == 0);
 	return 1;
 }
 
-struct osmo_sockaddr resolved_sgsn_addr;
+struct sgsn_sockaddr resolved_sgsn_addr;
 static int resolve_to_sgsn(const char *addr, uint16_t port)
 {
-	LVL2_ASSERT(osmo_sockaddr_init_udp(&resolved_sgsn_addr,
+	LVL2_ASSERT(sgsn_sockaddr_init_udp(&resolved_sgsn_addr,
 					   addr, port)
 		    == 0);
 	return 1;
 }
 
-struct osmo_sockaddr sgsn_sender;
+struct sgsn_sockaddr sgsn_sender;
 static int send_from_sgsn(const char *addr, uint16_t port)
 {
-	LVL2_ASSERT(osmo_sockaddr_init_udp(&sgsn_sender,
+	LVL2_ASSERT(sgsn_sockaddr_init_udp(&sgsn_sender,
 					   addr, port)
 		    == 0);
 	return 1;
 }
 
-struct osmo_sockaddr ggsn_sender;
+struct sgsn_sockaddr ggsn_sender;
 static int send_from_ggsn(const char *addr, uint16_t port)
 {
-	LVL2_ASSERT(osmo_sockaddr_init_udp(&ggsn_sender,
+	LVL2_ASSERT(sgsn_sockaddr_init_udp(&ggsn_sender,
 					   addr, port)
 		    == 0);
 	return 1;
@@ -491,18 +491,18 @@ int __wrap_gtphub_ares_init(struct gtphub *hub)
 
 /* override, requires '-Wl,--wrap=gtphub_write' */
 int __real_gtphub_write(const struct osmo_fd *to,
-			const struct osmo_sockaddr *to_addr,
+			const struct sgsn_sockaddr *to_addr,
 			const uint8_t *buf, size_t buf_len);
 
 int __wrap_gtphub_write(const struct osmo_fd *to,
-			const struct osmo_sockaddr *to_addr,
+			const struct sgsn_sockaddr *to_addr,
 			const uint8_t *buf, size_t buf_len)
 {
 	printf("Out-of-band gtphub_write(%d):\n"
 	       "to %s\n"
 	       "%s\n",
 	       (int)buf_len,
-	       osmo_sockaddr_to_str(to_addr),
+	       sgsn_sockaddr_to_str(to_addr),
 	       osmo_hexdump(buf, buf_len));
 	return 0;
 }
@@ -553,11 +553,11 @@ static int _reply_is(const char *hex, const char *file, int line)
 }
 
 #define same_addr(GOT, EXPECTED) _same_addr((GOT),(EXPECTED), __FILE__, __LINE__)
-static int _same_addr(const struct osmo_sockaddr *got,
-		      const struct osmo_sockaddr *expected,
+static int _same_addr(const struct sgsn_sockaddr *got,
+		      const struct sgsn_sockaddr *expected,
 		      const char *file, int line)
 {
-	int cmp = osmo_sockaddr_cmp(got, expected);
+	int cmp = sgsn_sockaddr_cmp(got, expected);
 	if (!cmp)
 		return 1;
 	char buf[256];
@@ -565,8 +565,8 @@ static int _same_addr(const struct osmo_sockaddr *got,
 	       "  expecting: '%s'\n"
 	       "        got: '%s'\n\n",
 	       file, line,
-	       osmo_sockaddr_to_str(expected),
-	       osmo_sockaddr_to_strb(got, buf, sizeof(buf)));
+	       sgsn_sockaddr_to_str(expected),
+	       sgsn_sockaddr_to_strb(got, buf, sizeof(buf)));
 	return 0;
 }
 
@@ -668,7 +668,7 @@ static void test_echo(void)
 	now = 123;
 
 	struct osmo_fd *to_ofd;
-	struct osmo_sockaddr to_addr;
+	struct sgsn_sockaddr to_addr;
 	struct gtphub_peer_port *pp;
 	int send;
 
@@ -855,13 +855,13 @@ static void test_echo(void)
 #define msg_from_sgsn_c(A,B,C,D) msg_from_sgsn(GTPH_PLANE_CTRL, A,B,C,D)
 #define msg_from_sgsn_u(A,B,C,D) msg_from_sgsn(GTPH_PLANE_USER, A,B,C,D)
 static int msg_from_sgsn(int plane_idx,
-			 struct osmo_sockaddr *_sgsn_sender,
-			 struct osmo_sockaddr *ggsn_receiver,
+			 struct sgsn_sockaddr *_sgsn_sender,
+			 struct sgsn_sockaddr *ggsn_receiver,
 			 const char *hex_from_sgsn,
 			 const char *hex_to_ggsn)
 {
 	struct osmo_fd *ggsn_ofd = NULL;
-	struct osmo_sockaddr ggsn_addr;
+	struct sgsn_sockaddr ggsn_addr;
 	int send;
 	send = gtphub_handle_buf(hub, GTPH_SIDE_SGSN, plane_idx, _sgsn_sender,
 				 buf, msg(hex_from_sgsn), now,
@@ -875,13 +875,13 @@ static int msg_from_sgsn(int plane_idx,
 #define msg_from_ggsn_c(A,B,C,D) msg_from_ggsn(GTPH_PLANE_CTRL, A,B,C,D)
 #define msg_from_ggsn_u(A,B,C,D) msg_from_ggsn(GTPH_PLANE_USER, A,B,C,D)
 static int msg_from_ggsn(int plane_idx,
-			 struct osmo_sockaddr *ggsn_sender,
-			 struct osmo_sockaddr *sgsn_receiver,
+			 struct sgsn_sockaddr *ggsn_sender,
+			 struct sgsn_sockaddr *sgsn_receiver,
 			 const char *msg_from_ggsn,
 			 const char *msg_to_sgsn)
 {
 	struct osmo_fd *sgsn_ofd;
-	struct osmo_sockaddr sgsn_addr;
+	struct sgsn_sockaddr sgsn_addr;
 	int send;
 	send = gtphub_handle_buf(hub, GTPH_SIDE_GGSN, plane_idx, ggsn_sender,
 				 buf, msg(msg_from_ggsn), now,

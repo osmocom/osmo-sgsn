@@ -167,12 +167,12 @@ void gsn_addr_copy(struct gsn_addr *gsna, const struct gsn_addr *src)
 }
 
 int gsn_addr_from_sockaddr(struct gsn_addr *gsna, uint16_t *port,
-			   const struct osmo_sockaddr *sa)
+			   const struct sgsn_sockaddr *sa)
 {
 	char addr_str[256];
 	char port_str[6];
 
-	if (osmo_sockaddr_to_strs(addr_str, sizeof(addr_str),
+	if (sgsn_sockaddr_to_strs(addr_str, sizeof(addr_str),
 				  port_str, sizeof(port_str),
 				  sa, (NI_NUMERICHOST | NI_NUMERICSERV))
 	    != 0) {
@@ -925,7 +925,7 @@ static void gtphub_bind_stop(struct gtphub_bind *b) {
 /* Recv datagram from from->fd, write sender's address to *from_addr.
  * Return the number of bytes read, zero on error. */
 static int gtphub_read(const struct osmo_fd *from,
-		       struct osmo_sockaddr *from_addr,
+		       struct sgsn_sockaddr *from_addr,
 		       uint8_t *buf, size_t buf_len)
 {
 	OSMO_ASSERT(from_addr);
@@ -946,7 +946,7 @@ static int gtphub_read(const struct osmo_fd *from,
 	}
 
 	LOG(LOGL_DEBUG, "Received %d bytes from %s: %s%s\n",
-	    (int)received, osmo_sockaddr_to_str(from_addr),
+	    (int)received, sgsn_sockaddr_to_str(from_addr),
 	    osmo_hexdump(buf, received > 1000? 1000 : received),
 	    received > 1000 ? "..." : "");
 
@@ -1954,8 +1954,8 @@ static int from_sgsns_read_cb(struct osmo_fd *from_sgsns_ofd, unsigned int what)
 	struct gtphub *hub = from_sgsns_ofd->data;
 
 	static uint8_t buf[4096];
-	struct osmo_sockaddr from_addr;
-	struct osmo_sockaddr to_addr;
+	struct sgsn_sockaddr from_addr;
+	struct sgsn_sockaddr to_addr;
 	struct osmo_fd *to_ofd;
 	int len;
 	uint8_t *reply_buf;
@@ -1985,8 +1985,8 @@ static int from_ggsns_read_cb(struct osmo_fd *from_ggsns_ofd, unsigned int what)
 	struct gtphub *hub = from_ggsns_ofd->data;
 
 	static uint8_t buf[4096];
-	struct osmo_sockaddr from_addr;
-	struct osmo_sockaddr to_addr;
+	struct sgsn_sockaddr from_addr;
+	struct sgsn_sockaddr to_addr;
 	struct osmo_fd *to_ofd;
 	int len;
 	uint8_t *reply_buf;
@@ -2071,9 +2071,9 @@ static int gtphub_unmap(struct gtphub *hub,
 
 static int gsn_addr_to_sockaddr(struct gsn_addr *src,
 				uint16_t port,
-				struct osmo_sockaddr *dst)
+				struct sgsn_sockaddr *dst)
 {
-	return osmo_sockaddr_init_udp(dst, gsn_addr_to_str(src), port);
+	return sgsn_sockaddr_init_udp(dst, gsn_addr_to_str(src), port);
 }
 
 /* If p is an Echo request, replace p's data with the matching response and
@@ -2107,7 +2107,7 @@ static int gtphub_handle_echo_req(struct gtphub *hub, struct gtp_packet_desc *p,
 }
 
 struct gtphub_peer_port *gtphub_known_addr_have_port(const struct gtphub_bind *bind,
-						     const struct osmo_sockaddr *addr);
+						     const struct sgsn_sockaddr *addr);
 
 /* Parse buffer as GTP packet, replace elements in-place and return the ofd and
  * address to forward to. Return a pointer to the osmo_fd, but copy the
@@ -2117,13 +2117,13 @@ struct gtphub_peer_port *gtphub_known_addr_have_port(const struct gtphub_bind *b
 int gtphub_handle_buf(struct gtphub *hub,
 		      unsigned int side_idx,
 		      unsigned int plane_idx,
-		      const struct osmo_sockaddr *from_addr,
+		      const struct sgsn_sockaddr *from_addr,
 		      uint8_t *buf,
 		      size_t received,
 		      time_t now,
 		      uint8_t **reply_buf,
 		      struct osmo_fd **to_ofd,
-		      struct osmo_sockaddr *to_addr)
+		      struct sgsn_sockaddr *to_addr)
 {
 	struct gtphub_bind *from_bind = &hub->to_gsns[side_idx][plane_idx];
 	struct gtphub_bind *to_bind = &hub->to_gsns[other_side_idx(side_idx)][plane_idx];
@@ -2138,7 +2138,7 @@ int gtphub_handle_buf(struct gtphub *hub,
 	    (side_idx == GTPH_SIDE_GGSN)? "<-" : "->",
 	    gtphub_plane_idx_names[plane_idx],
 	    gtphub_side_idx_names[side_idx],
-	    osmo_sockaddr_to_str(from_addr),
+	    sgsn_sockaddr_to_str(from_addr),
 	    gtp_type_str(p.type));
 
 	if (p.rc <= 0) {
@@ -2146,7 +2146,7 @@ int gtphub_handle_buf(struct gtphub *hub,
 		    gtp_type_str(p.type),
 		    gtphub_side_idx_names[side_idx],
 		    gtphub_plane_idx_names[plane_idx],
-		    osmo_sockaddr_to_str(from_addr));
+		    sgsn_sockaddr_to_str(from_addr));
 		return -1;
 	}
 
@@ -2156,7 +2156,7 @@ int gtphub_handle_buf(struct gtphub *hub,
 	reply_len = gtphub_handle_echo_req(hub, &p, reply_buf);
 	if (reply_len > 0) {
 		/* It was an echo. Nothing left to do. */
-		osmo_sockaddr_copy(to_addr, from_addr);
+		sgsn_sockaddr_copy(to_addr, from_addr);
 		*to_ofd = &from_bind->ofd;
 
 		rate_ctr_inc(&from_bind->counters_io->ctr[GTPH_CTR_PKTS_OUT]);
@@ -2165,7 +2165,7 @@ int gtphub_handle_buf(struct gtphub *hub,
 		LOG(LOGL_DEBUG, "%s Echo response to %s: %d bytes to %s\n",
 		    (side_idx == GTPH_SIDE_GGSN)? "-->" : "<--",
 		    gtphub_side_idx_names[side_idx],
-		    (int)reply_len, osmo_sockaddr_to_str(to_addr));
+		    (int)reply_len, sgsn_sockaddr_to_str(to_addr));
 		return reply_len;
 	}
 	if (reply_len < 0)
@@ -2178,7 +2178,7 @@ int gtphub_handle_buf(struct gtphub *hub,
 	 * so no-one else is allowed to talk to us from that side. */
 	struct gtphub_peer_port *from_peer = hub->proxy[side_idx][plane_idx];
 	if (from_peer) {
-		if (osmo_sockaddr_cmp(&from_peer->sa, from_addr) != 0) {
+		if (sgsn_sockaddr_cmp(&from_peer->sa, from_addr) != 0) {
 			LOG(LOGL_ERROR,
 			    "Rejecting: %s proxy configured, but GTP packet"
 			    " received on %s bind is from another sender:"
@@ -2186,7 +2186,7 @@ int gtphub_handle_buf(struct gtphub *hub,
 			    gtphub_side_idx_names[side_idx],
 			    gtphub_side_idx_names[side_idx],
 			    gtphub_port_str(from_peer),
-			    osmo_sockaddr_to_str(from_addr));
+			    sgsn_sockaddr_to_str(from_addr));
 			return -1;
 		}
 	}
@@ -2204,7 +2204,7 @@ int gtphub_handle_buf(struct gtphub *hub,
 		if (side_idx == GTPH_SIDE_GGSN) {
 			LOG(LOGL_ERROR, "Dropping packet%s: unknown GGSN peer: %s\n",
 			    gtp_type_str(p.type),
-			    osmo_sockaddr_to_str(from_addr));
+			    sgsn_sockaddr_to_str(from_addr));
 			return -1;
 		} else {
 			/* SGSN */
@@ -2216,7 +2216,7 @@ int gtphub_handle_buf(struct gtphub *hub,
 				    "Dropping packet%s: User plane peer was not"
 				    "announced by PDP Context: %s\n",
 				    gtp_type_str(p.type),
-				    osmo_sockaddr_to_str(from_addr));
+				    sgsn_sockaddr_to_str(from_addr));
 				return -1;
 			}
 
@@ -2235,7 +2235,7 @@ int gtphub_handle_buf(struct gtphub *hub,
 		LOG(LOGL_ERROR, "Dropping packet%s: invalid %s peer: %s\n",
 		    gtp_type_str(p.type),
 		    gtphub_side_idx_names[side_idx],
-		    osmo_sockaddr_to_str(from_addr));
+		    sgsn_sockaddr_to_str(from_addr));
 		return -1;
 	}
 
@@ -2309,7 +2309,7 @@ int gtphub_handle_buf(struct gtphub *hub,
 	if (!to_peer_from_seq)
 		gtphub_map_seq(&p, from_peer, to_peer);
 
-	osmo_sockaddr_copy(to_addr, &to_peer->sa);
+	sgsn_sockaddr_copy(to_addr, &to_peer->sa);
 
 	*reply_buf = (uint8_t*)p.data;
 
@@ -2335,7 +2335,7 @@ int gtphub_handle_buf(struct gtphub *hub,
 	    (side_idx == GTPH_SIDE_SGSN)? "-->" : "<--",
 	    gtphub_side_idx_names[other_side_idx(side_idx)],
 	    p.header_tei, p.seq,
-	    (int)received, osmo_sockaddr_to_str(to_addr));
+	    (int)received, sgsn_sockaddr_to_str(to_addr));
 	return received;
 }
 
@@ -2645,7 +2645,7 @@ static struct gtphub_peer_port *gtphub_port_find(const struct gtphub_bind *bind,
 }
 
 struct gtphub_peer_port *gtphub_port_find_sa(const struct gtphub_bind *bind,
-					     const struct osmo_sockaddr *addr)
+					     const struct sgsn_sockaddr *addr)
 {
 	struct gsn_addr gsna;
 	uint16_t port;
@@ -2762,7 +2762,7 @@ struct gtphub_peer_port *gtphub_port_have(struct gtphub *hub,
 /* Find a GGSN peer with a matching address. If the address is known but the
  * port not, create a new port for that peer address. */
 struct gtphub_peer_port *gtphub_known_addr_have_port(const struct gtphub_bind *bind,
-						     const struct osmo_sockaddr *addr)
+						     const struct sgsn_sockaddr *addr)
 {
 	struct gtphub_peer_addr *pa;
 	struct gtphub_peer_port *pp;
@@ -2817,7 +2817,7 @@ static int gtphub_resolve_ggsn(struct gtphub *hub,
 
 /* TODO move to osmocom/core/socket.c ? */
 /* use this in osmo_sock_init() to remove dup. */
-/* Internal: call getaddrinfo for osmo_sockaddr_init(). The caller is required
+/* Internal: call getaddrinfo for sgsn_sockaddr_init(). The caller is required
    to call freeaddrinfo(*result), iff zero is returned. */
 static int _osmo_getaddrinfo(struct addrinfo **result,
 			     uint16_t family, uint16_t type, uint8_t proto,
@@ -2844,7 +2844,7 @@ static int _osmo_getaddrinfo(struct addrinfo **result,
 }
 
 /* TODO move to osmocom/core/socket.c ? */
-int osmo_sockaddr_init(struct osmo_sockaddr *addr,
+int sgsn_sockaddr_init(struct sgsn_sockaddr *addr,
 		       uint16_t family, uint16_t type, uint8_t proto,
 		       const char *host, uint16_t port)
 {
@@ -2865,9 +2865,9 @@ int osmo_sockaddr_init(struct osmo_sockaddr *addr,
 	return 0;
 }
 
-int osmo_sockaddr_to_strs(char *addr_str, size_t addr_str_len,
+int sgsn_sockaddr_to_strs(char *addr_str, size_t addr_str_len,
 			  char *port_str, size_t port_str_len,
-			  const struct osmo_sockaddr *addr,
+			  const struct sgsn_sockaddr *addr,
 			  int flags)
 {
        int rc;
@@ -2896,14 +2896,14 @@ int osmo_sockaddr_to_strs(char *addr_str, size_t addr_str_len,
        return rc;
 }
 
-const char *osmo_sockaddr_to_strb(const struct osmo_sockaddr *addr,
+const char *sgsn_sockaddr_to_strb(const struct sgsn_sockaddr *addr,
 				  char *buf, size_t buf_len)
 {
 	const int portbuf_len = 6;
 	OSMO_ASSERT(buf_len > portbuf_len);
 	char *portbuf = buf + buf_len - portbuf_len;
 	buf_len -= portbuf_len;
-	if (osmo_sockaddr_to_strs(buf, buf_len,
+	if (sgsn_sockaddr_to_strs(buf, buf_len,
 				  portbuf, portbuf_len,
 				  addr,
 				  NI_NUMERICHOST | NI_NUMERICSERV))
@@ -2918,17 +2918,17 @@ const char *osmo_sockaddr_to_strb(const struct osmo_sockaddr *addr,
 	return buf;
 }
 
-const char *osmo_sockaddr_to_str(const struct osmo_sockaddr *addr)
+const char *sgsn_sockaddr_to_str(const struct sgsn_sockaddr *addr)
 {
 	static char buf[256];
-	const char *result = osmo_sockaddr_to_strb(addr, buf, sizeof(buf));
+	const char *result = sgsn_sockaddr_to_strb(addr, buf, sizeof(buf));
 	if (! result)
 		return "(invalid)";
 	return result;
 }
 
-int osmo_sockaddr_cmp(const struct osmo_sockaddr *a,
-		      const struct osmo_sockaddr *b)
+int sgsn_sockaddr_cmp(const struct sgsn_sockaddr *a,
+		      const struct sgsn_sockaddr *b)
 {
 	if (a == b)
 		return 0;
@@ -2938,7 +2938,7 @@ int osmo_sockaddr_cmp(const struct osmo_sockaddr *a,
 		return 1;
 	if (a->l != b->l) {
 		/* Lengths are not the same, but determine the order. Will
-		 * anyone ever sort a list by osmo_sockaddr though...? */
+		 * anyone ever sort a list by sgsn_sockaddr though...? */
 		int cmp = memcmp(&a->a, &b->a, (a->l < b->l)? a->l : b->l);
 		if (cmp == 0) {
 			if (a->l < b->l)
@@ -2951,8 +2951,8 @@ int osmo_sockaddr_cmp(const struct osmo_sockaddr *a,
 	return memcmp(&a->a, &b->a, a->l);
 }
 
-void osmo_sockaddr_copy(struct osmo_sockaddr *dst,
-			const struct osmo_sockaddr *src)
+void sgsn_sockaddr_copy(struct sgsn_sockaddr *dst,
+			const struct sgsn_sockaddr *src)
 {
 	OSMO_ASSERT(src->l <= sizeof(dst->a));
 	memcpy(&dst->a, &src->a, src->l);

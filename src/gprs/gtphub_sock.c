@@ -33,13 +33,13 @@
 	LOGP(DGTPHUB, level, fmt, ##args)
 
 int gtphub_write(const struct osmo_fd *to,
-		 const struct osmo_sockaddr *to_addr,
+		 const struct sgsn_sockaddr *to_addr,
 		 const uint8_t *buf, size_t buf_len)
 {
 	errno = 0;
 	ssize_t sent = sendto(to->fd, buf, buf_len, 0,
 			      (struct sockaddr*)&to_addr->a, to_addr->l);
-	LOG(LOGL_DEBUG, "to %s\n", osmo_sockaddr_to_str(to_addr));
+	LOG(LOGL_DEBUG, "to %s\n", sgsn_sockaddr_to_str(to_addr));
 
 	if (sent == -1) {
 		LOG(LOGL_ERROR, "error: %s\n", strerror(errno));
