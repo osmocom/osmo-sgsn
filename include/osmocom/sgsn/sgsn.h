@@ -3,8 +3,9 @@
 
 
 #include <osmocom/core/msgb.h>
+#include <osmocom/core/select.h>
 #include <osmocom/crypt/gprs_cipher.h>
-#include <osmocom/gprs/gprs_ns.h>
+#include <osmocom/gprs/gprs_ns2.h>
 #include <osmocom/sgsn/gprs_sgsn.h>
 #include <osmocom/gsm/oap_client.h>
 #include <osmocom/gsupclient/gsup_client.h>
@@ -69,7 +70,7 @@ struct sgsn_config {
 	struct sockaddr_in gtp_listenaddr;
 
 	/* misc */
-	struct gprs_ns_inst *nsi;
+	struct gprs_ns2_inst *nsi;
 
 	enum sgsn_auth_policy auth_policy;
 	enum gprs_ciph_algo cipher;
@@ -157,7 +158,7 @@ char *sgsn_gtp_ntoa(struct ul16_t *ul);
 /* sgsn.c */
 
 /* Main input function for Gb proxy */
-int sgsn_rcvmsg(struct msgb *msg, struct gprs_nsvc *nsvc, uint16_t ns_bvci);
+int sgsn_rcvmsg(struct msgb *msg, struct gprs_ns2_vc *nsvc, uint16_t ns_bvci);
 
 /* sgsn_libgtp.c */
 struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,

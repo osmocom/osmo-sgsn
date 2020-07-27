@@ -39,8 +39,9 @@
 #include <osmocom/core/rate_ctr.h>
 #include <osmocom/core/logging.h>
 #include <osmocom/core/stats.h>
+#include <osmocom/core/sockaddr_str.h>
 
-#include <osmocom/gprs/gprs_ns.h>
+#include <osmocom/gprs/gprs_ns2.h>
 #include <osmocom/gprs/gprs_bssgp.h>
 #include <osmocom/gprs/gprs_bssgp_bss.h>
 
@@ -60,6 +61,7 @@
 #include <osmocom/sgsn/gprs_llc.h>
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/gprs_ranap.h>
+#include <osmocom/sgsn/gprs_gb.h>
 
 #include <osmocom/ctrl/control_if.h>
 #include <osmocom/ctrl/ports.h>
@@ -80,7 +82,7 @@
 void *tall_sgsn_ctx;
 struct ctrl_handle *g_ctrlh;
 
-struct gprs_ns_inst *sgsn_nsi;
+struct gprs_ns2_inst *sgsn_nsi;
 static int daemonize = 0;
 const char *openbsc_copyright =
 	"Copyright (C) 2010 Harald Welte and On-Waves\r\n"
@@ -93,27 +95,6 @@ const char *openbsc_copyright =
 
 
 struct sgsn_instance *sgsn;
-
-/* call-back function for the NS protocol */
-static int sgsn_ns_cb(enum gprs_ns_evt event, struct gprs_nsvc *nsvc,
-		      struct msgb *msg, uint16_t bvci)
-{
-	int rc = 0;
-
-	switch (event) {
-	case GPRS_NS_EVT_UNIT_DATA:
-		/* hand the message into the BSSGP implementation */
-		rc = bssgp_rcvmsg(msg);
-		break;
-	default:
-		LOGP(DGPRS, LOGL_ERROR, "SGSN: Unknown event %u from NS\n", event);
-		if (msg)
-			msgb_free(msg);
-		rc = -EIO;
-		break;
-	}
-	return rc;
-}
 
 /* call-back function for the BSSGP protocol */
 int bssgp_prim_cb(struct osmo_prim_hdr *oph, void *ctx)
@@ -180,23 +161,6 @@ static void signal_handler(int signum)
 
 /* NSI that BSSGP uses when transmitting on NS */
 extern struct gprs_ns_inst *bssgp_nsi;
-
-static void bvc_reset_persistent_nsvcs(void)
-{
-	/* Send BVC-RESET on all persistent NSVCs */
-	struct gprs_nsvc *nsvc;
-
-	llist_for_each_entry(nsvc, &sgsn_nsi->gprs_nsvcs, list) {
-		struct bssgp_bvc_ctx bctx = {
-			.nsei = nsvc->nsei,
-		};
-		if (!nsvc->persistent)
-			continue;
-		/* if it is not marked ALIVE, we cannot send any data over it. */
-		nsvc->state |= NSE_S_ALIVE;
-		bssgp_tx_bvc_reset2(&bctx, BVCI_SIGNALLING, BSSGP_CAUSE_EQUIP_FAIL, false);
-	}
-}
 
 static struct vty_app_info vty_info = {
 	.name 		= "OsmoSGSN",
@@ -364,6 +328,11 @@ static bool file_exists(const char *path)
 int main(int argc, char **argv)
 {
 	int rc;
+	struct osmo_sockaddr_str bind_address = {
+		.af = AF_INET,
+		.ip = "0.0.0.0",
+		.port = 23000,
+	};
 #if BUILD_IU
 	struct osmo_sccp_instance *sccp;
 #endif
@@ -418,27 +387,27 @@ int main(int argc, char **argv)
 
 	rate_ctr_init(tall_sgsn_ctx);
 
-	gprs_ns_set_log_ss(DNS);
 	logging_vty_add_deprecated_subsys(tall_sgsn_ctx, "bssgp");
 
-	sgsn_nsi = gprs_ns_instantiate(&sgsn_ns_cb, tall_sgsn_ctx);
+	sgsn_nsi = gprs_ns2_instantiate(tall_sgsn_ctx, &gprs_ns_prim_cb, NULL);
 	if (!sgsn_nsi) {
 		LOGP(DGPRS, LOGL_ERROR, "Unable to instantiate NS\n");
 		exit(1);
 	}
-	bssgp_nsi = sgsn->cfg.nsi = sgsn_nsi;
+	sgsn->cfg.nsi = sgsn_nsi;
+	bssgp_set_bssgp_callback(gprs_gb_send_cb, sgsn_nsi);
 
 	gprs_llc_init("/usr/local/lib/osmocom/crypt/");
 	sgsn_rate_ctr_init();
 	sgsn_inst_init(sgsn);
 
-	gprs_ns_vty_init(bssgp_nsi);
+
+	gprs_ns2_vty_init(sgsn_nsi, &bind_address);
 	bssgp_vty_init();
 	gprs_llc_vty_init();
 	gprs_sndcp_vty_init();
 	sgsn_auth_init(sgsn);
 	sgsn_cdr_init(sgsn);
-	/* FIXME: register signal handler for SS_L_NS */
 
 	rc = sgsn_parse_config(sgsn->config_file);
 	if (rc < 0) {
@@ -480,18 +449,13 @@ int main(int argc, char **argv)
 		exit(2);
 	}
 
-	rc = gprs_ns_nsip_listen(sgsn_nsi);
+	rc = gprs_ns2_vty_create();
 	if (rc < 0) {
 		LOGP(DGPRS, LOGL_FATAL, "Cannot bind/listen on NSIP socket\n");
 		exit(2);
 	}
 
-	rc = gprs_ns_frgre_listen(sgsn_nsi);
-	if (rc < 0) {
-		LOGP(DGPRS, LOGL_FATAL, "Cannot bind/listen GRE "
-			"socket. Do you have CAP_NET_RAW?\n");
-		exit(2);
-	}
+	gprs_ns2_dynamic_create_nse(sgsn_nsi, true);
 
 	if (sgsn->cfg.dynamic_lookup) {
 		if (sgsn_ares_init(sgsn) != 0) {
@@ -517,8 +481,6 @@ int main(int argc, char **argv)
 
 	ranap_iu_init(tall_sgsn_ctx, DRANAP, "OsmoSGSN-IuPS", sccp, gsm0408_gprs_rcvmsg_iu, sgsn_ranap_iu_event);
 #endif
-
-	bvc_reset_persistent_nsvcs();
 
 	if (daemonize) {
 		rc = osmo_daemonize();

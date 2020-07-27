@@ -12,3 +12,9 @@ void gprs_gb_recv_pdu(struct sgsn_mm_ctx *mmctx);
 
 /* page a MS in its routing area */
 int gprs_gb_page_ps_ra(struct sgsn_mm_ctx *mmctx);
+
+/* called by the bssgp layer to send NS PDUs */
+int gprs_gb_send_cb(void *ctx, struct msgb *msg);
+
+/* called by the ns layer */
+int gprs_ns_prim_cb(struct osmo_prim_hdr *oph, void *ctx);

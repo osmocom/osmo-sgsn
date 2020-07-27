@@ -26,6 +26,7 @@
 
 #include <osmocom/core/rate_ctr.h>
 #include <osmocom/core/tdef.h>
+#include <osmocom/gprs/gprs_msgb.h>
 
 #include <osmocom/ranap/ranap_common.h>
 

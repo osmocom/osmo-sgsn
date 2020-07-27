@@ -25,6 +25,9 @@
 
 #include <osmocom/gprs/gprs_msgb.h>
 #include <osmocom/gprs/gprs_bssgp.h>
+#include <osmocom/gprs/gprs_ns2.h>
+#include <osmocom/gprs/gprs_bssgp_bss.h>
+#include <osmocom/sgsn/gprs_llc.h>
 
 #include "bscconfig.h"
 
@@ -100,6 +103,86 @@ int gprs_gb_page_ps_ra(struct sgsn_mm_ctx *mmctx)
 	pinfo.qos[0] = 0; // FIXME
 	rc = bssgp_tx_paging(mmctx->gb.nsei, 0, &pinfo);
 	rate_ctr_inc(&mmctx->ctrg->ctr[GMM_CTR_PAGING_PS]);
+
+	return rc;
+}
+
+/* called by the bssgp layer to send NS PDUs */
+int gprs_gb_send_cb(void *ctx, struct msgb *msg)
+{
+	struct gprs_ns2_inst *nsi = (struct gprs_ns2_inst *) ctx;
+	struct osmo_gprs_ns2_prim nsp = {};
+	nsp.nsei = msgb_nsei(msg);
+	nsp.bvci = msgb_bvci(msg);
+	osmo_prim_init(&nsp.oph, SAP_NS, PRIM_NS_UNIT_DATA, PRIM_OP_REQUEST, msg);
+	return gprs_ns2_recv_prim(nsi, &nsp.oph);
+}
+
+void gprs_ns_prim_status_cb(struct osmo_gprs_ns2_prim *nsp)
+{
+	switch (nsp->u.status.cause) {
+	case NS_AFF_CAUSE_SNS_CONFIGURED:
+		LOGP(DGPRS, LOGL_NOTICE, "NS-E %d SNS configured.\n", nsp->nsei);
+		break;
+	case NS_AFF_CAUSE_RECOVERY:
+		LOGP(DGPRS, LOGL_NOTICE, "NS-E %d became available\n", nsp->nsei);
+		/* workaround for broken BSS which doesn't respond correct to BSSGP status message.
+		 * Sent a BSSGP Reset when a persistent NSVC comes up for the first time. */
+		if (nsp->u.status.first && nsp->u.status.persistent) {
+			struct bssgp_bvc_ctx bctx = {
+				.nsei = nsp->nsei,
+			};
+			bssgp_tx_bvc_reset2(&bctx, BVCI_SIGNALLING, BSSGP_CAUSE_EQUIP_FAIL, false);
+		}
+		break;
+	case NS_AFF_CAUSE_FAILURE:
+		LOGP(DGPRS, LOGL_NOTICE, "NS-E %d became unavailable\n", nsp->nsei);
+		break;
+	default:
+		LOGP(DGPRS, LOGL_NOTICE, "NS: %s Unknown prim %d from NS\n",
+		     get_value_string(osmo_prim_op_names, nsp->oph.operation), nsp->oph.primitive);
+		break;
+	}
+}
+
+/* call-back function for the NS protocol */
+int gprs_ns_prim_cb(struct osmo_prim_hdr *oph, void *ctx)
+{
+	struct osmo_gprs_ns2_prim *nsp;
+	int rc = 0;
+
+	if (oph->sap != SAP_NS)
+		return 0;
+
+	nsp = container_of(oph, struct osmo_gprs_ns2_prim, oph);
+
+	if (oph->operation != PRIM_OP_INDICATION) {
+		LOGP(DGPRS, LOGL_NOTICE, "NS: %s Unknown prim %d from NS\n",
+		     get_value_string(osmo_prim_op_names, oph->operation),
+		     oph->operation);
+		return 0;
+	}
+
+	switch (oph->primitive) {
+	case PRIM_NS_UNIT_DATA:
+		/* hand the message into the BSSGP implementation */
+		/* add required msg fields for Gb layer */
+		msgb_bssgph(oph->msg) = oph->msg->l3h;
+		msgb_bvci(oph->msg) = nsp->bvci;
+		msgb_nsei(oph->msg) = nsp->nsei;
+		rc = bssgp_rcvmsg(oph->msg);
+		break;
+	case PRIM_NS_STATUS:
+		gprs_ns_prim_status_cb(nsp);
+		break;
+	default:
+		LOGP(DGPRS, LOGL_NOTICE, "NS: %s Unknown prim %d from NS\n",
+		     get_value_string(osmo_prim_op_names, oph->operation), oph->primitive);
+		break;
+	}
+
+	if (oph->msg)
+		msgb_free(oph->msg);
 
 	return rc;
 }

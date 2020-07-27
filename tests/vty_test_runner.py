@@ -141,7 +141,7 @@ class TestVTYSGSN(TestVTYBase):
 
     def testVtyShow(self):
         res = self.vty.command("show ns")
-        self.assertTrue(res.find('Encapsulation NS-UDP-IP') >= 0)
+        self.assertTrue(res.find('0 NS-VC:') >= 0)
         self.assertTrue(self.vty.verify('show bssgp', ['']))
         self.assertTrue(self.vty.verify('show bssgp stats', ['']))
         self.assertTrue(self.vty.verify('show bssgp nsei 123', ['']))
