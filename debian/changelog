@@ -1,3 +1,10 @@
+osmo-sgsn (1.6.2) unstable; urgency=medium
+
+  [ Alexander Couzens ]
+  * gtphub: rename sgsn's oww osmo_sockaddr into sgsn_sockaddr
+
+ -- Harald Welte <laforge@osmocom.org>  Thu, 13 Aug 2020 11:37:22 +0200
+
 osmo-sgsn (1.6.1) unstable; urgency=medium
 
   * gtphub_test: Fix compilation with gcc-10
