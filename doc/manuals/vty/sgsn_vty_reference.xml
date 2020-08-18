@@ -18,10 +18,11 @@
         <param name='terminal' doc='Write to terminal' />
       </params>
     </command>
-    <command id='write file'>
+    <command id='write file [PATH]'>
       <params>
         <param name='write' doc='Write running configuration to memory, network, or terminal' />
         <param name='file' doc='Write to configuration file' />
+        <param name='[PATH]' doc='Set file path to store the config, or replace if already exists' />
       </params>
     </command>
     <command id='write memory'>
@@ -187,7 +188,7 @@
         <param name='MASK' doc='List of logging categories to log, e.g. &apos;abc:mno:xyz&apos;. Available log categories depend on the specific application, refer to the &apos;logging level&apos; command. Optionally add individual log levels like &apos;abc,1:mno,3:xyz,5&apos;, where the level numbers are LOGL_DEBUG=1 LOGL_INFO=3 LOGL_NOTICE=5 LOGL_ERROR=7 LOGL_FATAL=8' />
       </params>
     </command>
-    <command id='logging level (|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|slhc|ranap|sua|v42bis|lglobal|llapd|linp|lmux|lmi|lmib|lsms|lctrl|lgtp|lstats|lgsup|loap|lss7|lsccp|lsua|lm3ua|lmgcp|ljibuf|lrspro) (debug|info|notice|error|fatal)'>
+    <command id='logging level (|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|slhc|ranap|sua|v42bis|gtp|lglobal|llapd|linp|lmux|lmi|lmib|lsms|lctrl|lgtp|lstats|lgsup|loap|lss7|lsccp|lsua|lm3ua|lmgcp|ljibuf|lrspro) (debug|info|notice|error|fatal)'>
       <params>
         <param name='logging' doc='Configure logging' />
         <param name='level' doc='Set the log level for a specified category' />
@@ -204,6 +205,7 @@
         <param name='ranap' doc='RAN Application Part (RANAP)' />
         <param name='sua' doc='SCCP User Adaptation (SUA)' />
         <param name='v42bis' doc='V.42bis data compression (SNDCP)' />
+        <param name='gtp' doc='GPRS Tunnelling Protocol (GTP)' />
         <param name='lglobal' doc='Library-internal global log family' />
         <param name='llapd' doc='LAPD in libosmogsm' />
         <param name='linp' doc='A-bis Intput Subsystem' />
@@ -260,6 +262,50 @@
         <param name='logging' doc='Configure logging' />
         <param name='level' doc='Set the log level for a specified category' />
         <param name='force-all' doc='Release any globally forced log level set with &apos;logging level force-all &lt;level&gt;&apos;' />
+      </params>
+    </command>
+    <command id='logp (|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|slhc|ranap|sua|v42bis|gtp|lglobal|llapd|linp|lmux|lmi|lmib|lsms|lctrl|lgtp|lstats|lgsup|loap|lss7|lsccp|lsua|lm3ua|lmgcp|ljibuf|lrspro) (debug|info|notice|error|fatal) .LOGMESSAGE'>
+      <params>
+        <param name='logp' doc='Print a message on all log outputs; useful for placing markers in test logs' />
+        <param name='mm' doc='Layer3 Mobility Management (MM)' />
+        <param name='pag' doc='Paging Subsystem' />
+        <param name='meas' doc='Radio Measurement Processing' />
+        <param name='ref' doc='Reference Counting' />
+        <param name='gprs' doc='GPRS Packet Service' />
+        <param name='ns' doc='GPRS Network Service (NS)' />
+        <param name='bssgp' doc='GPRS BSS Gateway Protocol (BSSGP)' />
+        <param name='llc' doc='GPRS Logical Link Control Protocol (LLC)' />
+        <param name='sndcp' doc='GPRS Sub-Network Dependent Control Protocol (SNDCP)' />
+        <param name='slhc' doc='RFC1144 TCP/IP Header compression (SLHC)' />
+        <param name='ranap' doc='RAN Application Part (RANAP)' />
+        <param name='sua' doc='SCCP User Adaptation (SUA)' />
+        <param name='v42bis' doc='V.42bis data compression (SNDCP)' />
+        <param name='gtp' doc='GPRS Tunnelling Protocol (GTP)' />
+        <param name='lglobal' doc='Library-internal global log family' />
+        <param name='llapd' doc='LAPD in libosmogsm' />
+        <param name='linp' doc='A-bis Intput Subsystem' />
+        <param name='lmux' doc='A-bis B-Subchannel TRAU Frame Multiplex' />
+        <param name='lmi' doc='A-bis Input Driver for Signalling' />
+        <param name='lmib' doc='A-bis Input Driver for B-Channels (voice)' />
+        <param name='lsms' doc='Layer3 Short Message Service (SMS)' />
+        <param name='lctrl' doc='Control Interface' />
+        <param name='lgtp' doc='GPRS GTP library' />
+        <param name='lstats' doc='Statistics messages and logging' />
+        <param name='lgsup' doc='Generic Subscriber Update Protocol' />
+        <param name='loap' doc='Osmocom Authentication Protocol' />
+        <param name='lss7' doc='libosmo-sigtran Signalling System 7' />
+        <param name='lsccp' doc='libosmo-sigtran SCCP Implementation' />
+        <param name='lsua' doc='libosmo-sigtran SCCP User Adaptation' />
+        <param name='lm3ua' doc='libosmo-sigtran MTP3 User Adaptation' />
+        <param name='lmgcp' doc='libosmo-mgcp Media Gateway Control Protocol' />
+        <param name='ljibuf' doc='libosmo-netif Jitter Buffer' />
+        <param name='lrspro' doc='Remote SIM protocol' />
+        <param name='debug' doc='Log debug messages and higher levels' />
+        <param name='info' doc='Log informational messages and higher levels' />
+        <param name='notice' doc='Log noticeable messages and higher levels' />
+        <param name='error' doc='Log error messages and higher levels' />
+        <param name='fatal' doc='Log only fatal messages' />
+        <param name='.LOGMESSAGE' doc='Arbitrary message to log on given category and log level' />
       </params>
     </command>
     <command id='show logging vty'>
@@ -378,6 +424,13 @@
         <param name='cache' doc='Display contents of subscriber cache' />
       </params>
     </command>
+    <command id='show timer [TNNNN]'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='timer' doc='Show timers' />
+        <param name='[TNNNN]' doc='T- or X-timer-number -- 3GPP compliant timer number of the format &apos;1234&apos; or &apos;T1234&apos; or &apos;t1234&apos;; Osmocom-specific timer number of the format: &apos;X1234&apos; or &apos;x1234&apos;.' />
+      </params>
+    </command>
     <command id='show cs7 instance &lt;0-15&gt; users'>
       <params>
         <param name='show' doc='Show running system information' />
@@ -395,6 +448,13 @@
         <param name='m3ua' doc='MTP3 User Adaptation' />
         <param name='ipa' doc='IPA Multiplex (SCCP Lite)' />
         <param name='[&lt;0-65534&gt;]' doc='Port Number' />
+      </params>
+    </command>
+    <command id='show cs7 config'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='cs7' doc='ITU-T Signaling System 7' />
+        <param name='config' doc='Currently running cs7 configuration' />
       </params>
     </command>
     <command id='show cs7 instance &lt;0-15&gt; asp'>
@@ -734,7 +794,7 @@
         <param name='MASK' doc='List of logging categories to log, e.g. &apos;abc:mno:xyz&apos;. Available log categories depend on the specific application, refer to the &apos;logging level&apos; command. Optionally add individual log levels like &apos;abc,1:mno,3:xyz,5&apos;, where the level numbers are LOGL_DEBUG=1 LOGL_INFO=3 LOGL_NOTICE=5 LOGL_ERROR=7 LOGL_FATAL=8' />
       </params>
     </command>
-    <command id='logging level (|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|slhc|ranap|sua|v42bis|lglobal|llapd|linp|lmux|lmi|lmib|lsms|lctrl|lgtp|lstats|lgsup|loap|lss7|lsccp|lsua|lm3ua|lmgcp|ljibuf|lrspro) (debug|info|notice|error|fatal)'>
+    <command id='logging level (|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|slhc|ranap|sua|v42bis|gtp|lglobal|llapd|linp|lmux|lmi|lmib|lsms|lctrl|lgtp|lstats|lgsup|loap|lss7|lsccp|lsua|lm3ua|lmgcp|ljibuf|lrspro) (debug|info|notice|error|fatal)'>
       <params>
         <param name='logging' doc='Configure logging' />
         <param name='level' doc='Set the log level for a specified category' />
@@ -751,6 +811,7 @@
         <param name='ranap' doc='RAN Application Part (RANAP)' />
         <param name='sua' doc='SCCP User Adaptation (SUA)' />
         <param name='v42bis' doc='V.42bis data compression (SNDCP)' />
+        <param name='gtp' doc='GPRS Tunnelling Protocol (GTP)' />
         <param name='lglobal' doc='Library-internal global log family' />
         <param name='llapd' doc='LAPD in libosmogsm' />
         <param name='linp' doc='A-bis Intput Subsystem' />
@@ -807,6 +868,50 @@
         <param name='logging' doc='Configure logging' />
         <param name='level' doc='Set the log level for a specified category' />
         <param name='force-all' doc='Release any globally forced log level set with &apos;logging level force-all &lt;level&gt;&apos;' />
+      </params>
+    </command>
+    <command id='logp (|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|slhc|ranap|sua|v42bis|gtp|lglobal|llapd|linp|lmux|lmi|lmib|lsms|lctrl|lgtp|lstats|lgsup|loap|lss7|lsccp|lsua|lm3ua|lmgcp|ljibuf|lrspro) (debug|info|notice|error|fatal) .LOGMESSAGE'>
+      <params>
+        <param name='logp' doc='Print a message on all log outputs; useful for placing markers in test logs' />
+        <param name='mm' doc='Layer3 Mobility Management (MM)' />
+        <param name='pag' doc='Paging Subsystem' />
+        <param name='meas' doc='Radio Measurement Processing' />
+        <param name='ref' doc='Reference Counting' />
+        <param name='gprs' doc='GPRS Packet Service' />
+        <param name='ns' doc='GPRS Network Service (NS)' />
+        <param name='bssgp' doc='GPRS BSS Gateway Protocol (BSSGP)' />
+        <param name='llc' doc='GPRS Logical Link Control Protocol (LLC)' />
+        <param name='sndcp' doc='GPRS Sub-Network Dependent Control Protocol (SNDCP)' />
+        <param name='slhc' doc='RFC1144 TCP/IP Header compression (SLHC)' />
+        <param name='ranap' doc='RAN Application Part (RANAP)' />
+        <param name='sua' doc='SCCP User Adaptation (SUA)' />
+        <param name='v42bis' doc='V.42bis data compression (SNDCP)' />
+        <param name='gtp' doc='GPRS Tunnelling Protocol (GTP)' />
+        <param name='lglobal' doc='Library-internal global log family' />
+        <param name='llapd' doc='LAPD in libosmogsm' />
+        <param name='linp' doc='A-bis Intput Subsystem' />
+        <param name='lmux' doc='A-bis B-Subchannel TRAU Frame Multiplex' />
+        <param name='lmi' doc='A-bis Input Driver for Signalling' />
+        <param name='lmib' doc='A-bis Input Driver for B-Channels (voice)' />
+        <param name='lsms' doc='Layer3 Short Message Service (SMS)' />
+        <param name='lctrl' doc='Control Interface' />
+        <param name='lgtp' doc='GPRS GTP library' />
+        <param name='lstats' doc='Statistics messages and logging' />
+        <param name='lgsup' doc='Generic Subscriber Update Protocol' />
+        <param name='loap' doc='Osmocom Authentication Protocol' />
+        <param name='lss7' doc='libosmo-sigtran Signalling System 7' />
+        <param name='lsccp' doc='libosmo-sigtran SCCP Implementation' />
+        <param name='lsua' doc='libosmo-sigtran SCCP User Adaptation' />
+        <param name='lm3ua' doc='libosmo-sigtran MTP3 User Adaptation' />
+        <param name='lmgcp' doc='libosmo-mgcp Media Gateway Control Protocol' />
+        <param name='ljibuf' doc='libosmo-netif Jitter Buffer' />
+        <param name='lrspro' doc='Remote SIM protocol' />
+        <param name='debug' doc='Log debug messages and higher levels' />
+        <param name='info' doc='Log informational messages and higher levels' />
+        <param name='notice' doc='Log noticeable messages and higher levels' />
+        <param name='error' doc='Log error messages and higher levels' />
+        <param name='fatal' doc='Log only fatal messages' />
+        <param name='.LOGMESSAGE' doc='Arbitrary message to log on given category and log level' />
       </params>
     </command>
     <command id='show logging vty'>
@@ -888,6 +993,18 @@
         <param name='rate-counters' doc='Show all rate counters' />
       </params>
     </command>
+    <command id='stats report'>
+      <params>
+        <param name='stats' doc='Stats related commands' />
+        <param name='report' doc='Manurally trigger reporting of stats' />
+      </params>
+    </command>
+    <command id='stats reset'>
+      <params>
+        <param name='stats' doc='Stats related commands' />
+        <param name='reset' doc='Reset all stats' />
+      </params>
+    </command>
     <command id='show sgsn'>
       <params>
         <param name='show' doc='Show running system information' />
@@ -923,6 +1040,13 @@
         <param name='show' doc='Show running system information' />
         <param name='subscriber' doc='Show information about subscribers' />
         <param name='cache' doc='Display contents of subscriber cache' />
+      </params>
+    </command>
+    <command id='show timer [TNNNN]'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='timer' doc='Show timers' />
+        <param name='[TNNNN]' doc='T- or X-timer-number -- 3GPP compliant timer number of the format &apos;1234&apos; or &apos;T1234&apos; or &apos;t1234&apos;; Osmocom-specific timer number of the format: &apos;X1234&apos; or &apos;x1234&apos;.' />
       </params>
     </command>
     <command id='update-subscriber imsi IMSI insert auth-triplet &lt;1-5&gt; sres SRES rand RAND kc KC'>
@@ -1006,6 +1130,13 @@
         <param name='m3ua' doc='MTP3 User Adaptation' />
         <param name='ipa' doc='IPA Multiplex (SCCP Lite)' />
         <param name='[&lt;0-65534&gt;]' doc='Port Number' />
+      </params>
+    </command>
+    <command id='show cs7 config'>
+      <params>
+        <param name='show' doc='Show running system information' />
+        <param name='cs7' doc='ITU-T Signaling System 7' />
+        <param name='config' doc='Currently running cs7 configuration' />
       </params>
     </command>
     <command id='show cs7 instance &lt;0-15&gt; asp'>
@@ -1412,11 +1543,11 @@
         <param name='log' doc='Report to the logger' />
       </params>
     </command>
-    <command id='stats interval &lt;1-65535&gt;'>
+    <command id='stats interval &lt;0-65535&gt;'>
       <params>
         <param name='stats' doc='Configure stats sub-system' />
         <param name='interval' doc='Set the reporting interval' />
-        <param name='&lt;1-65535&gt;' doc='Interval in seconds' />
+        <param name='&lt;0-65535&gt;' doc='Interval in seconds (0 disables the reporting interval)' />
       </params>
     </command>
     <command id='sgsn'>
@@ -1521,7 +1652,7 @@
         <param name='[last]' doc='Log source file info at the end of a log line. If omitted, log source file info just before the log text.' />
       </params>
     </command>
-    <command id='logging level (|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|slhc|ranap|sua|v42bis|lglobal|llapd|linp|lmux|lmi|lmib|lsms|lctrl|lgtp|lstats|lgsup|loap|lss7|lsccp|lsua|lm3ua|lmgcp|ljibuf|lrspro) (debug|info|notice|error|fatal)'>
+    <command id='logging level (|mm|pag|meas|ref|gprs|ns|bssgp|llc|sndcp|slhc|ranap|sua|v42bis|gtp|lglobal|llapd|linp|lmux|lmi|lmib|lsms|lctrl|lgtp|lstats|lgsup|loap|lss7|lsccp|lsua|lm3ua|lmgcp|ljibuf|lrspro) (debug|info|notice|error|fatal)'>
       <params>
         <param name='logging' doc='Configure logging' />
         <param name='level' doc='Set the log level for a specified category' />
@@ -1538,6 +1669,7 @@
         <param name='ranap' doc='RAN Application Part (RANAP)' />
         <param name='sua' doc='SCCP User Adaptation (SUA)' />
         <param name='v42bis' doc='V.42bis data compression (SNDCP)' />
+        <param name='gtp' doc='GPRS Tunnelling Protocol (GTP)' />
         <param name='lglobal' doc='Library-internal global log family' />
         <param name='llapd' doc='LAPD in libosmogsm' />
         <param name='linp' doc='A-bis Intput Subsystem' />
@@ -1686,6 +1818,12 @@
         <param name='disable' doc='Disable the reporter' />
       </params>
     </command>
+    <command id='flush-period &lt;0-65535&gt;'>
+      <params>
+        <param name='flush-period' doc='Configure stats sub-system' />
+        <param name='&lt;0-65535&gt;' doc='Send all stats even if they have not changed (i.e. force the flush)every N-th reporting interval. Set to 0 to disable regular flush (default).' />
+      </params>
+    </command>
   </node>
   <node id='config-line'>
     <name>config-line</name>
@@ -1803,6 +1941,15 @@
         <param name='udp' doc='NS over UDP Encapsulation' />
         <param name='dscp' doc='Set DSCP/TOS on the UDP socket' />
         <param name='&lt;0-255&gt;' doc='DSCP Value' />
+      </params>
+    </command>
+    <command id='encapsulation udp use-reset-block-unblock (enabled|disabled)'>
+      <params>
+        <param name='encapsulation' doc='NS encapsulation options' />
+        <param name='udp' doc='NS over UDP Encapsulation' />
+        <param name='use-reset-block-unblock' doc='Use NS-{RESET,BLOCK,UNBLOCK} procedures in violation of 3GPP TS 48.016' />
+        <param name='enabled' doc='Enable NS-{RESET,BLOCK,UNBLOCK}' />
+        <param name='disabled' doc='Disable NS-{RESET,BLOCK,UNBLOCK}' />
       </params>
     </command>
     <command id='encapsulation framerelay-gre enabled (1|0)'>
@@ -1984,6 +2131,12 @@
         <param name='override' doc='Override' />
       </params>
     </command>
+    <command id='no traffic-mode'>
+      <params>
+        <param name='no' doc='Negate a command or set its defaults' />
+        <param name='traffic-mode' doc='Remove explicit traffic mode of operation of this AS' />
+      </params>
+    </command>
     <command id='recovery-timeout &lt;1-2000&gt;'>
       <params>
         <param name='recovery-timeout' doc='Specifies the recovery timeout value in milliseconds' />
@@ -2054,6 +2207,15 @@
         <param name='PC' doc='Override Destination Point Code' />
       </params>
     </command>
+    <command id='point-code override patch-sccp (disabled|both)'>
+      <params>
+        <param name='point-code' doc='Point Code Specific Features' />
+        <param name='override' doc='Override (force) a point-code to hard-coded value' />
+        <param name='patch-sccp' doc='Patch point code values into SCCP called/calling address' />
+        <param name='disabled' doc='Don&apos;t patch any point codes into SCCP called/calling address' />
+        <param name='both' doc='Patch both origin and destination point codes into SCCP called/calling address' />
+      </params>
+    </command>
   </node>
   <node id='config-cs7-asp'>
     <name>config-cs7-asp</name>
@@ -2079,6 +2241,21 @@
       <params>
         <param name='qos-class' doc='Specify QoS Class of ASP' />
         <param name='&lt;0-255&gt;' doc='QoS Class of ASP' />
+      </params>
+    </command>
+    <command id='role (sg|asp|ipsp)'>
+      <params>
+        <param name='role' doc='Specify the xUA role for this ASP' />
+        <param name='sg' doc='SG (Signaling Gateway)' />
+        <param name='asp' doc='ASP (Application Server Process)' />
+        <param name='ipsp' doc='IPSP (IP Signalling Point)' />
+      </params>
+    </command>
+    <command id='sctp-role (client|server)'>
+      <params>
+        <param name='sctp-role' doc='Specify the SCTP role for this ASP' />
+        <param name='client' doc='Operate as SCTP client; connect to a server' />
+        <param name='server' doc='Operate as SCTP server; wait for client connections' />
       </params>
     </command>
     <command id='block'>
@@ -2366,88 +2543,12 @@
         <param name='A.B.C.D' doc='IPv4 address' />
       </params>
     </command>
-    <command id='timer t3312 &lt;0-65535&gt;'>
+    <command id='timer [TNNNN] [(&lt;0-2147483647&gt;|default)]'>
       <params>
-        <param name='timer' doc='Configure GPRS Timers' />
-        <param name='t3312' doc='Periodic RA Update timer (s)' />
-        <param name='&lt;0-65535&gt;' doc='Timer Value in seconds' />
-      </params>
-    </command>
-    <command id='timer t3322 &lt;0-65535&gt;'>
-      <params>
-        <param name='timer' doc='Configure GPRS Timers' />
-        <param name='t3322' doc='Detach request -&gt; accept timer (s)' />
-        <param name='&lt;0-65535&gt;' doc='Timer Value in seconds' />
-      </params>
-    </command>
-    <command id='timer t3350 &lt;0-65535&gt;'>
-      <params>
-        <param name='timer' doc='Configure GPRS Timers' />
-        <param name='t3350' doc='Waiting for ATT/RAU/TMSI_COMPL timer (s)' />
-        <param name='&lt;0-65535&gt;' doc='Timer Value in seconds' />
-      </params>
-    </command>
-    <command id='timer t3360 &lt;0-65535&gt;'>
-      <params>
-        <param name='timer' doc='Configure GPRS Timers' />
-        <param name='t3360' doc='Waiting for AUTH/CIPH response timer (s)' />
-        <param name='&lt;0-65535&gt;' doc='Timer Value in seconds' />
-      </params>
-    </command>
-    <command id='timer t3370 &lt;0-65535&gt;'>
-      <params>
-        <param name='timer' doc='Configure GPRS Timers' />
-        <param name='t3370' doc='Waiting for IDENTITY response timer (s)' />
-        <param name='&lt;0-65535&gt;' doc='Timer Value in seconds' />
-      </params>
-    </command>
-    <command id='timer t3313 &lt;0-65535&gt;'>
-      <params>
-        <param name='timer' doc='Configure GPRS Timers' />
-        <param name='t3313' doc='Waiting for paging response timer (s)' />
-        <param name='&lt;0-65535&gt;' doc='Timer Value in seconds' />
-      </params>
-    </command>
-    <command id='timer t3314 &lt;0-65535&gt;'>
-      <params>
-        <param name='timer' doc='Configure GPRS Timers' />
-        <param name='t3314' doc='Force to STANDBY on expiry timer (s)' />
-        <param name='&lt;0-65535&gt;' doc='Timer Value in seconds' />
-      </params>
-    </command>
-    <command id='timer t3316 &lt;0-65535&gt;'>
-      <params>
-        <param name='timer' doc='Configure GPRS Timers' />
-        <param name='t3316' doc='AA-Ready timer (s)' />
-        <param name='&lt;0-65535&gt;' doc='Timer Value in seconds' />
-      </params>
-    </command>
-    <command id='timer t3385 &lt;0-65535&gt;'>
-      <params>
-        <param name='timer' doc='Configure GPRS Timers' />
-        <param name='t3385' doc='Wait for ACT PDP CTX REQ timer (s)' />
-        <param name='&lt;0-65535&gt;' doc='Timer Value in seconds' />
-      </params>
-    </command>
-    <command id='timer t3386 &lt;0-65535&gt;'>
-      <params>
-        <param name='timer' doc='Configure GPRS Timers' />
-        <param name='t3386' doc='Wait for MODIFY PDP CTX ACK timer (s)' />
-        <param name='&lt;0-65535&gt;' doc='Timer Value in seconds' />
-      </params>
-    </command>
-    <command id='timer t3395 &lt;0-65535&gt;'>
-      <params>
-        <param name='timer' doc='Configure GPRS Timers' />
-        <param name='t3395' doc='Wait for DEACT PDP CTX ACK timer (s)' />
-        <param name='&lt;0-65535&gt;' doc='Timer Value in seconds' />
-      </params>
-    </command>
-    <command id='timer t3397 &lt;0-65535&gt;'>
-      <params>
-        <param name='timer' doc='Configure GPRS Timers' />
-        <param name='t3397' doc='Wait for DEACT AA PDP CTX ACK timer (s)' />
-        <param name='&lt;0-65535&gt;' doc='Timer Value in seconds' />
+        <param name='timer' doc='Configure or show timers' />
+        <param name='[TNNNN]' doc='T- or X-timer-number -- 3GPP compliant timer number of the format &apos;1234&apos; or &apos;T1234&apos; or &apos;t1234&apos;; Osmocom-specific timer number of the format: &apos;X1234&apos; or &apos;x1234&apos;.' />
+        <param name='[&lt;0-2147483647&gt;]' doc='New timer value' />
+        <param name='[default]' doc='Set to default timer value' />
       </params>
     </command>
     <command id='no compression rfc1144'>
