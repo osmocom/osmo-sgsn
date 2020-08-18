@@ -49,6 +49,7 @@
 #include <osmocom/vty/stats.h>
 #include <osmocom/vty/ports.h>
 #include <osmocom/vty/misc.h>
+#include <osmocom/vty/cpu_sched_vty.h>
 
 #include <osmocom/ctrl/control_vty.h>
 
@@ -414,6 +415,7 @@ int main(int argc, char **argv)
 	osmo_stats_vty_add_cmds();
 	sgsn_vty_init(&sgsn->cfg);
 	ctrl_vty_init(tall_sgsn_ctx);
+	osmo_cpu_sched_vty_init(tall_sgsn_ctx);
 
 #if BUILD_IU
 	OSMO_ASSERT(osmo_ss7_init() == 0);
