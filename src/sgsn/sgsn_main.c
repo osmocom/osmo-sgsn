@@ -532,8 +532,8 @@ int main(int argc, char **argv)
 						 "OsmoSGSN",
 						 (23 << 3) + 4,
 						 OSMO_SS7_ASP_PROT_M3UA,
-						 0, NULL,
-						 0, "127.0.0.1");
+						 0, "localhost",
+						 0, "localhost");
 	if (!sccp) {
 		printf("Setting up SCCP client failed.\n");
 		return 8;
