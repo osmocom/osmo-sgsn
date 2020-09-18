@@ -1663,16 +1663,26 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	} else if (!gprs_ra_id_equals(&mmctx->ra, &old_ra_id) ||
 		mmctx->gmm_fsm->state == ST_GMM_DEREGISTERED)
 	{
-		/* We cannot use the mmctx */
-		LOGMMCTXP(LOGL_INFO, mmctx,
-			"The MM context cannot be used, RA: %s\n",
-			osmo_rai_name(&mmctx->ra));
-		/* mmctx is set to NULL and gprs_llgmm_unassign(llme) will be
-		   called below, let's make sure we don't keep dangling llme
-		   pointers in mmctx (OS#3957, OS#4245). */
-		if (mmctx->ran_type == MM_CTX_T_GERAN_Gb)
-			mmctx->gb.llme = NULL;
-		mmctx = NULL;
+		/* We've received either a RAU for a MS which isn't registered
+		 * or a RAU with an unknown RA ID. As long the SGSN doesn't support
+		 * PS handover we treat this as invalid RAU */
+		struct gprs_ra_id new_ra_id;
+		char new_ra[32];
+
+		bssgp_parse_cell_id(&new_ra_id, msgb_bcid(msg));
+		osmo_rai_name_buf(new_ra, sizeof(new_ra), &new_ra_id);
+
+		if (mmctx->gmm_fsm->state == ST_GMM_DEREGISTERED)
+			LOGMMCTXP(LOGL_INFO, mmctx,
+				  "Rejecting RAU - GMM state is deregistered. Old RA: %s New RA: %s\n",
+				  osmo_rai_name(&old_ra_id), new_ra);
+		else
+			LOGMMCTXP(LOGL_INFO, mmctx,
+				  "Rejecting RAU - Old RA doesn't match MM. Old RA: %s New RA: %s\n",
+				  osmo_rai_name(&old_ra_id), new_ra);
+
+		reject_cause = GMM_CAUSE_IMPL_DETACHED;
+		goto rejected;
 	}
 
 	if (!mmctx) {
