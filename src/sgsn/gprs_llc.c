@@ -376,20 +376,24 @@ static int _bssgp_tx_dl_ud(struct msgb *msg, struct sgsn_mm_ctx *mmctx)
 	 * not yet have a MMC context (e.g. XID negotiation of primarly
 	 * LLC connection from GMM sapi). */
 	if (mmctx) {
+		/* In rare cases the LLME is NULL in those cases don't
+		 * use the mm radio capabilities */
 		dup.imsi = mmctx->imsi;
-		dup.drx_parms = mmctx->drx_parms;
-		dup.ms_ra_cap.len = mmctx->ms_radio_access_capa.len;
-		dup.ms_ra_cap.v = mmctx->ms_radio_access_capa.buf;
+		if (mmctx->gb.llme) {
+			dup.drx_parms = mmctx->drx_parms;
+			dup.ms_ra_cap.len = mmctx->ms_radio_access_capa.len;
+			dup.ms_ra_cap.v = mmctx->ms_radio_access_capa.buf;
 
-		/* make sure we only send it to the right llme */
-		if (!(msgb_tlli(msg) == mmctx->gb.llme->tlli
-		      || msgb_tlli(msg) == mmctx->gb.llme->old_tlli)) {
-			LOGP(DLLC, LOGL_ERROR,
-			     "_bssgp_tx_dl_ud(): Attempt to send Downlink Unitdata to wrong LLME:"
-			     " msgb_tlli=0x%x mmctx->gb.llme->tlli=0x%x ->old_tlli=0x%x\n",
-			     msgb_tlli(msg), mmctx->gb.llme->tlli, mmctx->gb.llme->old_tlli);
-			msgb_free(msg);
-			return -EINVAL;
+			/* make sure we only send it to the right llme */
+			if (!(msgb_tlli(msg) == mmctx->gb.llme->tlli
+			      || msgb_tlli(msg) == mmctx->gb.llme->old_tlli)) {
+				LOGP(DLLC, LOGL_ERROR,
+				     "_bssgp_tx_dl_ud(): Attempt to send Downlink Unitdata to wrong LLME:"
+				     " msgb_tlli=0x%x mmctx->gb.llme->tlli=0x%x ->old_tlli=0x%x\n",
+				     msgb_tlli(msg), mmctx->gb.llme->tlli, mmctx->gb.llme->old_tlli);
+				msgb_free(msg);
+				return -EINVAL;
+			}
 		}
 	}
 	memcpy(&dup.qos_profile, qos_profile_default,
