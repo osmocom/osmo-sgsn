@@ -302,7 +302,7 @@ int gsm48_tx_gmm_att_ack(struct sgsn_mm_ctx *mm)
 	aa->att_result = 1;	/* GPRS only */
 	t = osmo_tdef_get(sgsn->cfg.T_defs, 3312, OSMO_TDEF_S, -1);
 	aa->ra_upd_timer = gprs_secs_to_tmr_floor(t);
-	aa->radio_prio = 4;	/* lowest */
+	aa->radio_prio = 0x44;	/* lowest */
 	gsm48_encode_ra(&aa->ra_id, &mm->ra);
 
 #if 0

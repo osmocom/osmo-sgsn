@@ -167,6 +167,7 @@ struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
 	pdp->hisaddr0 =	ggsn->remote_addr;
 	pdp->hisaddr1 = ggsn->remote_addr;
 	//pdp->cch_pdp = 512;	/* Charging Flat Rate */
+	pdp->radio_pri = 0x4;
 
 	/* MS provided APN, subscription was verified by the caller */
 	pdp->selmode = 0xFC | 0x00;
