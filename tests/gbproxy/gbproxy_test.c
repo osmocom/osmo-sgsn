@@ -47,38 +47,38 @@
 
 //#define MATCH_ANY (-1)
 
-//void *tall_sgsn_ctx = NULL;
+void *tall_sgsn_ctx = NULL;
 
 //struct gbproxy_config gbcfg = {0};
 
 //struct llist_head *received_messages = NULL;
 
-///* override, requires '-Wl,--wrap=osmo_get_rand_id' */
-//int __real_osmo_get_rand_id(uint8_t *data, size_t len);
-//int mock_osmo_get_rand_id(uint8_t *data, size_t len);
-//int (*osmo_get_rand_id_cb)(uint8_t *, size_t) =
-//  &mock_osmo_get_rand_id;
+/* override, requires '-Wl,--wrap=osmo_get_rand_id' */
+int __real_osmo_get_rand_id(uint8_t *data, size_t len);
+int mock_osmo_get_rand_id(uint8_t *data, size_t len);
+int (*osmo_get_rand_id_cb)(uint8_t *, size_t) =
+  &mock_osmo_get_rand_id;
 
-//int __wrap_osmo_get_rand_id(uint8_t *buf, size_t num)
-//{
-//	return (*osmo_get_rand_id_cb)(buf, num);
-//}
+int __wrap_osmo_get_rand_id(uint8_t *buf, size_t num)
+{
+	return (*osmo_get_rand_id_cb)(buf, num);
+}
 
-//static int rand_seq_num = 0;
-//int mock_osmo_get_rand_id(uint8_t *buf, size_t num)
-//{
-//	uint32_t val;
+static int rand_seq_num = 0;
+int mock_osmo_get_rand_id(uint8_t *buf, size_t num)
+{
+	uint32_t val;
 
-//	OSMO_ASSERT(num == sizeof(val));
+	OSMO_ASSERT(num == sizeof(val));
 
-//	val = 0x00dead00 + rand_seq_num;
+	val = 0x00dead00 + rand_seq_num;
 
-//	rand_seq_num++;
+	rand_seq_num++;
 
-//	memcpy(buf, &val, num);
+	memcpy(buf, &val, num);
 
-//	return 1;
-//}
+	return 1;
+}
 
 //static void cleanup_test()
 //{
@@ -5032,6 +5032,7 @@
 
 int main(int argc, char **argv)
 {
+	tall_sgsn_ctx = talloc_named_const(NULL, 0, "nsip_proxy");
 
 	/* all tests ok! */
 	return 0;
