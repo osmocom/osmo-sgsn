@@ -33,22 +33,41 @@
 
 extern vector ctrl_node_vec;
 
+static int ctrl_nsvc_state_cb(struct gprs_ns2_vc *nsvc, void *ctx) {
+/* FIXME: Can't get NSVC state in ns2
+	struct ctrl_cmd *cmd = (struct ctrl_cmd *)ctx;
+
+	cmd->reply = gprs_ns2_vc_state_append(cmd->reply, nsvc);
+*/
+	return 0;
+}
+
 static int get_nsvc_state(struct ctrl_cmd *cmd, void *data)
 {
 	struct gbproxy_config *cfg = data;
-	struct gprs_ns_inst *nsi = cfg->nsi;
-	struct gprs_nsvc *nsvc;
+	struct gprs_ns2_inst *nsi = cfg->nsi;
+	struct gprs_ns2_nse *nse;
+	struct gbproxy_peer *peer;
 
 	cmd->reply = talloc_strdup(cmd, "");
 
-	llist_for_each_entry(nsvc, &nsi->gprs_nsvcs, list) {
-		if (nsvc == nsi->unknown_nsvc)
-			continue;
+	/* NS-VCs for SGSN */
+	nse = gprs_ns2_nse_by_nsei(nsi, cfg->nsip_sgsn_nsei);
+	if (nse)
+		gprs_ns2_nse_foreach_nsvc(nse, &ctrl_nsvc_state_cb, cmd);
+	/* NS-VCs for SGSN2 */
+	nse = gprs_ns2_nse_by_nsei(nsi, cfg->nsip_sgsn2_nsei);
+	if (nse)
+		gprs_ns2_nse_foreach_nsvc(nse, &ctrl_nsvc_state_cb, cmd);
 
-		cmd->reply = gprs_nsvc_state_append(cmd->reply, nsvc);
+	/* NS-VCs for BSS peers */
+	llist_for_each_entry(peer, &cfg->bts_peers, list) {
+		nse = gprs_ns2_nse_by_nsei(nsi, peer->nsei);
+		if (nse)
+			gprs_ns2_nse_foreach_nsvc(nse, &ctrl_nsvc_state_cb, cmd);
 	}
-
-	return CTRL_CMD_REPLY;
+	cmd->reply = "Getting NSVC state not yet implemented for NS2";
+	return CTRL_CMD_ERROR;
 }
 
 CTRL_CMD_DEFINE_RO(nsvc_state, "nsvc-state");

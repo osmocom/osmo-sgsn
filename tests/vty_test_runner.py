@@ -95,7 +95,7 @@ class TestVTYGbproxy(TestVTYBase):
 
     def testVtyShow(self):
         res = self.vty.command("show ns")
-        self.assertTrue(res.find('Encapsulation NS-UDP-IP') >= 0)
+        self.assertTrue(res.find('UDP bind') >= 0)
 
         res = self.vty.command("show gbproxy stats")
         self.assertTrue(res.find('GBProxy Global Statistics') >= 0)
@@ -105,16 +105,14 @@ class TestVTYGbproxy(TestVTYBase):
         self.assertTrue(self.vty.verify('delete-gbproxy-peer 9999 bvci 7777', ['BVC not found']))
         res = self.vty.command("delete-gbproxy-peer 9999 all dry-run")
         self.assertTrue(res.find('Not Deleted 0 BVC') >= 0)
-        self.assertTrue(res.find('Not Deleted 0 NS-VC') >= 0)
+        self.assertTrue(res.find('NSEI not found') >= 0)
         res = self.vty.command("delete-gbproxy-peer 9999 only-bvc dry-run")
         self.assertTrue(res.find('Not Deleted 0 BVC') >= 0)
-        self.assertTrue(res.find('Not Deleted 0 NS-VC') < 0)
         res = self.vty.command("delete-gbproxy-peer 9999 only-nsvc dry-run")
-        self.assertTrue(res.find('Not Deleted 0 BVC') < 0)
-        self.assertTrue(res.find('Not Deleted 0 NS-VC') >= 0)
+        self.assertTrue(res.find('NSEI not found') >= 0)
         res = self.vty.command("delete-gbproxy-peer 9999 all")
         self.assertTrue(res.find('Deleted 0 BVC') >= 0)
-        self.assertTrue(res.find('Deleted 0 NS-VC') >= 0)
+        self.assertTrue(res.find('NSEI not found') >= 0)
 
 class TestVTYSGSN(TestVTYBase):
 

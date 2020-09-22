@@ -3,9 +3,10 @@
 
 
 #include <osmocom/core/msgb.h>
+#include <osmocom/core/timer.h>
 #include <osmocom/gsm/gsm23003.h>
 
-#include <osmocom/gprs/gprs_ns.h>
+#include <osmocom/gprs/gprs_ns2.h>
 #include <osmocom/vty/command.h>
 
 #include <sys/types.h>
@@ -95,7 +96,7 @@ struct gbproxy_config {
 	uint16_t nsip_sgsn_nsei;
 
 	/* NS instance of libosmogb */
-	struct gprs_ns_inst *nsi;
+	struct gprs_ns2_inst *nsi;
 
 	/* Linked list of all Gb peers (except SGSN) */
 	struct llist_head bts_peers;
@@ -236,13 +237,13 @@ int gb_ctrl_cmds_install(void);
 int gbproxy_init_config(struct gbproxy_config *cfg);
 
 /* Main input function for Gb proxy */
-int gbprox_rcvmsg(struct gbproxy_config *cfg, struct msgb *msg, uint16_t nsei, uint16_t ns_bvci, uint16_t nsvci);
+int gbprox_rcvmsg(void *ctx, struct msgb *msg);
 
 int gbprox_signal(unsigned int subsys, unsigned int signal,
 		  void *handler_data, void *signal_data);
 
-/* Reset all persistent NS-VC's */
-int gbprox_reset_persistent_nsvcs(struct gprs_ns_inst *nsi);
+
+int gprs_ns2_prim_cb(struct osmo_prim_hdr *oph, void *ctx);
 
 void gbprox_reset(struct gbproxy_config *cfg);
 
