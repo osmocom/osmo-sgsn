@@ -18,6 +18,7 @@
  *
  */
 
+#include <osmocom/gprs/gprs_msgb.h>
 #include <osmocom/sgsn/gb_proxy.h>
 
 #include <osmocom/sgsn/gprs_utils.h>

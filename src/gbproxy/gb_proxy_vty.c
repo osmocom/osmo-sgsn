@@ -26,10 +26,11 @@
 #include <inttypes.h>
 
 #include <osmocom/core/talloc.h>
+#include <osmocom/core/timer.h>
 #include <osmocom/core/rate_ctr.h>
 #include <osmocom/gsm/gsm48.h>
 
-#include <osmocom/gprs/gprs_ns.h>
+#include <osmocom/gprs/gprs_ns2.h>
 #include <osmocom/gsm/apn.h>
 
 #include <osmocom/sgsn/debug.h>
@@ -666,25 +667,34 @@ DEFUN(delete_gb_nsei, delete_gb_nsei_cmd,
 	}
 
 	if (delete_nsvc) {
-		struct gprs_ns_inst *nsi = g_cfg->nsi;
-		struct gprs_nsvc *nsvc, *nsvc2;
+		struct gprs_ns2_inst *nsi = g_cfg->nsi;
+		struct gprs_ns2_nse *nse;
 
-		counter = 0;
-		llist_for_each_entry_safe(nsvc, nsvc2, &nsi->gprs_nsvcs, list) {
-			if (nsvc->nsei != nsei)
-				continue;
-			if (nsvc->persistent)
-				continue;
-
-			if (!dry_run)
-				gprs_nsvc_delete(nsvc);
-			else
-				vty_out(vty, "NS-VC: NSEI %5u, NS-VCI %5u, "
-					"remote %s%s",
-					nsvc->nsei, nsvc->nsvci,
-					gprs_ns_ll_str(nsvc), VTY_NEWLINE);
-			counter += 1;
+		counter = 1;
+		nse = gprs_ns2_nse_by_nsei(nsi, nsei);
+		if (!nse) {
+			/* TODO: fail vty */
+			return CMD_ERR_NO_MATCH;
 		}
+
+		gprs_ns2_free_nse(nse);
+		/* TODO: old code could NOT delete a persistent NSEI/NSVC */
+
+//		llist_for_each_entry_safe(nsvc, nsvc2, &nsi->gprs_nsvcs, list) {
+//			if (nsvc->nsei != nsei)
+//				continue;
+//			if (nsvc->persistent)
+//				continue;
+
+//			if (!dry_run)
+//				gprs_nsvc_delete(nsvc);
+//			else
+//				vty_out(vty, "NS-VC: NSEI %5u, NS-VCI %5u, "
+//					"remote %s%s",
+//					nsvc->nsei, nsvc->nsvci,
+//					gprs_ns_ll_str(nsvc), VTY_NEWLINE);
+//			counter += 1;
+//		}
 		vty_out(vty, "%sDeleted %d NS-VC%s",
 			dry_run ? "Not " : "", counter, VTY_NEWLINE);
 	}

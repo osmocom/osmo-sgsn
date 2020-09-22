@@ -36,7 +36,7 @@
 #include <osmocom/core/rate_ctr.h>
 #include <osmocom/core/stats.h>
 
-#include <osmocom/gprs/gprs_ns.h>
+#include <osmocom/gprs/gprs_ns2.h>
 #include <osmocom/gprs/gprs_bssgp.h>
 
 #include <osmocom/gsm/gsm_utils.h>
@@ -76,7 +76,7 @@ static const struct rate_ctr_group_desc global_ctrg_desc = {
 };
 
 static int gbprox_relay2peer(struct msgb *old_msg, struct gbproxy_peer *peer,
-			  uint16_t ns_bvci);
+			     uint16_t ns_bvci);
 static int gbprox_relay2sgsn(struct gbproxy_config *cfg, struct msgb *old_msg,
 			     uint16_t ns_bvci, uint16_t sgsn_nsei);
 static void gbproxy_reset_imsi_acquisition(struct gbproxy_link_info* link_info);
@@ -779,43 +779,49 @@ static int gbprox_relay2sgsn(struct gbproxy_config *cfg, struct msgb *old_msg,
 {
 	/* create a copy of the message so the old one can
 	 * be free()d safely when we return from gbprox_rcvmsg() */
+	struct gprs_ns2_inst *nsi = cfg->nsi;
+	struct osmo_gprs_ns2_prim nsp = {};
 	struct msgb *msg = bssgp_msgb_copy(old_msg, "msgb_relay2sgsn");
 	int rc;
 
 	DEBUGP(DGPRS, "NSEI=%u proxying BTS->SGSN (NS_BVCI=%u, NSEI=%u)\n",
 		msgb_nsei(msg), ns_bvci, sgsn_nsei);
 
-	msgb_bvci(msg) = ns_bvci;
-	msgb_nsei(msg) = sgsn_nsei;
+	nsp.bvci = ns_bvci;
+	nsp.nsei = sgsn_nsei;
 
 	strip_ns_hdr(msg);
-
-	rc = gprs_ns_sendmsg(bssgp_nsi, msg);
+	osmo_prim_init(&nsp.oph, SAP_NS, PRIM_NS_UNIT_DATA,
+		       PRIM_OP_REQUEST, msg);
+	rc = gprs_ns2_recv_prim(nsi, &nsp.oph);
 	if (rc < 0)
 		rate_ctr_inc(&cfg->ctrg->ctr[GBPROX_GLOB_CTR_TX_ERR_SGSN]);
-
 	return rc;
 }
 
 /* feed a message down the NS-VC associated with the specified peer */
 static int gbprox_relay2peer(struct msgb *old_msg, struct gbproxy_peer *peer,
-			  uint16_t ns_bvci)
+			     uint16_t ns_bvci)
 {
 	/* create a copy of the message so the old one can
 	 * be free()d safely when we return from gbprox_rcvmsg() */
+	struct gprs_ns2_inst *nsi = peer->cfg->nsi;
+	struct osmo_gprs_ns2_prim nsp = {};
 	struct msgb *msg = bssgp_msgb_copy(old_msg, "msgb_relay2peer");
 	int rc;
 
 	DEBUGP(DGPRS, "NSEI=%u proxying SGSN->BSS (NS_BVCI=%u, NSEI=%u)\n",
 		msgb_nsei(msg), ns_bvci, peer->nsei);
 
-	msgb_bvci(msg) = ns_bvci;
-	msgb_nsei(msg) = peer->nsei;
+	nsp.bvci = ns_bvci;
+	nsp.nsei = peer->nsei;
 
 	/* Strip the old NS header, it will be replaced with a new one */
 	strip_ns_hdr(msg);
 
-	rc = gprs_ns_sendmsg(bssgp_nsi, msg);
+	osmo_prim_init(&nsp.oph, SAP_NS, PRIM_NS_UNIT_DATA,
+		       PRIM_OP_REQUEST, msg);
+	rc = gprs_ns2_recv_prim(nsi, &nsp.oph);
 	if (rc < 0)
 		rate_ctr_inc(&peer->ctrg->ctr[GBPROX_PEER_CTR_TX_ERR]);
 
@@ -875,7 +881,7 @@ int bssgp_prim_cb(struct osmo_prim_hdr *oph, void *ctx)
 /* Receive an incoming PTP message from a BSS-side NS-VC */
 static int gbprox_rx_ptp_from_bss(struct gbproxy_config *cfg,
 				  struct msgb *msg, uint16_t nsei,
-				  uint16_t nsvci, uint16_t ns_bvci)
+				  uint16_t ns_bvci)
 {
 	struct gbproxy_peer *peer;
 	struct bssgp_normal_hdr *bgph = (struct bssgp_normal_hdr *) msgb_bssgph(msg);
@@ -885,9 +891,9 @@ static int gbprox_rx_ptp_from_bss(struct gbproxy_config *cfg,
 	peer = gbproxy_peer_by_bvci(cfg, ns_bvci);
 	if (!peer) {
 		LOGP(DGPRS, LOGL_NOTICE, "Didn't find peer for "
-		     "BVCI=%u for PTP message from NSVC=%u/NSEI=%u (BSS), "
+		     "BVCI=%u for PTP message from NSEI=%u (BSS), "
 		     "discarding message\n",
-		     ns_bvci, nsvci, nsei);
+		     ns_bvci, nsei);
 		return bssgp_tx_status(BSSGP_CAUSE_UNKNOWN_BVCI,
 				       &ns_bvci, msg);
 	}
@@ -917,7 +923,7 @@ static int gbprox_rx_ptp_from_bss(struct gbproxy_config *cfg,
 /* Receive an incoming PTP message from a SGSN-side NS-VC */
 static int gbprox_rx_ptp_from_sgsn(struct gbproxy_config *cfg,
 				   struct msgb *msg, uint16_t nsei,
-				   uint16_t nsvci, uint16_t ns_bvci)
+				   uint16_t ns_bvci)
 {
 	struct gbproxy_peer *peer;
 	struct bssgp_normal_hdr *bgph = (struct bssgp_normal_hdr *) msgb_bssgph(msg);
@@ -929,8 +935,8 @@ static int gbprox_rx_ptp_from_sgsn(struct gbproxy_config *cfg,
 
 	if (!peer) {
 		LOGP(DGPRS, LOGL_INFO, "Didn't find peer for "
-		     "BVCI=%u for message from NSVC=%u/NSEI=%u (SGSN)\n",
-		     ns_bvci, nsvci, nsei);
+		     "BVCI=%u for message from NSEI=%u (SGSN)\n",
+		     ns_bvci, nsei);
 		rate_ctr_inc(&cfg->ctrg->
 			     ctr[GBPROX_GLOB_CTR_INV_BVCI]);
 		return bssgp_tx_status(BSSGP_CAUSE_UNKNOWN_BVCI,
@@ -939,8 +945,8 @@ static int gbprox_rx_ptp_from_sgsn(struct gbproxy_config *cfg,
 
 	if (peer->blocked) {
 		LOGP(DGPRS, LOGL_NOTICE, "Dropping PDU for "
-		     "blocked BVCI=%u via NSVC=%u/NSEI=%u\n",
-		     ns_bvci, nsvci, nsei);
+		     "blocked BVCI=%u via NSEI=%u\n",
+		     ns_bvci, nsei);
 		rate_ctr_inc(&peer->ctrg->ctr[GBPROX_PEER_CTR_DROPPED]);
 		return bssgp_tx_status(BSSGP_CAUSE_BVCI_BLOCKED, &ns_bvci, msg);
 	}
@@ -1315,7 +1321,7 @@ static int gbproxy_is_sgsn_nsei(struct gbproxy_config *cfg, uint16_t nsei)
 
 /* Main input function for Gb proxy */
 int gbprox_rcvmsg(struct gbproxy_config *cfg, struct msgb *msg, uint16_t nsei,
-		uint16_t ns_bvci, uint16_t nsvci)
+		uint16_t ns_bvci)
 {
 	int rc;
 	int remote_end_is_sgsn = gbproxy_is_sgsn_nsei(cfg, nsei);
@@ -1329,102 +1335,124 @@ int gbprox_rcvmsg(struct gbproxy_config *cfg, struct msgb *msg, uint16_t nsei,
 	} else {
 		/* All other BVCI are PTP */
 		if (remote_end_is_sgsn)
-			rc = gbprox_rx_ptp_from_sgsn(cfg, msg, nsei, nsvci,
+			rc = gbprox_rx_ptp_from_sgsn(cfg, msg, nsei,
 						     ns_bvci);
 		else
-			rc = gbprox_rx_ptp_from_bss(cfg, msg, nsei, nsvci,
+			rc = gbprox_rx_ptp_from_bss(cfg, msg, nsei,
 						    ns_bvci);
 	}
 
 	return rc;
 }
 
-int gbprox_reset_persistent_nsvcs(struct gprs_ns_inst *nsi)
+//int gbprox_reset_persistent_nsvcs(struct gprs_ns_inst *nsi)
+//{
+//	struct gprs_nsvc *nsvc;
+
+//	llist_for_each_entry(nsvc, &nsi->gprs_nsvcs, list) {
+//		if (!nsvc->persistent)
+//			continue;
+//		gprs_nsvc_reset(nsvc, NS_CAUSE_OM_INTERVENTION);
+//	}
+//	return 0;
+//}
+
+static void gprs_ns_prim_status_cb(struct gbproxy_config *cfg, struct osmo_gprs_ns2_prim *nsp);
+
+/* called by the ns layer */
+int gprs_ns_prim_cb(struct osmo_prim_hdr *oph, void *ctx)
 {
-	struct gprs_nsvc *nsvc;
+	struct osmo_gprs_ns2_prim *nsp;
+	struct gbproxy_config *cfg = (struct gbproxy_config *) ctx;
+	int rc = 0;
 
-	llist_for_each_entry(nsvc, &nsi->gprs_nsvcs, list) {
-		if (!nsvc->persistent)
-			continue;
-		gprs_nsvc_reset(nsvc, NS_CAUSE_OM_INTERVENTION);
-	}
-	return 0;
-}
-
-/* Signal handler for signals from NS layer */
-int gbprox_signal(unsigned int subsys, unsigned int signal,
-		  void *handler_data, void *signal_data)
-{
-	struct gbproxy_config *cfg = handler_data;
-	struct ns_signal_data *nssd = signal_data;
-	struct gprs_nsvc *nsvc = nssd->nsvc;
-	struct gbproxy_peer *peer;
-	int remote_end_is_sgsn = gbproxy_is_sgsn_nsei(cfg, nsvc->nsei);
-
-	if (subsys != SS_L_NS)
+	if (oph->sap != SAP_NS)
 		return 0;
 
-	if (signal == S_NS_RESET && remote_end_is_sgsn) {
-		/* We have received a NS-RESET from the NSEI and NSVC
-		 * of the SGSN.  This might happen with SGSN that start
-		 * their own NS-RESET procedure without waiting for our
-		 * NS-RESET */
-		nsvc->remote_end_is_sgsn = 1;
+	nsp = container_of(oph, struct osmo_gprs_ns2_prim, oph);
+
+	if (oph->operation != PRIM_OP_INDICATION) {
+		LOGP(DPCU, LOGL_NOTICE, "NS: %s Unknown prim %d from NS\n",
+		     get_value_string(osmo_prim_op_names, oph->operation),
+		     oph->operation);
+		return 0;
 	}
 
-	if (signal == S_NS_ALIVE_EXP && nsvc->remote_end_is_sgsn) {
-		LOGP(DGPRS, LOGL_NOTICE, "Tns alive expired too often, "
-			"re-starting RESET procedure\n");
-		rate_ctr_inc(&cfg->ctrg->
-			     ctr[GBPROX_GLOB_CTR_RESTART_RESET_SGSN]);
-		gprs_ns_nsip_connect(nsvc->nsi, &nsvc->ip.bts_addr,
-				  nsvc->nsei, nsvc->nsvci);
+	switch (oph->primitive) {
+	case PRIM_NS_UNIT_DATA:
+		/* hand the message into the BSSGP implementation */
+		rc = gbprox_rcvmsg(cfg, oph->msg, nsp->nsei, nsp->bvci);
+		break;
+	case PRIM_NS_STATUS:
+		gprs_ns_prim_status_cb(cfg, nsp);
+		break;
+	default:
+		LOGP(DPCU, LOGL_NOTICE,
+		     "NS: %s Unknown prim %d from NS\n",
+		     get_value_string(osmo_prim_op_names, oph->operation),
+		     oph->primitive);
+		break;
 	}
 
-	if (!nsvc->remote_end_is_sgsn) {
-		/* from BSS to SGSN */
-		peer = gbproxy_peer_by_nsei(cfg, nsvc->nsei);
-		if (!peer) {
-			LOGP(DGPRS, LOGL_NOTICE, "signal '%s' for unknown peer NSEI=%u/NSVCI=%u\n",
-			     get_value_string(gprs_ns_signal_ns_names, signal), nsvc->nsei, nsvc->nsvci);
-			return 0;
-		}
-		switch (signal) {
-		case S_NS_RESET:
-		case S_NS_BLOCK:
-			if (!peer->blocked)
-				break;
-			LOGP(DGPRS, LOGL_NOTICE, "Converting '%s' from NSEI=%u/NSVCI=%u into BSSGP_BVC_BLOCK to SGSN\n",
-			     get_value_string(gprs_ns_signal_ns_names, signal), nsvc->nsei, nsvc->nsvci);
-			bssgp_tx_simple_bvci(BSSGP_PDUT_BVC_BLOCK, nsvc->nsei,
-					     peer->bvci, 0);
-			break;
-		}
-	} else {
-		/* Forward this message to all NS-VC to BSS */
-		struct gprs_ns_inst *nsi = cfg->nsi;
-		struct gprs_nsvc *next_nsvc;
+	return rc;
+}
 
-		llist_for_each_entry(next_nsvc, &nsi->gprs_nsvcs, list) {
-			if (next_nsvc->remote_end_is_sgsn)
-				continue;
+/*
+ * 	NS_AFF_CAUSE_VC_FAILURE,
+	NS_AFF_CAUSE_VC_RECOVERY,
+	NS_AFF_CAUSE_FAILURE,
+	NS_AFF_CAUSE_RECOVERY,
+	osmocom own causes
+	NS_AFF_CAUSE_SNS_CONFIGURED,
+	NS_AFF_CAUSE_SNS_FAILURE,
+	*/
 
-			/* Note that the following does not start the full
-			 * procedures including timer based retransmissions. */
-			switch (signal) {
-			case S_NS_RESET:
-				gprs_ns_tx_reset(next_nsvc, nssd->cause);
-				break;
-			case S_NS_BLOCK:
-				gprs_ns_tx_block(next_nsvc, nssd->cause);
-				break;
-			case S_NS_UNBLOCK:
-				gprs_ns_tx_unblock(next_nsvc);
+void gprs_ns_prim_status_cb(struct gbproxy_config *cfg, struct osmo_gprs_ns2_prim *nsp)
+{
+	/* TODO: bss nsei available/unavailable  bssgp_tx_simple_bvci(BSSGP_PDUT_BVC_BLOCK, nsvc->nsei, peer->bvci, 0);
+	 * TODO: sgsn nsei available/unavailable
+
+	 */
+	struct gbproxy_peer *peer;
+
+	switch (nsp->u.status.cause) {
+	case NS_AFF_CAUSE_SNS_FAILURE:
+	case NS_AFF_CAUSE_SNS_CONFIGURED:
+		break;
+
+	case NS_AFF_CAUSE_RECOVERY:
+		LOGP(DPCU, LOGL_NOTICE, "NS-NSE %d became available\n", nsp->nsei);
+		break;
+	case NS_AFF_CAUSE_FAILURE:
+		if (nsp->nsei == cfg->nsip_sgsn_nsei) {
+			/* sgsn */
+			/* TODO: BSVC: block all PtP towards bss */
+			rate_ctr_inc(&cfg->ctrg->
+				     ctr[GBPROX_GLOB_CTR_RESTART_RESET_SGSN]);
+		} else {
+			/* bss became unavailable */
+			peer = gbproxy_peer_by_nsei(cfg, nsp->nsei);
+			if (!peer) {
+				/* TODO: use primitive name + status cause name */
+				LOGP(DGPRS, LOGL_NOTICE, "Received ns2 primitive %d for unknown peer NSEI=%u\n",
+				     nsp->u.status.cause, nsp->nsei);
 				break;
 			}
+
+			if (!peer->blocked)
+				break;
+			bssgp_tx_simple_bvci(BSSGP_PDUT_BVC_BLOCK, cfg->nsip_sgsn_nsei,
+					     peer->bvci, 0);
 		}
+		LOGP(DPCU, LOGL_NOTICE, "NS-NSE %d became unavailable\n", nsp->nsei);
+		break;
+	default:
+		LOGP(DPCU, LOGL_NOTICE,
+		     "NS: %s Unknown prim %d from NS\n",
+		     get_value_string(osmo_prim_op_names, nsp->oph.operation),
+		     nsp->oph.primitive);
+		break;
 	}
-	return 0;
 }
 
 void gbprox_reset(struct gbproxy_config *cfg)

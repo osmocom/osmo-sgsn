@@ -38,7 +38,7 @@
 #include <osmocom/core/rate_ctr.h>
 #include <osmocom/core/stats.h>
 
-#include <osmocom/gprs/gprs_ns.h>
+#include <osmocom/gprs/gprs_ns2.h>
 #include <osmocom/gprs/gprs_bssgp.h>
 
 #include <osmocom/sgsn/signal.h>
@@ -81,24 +81,26 @@ static int daemonize = 0;
 extern struct gbprox_peer *gbprox_peer_sgsn;
 
 /* call-back function for the NS protocol */
-static int proxy_ns_cb(enum gprs_ns_evt event, struct gprs_nsvc *nsvc,
-		      struct msgb *msg, uint16_t bvci)
-{
-	int rc = 0;
+//static int proxy_ns_cb(enum gprs_ns_evt event, struct gprs_nsvc *nsvc,
+//		      struct msgb *msg, uint16_t bvci)
+//{
+//	int rc = 0;
 
-	switch (event) {
-	case GPRS_NS_EVT_UNIT_DATA:
-		rc = gbprox_rcvmsg(gbcfg, msg, nsvc->nsei, bvci, nsvc->nsvci);
-		break;
-	default:
-		LOGP(DGPRS, LOGL_ERROR, "SGSN: Unknown event %u from NS\n", event);
-		if (msg)
-			msgb_free(msg);
-		rc = -EIO;
-		break;
-	}
-	return rc;
-}
+//	switch (event) {
+//	case GPRS_NS_EVT_UNIT_DATA:
+//		rc = gbprox_rcvmsg(gbcfg, msg, nsvc->nsei, bvci, nsvc->nsvci);
+//		break;
+//	default:
+//		LOGP(DGPRS, LOGL_ERROR, "SGSN: Unknown event %u from NS\n", event);
+//		if (msg)
+//			msgb_free(msg);
+//		rc = -EIO;
+//		break;
+//	}
+//	return rc;
+//}
+
+
 
 static void signal_handler(int signal)
 {
@@ -314,29 +316,28 @@ int main(int argc, char **argv)
 	rate_ctr_init(tall_sgsn_ctx);
 	osmo_stats_init(tall_sgsn_ctx);
 
-	bssgp_nsi = gprs_ns_instantiate(&proxy_ns_cb, tall_sgsn_ctx);
-	if (!bssgp_nsi) {
-		LOGP(DGPRS, LOGL_ERROR, "Unable to instantiate NS\n");
-		exit(1);
-	}
-
 	gbcfg = talloc_zero(tall_sgsn_ctx, struct gbproxy_config);
 	if (!gbcfg) {
 		LOGP(DGPRS, LOGL_FATAL, "Unable to allocate config\n");
 		exit(1);
 	}
 	gbproxy_init_config(gbcfg);
-	gbcfg->nsi = bssgp_nsi;
-	gprs_ns_vty_init(bssgp_nsi);
-	gprs_ns_set_log_ss(DNS);
+	gbcfg->nsi = gprs_ns2_instantiate(tall_sgsn_ctx, gprs_ns_prim_cb, gbcfg);
+	if (!gbcfg->nsi) {
+		LOGP(DGPRS, LOGL_ERROR, "Unable to instantiate NS\n");
+		exit(1);
+	}
+
+	gprs_ns2_vty_init(gbcfg->nsi);
 	bssgp_set_log_ss(DBSSGP);
-	osmo_signal_register_handler(SS_L_NS, &gbprox_signal, gbcfg);
 
 	rc = gbproxy_parse_config(config_file, gbcfg);
 	if (rc < 0) {
 		LOGP(DGPRS, LOGL_FATAL, "Cannot parse config file '%s'\n", config_file);
 		exit(2);
 	}
+
+	gprs_ns2_vty_create();
 
 	/* start telnet after reading config for vty_get_bind_addr() */
 	rc = telnet_init_dynif(tall_sgsn_ctx, NULL,
@@ -357,25 +358,25 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (!gprs_nsvc_by_nsei(gbcfg->nsi, gbcfg->nsip_sgsn_nsei)) {
+	if (!gprs_ns2_nse_by_nsei(gbcfg->nsi, gbcfg->nsip_sgsn_nsei)) {
 		LOGP(DGPRS, LOGL_FATAL, "You cannot proxy to NSEI %u "
 			"without creating that NSEI before\n",
 			gbcfg->nsip_sgsn_nsei);
 		exit(2);
 	}
 
-	rc = gprs_ns_nsip_listen(bssgp_nsi);
-	if (rc < 0) {
-		LOGP(DGPRS, LOGL_FATAL, "Cannot bind/listen on NSIP socket\n");
-		exit(2);
-	}
+//	rc = gprs_ns_nsip_listen(bssgp_nsi);
+//	if (rc < 0) {
+//		LOGP(DGPRS, LOGL_FATAL, "Cannot bind/listen on NSIP socket\n");
+//		exit(2);
+//	}
 
-	rc = gprs_ns_frgre_listen(bssgp_nsi);
-	if (rc < 0) {
-		LOGP(DGPRS, LOGL_FATAL, "Cannot bind/listen GRE "
-			"socket. Do you have CAP_NET_RAW?\n");
-		exit(2);
-	}
+//	rc = gprs_ns_frgre_listen(bssgp_nsi);
+//	if (rc < 0) {
+//		LOGP(DGPRS, LOGL_FATAL, "Cannot bind/listen GRE "
+//			"socket. Do you have CAP_NET_RAW?\n");
+//		exit(2);
+//	}
 
 	if (daemonize) {
 		rc = osmo_daemonize();
@@ -386,7 +387,7 @@ int main(int argc, char **argv)
 	}
 
 	/* Reset all the persistent NS-VCs that we've read from the config */
-	gbprox_reset_persistent_nsvcs(bssgp_nsi);
+//	gbprox_reset_persistent_nsvcs(gbcfg->nsi);
 
 	while (1) {
 		rc = osmo_select_main(0);
