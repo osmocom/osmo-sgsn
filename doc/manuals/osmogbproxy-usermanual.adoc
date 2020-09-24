@@ -9,6 +9,8 @@ include::./common/chapters/preface.adoc[]
 
 include::{srcdir}/chapters/gbproxy-overview.adoc[]
 
+include::{srcdir}/chapters/gbproxy-details.adoc[]
+
 include::{srcdir}/chapters/gbproxy-running.adoc[]
 
 include::{srcdir}/chapters/gbproxy-control.adoc[]

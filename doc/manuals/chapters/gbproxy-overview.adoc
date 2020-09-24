@@ -1,18 +1,18 @@
 [[chapter_overview]]
 == Overview
 
-=== About OsmoGbPROXY
+=== About OsmoGbProxy
 
-OsmoGbPROXY is the Osmocom proxy for the 3GPP Gb interface.  The Gb
+OsmoGbProxy is the Osmocom proxy for the 3GPP Gb interface.  The Gb
 interface is defined by 3GPP as the protocol between the BSS and the
 SGSN inside the 2G/2.5G/2.75G packet switched network domain.
 
 As Osmocom implements a BTS-colocated PCU, there are potentially many
 Gb interface connections between all those many PCUs in the network
 and the SGSN.  This can be cumbersome to configure/maintain at the
-SGSN sine.
+SGSN side.
 
-OsmoGbPROXY aggregates many PCU-facing Gb connections into one Gb
+OsmoGbProxy aggregates many PCU-facing Gb connections into one Gb
 connection to the SGSN.  This is achieved by
 
 * maintaining sepaate NS-VCs on the PCU side and on the SGSN side
@@ -21,11 +21,12 @@ connection to the SGSN.  This is achieved by
 * having some special handling for the signaling BVC (BVCI=0) which is
   shared among all the PCUs connected to the proxy
 
+
 === Data Model
 
 ==== gbproxy_config
 
-This contains the parsed configuration of the OsmoGbPROXY.
+This contains the parsed configuration of the OsmoGbProxy.
 
 ==== gproxy_peer
 

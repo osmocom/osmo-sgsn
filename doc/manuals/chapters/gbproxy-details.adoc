@@ -1,0 +1,113 @@
+[[chapter_details]]
+== Proxy details
+
+=== BVC handling
+
+This section describes in more detail how BVCs are handled in OsmoGbProxy
+
+If a BSS connects to OsmoGbProxy while the SGSN is not available it will
+acknowledge the BVC RESET on the signalling BVC, but ignore other messages
+(especially any PTP BVC RESET).
+
+.BSS connects to OsmoGbProxy
+[mscgen]
+----
+msc {
+    hscale="1.8";
+    bss1 [label="BSS1"], bss2 [label="BSS2"], gbproxy [label="GbProxy"], sgsn [label="SGSN"];
+    bss1 <=> gbproxy [label="NS link available"];
+    bss1 => gbproxy [label="BVC RESET (BVCI=0)"];
+    gbproxy => bss1 [label="BVC RESET ACK"];
+    bss1 -x gbproxy [label="PTP BVC RESET (ignored)"];
+}
+----
+
+As soon as the SGSN is reachable through NS OsmoGbProxy will send a BVC RESET
+to the signalling BVC towards the SGSN. After that completes it will reset the
+signalling BVC of all BSS connections. At this point the BSS will send a BVC
+RESET for its PTP BVCs which will be forwarded to the SGSN, similarly the PTP
+BVC RESET ACK from the SGSN will be sent back to the BSS.
+
+.SGSN connection to OsmoGbProxy
+[mscgen]
+----
+msc {
+    hscale="1.8";
+    bss1 [label="BSS1"], bss2 [label="BSS2"], gbproxy [label="GbProxy"], sgsn [label="SGSN"];
+    gbproxy <=> sgsn [label="NS link available"];
+    gbproxy => sgsn [label="BVC RESET (BVCI=0)"];
+    sgsn => gbproxy [label="BVC RESET ACK"];
+
+    gbproxy => bss1 [label="BVC RESET (BVCI=0)"];
+    bss1 => gbproxy [label="BVC RESET ACK"];
+    bss1 box bss1 [label="PTP BVCs need to be reset"];
+    bss1 => gbproxy [label="PTP BVC RESET (BVCI=x)"];
+    gbproxy => sgsn [label="PTP BVC RESET (BVCI=x)"];
+    sgsn => gbproxy [label="PTP BVC RESET ACK (BVCI=x)"];
+    gbproxy => bss1 [label="PTP BVC RESET ACK (BVCI=x)"];
+    bss2 <=> sgsn [label="BVCI x established"];
+}
+----
+
+The communication on the PTP BVC will then be forwarded between the BSS and the
+SGSN.
+
+If a BSS connects while the SGSN is up the PTP BVC RESET will directly be
+forwarded.
+
+.BSS connects to OsmoGbProxy
+[mscgen]
+----
+msc {
+    hscale="1.8";
+    bss1 [label="BSS1"], bss2 [label="BSS2"], gbproxy [label="GbProxy"], sgsn [label="SGSN"];
+    bss2 <=> gbproxy [label="NS link available"];
+    bss2 => gbproxy [label="BVC RESET (BVCI=0)"];
+    gbproxy => bss2 [label="BVC RESET ACK"];
+    bss2 => gbproxy [label="PTP BVC RESET (BVCI=y)"];
+    gbproxy => sgsn [label="PTP BVC RESET (BVCI=y)"];
+    sgsn => gbproxy [label="PTP BVC RESET ACK (BVCI=y)"];
+    gbproxy => bss2 [label="PTP BVC RESET ACK (BVCI=y)"];
+    bss2 <=> sgsn [label="BVCI y established"];
+}
+----
+
+If OsmoGbProxy looses the connection to the SGSN it will reset the signalling
+BVC of all BSS connections. This ensures that the BSS will not send traffic
+over a PTP BVC before its reset procedure has been completed.
+
+.SGSN connection fails
+[mscgen]
+----
+msc {
+    hscale="1.8";
+    bss1 [label="BSS1"], bss2 [label="BSS2"], gbproxy [label="GbProxy"], sgsn [label="SGSN"];
+    gbproxy <=> sgsn [label="NS link fails"];
+    gbproxy => bss1 [label="BVC RESET (BVCI=0)"];
+    gbproxy => bss2 [label="BVC RESET (BVCI=0)"];
+}
+----
+
+When the connection to the SGSN is eventually restored the signalling BVC
+between OsmoGbProxy and SGSN will be reset.
+
+After that completes OsmoGbProxy will reset the signalling BVC on all BSS NS
+connections and forward the PTP BVC RESET messages.
+
+.SGSN connection restored
+[mscgen]
+----
+msc {
+    hscale="1.8";
+    bss1 [label="BSS1"], bss2 [label="BSS2"], gbproxy [label="GbProxy"], sgsn [label="SGSN"];
+    gbproxy <=> sgsn [label="NS link available"];
+    gbproxy => sgsn [label="BVC RESET (BVCI=0)"];
+    sgsn => gbproxy [label="BVC RESET ACK"];
+    gbproxy => bss1 [label="BVC RESET (BVCI=0)"];
+    bss1 => gbproxy [label="BVC RESET ACK"];
+    bss1 box bss1 [label="PTP BVCs need to be reset"];
+    gbproxy => bss2 [label="BVC RESET (BVCI=0)"];
+    bss2 => gbproxy [label="BVC RESET ACK"];
+    bss2 box bss2 [label="PTP BVCs need to be reset"];
+}
+----
