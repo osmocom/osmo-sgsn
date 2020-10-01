@@ -2899,9 +2899,9 @@ int sgsn_sockaddr_to_strs(char *addr_str, size_t addr_str_len,
 const char *sgsn_sockaddr_to_strb(const struct sgsn_sockaddr *addr,
 				  char *buf, size_t buf_len)
 {
+	char portbuf[6];
 	const int portbuf_len = 6;
 	OSMO_ASSERT(buf_len > portbuf_len);
-	char *portbuf = buf + buf_len - portbuf_len;
 	buf_len -= portbuf_len;
 	if (sgsn_sockaddr_to_strs(buf, buf_len,
 				  portbuf, portbuf_len,
