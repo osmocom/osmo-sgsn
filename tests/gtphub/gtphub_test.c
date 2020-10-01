@@ -529,6 +529,8 @@ static int _reply_is(const char *hex, const char *file, int line)
 	const char *dump = osmo_hexdump_nospc(reply_buf, len);
 	int cmp = strcmp(dump, hex);
 
+	OSMO_ASSERT(dump && hex);
+
 	if (cmp != 0) {
 		printf("\n%s:%d: reply_is(): MISMATCH\n"
 		       "  expecting:\n'%s'\n"
