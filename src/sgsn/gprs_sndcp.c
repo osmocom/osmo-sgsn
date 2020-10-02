@@ -370,8 +370,8 @@ static int defrag_segments(struct gprs_sndcp_entity *sne)
 	 * downwards in the call above */
 	msgb_free(msg);
 
-	if (any_pcomp_or_dcomp_active(sgsn))
-		talloc_free(expnd);
+	/* Note: We do not have to free expnd explicitly, because it is created
+	 * within the talloc context of msg, which we just freed. */
 
 	return rc;
 }
