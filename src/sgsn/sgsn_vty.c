@@ -186,6 +186,8 @@ static int config_write_sgsn(struct vty *vty)
 
 	vty_out(vty, "sgsn%s", VTY_NEWLINE);
 
+	vty_out(vty, " gtp state-dir %s%s",
+		g_cfg->gtp_statedir, VTY_NEWLINE);
 	vty_out(vty, " gtp local-ip %s%s",
 		inet_ntoa(g_cfg->gtp_listenaddr.sin_addr), VTY_NEWLINE);
 
@@ -312,6 +314,17 @@ DEFUN(cfg_sgsn, cfg_sgsn_cmd,
 	SGSN_STR)
 {
 	vty->node = SGSN_NODE;
+	return CMD_SUCCESS;
+}
+
+DEFUN(cfg_sgsn_state_dir, cfg_sgsn_state_dir_cmd,
+	"gtp state-dir PATH",
+	"GTP Parameters\n"
+	"Set the directory for the GTP State file\n"
+	"Local Directory\n")
+{
+	osmo_talloc_replace_string(sgsn, &sgsn->cfg.gtp_statedir, argv[0]);
+
 	return CMD_SUCCESS;
 }
 
@@ -1432,6 +1445,7 @@ int sgsn_vty_init(struct sgsn_config *cfg)
 
 	install_element(CONFIG_NODE, &cfg_sgsn_cmd);
 	install_node(&sgsn_node, config_write_sgsn);
+	install_element(SGSN_NODE, &cfg_sgsn_state_dir_cmd);
 	install_element(SGSN_NODE, &cfg_sgsn_bind_addr_cmd);
 	install_element(SGSN_NODE, &cfg_ggsn_remote_ip_cmd);
 	//install_element(SGSN_NODE, &cfg_ggsn_remote_port_cmd);

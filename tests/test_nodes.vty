@@ -27,6 +27,7 @@ OsmoSGSN(config)# list
 OsmoSGSN(config)# sgsn
 OsmoSGSN(config-sgsn)# list
 ...
+  gtp state-dir PATH
   gtp local-ip A.B.C.D
   ggsn <0-255> remote-ip A.B.C.D
   ggsn <0-255> gtp-version (0|1)
