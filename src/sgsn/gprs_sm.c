@@ -639,7 +639,11 @@ static int gsm48_rx_gsm_deact_pdp_req(struct sgsn_mm_ctx *mm, struct msgb *msg)
 		return _gsm48_tx_gsm_deact_pdp_acc(mm, transaction_id);
 	}
 
-	return sgsn_delete_pdp_ctx(pdp);
+	if (pdp->ggsn)
+		return sgsn_delete_pdp_ctx(pdp);
+	/* GTP side already detached, freeing */
+	sgsn_pdp_ctx_free(pdp);
+	return 0;
 }
 
 /* 3GPP TS 24.008 § 9.5.9: Deactivate PDP Context Accept */
