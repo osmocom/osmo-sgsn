@@ -853,10 +853,7 @@ static int gtphub_sock_init(struct osmo_fd *ofd,
 		return -1;
 	}
 
-	ofd->when = OSMO_FD_READ;
-	ofd->cb = cb;
-	ofd->data = data;
-	ofd->priv_nr = ofd_id;
+	osmo_fd_setup(ofd, -1, OSMO_FD_READ, cb, data, ofd_id);
 
 	int rc;
 	rc = osmo_sock_init_ofd(ofd,

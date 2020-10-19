@@ -776,31 +776,19 @@ int sgsn_gtp_init(struct sgsn_instance *sgi)
 	if (gsn->mode != GTP_MODE_SGSN)
 		return -EINVAL;
 
-	sgi->gtp_fd0.fd = gsn->fd0;
-	sgi->gtp_fd0.priv_nr = 0;
-	sgi->gtp_fd0.data = sgi;
-	sgi->gtp_fd0.when = OSMO_FD_READ;
-	sgi->gtp_fd0.cb = sgsn_gtp_fd_cb;
+	osmo_fd_setup(&sgi->gtp_fd0, gsn->fd0, OSMO_FD_READ, sgsn_gtp_fd_cb, sgi, 0);
 	rc = osmo_fd_register(&sgi->gtp_fd0);
 	if (rc < 0)
 		return rc;
 
-	sgi->gtp_fd1c.fd = gsn->fd1c;
-	sgi->gtp_fd1c.priv_nr = 1;
-	sgi->gtp_fd1c.data = sgi;
-	sgi->gtp_fd1c.when = OSMO_FD_READ;
-	sgi->gtp_fd1c.cb = sgsn_gtp_fd_cb;
+	osmo_fd_setup(&sgi->gtp_fd1c, gsn->fd1c, OSMO_FD_READ, sgsn_gtp_fd_cb, sgi, 1);
 	rc = osmo_fd_register(&sgi->gtp_fd1c);
 	if (rc < 0) {
 		osmo_fd_unregister(&sgi->gtp_fd0);
 		return rc;
 	}
 
-	sgi->gtp_fd1u.fd = gsn->fd1u;
-	sgi->gtp_fd1u.priv_nr = 2;
-	sgi->gtp_fd1u.data = sgi;
-	sgi->gtp_fd1u.when = OSMO_FD_READ;
-	sgi->gtp_fd1u.cb = sgsn_gtp_fd_cb;
+	osmo_fd_setup(&sgi->gtp_fd1u, gsn->fd1u, OSMO_FD_READ, sgsn_gtp_fd_cb, sgi, 2);
 	rc = osmo_fd_register(&sgi->gtp_fd1u);
 	if (rc < 0) {
 		osmo_fd_unregister(&sgi->gtp_fd0);
