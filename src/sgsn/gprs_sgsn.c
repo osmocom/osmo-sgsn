@@ -511,6 +511,11 @@ void sgsn_pdp_ctx_free(struct sgsn_pdp_ctx *pdp)
 	sig_data.pdp = pdp;
 	osmo_signal_dispatch(SS_SGSN, S_SGSN_PDP_FREE, &sig_data);
 
+	if (osmo_timer_pending(&pdp->timer)) {
+		LOGPDPCTXP(LOGL_ERROR, pdp, "Freeing PDP ctx with timer %u pending\n", pdp->T);
+		osmo_timer_del(&pdp->timer);
+	}
+
 	rate_ctr_group_free(pdp->ctrg);
 	if (pdp->mm)
 		llist_del(&pdp->list);
