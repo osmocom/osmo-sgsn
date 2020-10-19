@@ -120,14 +120,14 @@ static void setup_ares_osmo_fd(void *data, int fd, int read, int write)
 
 update_fd:
 	if (read)
-		ufd->fd.when |= OSMO_FD_READ;
+		osmo_fd_read_enable(&ufd->fd);
 	else
-		ufd->fd.when &= ~OSMO_FD_READ;
+		osmo_fd_read_disable(&ufd->fd);
 
 	if (write)
-		ufd->fd.when |= OSMO_FD_WRITE;
+		osmo_fd_write_enable(&ufd->fd);
 	else
-		ufd->fd.when &= ~OSMO_FD_WRITE;
+		osmo_fd_write_disable(&ufd->fd);
 
 	osmo_ares_reschedule(sgsn);
 }
