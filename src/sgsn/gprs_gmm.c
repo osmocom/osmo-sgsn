@@ -1533,7 +1533,10 @@ static void process_ms_ctx_status(struct sgsn_mm_ctx *mmctx,
 		LOGMMCTXP(LOGL_NOTICE, mmctx, "Dropping PDP context for NSAPI=%u "
 			"due to PDP CTX STATUS IE=0x%02x%02x\n",
 			pdp->nsapi, pdp_status[1], pdp_status[0]);
-		sgsn_delete_pdp_ctx(pdp);
+		if (pdp->ggsn)
+			sgsn_delete_pdp_ctx(pdp);
+		else /* GTP side already detached, freeing */
+			sgsn_pdp_ctx_free(pdp);
 	}
 }
 
