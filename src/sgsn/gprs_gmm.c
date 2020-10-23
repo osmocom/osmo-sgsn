@@ -1524,21 +1524,16 @@ static void process_ms_ctx_status(struct sgsn_mm_ctx *mmctx,
 	 * being in state PDP-INACTIVE. */
 
 	llist_for_each_entry_safe(pdp, pdp2, &mmctx->pdp_list, list) {
-		if (pdp->nsapi < 8) {
-			if (!(pdp_status[0] & (1 << pdp->nsapi))) {
-				LOGMMCTXP(LOGL_NOTICE, mmctx, "Dropping PDP context for NSAPI=%u "
-					"due to PDP CTX STATUS IE= 0x%02x%02x\n",
-					pdp->nsapi, pdp_status[1], pdp_status[0]);
-				sgsn_delete_pdp_ctx(pdp);
-			}
-		} else {
-			if (!(pdp_status[1] & (1 << (pdp->nsapi - 8)))) {
-				LOGMMCTXP(LOGL_NOTICE, mmctx, "Dropping PDP context for NSAPI=%u "
-					"due to PDP CTX STATUS IE= 0x%02x%02x\n",
-					pdp->nsapi, pdp_status[1], pdp_status[0]);
-				sgsn_delete_pdp_ctx(pdp);
-			}
-		}
+		bool inactive = (pdp->nsapi < 8) ?
+					!(pdp_status[0] & (1 << pdp->nsapi)) :
+					!(pdp_status[1] & (1 << (pdp->nsapi - 8)));
+		if (!inactive)
+			continue;
+
+		LOGMMCTXP(LOGL_NOTICE, mmctx, "Dropping PDP context for NSAPI=%u "
+			"due to PDP CTX STATUS IE=0x%02x%02x\n",
+			pdp->nsapi, pdp_status[1], pdp_status[0]);
+		sgsn_delete_pdp_ctx(pdp);
 	}
 }
 
