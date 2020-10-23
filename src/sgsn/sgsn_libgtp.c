@@ -312,10 +312,15 @@ struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
 	return pctx;
 }
 
-/* SGSN wants to delete a PDP context */
+/* SGSN wants to delete a PDP context, send first DeleteCtxReq on the GTP side,
+   then upon DeleteCtx ACK it will send DeactPdpAcc to the MS if still
+   connected. */
 int sgsn_delete_pdp_ctx(struct sgsn_pdp_ctx *pctx)
 {
 	LOGPDPCTXP(LOGL_INFO, pctx, "Delete PDP Context\n");
+
+	OSMO_ASSERT(pctx->ggsn);
+	OSMO_ASSERT(pctx->lib);
 
 	/* FIXME: decide if we need teardown or not ! */
 	return gtp_delete_context_req2(pctx->ggsn->gsn, pctx->lib, pctx, 1);
