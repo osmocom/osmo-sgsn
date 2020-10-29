@@ -1105,6 +1105,7 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 		nsei);
 	if (TLVP_PRESENT(tp, BSSGP_IE_BVCI)) {
 		uint16_t bvci = ntohs(tlvp_val16_unal(tp, BSSGP_IE_BVCI));
+		peer = gbproxy_peer_by_bvci(cfg, bvci);
 		LOGPC(DGPRS, LOGL_INFO, "routing by BVCI to peer BVCI=%u\n",
 			bvci);
 		errctr = GBPROX_GLOB_CTR_OTHER_ERR;
