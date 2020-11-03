@@ -118,44 +118,12 @@ static void signal_handler(int signal)
 	}
 }
 
-#if BUILD_IU
-int gtphub_vty_go_parent(struct vty *vty)
-{
-	switch (vty->node) {
-	default:
-		osmo_ss7_vty_go_parent(vty);
-	}
-
-	return vty->node;
-}
-#endif
-
-int gtphub_vty_is_config_node(struct vty *vty, int node)
-{
-	/* Check if libosmo-sccp declares the node in
-	 * question as config node */
-#if BUILD_IU
-	if (osmo_ss7_is_config_node(vty, node))
-		return 1;
-#endif
-
-	switch (node) {
-	/* add items that are not config */
-	case CONFIG_NODE:
-		return 0;
-
-	default:
-		return 1;
-	}
-}
-
 static struct vty_app_info vty_info = {
 	.name 		= "OsmoGTPhub",
 	.version	= PACKAGE_VERSION,
 #if BUILD_IU
-	.go_parent_cb	= gtphub_vty_go_parent,
+	.go_parent_cb	= osmo_ss7_vty_go_parent,
 #endif
-	.is_config_node	= gtphub_vty_is_config_node,
 };
 
 struct cmdline_cfg {

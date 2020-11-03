@@ -172,35 +172,6 @@ static void signal_handler(int signal)
 /* NSI that BSSGP uses when transmitting on NS */
 extern struct gprs_ns_inst *bssgp_nsi;
 
-int sgsn_vty_is_config_node(struct vty *vty, int node)
-{
-	/* So far the SGSN has no nested nodes that need parent node
-	 * declaration, except for the ss7 vty nodes. */
-	switch (node) {
-	case SGSN_NODE:
-		return 1;
-	default:
-#if BUILD_IU
-		return osmo_ss7_is_config_node(vty, node);
-#else
-		return 0;
-#endif
-	}
-}
-
-int sgsn_vty_go_parent(struct vty *vty)
-{
-	/* So far the SGSN has no nested nodes that need parent node
-	 * declaration, except for the ss7 vty nodes. */
-#if BUILD_IU
-	return osmo_ss7_vty_go_parent(vty);
-#else
-	vty->node = CONFIG_NODE;
-	vty->index = NULL;
-	return 0;
-#endif
-}
-
 static void bvc_reset_persistent_nsvcs(void)
 {
 	/* Send BVC-RESET on all persistent NSVCs */
@@ -221,8 +192,9 @@ static void bvc_reset_persistent_nsvcs(void)
 static struct vty_app_info vty_info = {
 	.name 		= "OsmoSGSN",
 	.version	= PACKAGE_VERSION,
-	.go_parent_cb	= sgsn_vty_go_parent,
-	.is_config_node	= sgsn_vty_is_config_node,
+#if BUILD_IU
+	.go_parent_cb	= osmo_ss7_vty_go_parent,
+#endif
 };
 
 static void print_help(void)
