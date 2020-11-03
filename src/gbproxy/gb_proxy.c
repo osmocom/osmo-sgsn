@@ -77,7 +77,7 @@ static const struct rate_ctr_group_desc global_ctrg_desc = {
 };
 
 static int gbprox_relay2peer(struct msgb *old_msg, struct gbproxy_peer *peer,
-			  uint16_t ns_bvci);
+			     uint16_t ns_bvci);
 static int gbprox_relay2sgsn(struct gbproxy_config *cfg, struct msgb *old_msg,
 			     uint16_t ns_bvci, uint16_t sgsn_nsei);
 static void gbproxy_reset_imsi_acquisition(struct gbproxy_link_info* link_info);
@@ -804,7 +804,7 @@ static int gbprox_relay2sgsn(struct gbproxy_config *cfg, struct msgb *old_msg,
 
 /* feed a message down the NS-VC associated with the specified peer */
 static int gbprox_relay2peer(struct msgb *old_msg, struct gbproxy_peer *peer,
-			  uint16_t ns_bvci)
+			     uint16_t ns_bvci)
 {
 	/* create a copy of the message so the old one can
 	 * be free()d safely when we return from gbprox_rcvmsg() */
