@@ -1218,7 +1218,16 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_config *cfg,
 	case BSSGP_PDUT_BVC_RESET_ACK:
 		if (cfg->route_to_sgsn2 && nsei == cfg->nsip_sgsn2_nsei)
 			break;
-		/* fall through */
+		/* simple case: BVCI IE is mandatory */
+		if (!TLVP_PRESENT(&tp, BSSGP_IE_BVCI))
+			goto err_mand_ie;
+		bvci = ntohs(tlvp_val16_unal(&tp, BSSGP_IE_BVCI));
+		if (bvci == BVCI_SIGNALLING) {
+			/* TODO: Reset all PTP BVCIs */
+		} else {
+			rc = gbprox_relay2bvci(cfg, msg, bvci, ns_bvci);
+		}
+		break;
 	case BSSGP_PDUT_FLUSH_LL:
 		/* simple case: BVCI IE is mandatory */
 		if (!TLVP_PRESENT(&tp, BSSGP_IE_BVCI))

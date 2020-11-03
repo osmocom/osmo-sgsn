@@ -3236,7 +3236,6 @@ NS2 CALLBACK, prim 0, msg length 5, bvci 0x0000
 23 04 82 10 02 
 
 Gbproxy global:
-    Invalid BVC Identifier          : 1
     Patch error: no peer            : 1
 Peers:
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
@@ -4307,7 +4306,6 @@ Peers:
     Detach Accept count             : 3
     TLLI-Cache: 0
 Gbproxy global:
-    Invalid BVC Identifier          : 1
     BSSGP protocol error      (SGSN): 2
     Patch error: no peer            : 1
 === test_gbproxy_keep_info ===
