@@ -505,7 +505,6 @@ static void send_ns_unitdata(struct gprs_ns2_inst *nsi, const char *text,
 			PRIM_OP_INDICATION, msg);
 
 	gprs_ns2_callback(&nsp.oph, &gbcfg);
-	talloc_free(msg);
 }
 static int gbprox_test_bssgp_send_cb(void *ctx, struct msgb *msg);
 
@@ -1037,9 +1036,8 @@ static int gprs_ns2_callback(struct osmo_prim_hdr *oph, void *ctx)
 		break;
 	}
 
-	/* Hand off to gbproxy */
+	/* Hand off to gbproxy which will free the msg */
 	return gprs_ns2_prim_cb(oph, ctx);
-
 }
 
 /* Get the next message from the receive FIFO

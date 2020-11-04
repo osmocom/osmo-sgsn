@@ -1470,6 +1470,7 @@ int gprs_ns2_prim_cb(struct osmo_prim_hdr *oph, void *ctx)
 		msgb_nsei(oph->msg) = nsp->nsei;
 
 		rc = gbprox_rcvmsg(cfg, oph->msg);
+		msgb_free(oph->msg);
 		break;
 	case PRIM_NS_STATUS:
 		gprs_ns_prim_status_cb(cfg, nsp);
