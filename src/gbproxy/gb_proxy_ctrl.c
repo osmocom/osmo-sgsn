@@ -33,12 +33,20 @@
 
 extern vector ctrl_node_vec;
 
-static int ctrl_nsvc_state_cb(struct gprs_ns2_vc *nsvc, void *ctx) {
-/* FIXME: Can't get NSVC state in ns2
-	struct ctrl_cmd *cmd = (struct ctrl_cmd *)ctx;
+struct nsvc_cb_data {
+	struct ctrl_cmd *cmd;
+	uint16_t nsei;
+	bool is_sgsn;
+};
 
-	cmd->reply = gprs_ns2_vc_state_append(cmd->reply, nsvc);
-*/
+static int ctrl_nsvc_state_cb(struct gprs_ns2_vc *nsvc, void *ctx) {
+	struct nsvc_cb_data *data = (struct nsvc_cb_data *)ctx;
+	struct ctrl_cmd *cmd = (struct ctrl_cmd *)data->cmd;
+
+	cmd->reply = talloc_asprintf_append(cmd->reply, "%u,%s,%s,%s\n",
+			data->nsei, gprs_ns2_ll_str(nsvc), gprs_ns2_nsvc_state_name(nsvc),
+			data->is_sgsn ? "SGSN" : "BSS" );
+
 	return 0;
 }
 
@@ -66,8 +74,8 @@ static int get_nsvc_state(struct ctrl_cmd *cmd, void *data)
 		if (nse)
 			gprs_ns2_nse_foreach_nsvc(nse, &ctrl_nsvc_state_cb, cmd);
 	}
-	cmd->reply = "Getting NSVC state not yet implemented for NS2";
-	return CTRL_CMD_ERROR;
+
+	return CTRL_CMD_REPLY;
 }
 
 CTRL_CMD_DEFINE_RO(nsvc_state, "nsvc-state");
