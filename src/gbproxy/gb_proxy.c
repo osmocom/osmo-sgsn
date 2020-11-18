@@ -811,6 +811,7 @@ static int gbprox_relay2peer(struct msgb *old_msg, struct gbproxy_peer *peer,
 	struct gprs_ns2_inst *nsi = peer->cfg->nsi;
 	struct osmo_gprs_ns2_prim nsp = {};
 	struct msgb *msg = bssgp_msgb_copy(old_msg, "msgb_relay2peer");
+	uint32_t tlli;
 	int rc;
 
 	DEBUGP(DGPRS, "NSEI=%u proxying SGSN->BSS (NS_BVCI=%u, NSEI=%u)\n",
@@ -821,6 +822,14 @@ static int gbprox_relay2peer(struct msgb *old_msg, struct gbproxy_peer *peer,
 
 	/* Strip the old NS header, it will be replaced with a new one */
 	strip_ns_hdr(msg);
+
+	/* TS 48.018 Section 5.4.2: The link selector parameter is
+	 * defined in 3GPP TS 48.016. At one side of the Gb interface,
+	 * all BSSGP UNITDATA PDUs related to an MS shall be passed with
+	 * the same LSP, e.g. the LSP contains the MS's TLLI, to the
+	 * underlying network service. */
+	if (gprs_gb_parse_tlli(msgb_data(msg), msgb_length(msg), &tlli) == 1)
+		nsp.u.unitdata.link_selector = tlli;
 
 	osmo_prim_init(&nsp.oph, SAP_NS, PRIM_NS_UNIT_DATA,
 		       PRIM_OP_REQUEST, msg);
