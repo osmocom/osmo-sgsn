@@ -1098,37 +1098,54 @@ err_mand_ie:
 static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct tlv_parsed *tp,
 			    uint32_t nsei, uint16_t ns_bvci)
 {
-	struct gbproxy_peer *peer = NULL;
+	struct gbproxy_peer *peer;
+	unsigned int n_peers = 0;
 	int errctr = GBPROX_GLOB_CTR_PROTO_ERR_SGSN;
 
 	LOGP(DGPRS, LOGL_INFO, "NSEI=%u(SGSN) BSSGP PAGING ",
 		nsei);
 	if (TLVP_PRESENT(tp, BSSGP_IE_BVCI)) {
 		uint16_t bvci = ntohs(tlvp_val16_unal(tp, BSSGP_IE_BVCI));
-		peer = gbproxy_peer_by_bvci(cfg, bvci);
-		LOGPC(DGPRS, LOGL_INFO, "routing by BVCI to peer BVCI=%u\n",
-			bvci);
 		errctr = GBPROX_GLOB_CTR_OTHER_ERR;
+		peer = gbproxy_peer_by_bvci(cfg, bvci);
+		LOGPC(DGPRS, LOGL_INFO, "routing by BVCI to peer BVCI=%u\n", bvci);
+		if (!peer) {
+			LOGP(DGPRS, LOGL_NOTICE, "NSEI=%u(SGSN) BSSGP PAGING: "
+				"unable to route: BVCI=%u unknown\n", nsei, bvci);
+			rate_ctr_inc(&cfg->ctrg->ctr[errctr]);
+			return -EINVAL;
+		}
+		return gbprox_relay2peer(msg, peer, ns_bvci);
 	} else if (TLVP_PRESENT(tp, BSSGP_IE_ROUTEING_AREA)) {
-		peer = gbproxy_peer_by_rai(cfg, TLVP_VAL(tp, BSSGP_IE_ROUTEING_AREA));
-		LOGPC(DGPRS, LOGL_INFO, "routing by RAI to peer BVCI=%u\n",
-			peer ? peer->bvci : -1);
 		errctr = GBPROX_GLOB_CTR_INV_RAI;
+		/* iterate over all peers and dispatch the paging to each matching one */
+		llist_for_each_entry(peer, &cfg->bts_peers, list) {
+			if (!memcmp(peer->ra, TLVP_VAL(tp, BSSGP_IE_ROUTEING_AREA), 6)) {
+				LOGPC(DGPRS, LOGL_INFO, "routing by RAI to peer BVCI=%u\n", peer->bvci);
+				gbprox_relay2peer(msg, peer, ns_bvci);
+				n_peers++;
+			}
+		}
 	} else if (TLVP_PRESENT(tp, BSSGP_IE_LOCATION_AREA)) {
-		peer = gbproxy_peer_by_lai(cfg, TLVP_VAL(tp, BSSGP_IE_LOCATION_AREA));
-		LOGPC(DGPRS, LOGL_INFO, "routing by LAI to peer BVCI=%u\n",
-			peer ? peer->bvci : -1);
 		errctr = GBPROX_GLOB_CTR_INV_LAI;
+		/* iterate over all peers and dispatch the paging to each matching one */
+		llist_for_each_entry(peer, &cfg->bts_peers, list) {
+			if (!memcmp(peer->ra, TLVP_VAL(tp, BSSGP_IE_LOCATION_AREA), 5)) {
+				LOGPC(DGPRS, LOGL_INFO, "routing by LAI to peer BVCI=%u\n", peer->bvci);
+				gbprox_relay2peer(msg, peer, ns_bvci);
+				n_peers++;
+			}
+		}
 	} else
 		LOGPC(DGPRS, LOGL_INFO, "\n");
 
-	if (!peer) {
+	if (n_peers == 0) {
 		LOGP(DGPRS, LOGL_ERROR, "NSEI=%u(SGSN) BSSGP PAGING: "
 			"unable to route, missing IE\n", nsei);
 		rate_ctr_inc(&cfg->ctrg->ctr[errctr]);
 		return -EINVAL;
 	}
-	return gbprox_relay2peer(msg, peer, ns_bvci);
+	return 0;
 }
 
 /* Receive an incoming BVC-RESET message from the SGSN */
