@@ -1136,12 +1136,23 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 				n_peers++;
 			}
 		}
-	} else
+	} else if (TLVP_PRESENT(tp, BSSGP_IE_BSS_AREA_ID)) {
+		/* iterate over all peers and dispatch the paging to each matching one */
+		llist_for_each_entry(peer, &cfg->bts_peers, list) {
+			LOGPC(DGPRS, LOGL_INFO, "broadcasting to peer BVCI=%u\n", peer->bvci);
+			gbprox_relay2peer(msg, peer, ns_bvci);
+			n_peers++;
+		}
+	} else {
 		LOGPC(DGPRS, LOGL_INFO, "\n");
+		LOGP(DGPRS, LOGL_ERROR, "NSEI=%u(SGSN) BSSGP PAGING: "
+			"unable to route, missing IE\n", nsei);
+		rate_ctr_inc(&cfg->ctrg->ctr[errctr]);
+	}
 
 	if (n_peers == 0) {
 		LOGP(DGPRS, LOGL_ERROR, "NSEI=%u(SGSN) BSSGP PAGING: "
-			"unable to route, missing IE\n", nsei);
+			"unable to route, no destination found\n", nsei);
 		rate_ctr_inc(&cfg->ctrg->ctr[errctr]);
 		return -EINVAL;
 	}
