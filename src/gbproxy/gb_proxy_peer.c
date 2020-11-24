@@ -105,6 +105,7 @@ struct gbproxy_peer *gbproxy_peer_by_nsei(struct gbproxy_config *cfg,
 }
 
 /* look-up a peer by its Routeing Area Identification (RAI) */
+/* FIXME: this doesn't make sense, as RA can span multiple peers! */
 struct gbproxy_peer *gbproxy_peer_by_rai(struct gbproxy_config *cfg,
 					 const uint8_t *ra)
 {
@@ -117,6 +118,7 @@ struct gbproxy_peer *gbproxy_peer_by_rai(struct gbproxy_config *cfg,
 }
 
 /* look-up a peer by its Location Area Identification (LAI) */
+/* FIXME: this doesn't make sense, as LA can span multiple peers! */
 struct gbproxy_peer *gbproxy_peer_by_lai(struct gbproxy_config *cfg,
 					 const uint8_t *la)
 {
@@ -129,6 +131,7 @@ struct gbproxy_peer *gbproxy_peer_by_lai(struct gbproxy_config *cfg,
 }
 
 /* look-up a peer by its Location Area Code (LAC) */
+/* FIXME: this doesn't make sense, as LAC can span multiple peers! */
 struct gbproxy_peer *gbproxy_peer_by_lac(struct gbproxy_config *cfg,
 					 const uint8_t *la)
 {
@@ -151,6 +154,7 @@ struct gbproxy_peer *gbproxy_peer_by_bssgp_tlv(struct gbproxy_config *cfg,
 			return gbproxy_peer_by_bvci(cfg, bvci);
 	}
 
+	/* FIXME: this doesn't make sense, as RA can span multiple peers! */
 	if (TLVP_PRESENT(tp, BSSGP_IE_ROUTEING_AREA)) {
 		uint8_t *rai = (uint8_t *)TLVP_VAL(tp, BSSGP_IE_ROUTEING_AREA);
 		/* Only compare LAC part, since MCC/MNC are possibly patched.
@@ -159,6 +163,7 @@ struct gbproxy_peer *gbproxy_peer_by_bssgp_tlv(struct gbproxy_config *cfg,
 		return gbproxy_peer_by_lac(cfg, rai);
 	}
 
+	/* FIXME: this doesn't make sense, as LA can span multiple peers! */
 	if (TLVP_PRESENT(tp, BSSGP_IE_LOCATION_AREA)) {
 		uint8_t *lai = (uint8_t *)TLVP_VAL(tp, BSSGP_IE_LOCATION_AREA);
 		return gbproxy_peer_by_lac(cfg, lai);
