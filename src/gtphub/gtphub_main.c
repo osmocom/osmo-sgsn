@@ -95,11 +95,11 @@ void log_cfg(struct gtphub_cfg *cfg)
 	}
 }
 
-static void signal_handler(int signal)
+static void signal_handler(int signum)
 {
-	fprintf(stdout, "signal %d received\n", signal);
+	fprintf(stdout, "signal %d received\n", signum);
 
-	switch (signal) {
+	switch (signum) {
 	case SIGINT:
 	case SIGTERM:
 		osmo_signal_dispatch(SS_L_GLOBAL, S_L_GLOBAL_SHUTDOWN, NULL);
@@ -107,8 +107,16 @@ static void signal_handler(int signal)
 		exit(0);
 		break;
 	case SIGABRT:
-		/* in case of abort, we want to obtain a talloc report
-		 * and then return to the caller, who will abort the process */
+		/* in case of abort, we want to obtain a talloc report and
+		 * then run default SIGABRT handler, who will generate coredump
+		 * and abort the process. abort() should do this for us after we
+		 * return, but program wouldn't exit if an external SIGABRT is
+		 * received.
+		 */
+		talloc_report_full(osmo_gtphub_ctx, stderr);
+		signal(SIGABRT, SIG_DFL);
+		raise(SIGABRT);
+		break;
 	case SIGUSR1:
 	case SIGUSR2:
 		talloc_report_full(osmo_gtphub_ctx, stderr);
