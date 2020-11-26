@@ -183,12 +183,15 @@ int gbproxy_remove_stale_link_infos(struct gbproxy_peer *peer, time_t now)
 	int exceeded_max_len = 0;
 	int deleted_count = 0;
 	int check_for_age;
+	OSMO_ASSERT(peer->nse);
+	struct gbproxy_config *cfg = peer->nse->cfg;
+	OSMO_ASSERT(cfg);
 
-	if (peer->cfg->tlli_max_len > 0)
+	if (cfg->tlli_max_len > 0)
 		exceeded_max_len =
-			state->logical_link_count - peer->cfg->tlli_max_len;
+			state->logical_link_count - cfg->tlli_max_len;
 
-	check_for_age = peer->cfg->tlli_max_age > 0;
+	check_for_age = cfg->tlli_max_age > 0;
 
 	for (; exceeded_max_len > 0; exceeded_max_len--) {
 		struct gbproxy_link_info *link_info;
@@ -213,7 +216,7 @@ int gbproxy_remove_stale_link_infos(struct gbproxy_peer *peer, time_t now)
 					list);
 		age = now - link_info->timestamp;
 		/* age < 0 only happens after system time jumps, discard entry */
-		if (age <= peer->cfg->tlli_max_age && age >= 0) {
+		if (age <= cfg->tlli_max_age && age >= 0) {
 			check_for_age = 0;
 			continue;
 		}
@@ -395,6 +398,9 @@ static void gbproxy_assign_imsi(struct gbproxy_peer *peer,
 	int imsi_matches;
 	struct gbproxy_link_info *other_link_info;
 	enum gbproxy_match_id match_id;
+	OSMO_ASSERT(peer->nse);
+	struct gbproxy_config *cfg = peer->nse->cfg;
+	OSMO_ASSERT(cfg);
 
 	/* Make sure that there is a second entry with the same IMSI */
 	other_link_info = gbproxy_link_info_by_imsi(
@@ -419,11 +425,11 @@ static void gbproxy_assign_imsi(struct gbproxy_peer *peer,
 
 	/* Check, whether the IMSI matches */
 	OSMO_ASSERT(ARRAY_SIZE(link_info->is_matching) ==
-		    ARRAY_SIZE(peer->cfg->matches));
+		    ARRAY_SIZE(cfg->matches));
 	for (match_id = 0; match_id < ARRAY_SIZE(link_info->is_matching);
 	     ++match_id) {
 		imsi_matches = gbproxy_check_imsi(
-			&peer->cfg->matches[match_id],
+			&cfg->matches[match_id],
 			parse_ctx->imsi, parse_ctx->imsi_len);
 		if (imsi_matches >= 0)
 			link_info->is_matching[match_id] = imsi_matches ? true : false;
@@ -590,6 +596,9 @@ struct gbproxy_link_info *gbproxy_update_link_state_dl(
 	struct gprs_gb_parse_context *parse_ctx)
 {
 	struct gbproxy_link_info *link_info = NULL;
+	OSMO_ASSERT(peer->nse);
+	struct gbproxy_config *cfg = peer->nse->cfg;
+	OSMO_ASSERT(cfg);
 
 	link_info = gbproxy_get_link_info_dl(peer, parse_ctx);
 
@@ -613,7 +622,7 @@ struct gbproxy_link_info *gbproxy_update_link_state_dl(
 		link_info->sgsn_tlli.ptmsi = new_sgsn_ptmsi;
 		link_info->tlli.ptmsi = new_bss_ptmsi;
 	} else if (parse_ctx->tlli_enc && parse_ctx->new_ptmsi_enc && !link_info &&
-		   !peer->cfg->patch_ptmsi) {
+		   !cfg->patch_ptmsi) {
 		/* A new P-TMSI has been signalled in the message with an unknown
 		 * TLLI, create a new link_info */
 		/* TODO: Add a test case for this branch */
@@ -631,7 +640,7 @@ struct gbproxy_link_info *gbproxy_update_link_state_dl(
 		link_info->tlli.ptmsi = new_ptmsi;
 		gbproxy_attach_link_info(peer, now, link_info);
 	} else if (parse_ctx->tlli_enc && parse_ctx->llc && !link_info &&
-		   !peer->cfg->patch_ptmsi) {
+		   !cfg->patch_ptmsi) {
 		/* Unknown SGSN TLLI, create a new link_info */
 		uint32_t new_ptmsi;
 		link_info = gbproxy_link_info_alloc(peer);
@@ -677,12 +686,16 @@ int gbproxy_update_link_state_after(
 	struct gprs_gb_parse_context *parse_ctx)
 {
 	int rc = 0;
+	OSMO_ASSERT(peer->nse);
+	struct gbproxy_config *cfg = peer->nse->cfg;
+	OSMO_ASSERT(cfg);
+
 	if (parse_ctx->invalidate_tlli && link_info) {
 		int keep_info =
-			peer->cfg->keep_link_infos == GBPROX_KEEP_ALWAYS ||
-			(peer->cfg->keep_link_infos == GBPROX_KEEP_REATTACH &&
+			cfg->keep_link_infos == GBPROX_KEEP_ALWAYS ||
+			(cfg->keep_link_infos == GBPROX_KEEP_REATTACH &&
 			 parse_ctx->await_reattach) ||
-			(peer->cfg->keep_link_infos == GBPROX_KEEP_IDENTIFIED &&
+			(cfg->keep_link_infos == GBPROX_KEEP_IDENTIFIED &&
 			 link_info->imsi_len > 0);
 		if (keep_info) {
 			LOGP(DGPRS, LOGL_INFO, "Unregistering TLLI %08x\n",

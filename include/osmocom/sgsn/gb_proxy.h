@@ -99,7 +99,7 @@ struct gbproxy_config {
 	struct gprs_ns2_inst *nsi;
 
 	/* Linked list of all Gb peers (except SGSN) */
-	struct llist_head bts_peers;
+	struct llist_head nse_peers;
 
 	/* Counter */
 	struct rate_ctr_group *ctrg;
@@ -143,23 +143,22 @@ struct gbproxy_patch_state {
 	int logical_link_count;
 };
 
-/* one peer at NS level that we interact with (BSS/PCU) */
+/* One BVC inside an NSE */
 struct gbproxy_peer {
-	/* linked to gbproxy_config.bts_peers */
+	/* linked to gbproxy_nse.bts_peers */
 	struct llist_head list;
 
-	/* point back to the config */
-	struct gbproxy_config *cfg;
-
-	/* NSEI of the peer entity */
-	uint16_t nsei;
+	/* The peer this BVC belongs to */
+	struct gbproxy_nse *nse;
 
 	/* BVCI used for Point-to-Point to this peer */
 	uint16_t bvci;
-	bool blocked;
 
-	/* Routeing Area that this peer is part of (raw 04.08 encoding) */
+	/* Routing Area that this peer is part of (raw 04.08 encoding) */
 	uint8_t ra[6];
+
+	/* true if this BVC is blocked */
+	bool blocked;
 
 	/* Counter */
 	struct rate_ctr_group *ctrg;
@@ -169,6 +168,21 @@ struct gbproxy_peer {
 
 	/* Fired periodically to clean up stale links from list */
 	struct osmo_timer_list clean_stale_timer;
+};
+
+/* one peer at NS level that we interact with (BSS/PCU) */
+struct gbproxy_nse {
+	/* linked to gbproxy_config.nse_peers */
+	struct llist_head list;
+
+	/* point back to the config */
+	struct gbproxy_config *cfg;
+
+	/* NSEI of the peer entity */
+	uint16_t nsei;
+
+	/* List of all BVCs in this NSE */
+	struct llist_head bts_peers;
 };
 
 struct gbproxy_tlli_state {
@@ -328,8 +342,14 @@ struct gbproxy_peer *gbproxy_peer_by_lac(
 	struct gbproxy_config *cfg, const uint8_t *la);
 struct gbproxy_peer *gbproxy_peer_by_bssgp_tlv(
 	struct gbproxy_config *cfg, struct tlv_parsed *tp);
-struct gbproxy_peer *gbproxy_peer_alloc(struct gbproxy_config *cfg, uint16_t bvci);
+struct gbproxy_peer *gbproxy_peer_alloc(struct gbproxy_nse *nse, uint16_t bvci);
 void gbproxy_peer_free(struct gbproxy_peer *peer);
 int gbproxy_cleanup_peers(struct gbproxy_config *cfg, uint16_t nsei, uint16_t bvci);
+
+/* NSE handling */
+struct gbproxy_nse *gbproxy_nse_alloc(struct gbproxy_config *cfg, uint16_t nsei);
+void gbproxy_nse_free(struct gbproxy_nse *nse);
+struct gbproxy_nse *gbproxy_nse_by_nsei(struct gbproxy_config *cfg, uint16_t nsei);
+struct gbproxy_nse *gbproxy_nse_by_nsei_or_new(struct gbproxy_config *cfg, uint16_t nsei);
 
 #endif

@@ -55,7 +55,7 @@ static int get_nsvc_state(struct ctrl_cmd *cmd, void *data)
 	struct gbproxy_config *cfg = data;
 	struct gprs_ns2_inst *nsi = cfg->nsi;
 	struct gprs_ns2_nse *nse;
-	struct gbproxy_peer *peer;
+	struct gbproxy_nse *nse_peer;
 
 	cmd->reply = talloc_strdup(cmd, "");
 
@@ -69,8 +69,8 @@ static int get_nsvc_state(struct ctrl_cmd *cmd, void *data)
 		gprs_ns2_nse_foreach_nsvc(nse, &ctrl_nsvc_state_cb, cmd);
 
 	/* NS-VCs for BSS peers */
-	llist_for_each_entry(peer, &cfg->bts_peers, list) {
-		nse = gprs_ns2_nse_by_nsei(nsi, peer->nsei);
+	llist_for_each_entry(nse_peer, &cfg->nse_peers, list) {
+		nse = gprs_ns2_nse_by_nsei(nsi, nse_peer->nsei);
 		if (nse)
 			gprs_ns2_nse_foreach_nsvc(nse, &ctrl_nsvc_state_cb, cmd);
 	}
@@ -83,19 +83,22 @@ CTRL_CMD_DEFINE_RO(nsvc_state, "nsvc-state");
 static int get_gbproxy_state(struct ctrl_cmd *cmd, void *data)
 {
 	struct gbproxy_config *cfg = data;
-	struct gbproxy_peer *peer;
+	struct gbproxy_nse *nse_peer;
 
 	cmd->reply = talloc_strdup(cmd, "");
 
-	llist_for_each_entry(peer, &cfg->bts_peers, list) {
-		struct gprs_ra_id raid;
-		gsm48_parse_ra(&raid, peer->ra);
+	llist_for_each_entry(nse_peer, &cfg->nse_peers, list) {
+		struct gbproxy_peer *peer;
+		llist_for_each_entry(peer, &nse_peer->bts_peers, list) {
+			struct gprs_ra_id raid;
+			gsm48_parse_ra(&raid, peer->ra);
 
-		cmd->reply = talloc_asprintf_append(cmd->reply, "%u,%u,%u,%u,%u,%u,%s\n",
-				peer->nsei, peer->bvci,
-				raid.mcc, raid.mnc,
-				raid.lac, raid.rac,
-				peer->blocked ? "BLOCKED" : "UNBLOCKED");
+			cmd->reply = talloc_asprintf_append(cmd->reply, "%u,%u,%u,%u,%u,%u,%s\n",
+					nse_peer->nsei, peer->bvci,
+					raid.mcc, raid.mnc,
+					raid.lac, raid.rac,
+					peer->blocked ? "BLOCKED" : "UNBLOCKED");
+		}
 	}
 
 	return CTRL_CMD_REPLY;
@@ -106,9 +109,14 @@ CTRL_CMD_DEFINE_RO(gbproxy_state, "gbproxy-state");
 static int get_num_peers(struct ctrl_cmd *cmd, void *data)
 {
 	struct gbproxy_config *cfg = data;
+	struct gbproxy_nse *nse_peer;
+	uint32_t count = 0;
+
+	llist_for_each_entry(nse_peer, &cfg->nse_peers, list)
+		count += llist_count(&nse_peer->bts_peers);
 
 	cmd->reply = talloc_strdup(cmd, "");
-	cmd->reply = talloc_asprintf_append(cmd->reply, "%u", llist_count(&cfg->bts_peers));
+	cmd->reply = talloc_asprintf_append(cmd->reply, "%u", count);
 
 	return CTRL_CMD_REPLY;
 }

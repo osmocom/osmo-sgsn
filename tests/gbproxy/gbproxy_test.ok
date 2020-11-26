@@ -96,9 +96,9 @@ Message for SGSN (NSEI=256 BVCI=0):
 [L2]> [L3]> 22 04 82 10 12 07 81 08 08 88 11 22 33 40 50 60 10 00 
 
 Peers:
-  NSEI 4096, BVCI 4114, not blocked, RAI 112-332-16464-96
-    TLLI-Cache: 0
   NSEI 8192, BVCI 8194, not blocked, RAI 112-332-16464-96
+    TLLI-Cache: 0
+  NSEI 4096, BVCI 4114, not blocked, RAI 112-332-16464-96
     TLLI-Cache: 0
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
     TLLI-Cache: 0
@@ -131,9 +131,9 @@ Message for SGSN (NSEI=256 BVCI=0):
 [L2]> [L3]> 22 04 82 10 02 07 81 08 08 88 11 22 33 40 50 60 10 00 
 
 Peers:
-  NSEI 4096, BVCI 4114, not blocked, RAI 112-332-16464-96
-    TLLI-Cache: 0
   NSEI 8192, BVCI 8194, not blocked, RAI 112-332-16464-96
+    TLLI-Cache: 0
+  NSEI 4096, BVCI 4114, not blocked, RAI 112-332-16464-96
     TLLI-Cache: 0
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
     TLLI-Cache: 0
@@ -166,9 +166,9 @@ Message for SGSN (NSEI=256 BVCI=0):
 [L2]> [L3]> 22 04 82 10 02 07 81 08 08 88 11 22 33 40 50 60 10 00 
 
 Peers:
-  NSEI 4096, BVCI 4114, not blocked, RAI 112-332-16464-96
-    TLLI-Cache: 0
   NSEI 8192, BVCI 8194, not blocked, RAI 112-332-16464-96
+    TLLI-Cache: 0
+  NSEI 4096, BVCI 4114, not blocked, RAI 112-332-16464-96
     TLLI-Cache: 0
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
     TLLI-Cache: 0
@@ -285,10 +285,10 @@ Message for SGSN (NSEI=256 BVCI=0):
 [L2]> [L3]> 22 04 82 10 02 07 81 08 08 88 11 22 33 40 50 60 10 00 
 
 Peers:
-  NSEI 4096, BVCI 4114, not blocked, RAI 112-332-16464-96
-    TLLI-Cache: 0
   NSEI 8192, BVCI 8194, not blocked, RAI 112-332-16464-96
     NSEI mismatch                   : 1
+    TLLI-Cache: 0
+  NSEI 4096, BVCI 4114, not blocked, RAI 112-332-16464-96
     TLLI-Cache: 0
   NSEI 4096, BVCI 4098, not blocked, RAI 112-332-16464-96
     TLLI-Cache: 0
@@ -517,10 +517,10 @@ Message for BSS (NSEI=8192 BVCI=0):
 [L2]> [L3]> 23 04 82 10 02 
 
 Peers:
-  NSEI 4096, BVCI 8194, not blocked, RAI 112-332-16464-96
-    TLLI-Cache: 0
   NSEI 8192, BVCI 4098, not blocked, RAI 112-332-16464-96
     NSEI mismatch                   : 1
+    TLLI-Cache: 0
+  NSEI 4096, BVCI 8194, not blocked, RAI 112-332-16464-96
     TLLI-Cache: 0
 --- Setup BVCI 3 ---
 
@@ -553,10 +553,10 @@ Message for BSS (NSEI=8192 BVCI=0):
 Peers:
   NSEI 8192, BVCI 12290, not blocked, RAI 112-332-16464-96
     TLLI-Cache: 0
-  NSEI 4096, BVCI 8194, not blocked, RAI 112-332-16464-96
-    TLLI-Cache: 0
   NSEI 8192, BVCI 4098, not blocked, RAI 112-332-16464-96
     NSEI mismatch                   : 1
+    TLLI-Cache: 0
+  NSEI 4096, BVCI 8194, not blocked, RAI 112-332-16464-96
     TLLI-Cache: 0
 --- Send message from BSS 1 to SGSN and back, BVCI 1 ---
 
@@ -601,10 +601,10 @@ Message for SGSN (NSEI=256 BVCI=8194):
 Peers:
   NSEI 8192, BVCI 12290, not blocked, RAI 112-332-16464-96
     TLLI-Cache: 0
-  NSEI 4096, BVCI 8194, not blocked, RAI 112-332-16464-96
+  NSEI 8192, BVCI 4098, not blocked, RAI 112-332-16464-96
     NSEI mismatch                   : 1
     TLLI-Cache: 0
-  NSEI 8192, BVCI 4098, not blocked, RAI 112-332-16464-96
+  NSEI 4096, BVCI 8194, not blocked, RAI 112-332-16464-96
     NSEI mismatch                   : 1
     TLLI-Cache: 0
 PROCESSING (null) from NSEI 256
@@ -622,10 +622,10 @@ Message for BSS (NSEI=4096 BVCI=8194):
 Peers:
   NSEI 8192, BVCI 12290, not blocked, RAI 112-332-16464-96
     TLLI-Cache: 0
-  NSEI 4096, BVCI 8194, not blocked, RAI 112-332-16464-96
+  NSEI 8192, BVCI 4098, not blocked, RAI 112-332-16464-96
     NSEI mismatch                   : 1
     TLLI-Cache: 0
-  NSEI 8192, BVCI 4098, not blocked, RAI 112-332-16464-96
+  NSEI 4096, BVCI 8194, not blocked, RAI 112-332-16464-96
     NSEI mismatch                   : 1
     TLLI-Cache: 0
 --- Send message from BSS 1 to SGSN and back, BVCI 3 ---
@@ -659,10 +659,10 @@ Peers:
   NSEI 8192, BVCI 12290, not blocked, RAI 112-332-16464-96
     NSEI mismatch                   : 1
     TLLI-Cache: 0
-  NSEI 4096, BVCI 8194, not blocked, RAI 112-332-16464-96
+  NSEI 8192, BVCI 4098, not blocked, RAI 112-332-16464-96
     NSEI mismatch                   : 1
     TLLI-Cache: 0
-  NSEI 8192, BVCI 4098, not blocked, RAI 112-332-16464-96
+  NSEI 4096, BVCI 8194, not blocked, RAI 112-332-16464-96
     NSEI mismatch                   : 1
     TLLI-Cache: 0
 === test_gbproxy_ra_patching ===

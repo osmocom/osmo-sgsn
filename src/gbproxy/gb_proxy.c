@@ -84,10 +84,12 @@ static void gbproxy_reset_imsi_acquisition(struct gbproxy_link_info* link_info);
 
 static int check_peer_nsei(struct gbproxy_peer *peer, uint16_t nsei)
 {
-	if (peer->nsei != nsei) {
+	OSMO_ASSERT(peer->nse);
+
+	if (peer->nse->nsei != nsei) {
 		LOGP(DGPRS, LOGL_NOTICE, "Peer entry doesn't match current NSEI "
 		     "BVCI=%u via NSEI=%u (expected NSEI=%u)\n",
-		     peer->bvci, nsei, peer->nsei);
+		     peer->bvci, nsei, peer->nse->nsei);
 		rate_ctr_inc(&peer->ctrg->ctr[GBPROX_PEER_CTR_INV_NSEI]);
 		return 0;
 	}
@@ -195,6 +197,9 @@ static void gbprox_update_current_raid(uint8_t *raid_enc,
 	struct gbproxy_patch_state *state = &peer->patch_state;
 	const struct osmo_plmn_id old_plmn = state->local_plmn;
 	struct gprs_ra_id raid;
+	OSMO_ASSERT(peer->nse);
+	struct gbproxy_config *cfg = peer->nse->cfg;
+	OSMO_ASSERT(cfg);
 
 	if (!raid_enc)
 		return;
@@ -202,15 +207,15 @@ static void gbprox_update_current_raid(uint8_t *raid_enc,
 	gsm48_parse_ra(&raid, raid_enc);
 
 	/* save source side MCC/MNC */
-	if (!peer->cfg->core_plmn.mcc || raid.mcc == peer->cfg->core_plmn.mcc) {
+	if (!cfg->core_plmn.mcc || raid.mcc == cfg->core_plmn.mcc) {
 		state->local_plmn.mcc = 0;
 	} else {
 		state->local_plmn.mcc = raid.mcc;
 	}
 
-	if (!peer->cfg->core_plmn.mnc
+	if (!cfg->core_plmn.mnc
 	    || !osmo_mnc_cmp(raid.mnc, raid.mnc_3_digits,
-			     peer->cfg->core_plmn.mnc, peer->cfg->core_plmn.mnc_3_digits)) {
+			     cfg->core_plmn.mnc, cfg->core_plmn.mnc_3_digits)) {
 		state->local_plmn.mnc = 0;
 		state->local_plmn.mnc_3_digits = false;
 	} else {
@@ -226,7 +231,7 @@ static void gbprox_update_current_raid(uint8_t *raid_enc,
 		     "" : "de",
 		     log_text,
 		     osmo_plmn_name(&state->local_plmn),
-		     osmo_plmn_name2(&peer->cfg->core_plmn));
+		     osmo_plmn_name2(&cfg->core_plmn));
 }
 
 uint32_t gbproxy_make_bss_ptmsi(struct gbproxy_peer *peer,
@@ -234,7 +239,7 @@ uint32_t gbproxy_make_bss_ptmsi(struct gbproxy_peer *peer,
 {
 	uint32_t bss_ptmsi;
 	int max_retries = 23, rc = 0;
-	if (!peer->cfg->patch_ptmsi) {
+	if (!peer->nse->cfg->patch_ptmsi) {
 		bss_ptmsi = sgsn_ptmsi;
 	} else {
 		do {
@@ -263,7 +268,7 @@ uint32_t gbproxy_make_sgsn_tlli(struct gbproxy_peer *peer,
 {
 	uint32_t sgsn_tlli;
 	int max_retries = 23, rc = 0;
-	if (!peer->cfg->patch_ptmsi) {
+	if (!peer->nse->cfg->patch_ptmsi) {
 		sgsn_tlli = bss_tlli;
 	} else if (link_info->sgsn_tlli.ptmsi != GSM_RESERVED_TMSI &&
 		   gprs_tlli_type(bss_tlli) == TLLI_FOREIGN) {
@@ -330,6 +335,9 @@ static int gbproxy_flush_stored_messages(struct gbproxy_peer *peer,
 {
 	int rc;
 	struct msgb *stored_msg;
+	OSMO_ASSERT(peer->nse);
+	struct gbproxy_config *cfg = peer->nse->cfg;
+	OSMO_ASSERT(cfg);
 
 	/* Patch and flush stored messages towards the SGSN */
 	while ((stored_msg = msgb_dequeue_count(&link_info->stored_msgs,
@@ -355,7 +363,7 @@ static int gbproxy_flush_stored_messages(struct gbproxy_peer *peer,
 			return -1;
 		}
 
-		rc = gbprox_relay2sgsn(peer->cfg, stored_msg,
+		rc = gbprox_relay2sgsn(cfg, stored_msg,
 				       msgb_bvci(stored_msg), link_info->sgsn_nsei);
 
 		if (rc < 0)
@@ -425,6 +433,9 @@ static int gbproxy_imsi_acquisition(struct gbproxy_peer *peer,
 				    struct gprs_gb_parse_context *parse_ctx)
 {
 	struct msgb *stored_msg;
+	OSMO_ASSERT(peer->nse);
+	struct gbproxy_config *cfg = peer->nse->cfg;
+	OSMO_ASSERT(cfg);
 
 	if (!link_info)
 		return 1;
@@ -493,9 +504,9 @@ static int gbproxy_imsi_acquisition(struct gbproxy_peer *peer,
 	/* The message cannot be processed since the IMSI is still missing */
 
 	/* If queue is getting too large, drop oldest msgb before adding new one */
-	if (peer->cfg->stored_msgs_max_len > 0) {
+	if (cfg->stored_msgs_max_len > 0) {
 		int exceeded_max_len = link_info->stored_msgs_len
-				   + 1 - peer->cfg->stored_msgs_max_len;
+				   + 1 - cfg->stored_msgs_max_len;
 
 		for (; exceeded_max_len > 0; exceeded_max_len--) {
 			struct msgb *msgb_drop;
@@ -806,19 +817,23 @@ static int gbprox_relay2sgsn(struct gbproxy_config *cfg, struct msgb *old_msg,
 static int gbprox_relay2peer(struct msgb *old_msg, struct gbproxy_peer *peer,
 			     uint16_t ns_bvci)
 {
+	struct gbproxy_nse *nse = peer->nse;
+	OSMO_ASSERT(nse);
+	OSMO_ASSERT(nse->cfg);
+
 	/* create a copy of the message so the old one can
 	 * be free()d safely when we return from gbprox_rcvmsg() */
-	struct gprs_ns2_inst *nsi = peer->cfg->nsi;
+	struct gprs_ns2_inst *nsi = nse->cfg->nsi;
 	struct osmo_gprs_ns2_prim nsp = {};
 	struct msgb *msg = bssgp_msgb_copy(old_msg, "msgb_relay2peer");
 	uint32_t tlli;
 	int rc;
 
 	DEBUGP(DGPRS, "NSEI=%u proxying SGSN->BSS (NS_BVCI=%u, NSEI=%u)\n",
-		msgb_nsei(msg), ns_bvci, peer->nsei);
+		msgb_nsei(msg), ns_bvci, nse->nsei);
 
 	nsp.bvci = ns_bvci;
-	nsp.nsei = peer->nsei;
+	nsp.nsei = nse->nsei;
 
 	/* Strip the old NS header, it will be replaced with a new one */
 	strip_ns_hdr(msg);
@@ -1051,16 +1066,33 @@ static int gbprox_rx_sig_from_bss(struct gbproxy_config *cfg,
 			}
 			from_peer = gbproxy_peer_by_bvci(cfg, bvci);
 			if (!from_peer) {
+				struct gbproxy_nse *nse = gbproxy_nse_by_nsei_or_new(cfg, nsei);
+				if (!nse) {
+					LOGP(DGPRS, LOGL_ERROR, "Could not allocate NSE for NSEI=%u\n", nsei);
+					return bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, NULL, msg);
+				}
 				/* if a PTP-BVC is reset, and we don't know that
 				 * PTP-BVCI yet, we should allocate a new peer */
 				LOGP(DGPRS, LOGL_INFO, "Allocationg new peer for BVCI=%u via NSEI=%u\n", bvci, nsei);
-				from_peer = gbproxy_peer_alloc(cfg, bvci);
+				from_peer = gbproxy_peer_alloc(nse, bvci);
 				OSMO_ASSERT(from_peer);
-				from_peer->nsei = nsei;
 			}
 
-			if (!check_peer_nsei(from_peer, nsei))
-				from_peer->nsei = nsei;
+			/* Could have moved to a different NSE */
+			if (!check_peer_nsei(from_peer, nsei)) {
+				struct gbproxy_nse *nse_old = from_peer->nse;
+				struct gbproxy_nse *nse_new = gbproxy_nse_by_nsei_or_new(cfg, nsei);
+				if (!nse_new) {
+					LOGP(DGPRS, LOGL_ERROR, "Could not allocate NSE for NSEI=%u\n", nsei);
+					return bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, NULL, msg);
+				}
+				LOGP(DGPRS, LOGL_NOTICE, "Peer for BVCI=%u moved from NSEI=%u to NSEI=%u\n", bvci, nse_old->nsei, nsei);
+
+				/* Move peer to different NSE */
+				llist_del(&from_peer->list);
+				llist_add(&from_peer->list, &nse_new->bts_peers);
+				from_peer->nse = nse_new;
+			}
 
 			if (TLVP_PRESENT(&tp, BSSGP_IE_CELL_ID)) {
 				struct gprs_ra_id raid;
@@ -1107,9 +1139,12 @@ err_mand_ie:
 static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct tlv_parsed *tp,
 			    uint32_t nsei, uint16_t ns_bvci)
 {
+	struct gbproxy_nse *nse;
 	struct gbproxy_peer *peer;
 	unsigned int n_peers = 0;
 	int errctr = GBPROX_GLOB_CTR_PROTO_ERR_SGSN;
+
+	/* FIXME: Handle paging logic to only page each matching NSE */
 
 	LOGP(DGPRS, LOGL_INFO, "NSEI=%u(SGSN) BSSGP PAGING ",
 		nsei);
@@ -1128,29 +1163,35 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 	} else if (TLVP_PRESENT(tp, BSSGP_IE_ROUTEING_AREA)) {
 		errctr = GBPROX_GLOB_CTR_INV_RAI;
 		/* iterate over all peers and dispatch the paging to each matching one */
-		llist_for_each_entry(peer, &cfg->bts_peers, list) {
-			if (!memcmp(peer->ra, TLVP_VAL(tp, BSSGP_IE_ROUTEING_AREA), 6)) {
-				LOGPC(DGPRS, LOGL_INFO, "routing by RAI to peer BVCI=%u\n", peer->bvci);
-				gbprox_relay2peer(msg, peer, ns_bvci);
-				n_peers++;
+		llist_for_each_entry(nse, &cfg->nse_peers, list) {
+			llist_for_each_entry(peer, &nse->bts_peers, list) {
+				if (!memcmp(peer->ra, TLVP_VAL(tp, BSSGP_IE_ROUTEING_AREA), 6)) {
+					LOGPC(DGPRS, LOGL_INFO, "routing by RAI to peer BVCI=%u\n", peer->bvci);
+					gbprox_relay2peer(msg, peer, ns_bvci);
+					n_peers++;
+				}
 			}
 		}
 	} else if (TLVP_PRESENT(tp, BSSGP_IE_LOCATION_AREA)) {
 		errctr = GBPROX_GLOB_CTR_INV_LAI;
 		/* iterate over all peers and dispatch the paging to each matching one */
-		llist_for_each_entry(peer, &cfg->bts_peers, list) {
-			if (!memcmp(peer->ra, TLVP_VAL(tp, BSSGP_IE_LOCATION_AREA), 5)) {
-				LOGPC(DGPRS, LOGL_INFO, "routing by LAI to peer BVCI=%u\n", peer->bvci);
-				gbprox_relay2peer(msg, peer, ns_bvci);
-				n_peers++;
+		llist_for_each_entry(nse, &cfg->nse_peers, list) {
+			llist_for_each_entry(peer, &nse->bts_peers, list) {
+				if (!memcmp(peer->ra, TLVP_VAL(tp, BSSGP_IE_LOCATION_AREA), 5)) {
+					LOGPC(DGPRS, LOGL_INFO, "routing by LAI to peer BVCI=%u\n", peer->bvci);
+					gbprox_relay2peer(msg, peer, ns_bvci);
+					n_peers++;
+				}
 			}
 		}
 	} else if (TLVP_PRESENT(tp, BSSGP_IE_BSS_AREA_ID)) {
 		/* iterate over all peers and dispatch the paging to each matching one */
-		llist_for_each_entry(peer, &cfg->bts_peers, list) {
-			LOGPC(DGPRS, LOGL_INFO, "broadcasting to peer BVCI=%u\n", peer->bvci);
-			gbprox_relay2peer(msg, peer, ns_bvci);
-			n_peers++;
+		llist_for_each_entry(nse, &cfg->nse_peers, list) {
+			llist_for_each_entry(peer, &nse->bts_peers, list) {
+				LOGPC(DGPRS, LOGL_INFO, "broadcasting to peer BVCI=%u\n", peer->bvci);
+				gbprox_relay2peer(msg, peer, ns_bvci);
+				n_peers++;
+			}
 		}
 	} else {
 		LOGPC(DGPRS, LOGL_INFO, "\n");
@@ -1174,6 +1215,7 @@ static int rx_reset_from_sgsn(struct gbproxy_config *cfg,
 			struct msgb *msg, struct tlv_parsed *tp,
 			uint32_t nsei, uint16_t ns_bvci)
 {
+	struct gbproxy_nse *nse;
 	struct gbproxy_peer *peer;
 	uint16_t ptp_bvci;
 
@@ -1204,8 +1246,10 @@ static int rx_reset_from_sgsn(struct gbproxy_config *cfg,
 	 * from the SGSN.  As the signalling BVCI is shared
 	 * among all the BSS's that we multiplex, it needs to
 	 * be relayed  */
-	llist_for_each_entry(peer, &cfg->bts_peers, list)
-		gbprox_relay2peer(msg, peer, ns_bvci);
+	llist_for_each_entry(nse, &cfg->nse_peers, list) {
+		llist_for_each_entry(peer, &nse->bts_peers, list)
+			gbprox_relay2peer(msg, peer, ns_bvci);
+	}
 
 	return 0;
 }
@@ -1454,7 +1498,8 @@ void gprs_ns_prim_status_cb(struct gbproxy_config *cfg, struct osmo_gprs_ns2_pri
 			rate_ctr_inc(&cfg->ctrg->
 				     ctr[GBPROX_GLOB_CTR_RESTART_RESET_SGSN]);
 		} else {
-			/* bss became unavailable */
+			/* bss became unavailable
+			 * TODO: Block all BVC belonging to that NSE */
 			peer = gbproxy_peer_by_nsei(cfg, nsp->nsei);
 			if (!peer) {
 				/* TODO: use primitive name + status cause name */
@@ -1525,10 +1570,15 @@ int gprs_ns2_prim_cb(struct osmo_prim_hdr *oph, void *ctx)
 
 void gbprox_reset(struct gbproxy_config *cfg)
 {
-	struct gbproxy_peer *peer, *tmp;
+	struct gbproxy_nse *nse, *ntmp;
 
-	llist_for_each_entry_safe(peer, tmp, &cfg->bts_peers, list)
-		gbproxy_peer_free(peer);
+	llist_for_each_entry_safe(nse, ntmp, &cfg->nse_peers, list) {
+		struct gbproxy_peer *peer, *tmp;
+		llist_for_each_entry_safe(peer, tmp, &nse->bts_peers, list)
+			gbproxy_peer_free(peer);
+
+		gbproxy_nse_free(nse);
+	}
 
 	rate_ctr_group_free(cfg->ctrg);
 	gbproxy_init_config(cfg);
@@ -1538,7 +1588,7 @@ int gbproxy_init_config(struct gbproxy_config *cfg)
 {
 	struct timespec tp;
 
-	INIT_LLIST_HEAD(&cfg->bts_peers);
+	INIT_LLIST_HEAD(&cfg->nse_peers);
 	cfg->ctrg = rate_ctr_group_alloc(tall_sgsn_ctx, &global_ctrg_desc, 0);
 	if (!cfg->ctrg) {
 		LOGP(DGPRS, LOGL_ERROR, "Cannot allocate global counter group!\n");

@@ -73,7 +73,7 @@ static void gbprox_vty_print_peer(struct vty *vty, struct gbproxy_peer *peer)
 	gsm48_parse_ra(&raid, peer->ra);
 
 	vty_out(vty, "NSEI %5u, PTP-BVCI %5u, "
-		"RAI %s", peer->nsei, peer->bvci, osmo_rai_name(&raid));
+		"RAI %s", peer->nse->nsei, peer->bvci, osmo_rai_name(&raid));
 	if (peer->blocked)
 		vty_out(vty, " [BVC-BLOCKED]");
 
@@ -420,16 +420,19 @@ DEFUN(cfg_gbproxy_link_list_clean_stale_timer,
       GBPROXY_LINK_LIST_STR GBPROXY_CLEAN_STALE_TIMER_STR
       "Frequency at which the periodic timer is fired (in seconds)\n")
 {
-	struct gbproxy_peer *peer;
+	struct gbproxy_nse *nse;
 	g_cfg->clean_stale_timer_freq = (unsigned int) atoi(argv[0]);
 
 	/* Re-schedule running timers soon in case prev frequency was really big
 	   and new frequency is desired to be lower. After initial run, periodic
 	   time is used. Use random() to avoid firing timers for all peers at
 	   the same time */
-	llist_for_each_entry(peer, &g_cfg->bts_peers, list)
-		osmo_timer_schedule(&peer->clean_stale_timer,
-					random() % 5, random() % 1000000);
+	llist_for_each_entry(nse, &g_cfg->nse_peers, list) {
+		struct gbproxy_peer *peer;
+		llist_for_each_entry(peer, &nse->bts_peers, list)
+			osmo_timer_schedule(&peer->clean_stale_timer,
+						random() % 5, random() % 1000000);
+	}
 
 	return CMD_SUCCESS;
 }
@@ -440,11 +443,14 @@ DEFUN(cfg_gbproxy_link_list_no_clean_stale_timer,
       NO_STR GBPROXY_LINK_LIST_STR GBPROXY_CLEAN_STALE_TIMER_STR)
 
 {
-	struct gbproxy_peer *peer;
+	struct gbproxy_nse *nse;
 	g_cfg->clean_stale_timer_freq = 0;
 
-	llist_for_each_entry(peer, &g_cfg->bts_peers, list)
-		osmo_timer_del(&peer->clean_stale_timer);
+	llist_for_each_entry(nse, &g_cfg->nse_peers, list) {
+		struct gbproxy_peer *peer;
+		llist_for_each_entry(peer, &nse->bts_peers, list)
+			osmo_timer_del(&peer->clean_stale_timer);
+	}
 
 	return CMD_SUCCESS;
 }
@@ -536,17 +542,20 @@ DEFUN(cfg_gbproxy_link_no_stored_msgs_max_len,
 DEFUN(show_gbproxy, show_gbproxy_cmd, "show gbproxy [stats]",
        SHOW_STR "Display information about the Gb proxy\n" "Show statistics\n")
 {
-	struct gbproxy_peer *peer;
+	struct gbproxy_nse *nse;
 	int show_stats = argc >= 1;
 
 	if (show_stats)
 		vty_out_rate_ctr_group(vty, "", g_cfg->ctrg);
 
-	llist_for_each_entry(peer, &g_cfg->bts_peers, list) {
-		gbprox_vty_print_peer(vty, peer);
+	llist_for_each_entry(nse, &g_cfg->nse_peers, list) {
+		struct gbproxy_peer *peer;
+		llist_for_each_entry(peer, &nse->bts_peers, list) {
+			gbprox_vty_print_peer(vty, peer);
 
-		if (show_stats)
-			vty_out_rate_ctr_group(vty, "  ", peer->ctrg);
+			if (show_stats)
+				vty_out_rate_ctr_group(vty, "  ", peer->ctrg);
+		}
 	}
 	return CMD_SUCCESS;
 }
@@ -554,49 +563,52 @@ DEFUN(show_gbproxy, show_gbproxy_cmd, "show gbproxy [stats]",
 DEFUN(show_gbproxy_links, show_gbproxy_links_cmd, "show gbproxy links",
        SHOW_STR "Display information about the Gb proxy\n" "Show logical links\n")
 {
-	struct gbproxy_peer *peer;
+	struct gbproxy_nse *nse;
 	time_t now;
 	struct timespec ts = {0,};
 
 	osmo_clock_gettime(CLOCK_MONOTONIC, &ts);
 	now = ts.tv_sec;
 
-	llist_for_each_entry(peer, &g_cfg->bts_peers, list) {
-		struct gbproxy_link_info *link_info;
-		struct gbproxy_patch_state *state = &peer->patch_state;
+	llist_for_each_entry(nse, &g_cfg->nse_peers, list) {
+		struct gbproxy_peer *peer;
+		llist_for_each_entry(peer, &nse->bts_peers, list) {
+			struct gbproxy_link_info *link_info;
+			struct gbproxy_patch_state *state = &peer->patch_state;
 
-		gbprox_vty_print_peer(vty, peer);
+			gbprox_vty_print_peer(vty, peer);
 
-		llist_for_each_entry(link_info, &state->logical_links, list) {
-			time_t age = now - link_info->timestamp;
-			struct osmo_mobile_identity mi;
-			const char *imsi_str;
+			llist_for_each_entry(link_info, &state->logical_links, list) {
+				time_t age = now - link_info->timestamp;
+				struct osmo_mobile_identity mi;
+				const char *imsi_str;
 
-			if (link_info->imsi > 0) {
-				if (osmo_mobile_identity_decode(&mi, link_info->imsi, link_info->imsi_len, false)
-				    || mi.type != GSM_MI_TYPE_IMSI)
-					imsi_str = "(invalid)";
-				else
-					imsi_str = mi.imsi;
-			} else {
-				imsi_str = "(none)";
+				if (link_info->imsi > 0) {
+					if (osmo_mobile_identity_decode(&mi, link_info->imsi, link_info->imsi_len, false)
+					    || mi.type != GSM_MI_TYPE_IMSI)
+						imsi_str = "(invalid)";
+					else
+						imsi_str = mi.imsi;
+				} else {
+					imsi_str = "(none)";
+				}
+				vty_out(vty, "  TLLI %08x, IMSI %s, AGE %d",
+					link_info->tlli.current, imsi_str, (int)age);
+
+				if (link_info->stored_msgs_len)
+					vty_out(vty, ", STORED %"PRIu32"/%"PRIu32,
+						link_info->stored_msgs_len,
+						g_cfg->stored_msgs_max_len);
+
+				if (g_cfg->route_to_sgsn2)
+					vty_out(vty, ", SGSN NSEI %d",
+						link_info->sgsn_nsei);
+
+				if (link_info->is_deregistered)
+					vty_out(vty, ", DE-REGISTERED");
+
+				vty_out(vty, "%s", VTY_NEWLINE);
 			}
-			vty_out(vty, "  TLLI %08x, IMSI %s, AGE %d",
-				link_info->tlli.current, imsi_str, (int)age);
-
-			if (link_info->stored_msgs_len)
-				vty_out(vty, ", STORED %"PRIu32"/%"PRIu32,
-					link_info->stored_msgs_len,
-					g_cfg->stored_msgs_max_len);
-
-			if (g_cfg->route_to_sgsn2)
-				vty_out(vty, ", SGSN NSEI %d",
-					link_info->sgsn_nsei);
-
-			if (link_info->is_deregistered)
-				vty_out(vty, ", DE-REGISTERED");
-
-			vty_out(vty, "%s", VTY_NEWLINE);
 		}
 	}
 	return CMD_SUCCESS;
@@ -651,15 +663,17 @@ DEFUN(delete_gb_nsei, delete_gb_nsei_cmd,
 		if (!dry_run)
 			counter = gbproxy_cleanup_peers(g_cfg, nsei, 0);
 		else {
+			struct gbproxy_nse *nse;
 			struct gbproxy_peer *peer;
 			counter = 0;
-			llist_for_each_entry(peer, &g_cfg->bts_peers, list) {
-				if (peer->nsei != nsei)
+			llist_for_each_entry(nse, &g_cfg->nse_peers, list) {
+				if (nse->nsei != nsei)
 					continue;
-
-				vty_out(vty, "BVC: ");
-				gbprox_vty_print_peer(vty, peer);
-				counter += 1;
+				llist_for_each_entry(peer, &nse->bts_peers, list) {
+					vty_out(vty, "BVC: ");
+					gbprox_vty_print_peer(vty, peer);
+					counter += 1;
+				}
 			}
 		}
 		vty_out(vty, "%sDeleted %d BVC%s",

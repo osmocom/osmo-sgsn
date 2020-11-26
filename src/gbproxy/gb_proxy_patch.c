@@ -44,6 +44,10 @@ static void gbproxy_patch_raid(struct gsm48_ra_id *raid_enc, struct gbproxy_peer
 		GBPROX_PEER_CTR_RAID_PATCHED_SGSN :
 		GBPROX_PEER_CTR_RAID_PATCHED_BSS;
 
+	OSMO_ASSERT(peer->nse);
+	struct gbproxy_config *cfg = peer->nse->cfg;
+	OSMO_ASSERT(cfg);
+
 	if (!state->local_plmn.mcc || !state->local_plmn.mnc)
 		return;
 
@@ -58,11 +62,11 @@ static void gbproxy_patch_raid(struct gsm48_ra_id *raid_enc, struct gbproxy_peer
 	if (!to_bss) {
 		/* BSS -> SGSN */
 		if (state->local_plmn.mcc)
-			raid.mcc = peer->cfg->core_plmn.mcc;
+			raid.mcc = cfg->core_plmn.mcc;
 
 		if (state->local_plmn.mnc) {
-			raid.mnc = peer->cfg->core_plmn.mnc;
-			raid.mnc_3_digits = peer->cfg->core_plmn.mnc_3_digits;
+			raid.mnc = cfg->core_plmn.mnc;
+			raid.mnc_3_digits = cfg->core_plmn.mnc_3_digits;
 		}
 	} else {
 		/* SGSN -> BSS */
@@ -100,11 +104,14 @@ static void gbproxy_patch_apn_ie(struct msgb *msg,
 
 	size_t apn_len = hdr->apn_len;
 	uint8_t *apn = hdr->apn;
+	OSMO_ASSERT(peer->nse);
+	struct gbproxy_config *cfg = peer->nse->cfg;
+	OSMO_ASSERT(cfg);
 
 	OSMO_ASSERT(apn_ie_len == apn_len + sizeof(struct apn_ie_hdr));
 	OSMO_ASSERT(apn_ie_len > 2 && apn_ie_len <= 102);
 
-	if (peer->cfg->core_apn_size == 0) {
+	if (cfg->core_apn_size == 0) {
 		char str1[110];
 		/* Remove the IE */
 		LOGP(DGPRS, LOGL_DEBUG,
@@ -119,20 +126,20 @@ static void gbproxy_patch_apn_ie(struct msgb *msg,
 		char str1[110];
 		char str2[110];
 
-		OSMO_ASSERT(peer->cfg->core_apn_size <= 100);
+		OSMO_ASSERT(cfg->core_apn_size <= 100);
 
 		LOGP(DGPRS, LOGL_DEBUG,
 		     "Patching %s to SGSN: "
 		     "Replacing APN '%s' -> '%s'\n",
 		     log_text,
 		     osmo_apn_to_str(str1, apn, apn_len),
-		     osmo_apn_to_str(str2, peer->cfg->core_apn,
-				       peer->cfg->core_apn_size));
+		     osmo_apn_to_str(str2, cfg->core_apn,
+				       cfg->core_apn_size));
 
-		*new_apn_ie_len = peer->cfg->core_apn_size + 2;
-		msgb_resize_area(msg, apn, apn_len, peer->cfg->core_apn_size);
-		memcpy(apn, peer->cfg->core_apn, peer->cfg->core_apn_size);
-		hdr->apn_len = peer->cfg->core_apn_size;
+		*new_apn_ie_len = cfg->core_apn_size + 2;
+		msgb_resize_area(msg, apn, apn_len, cfg->core_apn_size);
+		memcpy(apn, cfg->core_apn, cfg->core_apn_size);
+		hdr->apn_len = cfg->core_apn_size;
 	}
 
 	rate_ctr_inc(&peer->ctrg->ctr[GBPROX_PEER_CTR_APN_PATCHED]);
@@ -207,10 +214,12 @@ int gbproxy_patch_llc(struct msgb *msg, uint8_t *llc, size_t llc_len,
 	struct gprs_llc_hdr_parsed *ghp = &parse_ctx->llc_hdr_parsed;
 	int have_patched = 0;
 	int fcs;
-	struct gbproxy_config *cfg = peer->cfg;
+	OSMO_ASSERT(peer->nse);
+	struct gbproxy_config *cfg = peer->nse->cfg;
+	OSMO_ASSERT(cfg);
 
 	if (parse_ctx->ptmsi_enc && link_info &&
-	    !parse_ctx->old_raid_is_foreign && peer->cfg->patch_ptmsi) {
+	    !parse_ctx->old_raid_is_foreign && cfg->patch_ptmsi) {
 		uint32_t ptmsi;
 		if (parse_ctx->to_bss)
 			ptmsi = link_info->tlli.ptmsi;
@@ -291,13 +300,16 @@ void gbproxy_patch_bssgp(struct msgb *msg, uint8_t *bssgp, size_t bssgp_len,
 {
 	const char *err_info = NULL;
 	int err_ctr = -1;
+	OSMO_ASSERT(peer->nse);
+	struct gbproxy_config *cfg = peer->nse->cfg;
+	OSMO_ASSERT(cfg);
 
 	if (parse_ctx->bssgp_raid_enc)
 		gbproxy_patch_raid((struct gsm48_ra_id *)parse_ctx->bssgp_raid_enc, peer,
 				   parse_ctx->to_bss, "BSSGP");
 
 	if (parse_ctx->need_decryption &&
-	    (peer->cfg->patch_ptmsi || peer->cfg->core_apn)) {
+	    (cfg->patch_ptmsi || cfg->core_apn)) {
 		/* Patching LLC messages has been requested
 		 * explicitly, but the message (including the
 		 * type) is encrypted, so we possibly fail to
@@ -319,7 +331,7 @@ void gbproxy_patch_bssgp(struct msgb *msg, uint8_t *bssgp, size_t bssgp_len,
 	if (!link_info)
 		return;
 
-	if (parse_ctx->tlli_enc && peer->cfg->patch_ptmsi) {
+	if (parse_ctx->tlli_enc && cfg->patch_ptmsi) {
 		uint32_t tlli = gbproxy_map_tlli(parse_ctx->tlli,
 						 link_info, parse_ctx->to_bss);
 
@@ -335,7 +347,7 @@ void gbproxy_patch_bssgp(struct msgb *msg, uint8_t *bssgp, size_t bssgp_len,
 		}
 	}
 
-	if (parse_ctx->bssgp_ptmsi_enc && peer->cfg->patch_ptmsi) {
+	if (parse_ctx->bssgp_ptmsi_enc && cfg->patch_ptmsi) {
 		uint32_t ptmsi;
 		if (parse_ctx->to_bss)
 			ptmsi = link_info->tlli.ptmsi;

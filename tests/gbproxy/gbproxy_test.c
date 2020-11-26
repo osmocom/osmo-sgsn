@@ -118,7 +118,7 @@ static int dump_global(FILE *stream, int indent)
 static int dump_peers(FILE *stream, int indent, time_t now,
 		      struct gbproxy_config *cfg)
 {
-	struct gbproxy_peer *peer;
+	struct gbproxy_nse *nse;
 	struct gprs_ra_id raid;
 	unsigned int i;
 	const struct rate_ctr_group_desc *desc;
@@ -128,98 +128,101 @@ static int dump_peers(FILE *stream, int indent, time_t now,
 	if (rc < 0)
 		return rc;
 
-	llist_for_each_entry(peer, &cfg->bts_peers, list) {
-		struct gbproxy_link_info *link_info;
-		struct gbproxy_patch_state *state = &peer->patch_state;
-		gsm48_parse_ra(&raid, peer->ra);
 
-		rc = fprintf(stream, "%*s  NSEI %u, BVCI %u, %sblocked, RAI %s\n",
-			     indent, "",
-			     peer->nsei, peer->bvci,
-			     peer->blocked ? "" : "not ",
-			     osmo_rai_name(&raid));
+	llist_for_each_entry(nse, &cfg->nse_peers, list) {
+		struct gbproxy_peer *peer;
+		llist_for_each_entry(peer, &nse->bts_peers, list) {
+			struct gbproxy_link_info *link_info;
+			struct gbproxy_patch_state *state = &peer->patch_state;
+			gsm48_parse_ra(&raid, peer->ra);
 
-		if (rc < 0)
-			return rc;
+			rc = fprintf(stream, "%*s  NSEI %u, BVCI %u, %sblocked, RAI %s\n",
+				     indent, "",
+				     nse->nsei, peer->bvci,
+				     peer->blocked ? "" : "not ",
+				     osmo_rai_name(&raid));
 
-		desc = peer->ctrg->desc;
+			if (rc < 0)
+				return rc;
 
-		for (i = 0; i < desc->num_ctr; i++) {
-			struct rate_ctr *ctr = &peer->ctrg->ctr[i];
-			if (ctr->current) {
-				rc = fprintf(stream, "%*s    %s: %llu\n",
-					     indent, "",
-					     desc->ctr_desc[i].description,
-					     (long long)ctr->current);
+			desc = peer->ctrg->desc;
 
+			for (i = 0; i < desc->num_ctr; i++) {
+				struct rate_ctr *ctr = &peer->ctrg->ctr[i];
+				if (ctr->current) {
+					rc = fprintf(stream, "%*s    %s: %llu\n",
+						     indent, "",
+						     desc->ctr_desc[i].description,
+						     (long long)ctr->current);
+
+					if (rc < 0)
+						return rc;
+				}
+			}
+
+			fprintf(stream, "%*s    TLLI-Cache: %d\n",
+				indent, "", state->logical_link_count);
+			llist_for_each_entry(link_info, &state->logical_links, list) {
+				struct osmo_mobile_identity mi;
+				const char *imsi_str;
+				time_t age = now ? now - link_info->timestamp : 0;
+				int stored_msgs = 0;
+				struct llist_head *iter;
+				enum gbproxy_match_id match_id;
+				llist_for_each(iter, &link_info->stored_msgs)
+					stored_msgs++;
+
+				if (link_info->imsi > 0) {
+					if (osmo_mobile_identity_decode(&mi, link_info->imsi, link_info->imsi_len, false)
+					    || mi.type != GSM_MI_TYPE_IMSI)
+						imsi_str = "(invalid)";
+					else
+						imsi_str = mi.imsi;
+				} else {
+					imsi_str = "(none)";
+				}
+				fprintf(stream, "%*s      TLLI %08x",
+					     indent, "", link_info->tlli.current);
+				if (link_info->tlli.assigned)
+					fprintf(stream, "/%08x", link_info->tlli.assigned);
+				if (link_info->sgsn_tlli.current) {
+					fprintf(stream, " -> %08x",
+						link_info->sgsn_tlli.current);
+					if (link_info->sgsn_tlli.assigned)
+						fprintf(stream, "/%08x",
+							link_info->sgsn_tlli.assigned);
+				}
+				fprintf(stream, ", IMSI %s, AGE %d",
+					imsi_str, (int)age);
+
+				if (stored_msgs)
+					fprintf(stream, ", STORED %d", stored_msgs);
+
+				for (match_id = 0; match_id < ARRAY_SIZE(cfg->matches);
+				     ++match_id) {
+					if (cfg->matches[match_id].enable &&
+					    link_info->is_matching[match_id]) {
+						fprintf(stream, ", IMSI matches");
+						break;
+					}
+				}
+
+				if (link_info->imsi_acq_pending)
+					fprintf(stream, ", IMSI acquisition in progress");
+
+				if (cfg->route_to_sgsn2)
+					fprintf(stream, ", SGSN NSEI %d",
+						link_info->sgsn_nsei);
+
+				if (link_info->is_deregistered)
+					fprintf(stream, ", DE-REGISTERED");
+
+				rc = fprintf(stream, "\n");
 				if (rc < 0)
 					return rc;
 			}
 		}
-
-		fprintf(stream, "%*s    TLLI-Cache: %d\n",
-			indent, "", state->logical_link_count);
-		llist_for_each_entry(link_info, &state->logical_links, list) {
-			struct osmo_mobile_identity mi;
-			const char *imsi_str;
-			time_t age = now ? now - link_info->timestamp : 0;
-			int stored_msgs = 0;
-			struct llist_head *iter;
-			enum gbproxy_match_id match_id;
-			llist_for_each(iter, &link_info->stored_msgs)
-				stored_msgs++;
-
-			if (link_info->imsi > 0) {
-				if (osmo_mobile_identity_decode(&mi, link_info->imsi, link_info->imsi_len, false)
-				    || mi.type != GSM_MI_TYPE_IMSI)
-					imsi_str = "(invalid)";
-				else
-					imsi_str = mi.imsi;
-			} else {
-				imsi_str = "(none)";
-			}
-			fprintf(stream, "%*s      TLLI %08x",
-				     indent, "", link_info->tlli.current);
-			if (link_info->tlli.assigned)
-				fprintf(stream, "/%08x", link_info->tlli.assigned);
-			if (link_info->sgsn_tlli.current) {
-				fprintf(stream, " -> %08x",
-					link_info->sgsn_tlli.current);
-				if (link_info->sgsn_tlli.assigned)
-					fprintf(stream, "/%08x",
-						link_info->sgsn_tlli.assigned);
-			}
-			fprintf(stream, ", IMSI %s, AGE %d",
-				imsi_str, (int)age);
-
-			if (stored_msgs)
-				fprintf(stream, ", STORED %d", stored_msgs);
-
-			for (match_id = 0; match_id < ARRAY_SIZE(cfg->matches);
-			     ++match_id) {
-				if (cfg->matches[match_id].enable &&
-				    link_info->is_matching[match_id]) {
-					fprintf(stream, ", IMSI matches");
-					break;
-				}
-			}
-
-			if (link_info->imsi_acq_pending)
-				fprintf(stream, ", IMSI acquisition in progress");
-
-			if (cfg->route_to_sgsn2)
-				fprintf(stream, ", SGSN NSEI %d",
-					link_info->sgsn_nsei);
-
-			if (link_info->is_deregistered)
-				fprintf(stream, ", DE-REGISTERED");
-
-			rc = fprintf(stream, "\n");
-			if (rc < 0)
-				return rc;
-		}
 	}
-
 	return 0;
 }
 
@@ -4210,7 +4213,7 @@ struct gbproxy_link_info *register_tlli(
 	struct gbproxy_link_info *link_info;
 	int imsi_matches = -1;
 	int tlli_already_known = 0;
-	struct gbproxy_config *cfg = peer->cfg;
+	struct gbproxy_config *cfg = peer->nse->cfg;
 
 	/* Check, whether the IMSI matches */
 	if (gprs_is_mi_imsi(imsi, imsi_len)) {
@@ -4259,6 +4262,7 @@ struct gbproxy_link_info *register_tlli(
 static void test_gbproxy_tlli_expire(void)
 {
 	struct gbproxy_config cfg = {0};
+	struct gbproxy_nse *nse;
 	struct gbproxy_peer *peer;
 	const char *err_msg = NULL;
 	const uint8_t imsi1[] = { GSM_MI_TYPE_IMSI, 0x23, 0x24, 0x25, 0xf6 };
@@ -4273,6 +4277,7 @@ static void test_gbproxy_tlli_expire(void)
 	printf("Test TLLI info expiry\n\n");
 
 	gbproxy_init_config(&cfg);
+	nse = gbproxy_nse_by_nsei_or_new(&cfg, 0);
 
 	if (gbproxy_set_patch_filter(&cfg.matches[GBPROX_MATCH_PATCHING],
 				     filter_re, &err_msg) != 0) {
@@ -4288,7 +4293,7 @@ static void test_gbproxy_tlli_expire(void)
 
 		cfg.tlli_max_len = 0;
 		cfg.tlli_max_age = 0;
-		peer = gbproxy_peer_alloc(&cfg, 20);
+		peer = gbproxy_peer_alloc(nse, 20);
 		OSMO_ASSERT(peer->patch_state.logical_link_count == 0);
 
 		printf("  Add TLLI 1, IMSI 1\n");
@@ -4327,7 +4332,7 @@ static void test_gbproxy_tlli_expire(void)
 
 		cfg.tlli_max_len = 0;
 		cfg.tlli_max_age = 0;
-		peer = gbproxy_peer_alloc(&cfg, 20);
+		peer = gbproxy_peer_alloc(nse, 20);
 		OSMO_ASSERT(peer->patch_state.logical_link_count == 0);
 
 		printf("  Add TLLI 1, IMSI 1\n");
@@ -4367,7 +4372,7 @@ static void test_gbproxy_tlli_expire(void)
 
 		cfg.tlli_max_len = 1;
 		cfg.tlli_max_age = 0;
-		peer = gbproxy_peer_alloc(&cfg, 20);
+		peer = gbproxy_peer_alloc(nse, 20);
 		OSMO_ASSERT(peer->patch_state.logical_link_count == 0);
 
 		printf("  Add TLLI 1, IMSI 1\n");
@@ -4405,7 +4410,7 @@ static void test_gbproxy_tlli_expire(void)
 
 		cfg.tlli_max_len = 0;
 		cfg.tlli_max_age = 1;
-		peer = gbproxy_peer_alloc(&cfg, 20);
+		peer = gbproxy_peer_alloc(nse, 20);
 		OSMO_ASSERT(peer->patch_state.logical_link_count == 0);
 
 		printf("  Add TLLI 1, IMSI 1 (should expire after timeout)\n");
@@ -4443,7 +4448,7 @@ static void test_gbproxy_tlli_expire(void)
 
 		cfg.tlli_max_len = 0;
 		cfg.tlli_max_age = 1;
-		peer = gbproxy_peer_alloc(&cfg, 20);
+		peer = gbproxy_peer_alloc(nse, 20);
 		OSMO_ASSERT(peer->patch_state.logical_link_count == 0);
 
 		printf("  Add TLLI 1, IMSI 1 (should expire)\n");

@@ -81,25 +81,30 @@ static const struct rate_ctr_group_desc peer_ctrg_desc = {
 };
 
 
-/* Find the gbprox_peer by its BVCI */
+/* Find the gbproxy_peer by its BVCI. There can only be one match */
 struct gbproxy_peer *gbproxy_peer_by_bvci(struct gbproxy_config *cfg, uint16_t bvci)
 {
-	struct gbproxy_peer *peer;
-	llist_for_each_entry(peer, &cfg->bts_peers, list) {
-		if (peer->bvci == bvci)
-			return peer;
+	struct gbproxy_nse *nse;
+
+	llist_for_each_entry(nse, &cfg->nse_peers, list) {
+		struct gbproxy_peer *peer;
+		llist_for_each_entry(peer, &nse->bts_peers, list) {
+			if (peer->bvci == bvci)
+				return peer;
+		}
 	}
 	return NULL;
 }
 
-/* Find the gbprox_peer by its NSEI */
+/* Find the gbproxy_peer by its NSEI */
+/* FIXME: Only returns the first peer, but we could have multiple on this nsei */
 struct gbproxy_peer *gbproxy_peer_by_nsei(struct gbproxy_config *cfg,
 					  uint16_t nsei)
 {
-	struct gbproxy_peer *peer;
-	llist_for_each_entry(peer, &cfg->bts_peers, list) {
-		if (peer->nsei == nsei)
-			return peer;
+	struct gbproxy_nse *nse;
+	llist_for_each_entry(nse, &cfg->nse_peers, list) {
+		if (nse->nsei == nsei && !llist_empty(&nse->bts_peers))
+			return llist_first_entry(&nse->bts_peers, struct gbproxy_peer, list);
 	}
 	return NULL;
 }
@@ -109,11 +114,16 @@ struct gbproxy_peer *gbproxy_peer_by_nsei(struct gbproxy_config *cfg,
 struct gbproxy_peer *gbproxy_peer_by_rai(struct gbproxy_config *cfg,
 					 const uint8_t *ra)
 {
-	struct gbproxy_peer *peer;
-	llist_for_each_entry(peer, &cfg->bts_peers, list) {
-		if (!memcmp(peer->ra, ra, 6))
-			return peer;
+	struct gbproxy_nse *nse;
+
+	llist_for_each_entry(nse, &cfg->nse_peers, list) {
+		struct gbproxy_peer *peer;
+		llist_for_each_entry(peer, &nse->bts_peers, list) {
+			if (!memcmp(peer->ra, ra, 6))
+				return peer;
+		}
 	}
+
 	return NULL;
 }
 
@@ -122,10 +132,14 @@ struct gbproxy_peer *gbproxy_peer_by_rai(struct gbproxy_config *cfg,
 struct gbproxy_peer *gbproxy_peer_by_lai(struct gbproxy_config *cfg,
 					 const uint8_t *la)
 {
-	struct gbproxy_peer *peer;
-	llist_for_each_entry(peer, &cfg->bts_peers, list) {
-		if (!memcmp(peer->ra, la, 5))
-			return peer;
+	struct gbproxy_nse *nse;
+
+	llist_for_each_entry(nse, &cfg->nse_peers, list) {
+		struct gbproxy_peer *peer;
+		llist_for_each_entry(peer, &nse->bts_peers, list) {
+			if (!memcmp(peer->ra, la, 5))
+				return peer;
+		}
 	}
 	return NULL;
 }
@@ -135,10 +149,14 @@ struct gbproxy_peer *gbproxy_peer_by_lai(struct gbproxy_config *cfg,
 struct gbproxy_peer *gbproxy_peer_by_lac(struct gbproxy_config *cfg,
 					 const uint8_t *la)
 {
-	struct gbproxy_peer *peer;
-	llist_for_each_entry(peer, &cfg->bts_peers, list) {
-		if (!memcmp(peer->ra + 3, la + 3, 2))
-			return peer;
+	struct gbproxy_nse *nse;
+
+	llist_for_each_entry(nse, &cfg->nse_peers, list) {
+		struct gbproxy_peer *peer;
+		llist_for_each_entry(peer, &nse->bts_peers, list) {
+			if (!memcmp(peer->ra + 3, la + 3, 2))
+				return peer;
+		}
 	}
 	return NULL;
 }
@@ -177,18 +195,25 @@ static void clean_stale_timer_cb(void *data)
 	time_t now;
 	struct timespec ts = {0,};
 	struct gbproxy_peer *peer = (struct gbproxy_peer *) data;
+	OSMO_ASSERT(peer);
+	OSMO_ASSERT(peer->nse);
+	struct gbproxy_config *cfg = peer->nse->cfg;
+	OSMO_ASSERT(cfg);
 
 	osmo_clock_gettime(CLOCK_MONOTONIC, &ts);
 	now = ts.tv_sec;
 	gbproxy_remove_stale_link_infos(peer, now);
-	if (peer->cfg->clean_stale_timer_freq != 0)
+	if (cfg->clean_stale_timer_freq != 0)
 		osmo_timer_schedule(&peer->clean_stale_timer,
-					peer->cfg->clean_stale_timer_freq, 0);
+					cfg->clean_stale_timer_freq, 0);
 }
 
-struct gbproxy_peer *gbproxy_peer_alloc(struct gbproxy_config *cfg, uint16_t bvci)
+struct gbproxy_peer *gbproxy_peer_alloc(struct gbproxy_nse *nse, uint16_t bvci)
 {
 	struct gbproxy_peer *peer;
+	OSMO_ASSERT(nse);
+	struct gbproxy_config *cfg = nse->cfg;
+	OSMO_ASSERT(cfg);
 
 	peer = talloc_zero(tall_sgsn_ctx, struct gbproxy_peer);
 	if (!peer)
@@ -200,22 +225,24 @@ struct gbproxy_peer *gbproxy_peer_alloc(struct gbproxy_config *cfg, uint16_t bvc
 		talloc_free(peer);
 		return NULL;
 	}
-	peer->cfg = cfg;
+	peer->nse = nse;
 
-	llist_add(&peer->list, &cfg->bts_peers);
+	llist_add(&peer->list, &nse->bts_peers);
 
 	INIT_LLIST_HEAD(&peer->patch_state.logical_links);
 
 	osmo_timer_setup(&peer->clean_stale_timer, clean_stale_timer_cb, peer);
-	if (peer->cfg->clean_stale_timer_freq != 0)
+	if (cfg->clean_stale_timer_freq != 0)
 		osmo_timer_schedule(&peer->clean_stale_timer,
-					peer->cfg->clean_stale_timer_freq, 0);
+					cfg->clean_stale_timer_freq, 0);
 
 	return peer;
 }
 
 void gbproxy_peer_free(struct gbproxy_peer *peer)
 {
+	OSMO_ASSERT(peer);
+
 	llist_del(&peer->list);
 	osmo_timer_del(&peer->clean_stale_timer);
 	gbproxy_delete_link_infos(peer);
@@ -229,17 +256,78 @@ void gbproxy_peer_free(struct gbproxy_peer *peer)
 int gbproxy_cleanup_peers(struct gbproxy_config *cfg, uint16_t nsei, uint16_t bvci)
 {
 	int counter = 0;
-	struct gbproxy_peer *peer, *tmp;
+	struct gbproxy_nse *nse, *ntmp;
+	OSMO_ASSERT(cfg);
 
-	llist_for_each_entry_safe(peer, tmp, &cfg->bts_peers, list) {
-		if (peer->nsei != nsei)
+	llist_for_each_entry_safe(nse, ntmp, &cfg->nse_peers, list) {
+		struct gbproxy_peer *peer, *tmp;
+		if (nse->nsei != nsei)
 			continue;
-		if (bvci && peer->bvci != bvci)
-			continue;
+		llist_for_each_entry_safe(peer, tmp, &nse->bts_peers, list) {
+			if (bvci && peer->bvci != bvci)
+				continue;
 
-		gbproxy_peer_free(peer);
-		counter += 1;
+			gbproxy_peer_free(peer);
+			counter += 1;
+		}
 	}
 
 	return counter;
+}
+
+struct gbproxy_nse *gbproxy_nse_alloc(struct gbproxy_config *cfg, uint16_t nsei)
+{
+	struct gbproxy_nse *nse;
+	OSMO_ASSERT(cfg);
+
+	nse = talloc_zero(tall_sgsn_ctx, struct gbproxy_nse);
+	if (!nse)
+		return NULL;
+
+	nse->nsei = nsei;
+	nse->cfg = cfg;
+
+	llist_add(&nse->list, &cfg->nse_peers);
+
+	INIT_LLIST_HEAD(&nse->bts_peers);
+
+	return nse;
+}
+
+void gbproxy_nse_free(struct gbproxy_nse *nse)
+{
+	struct gbproxy_peer *peer, *tmp;
+	OSMO_ASSERT(nse);
+
+	llist_del(&nse->list);
+
+	llist_for_each_entry_safe(peer, tmp, &nse->bts_peers, list)
+		gbproxy_peer_free(peer);
+
+	talloc_free(nse);
+}
+
+struct gbproxy_nse *gbproxy_nse_by_nsei(struct gbproxy_config *cfg, uint16_t nsei)
+{
+	struct gbproxy_nse *nse;
+	OSMO_ASSERT(cfg);
+
+	llist_for_each_entry(nse, &cfg->nse_peers, list) {
+		if (nse->nsei == nsei)
+			return nse;
+	}
+
+	return NULL;
+}
+
+struct gbproxy_nse *gbproxy_nse_by_nsei_or_new(struct gbproxy_config *cfg, uint16_t nsei)
+{
+	struct gbproxy_nse *nse;
+	OSMO_ASSERT(cfg);
+
+	nse = gbproxy_nse_by_nsei(cfg, nsei);
+	if (!nse)
+		nse = gbproxy_nse_alloc(cfg, nsei);
+
+	return nse;
 }
