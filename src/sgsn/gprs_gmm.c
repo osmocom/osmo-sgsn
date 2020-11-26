@@ -342,6 +342,9 @@ int gsm48_tx_gmm_att_ack(struct sgsn_mm_ctx *mm)
 	/* Optional: MS-identity (combined attach) */
 	/* Optional: GMM cause (partial attach result for combined attach) */
 
+	/* Optional: Network feature support 10.5.5.23 */
+	/* msgb_v_put(msg, GSM48_IE_GMM_NET_FEAT_SUPPORT | 0x00);*/
+
 	return gsm48_gmm_sendmsg(msg, 0, mm, true);
 }
 
