@@ -281,9 +281,11 @@ int gsm48_tx_gmm_att_ack(struct sgsn_mm_ctx *mm)
 	struct gsm48_hdr *gh;
 	struct gsm48_attach_ack *aa;
 	unsigned long t;
+#ifdef PTMSI_ALLOC
 	struct osmo_mobile_identity mi;
 	uint8_t *l;
 	int rc;
+#endif
 #if 0
 	uint8_t *ptsig;
 #endif
@@ -922,9 +924,9 @@ int gsm48_gmm_authorize(struct sgsn_mm_ctx *ctx)
 		ctx->t3350_mode = GMM_T3350_MODE_ATT;
 #else
 		memset(&sig_data, 0, sizeof(sig_data));
-		sig_data.mm = mmctx;
+		sig_data.mm = ctx;
 		osmo_signal_dispatch(SS_SGSN, S_SGSN_ATTACH, &sig_data);
-		osmo_fsm_inst_dispatch(mm->gmm_fsm, E_GMM_ATTACH_SUCCESS, NULL);
+		osmo_fsm_inst_dispatch(ctx->gmm_fsm, E_GMM_ATTACH_SUCCESS, NULL);
 #endif
 
 		return gsm48_tx_gmm_att_ack(ctx);
@@ -1438,9 +1440,11 @@ static int gsm48_tx_gmm_ra_upd_ack(struct sgsn_mm_ctx *mm)
 	struct gsm48_hdr *gh;
 	struct gsm48_ra_upd_ack *rua;
 	unsigned long t;
+#ifdef PTMSI_ALLOC
 	uint8_t *l;
 	int rc;
 	struct osmo_mobile_identity mi;
+#endif
 
 	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_GPRS_ROUTING_AREA_ACKED]);
 	LOGMMCTXP(LOGL_INFO, mm, "<- ROUTING AREA UPDATE ACCEPT\n");
@@ -1727,7 +1731,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	mmctx_timer_start(mmctx, 3350);
 #else
 	/* Make sure we are NORMAL (i.e. not SUSPENDED anymore) */
-	osmo_fsm_inst_dispatch(mm->gmm_fsm, E_GMM_ATTACH_SUCCESS, NULL);
+	osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_GMM_ATTACH_SUCCESS, NULL);
 
 	memset(&sig_data, 0, sizeof(sig_data));
 	sig_data.mm = mmctx;
