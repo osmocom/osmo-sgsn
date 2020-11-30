@@ -930,6 +930,7 @@ static void setup_ns(struct gprs_ns2_inst *nsi,
 	       "NSEI 0x%04x(%d)\n\n",
 	       nsei, nsei);
 	send_ns_avail(nsi, nsei);
+	send_bssgp_reset(nsi, nsei, 0);
 }
 
 static void setup_bssgp(struct gprs_ns2_inst *nsi,

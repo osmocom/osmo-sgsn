@@ -1058,6 +1058,14 @@ static int gbprox_rx_sig_from_bss(struct gbproxy_config *cfg,
 			LOGP(DGPRS, LOGL_INFO, "NSEI=%u Rx BVC RESET (BVCI=%u)\n",
 				nsei, bvci);
 			if (bvci == 0) {
+				struct gbproxy_nse *nse;
+				/* Ensure the NSE peer is there and clear all PtP BVCs */
+				nse = gbproxy_nse_by_nsei_or_new(cfg, nsei);
+				if (!nse)
+					LOGP(DGPRS, LOGL_ERROR, "Could not allocate NSE for NSEI=%u\n", nsei);
+
+				gbproxy_cleanup_peers(cfg, nsei, 0);
+
 				/* FIXME: only do this if SGSN is alive! */
 				LOGP(DGPRS, LOGL_INFO, "NSEI=%u Tx fake "
 					"BVC RESET ACK of BVCI=0\n", nsei);
@@ -1066,10 +1074,11 @@ static int gbprox_rx_sig_from_bss(struct gbproxy_config *cfg,
 			}
 			from_peer = gbproxy_peer_by_bvci(cfg, bvci);
 			if (!from_peer) {
-				struct gbproxy_nse *nse = gbproxy_nse_by_nsei_or_new(cfg, nsei);
+				struct gbproxy_nse *nse = gbproxy_nse_by_nsei(cfg, nsei);
 				if (!nse) {
-					LOGP(DGPRS, LOGL_ERROR, "Could not allocate NSE for NSEI=%u\n", nsei);
-					return bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, NULL, msg);
+					LOGP(DGPRS, LOGL_NOTICE, "Got PtP BVC reset before signalling reset for "
+						"BVCI=%u NSEI=%u\n", bvci, nsei);
+					return bssgp_tx_status(BSSGP_CAUSE_PDU_INCOMP_STATE, NULL, msg);
 				}
 				/* if a PTP-BVC is reset, and we don't know that
 				 * PTP-BVCI yet, we should allocate a new peer */
@@ -1081,10 +1090,11 @@ static int gbprox_rx_sig_from_bss(struct gbproxy_config *cfg,
 			/* Could have moved to a different NSE */
 			if (!check_peer_nsei(from_peer, nsei)) {
 				struct gbproxy_nse *nse_old = from_peer->nse;
-				struct gbproxy_nse *nse_new = gbproxy_nse_by_nsei_or_new(cfg, nsei);
+				struct gbproxy_nse *nse_new = gbproxy_nse_by_nsei(cfg, nsei);
 				if (!nse_new) {
-					LOGP(DGPRS, LOGL_ERROR, "Could not allocate NSE for NSEI=%u\n", nsei);
-					return bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, NULL, msg);
+					LOGP(DGPRS, LOGL_NOTICE, "Got PtP BVC reset before signalling reset for "
+						"BVCI=%u NSEI=%u\n", bvci, nsei);
+					return bssgp_tx_status(BSSGP_CAUSE_PDU_INCOMP_STATE, NULL, msg);
 				}
 				LOGP(DGPRS, LOGL_NOTICE, "Peer for BVCI=%u moved from NSEI=%u to NSEI=%u\n", bvci, nse_old->nsei, nsei);
 
