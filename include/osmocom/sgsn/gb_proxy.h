@@ -344,6 +344,7 @@ struct gbproxy_peer *gbproxy_peer_by_bssgp_tlv(
 	struct gbproxy_config *cfg, struct tlv_parsed *tp);
 struct gbproxy_peer *gbproxy_peer_alloc(struct gbproxy_nse *nse, uint16_t bvci);
 void gbproxy_peer_free(struct gbproxy_peer *peer);
+void gbproxy_peer_move(struct gbproxy_peer *peer, struct gbproxy_nse *nse);
 int gbproxy_cleanup_peers(struct gbproxy_config *cfg, uint16_t nsei, uint16_t bvci);
 
 /* NSE handling */

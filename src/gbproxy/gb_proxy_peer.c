@@ -253,6 +253,13 @@ void gbproxy_peer_free(struct gbproxy_peer *peer)
 	talloc_free(peer);
 }
 
+void gbproxy_peer_move(struct gbproxy_peer *peer, struct gbproxy_nse *nse)
+{
+	llist_del(&peer->list);
+	llist_add(&peer->list, &nse->bts_peers);
+	peer->nse = nse;
+}
+
 int gbproxy_cleanup_peers(struct gbproxy_config *cfg, uint16_t nsei, uint16_t bvci)
 {
 	int counter = 0;

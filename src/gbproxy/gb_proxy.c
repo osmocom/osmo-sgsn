@@ -1114,9 +1114,7 @@ static int gbprox_rx_sig_from_bss(struct gbproxy_config *cfg,
 				LOGP(DGPRS, LOGL_NOTICE, "Peer for BVCI=%u moved from NSEI=%u to NSEI=%u\n", bvci, nse_old->nsei, nsei);
 
 				/* Move peer to different NSE */
-				llist_del(&from_peer->list);
-				llist_add(&from_peer->list, &nse_new->bts_peers);
-				from_peer->nse = nse_new;
+				gbproxy_peer_move(from_peer, nse_new);
 			}
 
 			if (TLVP_PRESENT(&tp, BSSGP_IE_CELL_ID)) {
