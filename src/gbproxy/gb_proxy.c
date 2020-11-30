@@ -813,11 +813,10 @@ static int gbprox_relay2sgsn(struct gbproxy_config *cfg, struct msgb *old_msg,
 	return rc;
 }
 
-/* feed a message down the NS-VC associated with the specified peer */
-static int gbprox_relay2peer(struct msgb *old_msg, struct gbproxy_peer *peer,
+/* feed a message down the NSE */
+static int gbprox_relay2nse(struct msgb *old_msg, struct gbproxy_nse *nse,
 			     uint16_t ns_bvci)
 {
-	struct gbproxy_nse *nse = peer->nse;
 	OSMO_ASSERT(nse);
 	OSMO_ASSERT(nse->cfg);
 
@@ -825,7 +824,7 @@ static int gbprox_relay2peer(struct msgb *old_msg, struct gbproxy_peer *peer,
 	 * be free()d safely when we return from gbprox_rcvmsg() */
 	struct gprs_ns2_inst *nsi = nse->cfg->nsi;
 	struct osmo_gprs_ns2_prim nsp = {};
-	struct msgb *msg = bssgp_msgb_copy(old_msg, "msgb_relay2peer");
+	struct msgb *msg = bssgp_msgb_copy(old_msg, "msgb_relay2nse");
 	uint32_t tlli;
 	int rc;
 
@@ -849,6 +848,22 @@ static int gbprox_relay2peer(struct msgb *old_msg, struct gbproxy_peer *peer,
 	osmo_prim_init(&nsp.oph, SAP_NS, PRIM_NS_UNIT_DATA,
 		       PRIM_OP_REQUEST, msg);
 	rc = gprs_ns2_recv_prim(nsi, &nsp.oph);
+	/* FIXME: We need a counter group for gbproxy_nse */
+	//if (rc < 0)
+	//	rate_ctr_inc(&peer->ctrg->ctr[GBPROX_PEER_CTR_TX_ERR]);
+
+	return rc;
+}
+
+/* feed a message down the NS-VC associated with the specified peer */
+static int gbprox_relay2peer(struct msgb *old_msg, struct gbproxy_peer *peer,
+			     uint16_t ns_bvci)
+{
+	int rc;
+	struct gbproxy_nse *nse = peer->nse;
+	OSMO_ASSERT(nse);
+
+	rc = gbprox_relay2nse(old_msg, nse, ns_bvci);
 	if (rc < 0)
 		rate_ctr_inc(&peer->ctrg->ctr[GBPROX_PEER_CTR_TX_ERR]);
 
@@ -1151,7 +1166,7 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 {
 	struct gbproxy_nse *nse;
 	struct gbproxy_peer *peer;
-	unsigned int n_peers = 0;
+	unsigned int n_nses = 0;
 	int errctr = GBPROX_GLOB_CTR_PROTO_ERR_SGSN;
 
 	/* FIXME: Handle paging logic to only page each matching NSE */
@@ -1176,9 +1191,11 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 		llist_for_each_entry(nse, &cfg->nse_peers, list) {
 			llist_for_each_entry(peer, &nse->bts_peers, list) {
 				if (!memcmp(peer->ra, TLVP_VAL(tp, BSSGP_IE_ROUTEING_AREA), 6)) {
-					LOGPC(DGPRS, LOGL_INFO, "routing by RAI to peer BVCI=%u\n", peer->bvci);
-					gbprox_relay2peer(msg, peer, ns_bvci);
-					n_peers++;
+					LOGPC(DGPRS, LOGL_INFO, "routing by RAI to peer NSEI=%u\n", peer->bvci);
+					gbprox_relay2nse(msg, nse, ns_bvci);
+					n_nses++;
+					/* Only send it once to each NSE */
+					break;
 				}
 			}
 		}
@@ -1189,8 +1206,10 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 			llist_for_each_entry(peer, &nse->bts_peers, list) {
 				if (!memcmp(peer->ra, TLVP_VAL(tp, BSSGP_IE_LOCATION_AREA), 5)) {
 					LOGPC(DGPRS, LOGL_INFO, "routing by LAI to peer BVCI=%u\n", peer->bvci);
-					gbprox_relay2peer(msg, peer, ns_bvci);
-					n_peers++;
+					gbprox_relay2nse(msg, nse, ns_bvci);
+					n_nses++;
+					/* Only send it once to each NSE */
+					break;
 				}
 			}
 		}
@@ -1199,8 +1218,10 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 		llist_for_each_entry(nse, &cfg->nse_peers, list) {
 			llist_for_each_entry(peer, &nse->bts_peers, list) {
 				LOGPC(DGPRS, LOGL_INFO, "broadcasting to peer BVCI=%u\n", peer->bvci);
-				gbprox_relay2peer(msg, peer, ns_bvci);
-				n_peers++;
+				gbprox_relay2nse(msg, nse, ns_bvci);
+				n_nses++;
+				/* Only send it once to each NSE */
+				break;
 			}
 		}
 	} else {
@@ -1210,7 +1231,7 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 		rate_ctr_inc(&cfg->ctrg->ctr[errctr]);
 	}
 
-	if (n_peers == 0) {
+	if (n_nses == 0) {
 		LOGP(DGPRS, LOGL_ERROR, "NSEI=%u(SGSN) BSSGP PAGING: "
 			"unable to route, no destination found\n", nsei);
 		rate_ctr_inc(&cfg->ctrg->ctr[errctr]);
