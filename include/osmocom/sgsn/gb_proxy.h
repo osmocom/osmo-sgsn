@@ -237,6 +237,17 @@ struct gbproxy_link_info {
 	bool is_matching[GBPROX_MATCH_LAST];
 };
 
+/* Convenience logging macros for NSE/BVC */
+#define LOGPNSE_CAT(NSE, SUBSYS, LEVEL, FMT, ARGS...) \
+	LOGP(SUBSYS, LEVEL, "NSE(%05u/BSS) " FMT, (NSE)->nsei, ## ARGS)
+#define LOGPNSE(NSE, LEVEL, FMT, ARGS...) \
+	LOGPNSE_CAT(NSE, DGPRS, LEVEL, FMT, ## ARGS)
+
+#define LOGPBVC_CAT(BVC, SUBSYS, LEVEL, FMT, ARGS...) \
+	LOGP(SUBSYS, LEVEL, "NSE(%05u/BSS)-BVC(%05u/%s) " FMT, (BVC)->nse->nsei, (BVC)->bvci, \
+		(BVC)->blocked ? "BLOCKED" : "UNBLOCKED", ## ARGS)
+#define LOGPBVC(BVC, LEVEL, FMT, ARGS...) \
+	LOGPBVC_CAT(BVC, DGPRS, LEVEL, FMT, ## ARGS)
 
 /* gb_proxy_vty .c */
 
