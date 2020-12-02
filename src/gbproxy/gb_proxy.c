@@ -1014,31 +1014,34 @@ static int gbprox_rx_bvc_reset_from_bss(struct gbproxy_config *cfg, struct msgb 
 					int *copy_to_sgsn2)
 {
 	struct gbproxy_peer *from_peer = NULL;
+	uint16_t bvci;
 
-	/* If we receive a BVC reset on the signalling endpoint, we
-	 * don't want the SGSN to reset, as the signalling endpoint
-	 * is common for all point-to-point BVCs (and thus all BTS) */
-	if (TLVP_PRESENT(tp, BSSGP_IE_BVCI)) {
-		uint16_t bvci = ntohs(tlvp_val16_unal(tp, BSSGP_IE_BVCI));
-		LOGP(DGPRS, LOGL_INFO, "NSE(%05u) Rx BVC RESET (BVCI=%05u)\n", nsei, bvci);
-		if (bvci == 0) {
-			struct gbproxy_nse *nse;
-			/* Ensure the NSE peer is there and clear all PtP BVCs */
-			nse = gbproxy_nse_by_nsei_or_new(cfg, nsei);
-			if (!nse) {
-				LOGP(DGPRS, LOGL_ERROR, "Could not create NSE(%05u)\n", nsei);
-				bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, 0, msg);
-				return 0;
-			}
+	if (!TLVP_PRESENT(tp, BSSGP_IE_BVCI))
+		return 0;
 
-			gbproxy_cleanup_peers(cfg, nsei, 0);
-
-			/* FIXME: only do this if SGSN is alive! */
-			LOGPNSE(nse, LOGL_INFO, "Tx fake "
-				"BVC RESET ACK of BVCI=0\n");
-			bssgp_tx_simple_bvci(BSSGP_PDUT_BVC_RESET_ACK, nsei, 0, 0);
+	bvci = ntohs(tlvp_val16_unal(tp, BSSGP_IE_BVCI));
+	LOGP(DGPRS, LOGL_INFO, "NSE(%05u) Rx BVC RESET (BVCI=%05u)\n", nsei, bvci);
+	if (bvci == 0) {
+		/* If we receive a BVC reset on the signalling endpoint, we
+		 * don't want the SGSN to reset, as the signalling endpoint
+		 * is common for all point-to-point BVCs (and thus all BTS) */
+		struct gbproxy_nse *nse;
+		/* Ensure the NSE peer is there and clear all PtP BVCs */
+		nse = gbproxy_nse_by_nsei_or_new(cfg, nsei);
+		if (!nse) {
+			LOGP(DGPRS, LOGL_ERROR, "Could not create NSE(%05u)\n", nsei);
+			bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, 0, msg);
 			return 0;
 		}
+
+		gbproxy_cleanup_peers(cfg, nsei, 0);
+
+		/* FIXME: only do this if SGSN is alive! */
+		LOGPNSE(nse, LOGL_INFO, "Tx fake "
+			"BVC RESET ACK of BVCI=0\n");
+		bssgp_tx_simple_bvci(BSSGP_PDUT_BVC_RESET_ACK, nsei, 0, 0);
+		return 0;
+	} else {
 		from_peer = gbproxy_peer_by_bvci(cfg, bvci);
 		if (!from_peer) {
 			struct gbproxy_nse *nse = gbproxy_nse_by_nsei(cfg, nsei);
