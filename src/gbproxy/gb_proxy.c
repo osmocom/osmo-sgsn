@@ -1017,8 +1017,10 @@ static int gbprox_rx_bvc_reset_from_bss(struct gbproxy_config *cfg, struct msgb 
 	struct gbproxy_peer *from_peer = NULL;
 	uint16_t bvci;
 
-	if (!TLVP_PRESENT(tp, BSSGP_IE_BVCI))
-		return 0;
+	if (!TLVP_PRESENT(tp, BSSGP_IE_BVCI) || !TLVP_PRESENT(tp, BSSGP_IE_CAUSE)) {
+		rate_ctr_inc(&cfg->ctrg->ctr[GBPROX_GLOB_CTR_PROTO_ERR_BSS]);
+		return bssgp_tx_status(BSSGP_CAUSE_MISSING_MAND_IE, NULL, msg);
+	}
 
 	bvci = ntohs(tlvp_val16_unal(tp, BSSGP_IE_BVCI));
 	LOGP(DGPRS, LOGL_INFO, "NSE(%05u) Rx BVC RESET (BVCI=%05u)\n", nsei, bvci);
