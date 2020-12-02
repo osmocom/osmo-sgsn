@@ -15,6 +15,9 @@
 
 #define GBPROXY_INIT_VU_GEN_TX 256
 
+/* BVCI uses 16 bits */
+#define BVC_LOG_CTX_FLAG (1<<17)
+
 struct rate_ctr_group;
 struct gprs_gb_parse_context;
 struct tlv_parsed;

@@ -31,6 +31,7 @@
 #include <arpa/inet.h>
 #include <time.h>
 
+#include <osmocom/core/logging.h>
 #include <osmocom/core/talloc.h>
 #include <osmocom/core/select.h>
 #include <osmocom/core/rate_ctr.h>
@@ -1568,12 +1569,12 @@ void gprs_ns_prim_status_cb(struct gbproxy_config *cfg, struct osmo_gprs_ns2_pri
 	}
 }
 
-
 /* called by the ns layer */
 int gprs_ns2_prim_cb(struct osmo_prim_hdr *oph, void *ctx)
 {
 	struct osmo_gprs_ns2_prim *nsp;
 	struct gbproxy_config *cfg = (struct gbproxy_config *) ctx;
+	uintptr_t bvci;
 	int rc = 0;
 
 	if (oph->sap != SAP_NS)
@@ -1589,11 +1590,14 @@ int gprs_ns2_prim_cb(struct osmo_prim_hdr *oph, void *ctx)
 
 	switch (oph->primitive) {
 	case PRIM_NS_UNIT_DATA:
+
 		/* hand the message into the BSSGP implementation */
 		msgb_bssgph(oph->msg) = oph->msg->l3h;
 		msgb_bvci(oph->msg) = nsp->bvci;
 		msgb_nsei(oph->msg) = nsp->nsei;
+		bvci = nsp->bvci | BVC_LOG_CTX_FLAG;
 
+		log_set_context(LOG_CTX_GB_BVC, (void *)bvci);
 		rc = gbprox_rcvmsg(cfg, oph->msg);
 		msgb_free(oph->msg);
 		break;

@@ -39,6 +39,7 @@
 #include <osmocom/sgsn/vty.h>
 
 #include <osmocom/vty/command.h>
+#include <osmocom/vty/logging.h>
 #include <osmocom/vty/vty.h>
 #include <osmocom/vty/misc.h>
 
@@ -538,6 +539,41 @@ DEFUN(cfg_gbproxy_link_no_stored_msgs_max_len,
 	return CMD_SUCCESS;
 }
 
+static void log_set_bvc_filter(struct log_target *target,
+				const uint16_t *bvci)
+{
+	if (bvci) {
+		uintptr_t bvci_filter = *bvci | BVC_LOG_CTX_FLAG;
+		target->filter_map |= (1 << LOG_FLT_GB_BVC);
+		target->filter_data[LOG_FLT_GB_BVC] = (void *)bvci_filter;
+	} else if (target->filter_data[LOG_FLT_GB_BVC]) {
+		target->filter_map = ~(1 << LOG_FLT_GB_BVC);
+		target->filter_data[LOG_FLT_GB_BVC] = NULL;
+	}
+}
+
+DEFUN(logging_fltr_bvc,
+      logging_fltr_bvc_cmd,
+      "logging filter bvc bvci <0-65535>",
+	LOGGING_STR FILTER_STR
+	"Filter based on BSSGP VC\n"
+	"Identify BVC by BVCI\n"
+	"Numeric identifier\n")
+{
+	struct log_target *tgt;
+	uint16_t id = atoi(argv[0]);
+
+	log_tgt_mutex_lock();
+	tgt = osmo_log_vty2tgt(vty);
+	if (!tgt) {
+		log_tgt_mutex_unlock();
+		return CMD_WARNING;
+	}
+
+	log_set_bvc_filter(tgt, &id);
+	log_tgt_mutex_unlock();
+	return CMD_SUCCESS;
+}
 
 DEFUN(show_gbproxy, show_gbproxy_cmd, "show gbproxy [stats]",
        SHOW_STR "Display information about the Gb proxy\n" "Show statistics\n")
@@ -881,6 +917,7 @@ int gbproxy_vty_init(void)
 {
 	install_element_ve(&show_gbproxy_cmd);
 	install_element_ve(&show_gbproxy_links_cmd);
+	install_element_ve(&logging_fltr_bvc_cmd);
 
 	install_element(ENABLE_NODE, &delete_gb_bvci_cmd);
 	install_element(ENABLE_NODE, &delete_gb_nsei_cmd);

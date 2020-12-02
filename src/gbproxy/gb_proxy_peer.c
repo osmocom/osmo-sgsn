@@ -25,6 +25,7 @@
 #include <osmocom/sgsn/debug.h>
 
 #include <osmocom/gprs/protocol/gsm_08_18.h>
+#include <osmocom/core/logging.h>
 #include <osmocom/core/rate_ctr.h>
 #include <osmocom/core/stats.h>
 #include <osmocom/core/talloc.h>
