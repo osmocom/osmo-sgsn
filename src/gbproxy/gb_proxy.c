@@ -936,6 +936,7 @@ static int gbprox_rx_ptp_from_bss(struct gbproxy_config *cfg,
 				       &ns_bvci, msg);
 	}
 
+	/* TODO: Should we discard this message if the check fails */
 	check_peer_nsei(peer, nsei);
 
 	rc = gbprox_process_bssgp_ul(cfg, msg, peer);
@@ -1390,7 +1391,7 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_config *cfg,
 			LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u/SGSN) BSSGP "
 			     "%sBLOCK_ACK for signalling BVCI ?!?\n", nsei,
 			     pdu_type == BSSGP_PDUT_BVC_UNBLOCK_ACK ? "UN":"");
-			/* should we send STATUS ? */
+			/* TODO: should we send STATUS ? */
 			rate_ctr_inc(&cfg->ctrg->
 				     ctr[GBPROX_GLOB_CTR_INV_BVCI]);
 		} else {
