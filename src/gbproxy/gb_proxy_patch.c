@@ -36,6 +36,7 @@ extern void *tall_sgsn_ctx;
 static void gbproxy_patch_raid(struct gsm48_ra_id *raid_enc, struct gbproxy_peer *peer,
 			       int to_bss, const char *log_text)
 {
+	OSMO_ASSERT(peer);
 	struct gbproxy_patch_state *state = &peer->patch_state;
 	struct osmo_plmn_id old_plmn;
 	struct gprs_ra_id raid;
@@ -79,7 +80,7 @@ static void gbproxy_patch_raid(struct gsm48_ra_id *raid_enc, struct gbproxy_peer
 		}
 	}
 
-	LOGP(DGPRS, LOGL_DEBUG,
+	LOGPBVC(peer, LOGL_DEBUG,
 	     "Patching %s to %s: "
 	     "%s-%d-%d -> %s\n",
 	     log_text,
@@ -104,6 +105,7 @@ static void gbproxy_patch_apn_ie(struct msgb *msg,
 
 	size_t apn_len = hdr->apn_len;
 	uint8_t *apn = hdr->apn;
+	OSMO_ASSERT(peer);
 	OSMO_ASSERT(peer->nse);
 	struct gbproxy_config *cfg = peer->nse->cfg;
 	OSMO_ASSERT(cfg);
@@ -114,7 +116,7 @@ static void gbproxy_patch_apn_ie(struct msgb *msg,
 	if (cfg->core_apn_size == 0) {
 		char str1[110];
 		/* Remove the IE */
-		LOGP(DGPRS, LOGL_DEBUG,
+		LOGPBVC(peer, LOGL_DEBUG,
 		     "Patching %s to SGSN: Removing APN '%s'\n",
 		     log_text,
 		     osmo_apn_to_str(str1, apn, apn_len));
@@ -128,7 +130,7 @@ static void gbproxy_patch_apn_ie(struct msgb *msg,
 
 		OSMO_ASSERT(cfg->core_apn_size <= 100);
 
-		LOGP(DGPRS, LOGL_DEBUG,
+		LOGPBVC(peer, LOGL_DEBUG,
 		     "Patching %s to SGSN: "
 		     "Replacing APN '%s' -> '%s'\n",
 		     log_text,
@@ -156,6 +158,7 @@ static int gbproxy_patch_tlli(uint8_t *tlli_enc,
 		to_bss ?
 		GBPROX_PEER_CTR_TLLI_PATCHED_SGSN :
 		GBPROX_PEER_CTR_TLLI_PATCHED_BSS;
+	OSMO_ASSERT(peer);
 
 	memcpy(&tlli_be, tlli_enc, sizeof(tlli_be));
 	tlli = ntohl(tlli_be);
@@ -163,7 +166,7 @@ static int gbproxy_patch_tlli(uint8_t *tlli_enc,
 	if (tlli == new_tlli)
 		return 0;
 
-	LOGP(DGPRS, LOGL_DEBUG,
+	LOGPBVC(peer, LOGL_DEBUG,
 	     "Patching %ss: "
 	     "Replacing %08x -> %08x\n",
 	     log_text, tlli, new_tlli);
@@ -187,13 +190,15 @@ static int gbproxy_patch_ptmsi(uint8_t *ptmsi_enc,
 		to_bss ?
 		GBPROX_PEER_CTR_PTMSI_PATCHED_SGSN :
 		GBPROX_PEER_CTR_PTMSI_PATCHED_BSS;
+	OSMO_ASSERT(peer);
+
 	memcpy(&ptmsi_be, ptmsi_enc, sizeof(ptmsi_be));
 	ptmsi = ntohl(ptmsi_be);
 
 	if (ptmsi == new_ptmsi)
 		return 0;
 
-	LOGP(DGPRS, LOGL_DEBUG,
+	LOGPBVC(peer, LOGL_DEBUG,
 	     "Patching %ss: "
 	     "Replacing %08x -> %08x\n",
 	     log_text, ptmsi, new_ptmsi);
@@ -214,6 +219,7 @@ int gbproxy_patch_llc(struct msgb *msg, uint8_t *llc, size_t llc_len,
 	struct gprs_llc_hdr_parsed *ghp = &parse_ctx->llc_hdr_parsed;
 	int have_patched = 0;
 	int fcs;
+	OSMO_ASSERT(peer);
 	OSMO_ASSERT(peer->nse);
 	struct gbproxy_config *cfg = peer->nse->cfg;
 	OSMO_ASSERT(cfg);
@@ -281,7 +287,7 @@ int gbproxy_patch_llc(struct msgb *msg, uint8_t *llc, size_t llc_len,
 
 		/* Fix FCS */
 		fcs = gprs_llc_fcs(llc, ghp->crc_length);
-		LOGP(DLLC, LOGL_DEBUG, "Updated LLC message, CRC: %06x -> %06x\n",
+		LOGPBVC_CAT(peer, DLLC, LOGL_DEBUG, "Updated LLC message, CRC: %06x -> %06x\n",
 		     ghp->fcs, fcs);
 
 		llc[llc_len - 3] = fcs & 0xff;
@@ -401,8 +407,8 @@ void gbproxy_patch_bssgp(struct msgb *msg, uint8_t *bssgp, size_t bssgp_len,
 patch_error:
 	OSMO_ASSERT(err_ctr >= 0);
 	rate_ctr_inc(&peer->ctrg->ctr[err_ctr]);
-	LOGP(DGPRS, LOGL_ERROR,
-	     "NSEI=%u(%s) failed to patch BSSGP message as requested: %s.\n",
+	LOGPBVC(peer, LOGL_ERROR,
+	     "NSE(%05u/%s) failed to patch BSSGP message as requested: %s.\n",
 	     msgb_nsei(msg), parse_ctx->to_bss ? "SGSN" : "BSS",
 	     err_info);
 }

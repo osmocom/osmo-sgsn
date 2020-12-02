@@ -179,6 +179,7 @@ void gbproxy_attach_link_info(struct gbproxy_peer *peer, time_t now,
 
 int gbproxy_remove_stale_link_infos(struct gbproxy_peer *peer, time_t now)
 {
+	OSMO_ASSERT(peer);
 	struct gbproxy_patch_state *state = &peer->patch_state;
 	int exceeded_max_len = 0;
 	int deleted_count = 0;
@@ -199,7 +200,7 @@ int gbproxy_remove_stale_link_infos(struct gbproxy_peer *peer, time_t now)
 		link_info = llist_entry(state->logical_links.prev,
 					struct gbproxy_link_info,
 					list);
-		LOGP(DGPRS, LOGL_INFO,
+		LOGPBVC(peer, LOGL_INFO,
 		     "Removing TLLI %08x from list "
 		     "(stale, length %d, max_len exceeded)\n",
 		     link_info->tlli.current, state->logical_link_count);
@@ -221,7 +222,7 @@ int gbproxy_remove_stale_link_infos(struct gbproxy_peer *peer, time_t now)
 			continue;
 		}
 
-		LOGP(DGPRS, LOGL_INFO,
+		LOGPBVC(peer, LOGL_INFO,
 		     "Removing TLLI %08x from list "
 		     "(stale, age %d, max_age exceeded)\n",
 		     link_info->tlli.current, (int)age);
@@ -278,10 +279,11 @@ void gbproxy_update_link_info(struct gbproxy_link_info *link_info,
 void gbproxy_reassign_tlli(struct gbproxy_tlli_state *tlli_state,
 			   struct gbproxy_peer *peer, uint32_t new_tlli)
 {
+	OSMO_ASSERT(peer);
 	if (new_tlli == tlli_state->current)
 		return;
 
-	LOGP(DGPRS, LOGL_INFO,
+	LOGPBVC(peer, LOGL_INFO,
 	     "The TLLI has been reassigned from %08x to %08x\n",
 	     tlli_state->current, new_tlli);
 
@@ -354,11 +356,12 @@ static void gbproxy_touch_link_info(struct gbproxy_peer *peer,
 static int gbproxy_unregister_link_info(struct gbproxy_peer *peer,
 					 struct gbproxy_link_info *link_info)
 {
+	OSMO_ASSERT(peer);
 	if (!link_info)
 		return 1;
 
 	if (link_info->tlli.ptmsi == GSM_RESERVED_TMSI && !link_info->imsi_len) {
-		LOGP(DGPRS, LOGL_INFO,
+		LOGPBVC(peer, LOGL_INFO,
 		     "Removing TLLI %08x from list (P-TMSI or IMSI are not set)\n",
 		     link_info->tlli.current);
 		gbproxy_delete_link_info(peer, link_info);
@@ -398,6 +401,7 @@ static void gbproxy_assign_imsi(struct gbproxy_peer *peer,
 	int imsi_matches;
 	struct gbproxy_link_info *other_link_info;
 	enum gbproxy_match_id match_id;
+	OSMO_ASSERT(peer);
 	OSMO_ASSERT(peer->nse);
 	struct gbproxy_config *cfg = peer->nse->cfg;
 	OSMO_ASSERT(cfg);
@@ -410,9 +414,9 @@ static void gbproxy_assign_imsi(struct gbproxy_peer *peer,
 		struct osmo_mobile_identity mi;
 		if (osmo_mobile_identity_decode(&mi, parse_ctx->imsi, parse_ctx->imsi_len, false)
 		    || mi.type != GSM_MI_TYPE_IMSI) {
-			LOGP(DGPRS, LOGL_ERROR, "Failed to decode Mobile Identity\n");
+			LOGPBVC(peer, LOGL_ERROR, "Failed to decode Mobile Identity\n");
 		} else {
-			LOGP(DGPRS, LOGL_INFO,
+			LOGPBVC(peer, LOGL_INFO,
 			     "Removing TLLI %08x from list (IMSI %s re-used)\n",
 			     other_link_info->tlli.current, mi.imsi);
 			gbproxy_delete_link_info(peer, other_link_info);
@@ -454,6 +458,7 @@ static int gbproxy_tlli_match(const struct gbproxy_tlli_state *a,
 static void gbproxy_remove_matching_link_infos(
 	struct gbproxy_peer *peer, struct gbproxy_link_info *link_info)
 {
+	OSMO_ASSERT(peer);
 	struct gbproxy_link_info *info, *nxt;
 	struct gbproxy_patch_state *state = &peer->patch_state;
 
@@ -467,7 +472,7 @@ static void gbproxy_remove_matching_link_infos(
 		     !gbproxy_tlli_match(&link_info->sgsn_tlli, &info->sgsn_tlli)))
 			continue;
 
-		LOGP(DGPRS, LOGL_INFO,
+		LOGPBVC(peer, LOGL_INFO,
 		     "Removing TLLI %08x from list (P-TMSI/TLLI re-used)\n",
 		     info->tlli.current);
 		gbproxy_delete_link_info(peer, info);
@@ -518,6 +523,7 @@ struct gbproxy_link_info *gbproxy_update_link_state_ul(
 {
 	struct gbproxy_link_info *link_info;
 	int tlli_is_valid;
+	OSMO_ASSERT(peer);
 
 	link_info = gbproxy_get_link_info_ul(peer, &tlli_is_valid, parse_ctx);
 
@@ -525,7 +531,7 @@ struct gbproxy_link_info *gbproxy_update_link_state_ul(
 		uint32_t sgsn_tlli;
 
 		if (!link_info) {
-			LOGP(DGPRS, LOGL_INFO, "Adding TLLI %08x to list\n",
+			LOGPBVC(peer, LOGL_INFO, "Adding TLLI %08x to list\n",
 			    parse_ctx->tlli);
 			link_info = gbproxy_link_info_alloc(peer);
 			gbproxy_attach_link_info(peer, now, link_info);
@@ -596,6 +602,7 @@ struct gbproxy_link_info *gbproxy_update_link_state_dl(
 	struct gprs_gb_parse_context *parse_ctx)
 {
 	struct gbproxy_link_info *link_info = NULL;
+	OSMO_ASSERT(peer);
 	OSMO_ASSERT(peer->nse);
 	struct gbproxy_config *cfg = peer->nse->cfg;
 	OSMO_ASSERT(cfg);
@@ -615,7 +622,7 @@ struct gbproxy_link_info *gbproxy_update_link_state_dl(
 		if (new_bss_ptmsi == GSM_RESERVED_TMSI)
 			new_bss_ptmsi = gbproxy_make_bss_ptmsi(peer, new_sgsn_ptmsi);
 
-		LOGP(DGPRS, LOGL_INFO,
+		LOGPBVC(peer, LOGL_INFO,
 		     "Got new PTMSI %08x from SGSN, using %08x for BSS\n",
 		     new_sgsn_ptmsi, new_bss_ptmsi);
 		/* Setup PTMSIs */
@@ -629,7 +636,7 @@ struct gbproxy_link_info *gbproxy_update_link_state_dl(
 		uint32_t new_ptmsi;
 		gprs_parse_tmsi(parse_ctx->new_ptmsi_enc, &new_ptmsi);
 
-		LOGP(DGPRS, LOGL_INFO,
+		LOGPBVC(peer, LOGL_INFO,
 		     "Adding TLLI %08x to list (SGSN, new P-TMSI is %08x)\n",
 		     parse_ctx->tlli, new_ptmsi);
 
@@ -644,7 +651,7 @@ struct gbproxy_link_info *gbproxy_update_link_state_dl(
 		/* Unknown SGSN TLLI, create a new link_info */
 		uint32_t new_ptmsi;
 		link_info = gbproxy_link_info_alloc(peer);
-		LOGP(DGPRS, LOGL_INFO, "Adding TLLI %08x to list (SGSN)\n",
+		LOGPBVC(peer, LOGL_INFO, "Adding TLLI %08x to list (SGSN)\n",
 		     parse_ctx->tlli);
 
 		gbproxy_attach_link_info(peer, now, link_info);
@@ -658,7 +665,7 @@ struct gbproxy_link_info *gbproxy_update_link_state_dl(
 		/* A new P-TMSI has been signalled in the message */
 
 		gprs_parse_tmsi(parse_ctx->new_ptmsi_enc, &new_ptmsi);
-		LOGP(DGPRS, LOGL_INFO,
+		LOGPBVC(peer, LOGL_INFO,
 		     "Assigning new P-TMSI %08x\n", new_ptmsi);
 		/* Setup P-TMSIs */
 		link_info->sgsn_tlli.ptmsi = new_ptmsi;
@@ -686,6 +693,7 @@ int gbproxy_update_link_state_after(
 	struct gprs_gb_parse_context *parse_ctx)
 {
 	int rc = 0;
+	OSMO_ASSERT(peer);
 	OSMO_ASSERT(peer->nse);
 	struct gbproxy_config *cfg = peer->nse->cfg;
 	OSMO_ASSERT(cfg);
@@ -698,11 +706,11 @@ int gbproxy_update_link_state_after(
 			(cfg->keep_link_infos == GBPROX_KEEP_IDENTIFIED &&
 			 link_info->imsi_len > 0);
 		if (keep_info) {
-			LOGP(DGPRS, LOGL_INFO, "Unregistering TLLI %08x\n",
+			LOGPBVC(peer, LOGL_INFO, "Unregistering TLLI %08x\n",
 			     link_info->tlli.current);
 			rc = gbproxy_unregister_link_info(peer, link_info);
 		} else {
-			LOGP(DGPRS, LOGL_INFO, "Removing TLLI %08x from list\n",
+			LOGPBVC(peer, LOGL_INFO, "Removing TLLI %08x from list\n",
 			     link_info->tlli.current);
 			gbproxy_delete_link_info(peer, link_info);
 			rc = 1;
@@ -719,7 +727,7 @@ int gbproxy_update_link_state_after(
 		new_sgsn_tlli = gprs_tmsi2tlli(new_sgsn_ptmsi, TLLI_LOCAL);
 		if (new_bss_ptmsi != GSM_RESERVED_TMSI)
 			new_bss_tlli = gprs_tmsi2tlli(new_bss_ptmsi, TLLI_LOCAL);
-		LOGP(DGPRS, LOGL_INFO,
+		LOGPBVC(peer, LOGL_INFO,
 		     "Assigning new TLLI %08x to SGSN, %08x to BSS\n",
 		     new_sgsn_tlli, new_bss_tlli);
 
