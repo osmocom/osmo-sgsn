@@ -1008,6 +1008,89 @@ static int gbprox_rx_ptp_from_sgsn(struct gbproxy_config *cfg,
 	return gbprox_relay2peer(msg, peer, ns_bvci);
 }
 
+/* process a BVC-RESET message from the BSS side */
+static int gbprox_rx_bvc_reset_from_bss(struct gbproxy_config *cfg, struct msgb *msg,
+					uint16_t nsei, struct tlv_parsed *tp,
+					int *copy_to_sgsn2)
+{
+	struct gbproxy_peer *from_peer = NULL;
+
+	/* If we receive a BVC reset on the signalling endpoint, we
+	 * don't want the SGSN to reset, as the signalling endpoint
+	 * is common for all point-to-point BVCs (and thus all BTS) */
+	if (TLVP_PRESENT(tp, BSSGP_IE_BVCI)) {
+		uint16_t bvci = ntohs(tlvp_val16_unal(tp, BSSGP_IE_BVCI));
+		LOGP(DGPRS, LOGL_INFO, "NSE(%05u) Rx BVC RESET (BVCI=%05u)\n", nsei, bvci);
+		if (bvci == 0) {
+			struct gbproxy_nse *nse;
+			/* Ensure the NSE peer is there and clear all PtP BVCs */
+			nse = gbproxy_nse_by_nsei_or_new(cfg, nsei);
+			if (!nse) {
+				LOGP(DGPRS, LOGL_ERROR, "Could not create NSE(%05u)\n", nsei);
+				bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, 0, msg);
+				return 0;
+			}
+
+			gbproxy_cleanup_peers(cfg, nsei, 0);
+
+			/* FIXME: only do this if SGSN is alive! */
+			LOGPNSE(nse, LOGL_INFO, "Tx fake "
+				"BVC RESET ACK of BVCI=0\n");
+			bssgp_tx_simple_bvci(BSSGP_PDUT_BVC_RESET_ACK, nsei, 0, 0);
+			return 0;
+		}
+		from_peer = gbproxy_peer_by_bvci(cfg, bvci);
+		if (!from_peer) {
+			struct gbproxy_nse *nse = gbproxy_nse_by_nsei(cfg, nsei);
+			if (!nse) {
+				LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u) Got PtP BVC reset before signalling reset for "
+					"BVCI=%05u\n", nsei, bvci);
+				bssgp_tx_status(BSSGP_CAUSE_PDU_INCOMP_STATE, NULL, msg);
+				return 0;
+			}
+			/* if a PTP-BVC is reset, and we don't know that
+			 * PTP-BVCI yet, we should allocate a new peer */
+			from_peer = gbproxy_peer_alloc(nse, bvci);
+			OSMO_ASSERT(from_peer);
+			LOGPBVC(from_peer, LOGL_INFO, "Allocated new peer\n");
+		}
+
+		/* Could have moved to a different NSE */
+		if (!check_peer_nsei(from_peer, nsei)) {
+			LOGPBVC(from_peer, LOGL_NOTICE, "moving peer to NSE(%05u)\n", nsei);
+
+			struct gbproxy_nse *nse_new = gbproxy_nse_by_nsei(cfg, nsei);
+			if (!nse_new) {
+				LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u) Got PtP BVC reset before signalling reset for "
+					"BVCI=%05u\n", bvci, nsei);
+				bssgp_tx_status(BSSGP_CAUSE_PDU_INCOMP_STATE, NULL, msg);
+				return 0;
+			}
+
+			/* Move peer to different NSE */
+			gbproxy_peer_move(from_peer, nse_new);
+		}
+
+		if (TLVP_PRESENT(tp, BSSGP_IE_CELL_ID)) {
+			struct gprs_ra_id raid;
+			/* We have a Cell Identifier present in this
+			 * PDU, this means we can extend our local
+			 * state information about this particular cell
+			 * */
+			memcpy(from_peer->ra,
+				TLVP_VAL(tp, BSSGP_IE_CELL_ID),
+				sizeof(from_peer->ra));
+			gsm48_parse_ra(&raid, from_peer->ra);
+			LOGPBVC(from_peer, LOGL_INFO, "Cell ID %s\n",
+			     osmo_rai_name(&raid));
+		}
+		if (cfg->route_to_sgsn2)
+			*copy_to_sgsn2 = 1;
+	}
+	/* continue processing / relaying to SGSN[s] */
+	return 1;
+}
+
 /* Receive an incoming signalling message from a BSS-side NS-VC */
 static int gbprox_rx_sig_from_bss(struct gbproxy_config *cfg,
 				  struct msgb *msg, uint16_t nsei,
@@ -1061,76 +1144,10 @@ static int gbprox_rx_sig_from_bss(struct gbproxy_config *cfg,
 		/* FIXME: This only supports one BSS per RA */
 		break;
 	case BSSGP_PDUT_BVC_RESET:
-		/* If we receive a BVC reset on the signalling endpoint, we
-		 * don't want the SGSN to reset, as the signalling endpoint
-		 * is common for all point-to-point BVCs (and thus all BTS) */
-		if (TLVP_PRESENT(&tp, BSSGP_IE_BVCI)) {
-			uint16_t bvci = ntohs(tlvp_val16_unal(&tp, BSSGP_IE_BVCI));
-			LOGP(DGPRS, LOGL_INFO, "NSE(%05u) Rx BVC RESET (BVCI=%05u)\n",
-				nsei, bvci);
-			if (bvci == 0) {
-				struct gbproxy_nse *nse;
-				/* Ensure the NSE peer is there and clear all PtP BVCs */
-				nse = gbproxy_nse_by_nsei_or_new(cfg, nsei);
-				if (!nse) {
-					LOGP(DGPRS, LOGL_ERROR, "Could not create NSE(%05u)\n", nsei);
-					return bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, 0, msg);
-				}
-
-				gbproxy_cleanup_peers(cfg, nsei, 0);
-
-				/* FIXME: only do this if SGSN is alive! */
-				LOGPNSE(nse, LOGL_INFO, "Tx fake "
-					"BVC RESET ACK of BVCI=0\n");
-				return bssgp_tx_simple_bvci(BSSGP_PDUT_BVC_RESET_ACK,
-							    nsei, 0, ns_bvci);
-			}
-			from_peer = gbproxy_peer_by_bvci(cfg, bvci);
-			if (!from_peer) {
-				struct gbproxy_nse *nse = gbproxy_nse_by_nsei(cfg, nsei);
-				if (!nse) {
-					LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u) Got PtP BVC reset before signalling reset for "
-						"BVCI=%05u\n", nsei, bvci);
-					return bssgp_tx_status(BSSGP_CAUSE_PDU_INCOMP_STATE, NULL, msg);
-				}
-				/* if a PTP-BVC is reset, and we don't know that
-				 * PTP-BVCI yet, we should allocate a new peer */
-				from_peer = gbproxy_peer_alloc(nse, bvci);
-				OSMO_ASSERT(from_peer);
-				LOGPBVC(from_peer, LOGL_INFO, "Allocated new peer\n");
-			}
-
-			/* Could have moved to a different NSE */
-			if (!check_peer_nsei(from_peer, nsei)) {
-				LOGPBVC(from_peer, LOGL_NOTICE, "moving peer to NSE(%05u)\n", nsei);
-
-				struct gbproxy_nse *nse_new = gbproxy_nse_by_nsei(cfg, nsei);
-				if (!nse_new) {
-					LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u) Got PtP BVC reset before signalling reset for "
-						"BVCI=%05u\n", bvci, nsei);
-					return bssgp_tx_status(BSSGP_CAUSE_PDU_INCOMP_STATE, NULL, msg);
-				}
-
-				/* Move peer to different NSE */
-				gbproxy_peer_move(from_peer, nse_new);
-			}
-
-			if (TLVP_PRESENT(&tp, BSSGP_IE_CELL_ID)) {
-				struct gprs_ra_id raid;
-				/* We have a Cell Identifier present in this
-				 * PDU, this means we can extend our local
-				 * state information about this particular cell
-				 * */
-				memcpy(from_peer->ra,
-					TLVP_VAL(&tp, BSSGP_IE_CELL_ID),
-					sizeof(from_peer->ra));
-				gsm48_parse_ra(&raid, from_peer->ra);
-				LOGPBVC(from_peer, LOGL_INFO, "Cell ID %s\n",
-				     osmo_rai_name(&raid));
-			}
-			if (cfg->route_to_sgsn2)
-				copy_to_sgsn2 = 1;
-		}
+		rc = gbprox_rx_bvc_reset_from_bss(cfg, msg, nsei, &tp, &copy_to_sgsn2);
+		/* if function retruns 0, we terminate processing here */
+		if (rc == 0)
+			return 0;
 		break;
 	}
 
