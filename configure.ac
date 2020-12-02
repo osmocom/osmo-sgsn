@@ -118,8 +118,8 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE([char foo;])],
 CFLAGS="$saved_CFLAGS"
 AC_SUBST(SYMBOL_VISIBILITY)
 
-CPPFLAGS="$CPPFLAGS -Wall"
-CFLAGS="$CFLAGS -Wall"
+CPPFLAGS="$CPPFLAGS -Wall -Wno-trigraphs"
+CFLAGS="$CFLAGS -Wall -Wno-trigraphs"
 
 AX_CHECK_COMPILE_FLAG([-Werror=implicit], [CFLAGS="$CFLAGS -Werror=implicit"])
 AX_CHECK_COMPILE_FLAG([-Werror=maybe-uninitialized], [CFLAGS="$CFLAGS -Werror=maybe-uninitialized"])

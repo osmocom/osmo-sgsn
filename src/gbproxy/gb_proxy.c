@@ -564,7 +564,7 @@ struct gbproxy_peer *gbproxy_find_peer(struct gbproxy_config *cfg,
 
 	if (!peer) {
 		LOGP(DLLC, LOGL_INFO,
-		     "NSEI=%d(%s) patching: didn't find peer for message, "
+		     "NSE(%05u/%s) patching: didn't find peer for message, "
 		     "PDU %d\n",
 		     msgb_nsei(msg), parse_ctx->to_bss ? "BSS" : "SGSN",
 		     parse_ctx->pdu_type);
@@ -600,11 +600,11 @@ static int gbprox_process_bssgp_ul(struct gbproxy_config *cfg,
 
 	if (!rc && !parse_ctx.need_decryption) {
 		LOGP(DGPRS, LOGL_ERROR,
-		     "NSEI=%u(BSS) patching: failed to parse invalid %s message\n",
+		     "NSE(%05u/BSS) patching: failed to parse invalid %s message\n",
 		     msgb_nsei(msg), gprs_gb_message_name(&parse_ctx, "NS_UNITDATA"));
 		gprs_gb_log_parse_context(LOGL_NOTICE, &parse_ctx, "NS_UNITDATA");
 		LOGP(DGPRS, LOGL_NOTICE,
-		     "NSEI=%u(BSS) invalid message was: %s\n",
+		     "NSE(%05u/BSS) invalid message was: %s\n",
 		     msgb_nsei(msg), msgb_hexdump(msg));
 		return 0;
 	}
@@ -717,11 +717,11 @@ static void gbprox_process_bssgp_dl(struct gbproxy_config *cfg,
 
 	if (!rc && !parse_ctx.need_decryption) {
 		LOGP(DGPRS, LOGL_ERROR,
-		     "NSEI=%u(SGSN) patching: failed to parse invalid %s message\n",
+		     "NSE(%05u/SGSN) patching: failed to parse invalid %s message\n",
 		     msgb_nsei(msg), gprs_gb_message_name(&parse_ctx, "NS_UNITDATA"));
 		gprs_gb_log_parse_context(LOGL_NOTICE, &parse_ctx, "NS_UNITDATA");
 		LOGP(DGPRS, LOGL_NOTICE,
-		     "NSEI=%u(SGSN) invalid message was: %s\n",
+		     "NSE(%05u/SGSN) invalid message was: %s\n",
 		     msgb_nsei(msg), msgb_hexdump(msg));
 		return;
 	}
@@ -794,7 +794,7 @@ static int gbprox_relay2sgsn(struct gbproxy_config *cfg, struct msgb *old_msg,
 	struct msgb *msg = bssgp_msgb_copy(old_msg, "msgb_relay2sgsn");
 	int rc;
 
-	DEBUGP(DGPRS, "NSEI=%u proxying BTS->SGSN (NS_BVCI=%u, NSEI=%u)\n",
+	DEBUGP(DGPRS, "NSE(%05u/BSS)-BVC(%05u) proxying BTS->SGSN  NSE(%05u/SGSN)\n",
 		msgb_nsei(msg), ns_bvci, sgsn_nsei);
 
 	nsp.bvci = ns_bvci;
@@ -824,7 +824,7 @@ static int gbprox_relay2nse(struct msgb *old_msg, struct gbproxy_nse *nse,
 	uint32_t tlli;
 	int rc;
 
-	DEBUGP(DGPRS, "NSEI=%u proxying SGSN->BSS (NS_BVCI=%u, NSEI=%u)\n",
+	DEBUGP(DGPRS, "NSE(%05u/SGSN)-BVC(%05u) proxying SGSN->BSS NSE(%05u/BSS)\n",
 		msgb_nsei(msg), ns_bvci, nse->nsei);
 
 	nsp.bvci = ns_bvci;
@@ -872,7 +872,7 @@ static int block_unblock_peer(struct gbproxy_config *cfg, uint16_t ptp_bvci, uin
 
 	peer = gbproxy_peer_by_bvci(cfg, ptp_bvci);
 	if (!peer) {
-		LOGP(DGPRS, LOGL_ERROR, "BVCI=%u: Cannot find BSS\n",
+		LOGP(DGPRS, LOGL_ERROR, "BVC(%05u/??) Cannot find BSS\n",
 			ptp_bvci);
 		rate_ctr_inc(&cfg->ctrg->ctr[GBPROX_GLOB_CTR_INV_BVCI]);
 		return -ENOENT;
@@ -902,7 +902,7 @@ static int gbprox_relay2bvci(struct gbproxy_config *cfg, struct msgb *msg, uint1
 
 	peer = gbproxy_peer_by_bvci(cfg, ptp_bvci);
 	if (!peer) {
-		LOGP(DGPRS, LOGL_ERROR, "BVCI=%u: Cannot find BSS\n",
+		LOGP(DGPRS, LOGL_ERROR, "BVC(%05u/??) Cannot find BSS\n",
 			ptp_bvci);
 		rate_ctr_inc(&cfg->ctrg->ctr[GBPROX_GLOB_CTR_INV_BVCI]);
 		return -ENOENT;
@@ -928,8 +928,8 @@ static int gbprox_rx_ptp_from_bss(struct gbproxy_config *cfg,
 
 	peer = gbproxy_peer_by_bvci(cfg, ns_bvci);
 	if (!peer) {
-		LOGP(DGPRS, LOGL_NOTICE, "Didn't find peer for "
-		     "BVCI=%u for PTP message from NSEI=%u (BSS), "
+		LOGP(DGPRS, LOGL_NOTICE, "BVC(%05u/??) Didn't find peer "
+		     "for PTP message from NSE(%05u/BSS), "
 		     "discarding message\n",
 		     ns_bvci, nsei);
 		return bssgp_tx_status(BSSGP_CAUSE_UNKNOWN_BVCI,
@@ -972,8 +972,8 @@ static int gbprox_rx_ptp_from_sgsn(struct gbproxy_config *cfg,
 	/* Send status messages before patching */
 
 	if (!peer) {
-		LOGP(DGPRS, LOGL_INFO, "Didn't find peer for "
-		     "BVCI=%u for message from NSEI=%u (SGSN)\n",
+		LOGP(DGPRS, LOGL_INFO, "BVC(%05u/??) Didn't find peer for "
+		     "for message from NSE(%05u/SGSN)\n",
 		     ns_bvci, nsei);
 		rate_ctr_inc(&cfg->ctrg->
 			     ctr[GBPROX_GLOB_CTR_INV_BVCI]);
@@ -1022,7 +1022,7 @@ static int gbprox_rx_sig_from_bss(struct gbproxy_config *cfg,
 	int rc;
 
 	if (ns_bvci != 0 && ns_bvci != 1) {
-		LOGP(DGPRS, LOGL_NOTICE, "NSEI=%u BVCI=%u is not signalling\n",
+		LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u) BVCI=%05u is not signalling\n",
 			nsei, ns_bvci);
 		return -EINVAL;
 	}
@@ -1031,7 +1031,7 @@ static int gbprox_rx_sig_from_bss(struct gbproxy_config *cfg,
 	 * just to make sure  */
 	if (pdu_type == BSSGP_PDUT_UL_UNITDATA ||
 	    pdu_type == BSSGP_PDUT_DL_UNITDATA) {
-		LOGP(DGPRS, LOGL_NOTICE, "NSEI=%u UNITDATA not allowed in "
+		LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u) UNITDATA not allowed in "
 			"signalling\n", nsei);
 		return -EINVAL;
 	}
@@ -1065,14 +1065,14 @@ static int gbprox_rx_sig_from_bss(struct gbproxy_config *cfg,
 		 * is common for all point-to-point BVCs (and thus all BTS) */
 		if (TLVP_PRESENT(&tp, BSSGP_IE_BVCI)) {
 			uint16_t bvci = ntohs(tlvp_val16_unal(&tp, BSSGP_IE_BVCI));
-			LOGP(DGPRS, LOGL_INFO, "NSEI=%u Rx BVC RESET (BVCI=%u)\n",
+			LOGP(DGPRS, LOGL_INFO, "NSE(%05u) Rx BVC RESET (BVCI=%05u)\n",
 				nsei, bvci);
 			if (bvci == 0) {
 				struct gbproxy_nse *nse;
 				/* Ensure the NSE peer is there and clear all PtP BVCs */
 				nse = gbproxy_nse_by_nsei_or_new(cfg, nsei);
 				if (!nse) {
-					LOGP(DGPRS, LOGL_ERROR, "Could not allocate NSE for NSEI=%u\n", nsei);
+					LOGP(DGPRS, LOGL_ERROR, "Could not create NSE(%05u)\n", nsei);
 					return bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, 0, msg);
 				}
 
@@ -1088,8 +1088,8 @@ static int gbprox_rx_sig_from_bss(struct gbproxy_config *cfg,
 			if (!from_peer) {
 				struct gbproxy_nse *nse = gbproxy_nse_by_nsei(cfg, nsei);
 				if (!nse) {
-					LOGP(DGPRS, LOGL_NOTICE, "Got PtP BVC reset before signalling reset for "
-						"BVCI=%u NSEI=%u\n", bvci, nsei);
+					LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u) Got PtP BVC reset before signalling reset for "
+						"BVCI=%05u\n", nsei, bvci);
 					return bssgp_tx_status(BSSGP_CAUSE_PDU_INCOMP_STATE, NULL, msg);
 				}
 				/* if a PTP-BVC is reset, and we don't know that
@@ -1101,13 +1101,14 @@ static int gbprox_rx_sig_from_bss(struct gbproxy_config *cfg,
 
 			/* Could have moved to a different NSE */
 			if (!check_peer_nsei(from_peer, nsei)) {
+				LOGPBVC(from_peer, LOGL_NOTICE, "moving peer to NSE(%05u)\n", nsei);
+
 				struct gbproxy_nse *nse_new = gbproxy_nse_by_nsei(cfg, nsei);
 				if (!nse_new) {
-					LOGP(DGPRS, LOGL_NOTICE, "Got PtP BVC reset before signalling reset for "
-						"BVCI=%u NSEI=%u\n", bvci, nsei);
+					LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u) Got PtP BVC reset before signalling reset for "
+						"BVCI=%05u\n", bvci, nsei);
 					return bssgp_tx_status(BSSGP_CAUSE_PDU_INCOMP_STATE, NULL, msg);
 				}
-				LOGPBVC(from_peer, LOGL_NOTICE, "Peer moved to NSEI=%u\n", nsei);
 
 				/* Move peer to different NSE */
 				gbproxy_peer_move(from_peer, nse_new);
@@ -1143,12 +1144,12 @@ static int gbprox_rx_sig_from_bss(struct gbproxy_config *cfg,
 
 	return gbprox_relay2sgsn(cfg, msg, ns_bvci, cfg->nsip_sgsn_nsei);
 err_no_peer:
-	LOGP(DGPRS, LOGL_ERROR, "NSEI=%u(BSS) cannot find peer based on NSEI\n",
+	LOGP(DGPRS, LOGL_ERROR, "NSE(%05u/BSS) cannot find peer based on NSEI\n",
 		nsei);
 	rate_ctr_inc(&cfg->ctrg->ctr[GBPROX_GLOB_CTR_INV_NSEI]);
 	return bssgp_tx_status(BSSGP_CAUSE_INV_MAND_INF, NULL, msg);
 err_mand_ie:
-	LOGP(DGPRS, LOGL_ERROR, "NSEI=%u(BSS) missing mandatory RA IE\n",
+	LOGP(DGPRS, LOGL_ERROR, "NSE(%05u/BSS) missing mandatory RA IE\n",
 		nsei);
 	rate_ctr_inc(&cfg->ctrg->ctr[GBPROX_GLOB_CTR_PROTO_ERR_BSS]);
 	return bssgp_tx_status(BSSGP_CAUSE_MISSING_MAND_IE, NULL, msg);
@@ -1165,15 +1166,15 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 
 	/* FIXME: Handle paging logic to only page each matching NSE */
 
-	LOGP(DGPRS, LOGL_INFO, "NSEI=%u(SGSN) BSSGP PAGING\n",
+	LOGP(DGPRS, LOGL_INFO, "NSE(%05u/SGSN) BSSGP PAGING\n",
 		nsei);
 	if (TLVP_PRESENT(tp, BSSGP_IE_BVCI)) {
 		uint16_t bvci = ntohs(tlvp_val16_unal(tp, BSSGP_IE_BVCI));
 		errctr = GBPROX_GLOB_CTR_OTHER_ERR;
 		peer = gbproxy_peer_by_bvci(cfg, bvci);
 		if (!peer) {
-			LOGP(DGPRS, LOGL_NOTICE, "NSEI=%u(SGSN) BSSGP PAGING: "
-				"unable to route: BVCI=%u unknown\n", nsei, bvci);
+			LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u/SGSN) BSSGP PAGING: "
+				"unable to route: BVCI=%05u unknown\n", nsei, bvci);
 			rate_ctr_inc(&cfg->ctrg->ctr[errctr]);
 			return -EINVAL;
 		}
@@ -1219,13 +1220,13 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 			}
 		}
 	} else {
-		LOGP(DGPRS, LOGL_ERROR, "NSEI=%u(SGSN) BSSGP PAGING: "
+		LOGP(DGPRS, LOGL_ERROR, "NSE(%05u/SGSN) BSSGP PAGING: "
 			"unable to route, missing IE\n", nsei);
 		rate_ctr_inc(&cfg->ctrg->ctr[errctr]);
 	}
 
 	if (n_nses == 0) {
-		LOGP(DGPRS, LOGL_ERROR, "NSEI=%u(SGSN) BSSGP PAGING: "
+		LOGP(DGPRS, LOGL_ERROR, "NSE(%05u/SGSN) BSSGP PAGING: "
 			"unable to route, no destination found\n", nsei);
 		rate_ctr_inc(&cfg->ctrg->ctr[errctr]);
 		return -EINVAL;
@@ -1256,7 +1257,7 @@ static int rx_reset_from_sgsn(struct gbproxy_config *cfg,
 		 * respective peer */
 		peer = gbproxy_peer_by_bvci(cfg, ptp_bvci);
 		if (!peer) {
-			LOGP(DGPRS, LOGL_ERROR, "NSEI=%u BVCI=%u: Cannot find BSS\n",
+			LOGP(DGPRS, LOGL_ERROR, "NSE(%05u/SGSN) BVCI=%05u: Cannot find BSS\n",
 				nsei, ptp_bvci);
 			rate_ctr_inc(&cfg->ctrg->
 				     ctr[GBPROX_GLOB_CTR_INV_BVCI]);
@@ -1295,7 +1296,7 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_config *cfg,
 	int cause;
 
 	if (ns_bvci != 0 && ns_bvci != 1) {
-		LOGP(DGPRS, LOGL_NOTICE, "NSEI=%u(SGSN) BVCI=%u is not "
+		LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u/SGSN) BVCI=%05u is not "
 			"signalling\n", nsei, ns_bvci);
 		/* FIXME: Send proper error message */
 		return -EINVAL;
@@ -1305,7 +1306,7 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_config *cfg,
 	 * just to make sure  */
 	if (pdu_type == BSSGP_PDUT_UL_UNITDATA ||
 	    pdu_type == BSSGP_PDUT_DL_UNITDATA) {
-		LOGP(DGPRS, LOGL_NOTICE, "NSEI=%u(SGSN) UNITDATA not allowed in "
+		LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u/SGSN) UNITDATA not allowed in "
 			"signalling\n", nsei);
 		return bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, NULL, orig_msg);
 	}
@@ -1349,7 +1350,7 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_config *cfg,
 	case BSSGP_PDUT_STATUS:
 		/* Some exception has occurred */
 		LOGP(DGPRS, LOGL_NOTICE,
-			"NSEI=%u(SGSN) BSSGP STATUS ", nsei);
+			"NSE(%05u/SGSN) BSSGP STATUS ", nsei);
 		if (!TLVP_PRESENT(&tp, BSSGP_IE_CAUSE)) {
 			LOGPC(DGPRS, LOGL_NOTICE, "\n");
 			goto err_mand_ie;
@@ -1360,7 +1361,7 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_config *cfg,
 			bssgp_cause_str(cause));
 		if (TLVP_PRESENT(&tp, BSSGP_IE_BVCI)) {
 			bvci = ntohs(tlvp_val16_unal(&tp, BSSGP_IE_BVCI));
-			LOGPC(DGPRS, LOGL_NOTICE, "BVCI=%u\n", bvci);
+			LOGPC(DGPRS, LOGL_NOTICE, "BVCI=%05u\n", bvci);
 
 			if (cause == BSSGP_CAUSE_UNKNOWN_BVCI)
 				rc = gbprox_relay2bvci(cfg, msg, bvci, ns_bvci);
@@ -1386,7 +1387,7 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_config *cfg,
 			goto err_mand_ie;
 		bvci = ntohs(tlvp_val16_unal(&tp, BSSGP_IE_BVCI));
 		if (bvci == 0) {
-			LOGP(DGPRS, LOGL_NOTICE, "NSEI=%u(SGSN) BSSGP "
+			LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u/SGSN) BSSGP "
 			     "%sBLOCK_ACK for signalling BVCI ?!?\n", nsei,
 			     pdu_type == BSSGP_PDUT_BVC_UNBLOCK_ACK ? "UN":"");
 			/* should we send STATUS ? */
@@ -1400,13 +1401,14 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_config *cfg,
 		break;
 	case BSSGP_PDUT_SGSN_INVOKE_TRACE:
 		LOGP(DGPRS, LOGL_ERROR,
-		     "NSEI=%u(SGSN) BSSGP INVOKE TRACE not supported\n",nsei);
+		     "NSE(%05u/SGSN) BSSGP INVOKE TRACE not supported\n", nsei);
 		rate_ctr_inc(&cfg->ctrg->
 			     ctr[GBPROX_GLOB_CTR_NOT_SUPPORTED_SGSN]);
 		rc = bssgp_tx_status(BSSGP_CAUSE_PDU_INCOMP_FEAT, NULL, orig_msg);
 		break;
 	default:
-		LOGP(DGPRS, LOGL_NOTICE, "BSSGP PDU type %s not supported\n", bssgp_pdu_str(pdu_type));
+		LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u/SGSN) BSSGP PDU type %s not supported\n", nsei,
+		     bssgp_pdu_str(pdu_type));
 		rate_ctr_inc(&cfg->ctrg->
 			     ctr[GBPROX_GLOB_CTR_PROTO_ERR_SGSN]);
 		rc = bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, NULL, orig_msg);
@@ -1417,14 +1419,14 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_config *cfg,
 
 	return rc;
 err_mand_ie:
-	LOGP(DGPRS, LOGL_ERROR, "NSEI=%u(SGSN) missing mandatory IE\n",
+	LOGP(DGPRS, LOGL_ERROR, "NSE(%05u/SGSN) missing mandatory IE\n",
 		nsei);
 	rate_ctr_inc(&cfg->ctrg->
 		     ctr[GBPROX_GLOB_CTR_PROTO_ERR_SGSN]);
 	msgb_free(msg);
 	return bssgp_tx_status(BSSGP_CAUSE_MISSING_MAND_IE, NULL, orig_msg);
 err_no_peer:
-	LOGP(DGPRS, LOGL_ERROR, "NSEI=%u(SGSN) cannot find peer based on RAI\n",
+	LOGP(DGPRS, LOGL_ERROR, "NSE(%05u/SGSN) cannot find peer based on RAI\n",
 		nsei);
 	rate_ctr_inc(&cfg->ctrg-> ctr[GBPROX_GLOB_CTR_INV_RAI]);
 	msgb_free(msg);
