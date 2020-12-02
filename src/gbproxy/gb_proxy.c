@@ -1025,9 +1025,9 @@ static int gbprox_rx_bvc_reset_from_bss(struct gbproxy_config *cfg, struct msgb 
 		/* If we receive a BVC reset on the signalling endpoint, we
 		 * don't want the SGSN to reset, as the signalling endpoint
 		 * is common for all point-to-point BVCs (and thus all BTS) */
-		struct gbproxy_nse *nse;
+
 		/* Ensure the NSE peer is there and clear all PtP BVCs */
-		nse = gbproxy_nse_by_nsei_or_new(cfg, nsei);
+		struct gbproxy_nse *nse = gbproxy_nse_by_nsei_or_new(cfg, nsei);
 		if (!nse) {
 			LOGP(DGPRS, LOGL_ERROR, "Could not create NSE(%05u)\n", nsei);
 			bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, 0, msg);
@@ -1037,8 +1037,7 @@ static int gbprox_rx_bvc_reset_from_bss(struct gbproxy_config *cfg, struct msgb 
 		gbproxy_cleanup_peers(cfg, nsei, 0);
 
 		/* FIXME: only do this if SGSN is alive! */
-		LOGPNSE(nse, LOGL_INFO, "Tx fake "
-			"BVC RESET ACK of BVCI=0\n");
+		LOGPNSE(nse, LOGL_INFO, "Tx fake BVC RESET ACK of BVCI=0\n");
 		bssgp_tx_simple_bvci(BSSGP_PDUT_BVC_RESET_ACK, nsei, 0, 0);
 		return 0;
 	} else {
@@ -1080,12 +1079,9 @@ static int gbprox_rx_bvc_reset_from_bss(struct gbproxy_config *cfg, struct msgb 
 			 * PDU, this means we can extend our local
 			 * state information about this particular cell
 			 * */
-			memcpy(from_peer->ra,
-				TLVP_VAL(tp, BSSGP_IE_CELL_ID),
-				sizeof(from_peer->ra));
+			memcpy(from_peer->ra, TLVP_VAL(tp, BSSGP_IE_CELL_ID), sizeof(from_peer->ra));
 			gsm48_parse_ra(&raid, from_peer->ra);
-			LOGPBVC(from_peer, LOGL_INFO, "Cell ID %s\n",
-			     osmo_rai_name(&raid));
+			LOGPBVC(from_peer, LOGL_INFO, "Cell ID %s\n", osmo_rai_name(&raid));
 		}
 		if (cfg->route_to_sgsn2)
 			*copy_to_sgsn2 = 1;
