@@ -1290,6 +1290,7 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_config *cfg,
 	struct tlv_parsed tp;
 	uint8_t pdu_type = bgph->pdu_type;
 	int data_len;
+	struct gbproxy_nse *nse;
 	struct gbproxy_peer *peer;
 	uint16_t bvci;
 	struct msgb *msg;
@@ -1401,11 +1402,13 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_config *cfg,
 		rc = gbprox_relay2bvci(cfg, msg, bvci, ns_bvci);
 		break;
 	case BSSGP_PDUT_SGSN_INVOKE_TRACE:
-		LOGP(DGPRS, LOGL_ERROR,
-		     "NSE(%05u/SGSN) BSSGP INVOKE TRACE not supported\n", nsei);
-		rate_ctr_inc(&cfg->ctrg->
-			     ctr[GBPROX_GLOB_CTR_NOT_SUPPORTED_SGSN]);
-		rc = bssgp_tx_status(BSSGP_CAUSE_PDU_INCOMP_FEAT, NULL, orig_msg);
+	case BSSGP_PDUT_OVERLOAD:
+		LOGP(DGPRS, LOGL_DEBUG,
+			"NSE(%05u/SGSN) BSSGP %s: broadcasting\n", nsei, bssgp_pdu_str(pdu_type));
+		/* broadcast to all BSS-side peers */
+		llist_for_each_entry(nse, &cfg->nse_peers, list) {
+			gbprox_relay2nse(msg, nse, 0);
+		}
 		break;
 	default:
 		LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u/SGSN) BSSGP PDU type %s not supported\n", nsei,
