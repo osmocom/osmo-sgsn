@@ -1017,7 +1017,7 @@ static int gbprox_rx_bvc_reset_from_bss(struct gbproxy_config *cfg, struct msgb 
 	struct gbproxy_peer *from_peer = NULL;
 	uint16_t bvci;
 
-	if (!TLVP_PRESENT(tp, BSSGP_IE_BVCI) || !TLVP_PRESENT(tp, BSSGP_IE_CAUSE)) {
+	if (!TLVP_PRES_LEN(tp, BSSGP_IE_BVCI, 2) || !TLVP_PRES_LEN(tp, BSSGP_IE_CAUSE, 1)) {
 		rate_ctr_inc(&cfg->ctrg->ctr[GBPROX_GLOB_CTR_PROTO_ERR_BSS]);
 		return bssgp_tx_status(BSSGP_CAUSE_MISSING_MAND_IE, NULL, msg);
 	}
@@ -1076,7 +1076,7 @@ static int gbprox_rx_bvc_reset_from_bss(struct gbproxy_config *cfg, struct msgb 
 			gbproxy_peer_move(from_peer, nse_new);
 		}
 
-		if (TLVP_PRESENT(tp, BSSGP_IE_CELL_ID)) {
+		if (TLVP_PRES_LEN(tp, BSSGP_IE_CELL_ID, 8)) {
 			struct gprs_ra_id raid;
 			/* We have a Cell Identifier present in this
 			 * PDU, this means we can extend our local
@@ -1132,7 +1132,7 @@ static int gbprox_rx_sig_from_bss(struct gbproxy_config *cfg,
 		 * area identification.  The snooped information is then used
 		 * for routing the {SUSPEND,RESUME}_[N]ACK back to the correct
 		 * BSSGP */
-		if (!TLVP_PRESENT(&tp, BSSGP_IE_ROUTEING_AREA))
+		if (!TLVP_PRES_LEN(&tp, BSSGP_IE_ROUTEING_AREA, 6))
 			goto err_mand_ie;
 		from_peer = gbproxy_peer_by_nsei(cfg, nsei);
 		if (!from_peer)
@@ -1188,7 +1188,7 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 
 	LOGP(DGPRS, LOGL_INFO, "NSE(%05u/SGSN) BSSGP PAGING\n",
 		nsei);
-	if (TLVP_PRESENT(tp, BSSGP_IE_BVCI)) {
+	if (TLVP_PRES_LEN(tp, BSSGP_IE_BVCI, 2)) {
 		uint16_t bvci = ntohs(tlvp_val16_unal(tp, BSSGP_IE_BVCI));
 		errctr = GBPROX_GLOB_CTR_OTHER_ERR;
 		peer = gbproxy_peer_by_bvci(cfg, bvci);
@@ -1200,7 +1200,7 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 		}
 		LOGPBVC(peer, LOGL_INFO, "routing by BVCI\n");
 		return gbprox_relay2peer(msg, peer, ns_bvci);
-	} else if (TLVP_PRESENT(tp, BSSGP_IE_ROUTEING_AREA)) {
+	} else if (TLVP_PRES_LEN(tp, BSSGP_IE_ROUTEING_AREA, 6)) {
 		errctr = GBPROX_GLOB_CTR_INV_RAI;
 		/* iterate over all peers and dispatch the paging to each matching one */
 		llist_for_each_entry(nse, &cfg->nse_peers, list) {
@@ -1214,7 +1214,7 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 				}
 			}
 		}
-	} else if (TLVP_PRESENT(tp, BSSGP_IE_LOCATION_AREA)) {
+	} else if (TLVP_PRES_LEN(tp, BSSGP_IE_LOCATION_AREA, 5)) {
 		errctr = GBPROX_GLOB_CTR_INV_LAI;
 		/* iterate over all peers and dispatch the paging to each matching one */
 		llist_for_each_entry(nse, &cfg->nse_peers, list) {
@@ -1228,7 +1228,7 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 				}
 			}
 		}
-	} else if (TLVP_PRESENT(tp, BSSGP_IE_BSS_AREA_ID)) {
+	} else if (TLVP_PRES_LEN(tp, BSSGP_IE_BSS_AREA_ID, 1)) {
 		/* iterate over all peers and dispatch the paging to each matching one */
 		llist_for_each_entry(nse, &cfg->nse_peers, list) {
 			llist_for_each_entry(peer, &nse->bts_peers, list) {
@@ -1264,7 +1264,7 @@ static int rx_reset_from_sgsn(struct gbproxy_config *cfg,
 	struct gbproxy_peer *peer;
 	uint16_t ptp_bvci;
 
-	if (!TLVP_PRESENT(tp, BSSGP_IE_BVCI)) {
+	if (!TLVP_PRES_LEN(tp, BSSGP_IE_BVCI, 2)) {
 		rate_ctr_inc(&cfg->ctrg->
 			     ctr[GBPROX_GLOB_CTR_PROTO_ERR_SGSN]);
 		return bssgp_tx_status(BSSGP_CAUSE_MISSING_MAND_IE,
@@ -1347,7 +1347,7 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_config *cfg,
 		if (cfg->route_to_sgsn2 && nsei == cfg->nsip_sgsn2_nsei)
 			break;
 		/* simple case: BVCI IE is mandatory */
-		if (!TLVP_PRESENT(&tp, BSSGP_IE_BVCI))
+		if (!TLVP_PRES_LEN(&tp, BSSGP_IE_BVCI, 2))
 			goto err_mand_ie;
 		bvci = ntohs(tlvp_val16_unal(&tp, BSSGP_IE_BVCI));
 		if (bvci == BVCI_SIGNALLING) {
@@ -1358,7 +1358,7 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_config *cfg,
 		break;
 	case BSSGP_PDUT_FLUSH_LL:
 		/* simple case: BVCI IE is mandatory */
-		if (!TLVP_PRESENT(&tp, BSSGP_IE_BVCI))
+		if (!TLVP_PRES_LEN(&tp, BSSGP_IE_BVCI, 2))
 			goto err_mand_ie;
 		bvci = ntohs(tlvp_val16_unal(&tp, BSSGP_IE_BVCI));
 		rc = gbprox_relay2bvci(cfg, msg, bvci, ns_bvci);
@@ -1372,7 +1372,7 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_config *cfg,
 		/* Some exception has occurred */
 		LOGP(DGPRS, LOGL_NOTICE,
 			"NSE(%05u/SGSN) BSSGP STATUS ", nsei);
-		if (!TLVP_PRESENT(&tp, BSSGP_IE_CAUSE)) {
+		if (!TLVP_PRES_LEN(&tp, BSSGP_IE_CAUSE, 1)) {
 			LOGPC(DGPRS, LOGL_NOTICE, "\n");
 			goto err_mand_ie;
 		}
@@ -1380,7 +1380,7 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_config *cfg,
 		LOGPC(DGPRS, LOGL_NOTICE,
 			"cause=0x%02x(%s) ", *TLVP_VAL(&tp, BSSGP_IE_CAUSE),
 			bssgp_cause_str(cause));
-		if (TLVP_PRESENT(&tp, BSSGP_IE_BVCI)) {
+		if (TLVP_PRES_LEN(&tp, BSSGP_IE_BVCI, 2)) {
 			bvci = ntohs(tlvp_val16_unal(&tp, BSSGP_IE_BVCI));
 			LOGPC(DGPRS, LOGL_NOTICE, "BVCI=%05u\n", bvci);
 
@@ -1395,7 +1395,7 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_config *cfg,
 	case BSSGP_PDUT_RESUME_ACK:
 	case BSSGP_PDUT_RESUME_NACK:
 		/* RAI IE is mandatory */
-		if (!TLVP_PRESENT(&tp, BSSGP_IE_ROUTEING_AREA))
+		if (!TLVP_PRES_LEN(&tp, BSSGP_IE_ROUTEING_AREA, 6))
 			goto err_mand_ie;
 		peer = gbproxy_peer_by_rai(cfg, TLVP_VAL(&tp, BSSGP_IE_ROUTEING_AREA));
 		if (!peer)
@@ -1404,7 +1404,7 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_config *cfg,
 		break;
 	case BSSGP_PDUT_BVC_BLOCK_ACK:
 	case BSSGP_PDUT_BVC_UNBLOCK_ACK:
-		if (!TLVP_PRESENT(&tp, BSSGP_IE_BVCI))
+		if (!TLVP_PRES_LEN(&tp, BSSGP_IE_BVCI, 2))
 			goto err_mand_ie;
 		bvci = ntohs(tlvp_val16_unal(&tp, BSSGP_IE_BVCI));
 		if (bvci == 0) {

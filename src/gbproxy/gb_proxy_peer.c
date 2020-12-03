@@ -165,7 +165,7 @@ struct gbproxy_peer *gbproxy_peer_by_lac(struct gbproxy_config *cfg,
 struct gbproxy_peer *gbproxy_peer_by_bssgp_tlv(struct gbproxy_config *cfg,
 					       struct tlv_parsed *tp)
 {
-	if (TLVP_PRESENT(tp, BSSGP_IE_BVCI)) {
+	if (TLVP_PRES_LEN(tp, BSSGP_IE_BVCI, 2)) {
 		uint16_t bvci;
 
 		bvci = ntohs(tlvp_val16_unal(tp, BSSGP_IE_BVCI));
@@ -174,7 +174,7 @@ struct gbproxy_peer *gbproxy_peer_by_bssgp_tlv(struct gbproxy_config *cfg,
 	}
 
 	/* FIXME: this doesn't make sense, as RA can span multiple peers! */
-	if (TLVP_PRESENT(tp, BSSGP_IE_ROUTEING_AREA)) {
+	if (TLVP_PRES_LEN(tp, BSSGP_IE_ROUTEING_AREA, 6)) {
 		uint8_t *rai = (uint8_t *)TLVP_VAL(tp, BSSGP_IE_ROUTEING_AREA);
 		/* Only compare LAC part, since MCC/MNC are possibly patched.
 		 * Since the LAC of different BSS must be different when
@@ -183,7 +183,7 @@ struct gbproxy_peer *gbproxy_peer_by_bssgp_tlv(struct gbproxy_config *cfg,
 	}
 
 	/* FIXME: this doesn't make sense, as LA can span multiple peers! */
-	if (TLVP_PRESENT(tp, BSSGP_IE_LOCATION_AREA)) {
+	if (TLVP_PRES_LEN(tp, BSSGP_IE_LOCATION_AREA, 5)) {
 		uint8_t *lai = (uint8_t *)TLVP_VAL(tp, BSSGP_IE_LOCATION_AREA);
 		return gbproxy_peer_by_lac(cfg, lai);
 	}
