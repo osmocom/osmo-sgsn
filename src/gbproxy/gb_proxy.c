@@ -31,6 +31,7 @@
 #include <arpa/inet.h>
 #include <time.h>
 
+#include <osmocom/core/hashtable.h>
 #include <osmocom/core/logging.h>
 #include <osmocom/core/talloc.h>
 #include <osmocom/core/select.h>
@@ -1183,6 +1184,7 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 	struct gbproxy_bvc *bvc;
 	unsigned int n_nses = 0;
 	int errctr = GBPROX_GLOB_CTR_PROTO_ERR_SGSN;
+	int i;
 
 	/* FIXME: Handle paging logic to only page each matching NSE */
 
@@ -1203,7 +1205,7 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 	} else if (TLVP_PRES_LEN(tp, BSSGP_IE_ROUTEING_AREA, 6)) {
 		errctr = GBPROX_GLOB_CTR_INV_RAI;
 		/* iterate over all bvcs and dispatch the paging to each matching one */
-		llist_for_each_entry(nse, &cfg->bss_nses, list) {
+		hash_for_each(cfg->bss_nses, i, nse, list) {
 			llist_for_each_entry(bvc, &nse->bvcs, list) {
 				if (!memcmp(bvc->ra, TLVP_VAL(tp, BSSGP_IE_ROUTEING_AREA), 6)) {
 					LOGPNSE(nse, LOGL_INFO, "routing to NSE (RAI match)\n");
@@ -1217,7 +1219,7 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 	} else if (TLVP_PRES_LEN(tp, BSSGP_IE_LOCATION_AREA, 5)) {
 		errctr = GBPROX_GLOB_CTR_INV_LAI;
 		/* iterate over all bvcs and dispatch the paging to each matching one */
-		llist_for_each_entry(nse, &cfg->bss_nses, list) {
+		hash_for_each(cfg->bss_nses, i, nse, list) {
 			llist_for_each_entry(bvc, &nse->bvcs, list) {
 				if (!memcmp(bvc->ra, TLVP_VAL(tp, BSSGP_IE_LOCATION_AREA), 5)) {
 					LOGPNSE(nse, LOGL_INFO, "routing to NSE (LAI match)\n");
@@ -1230,7 +1232,7 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 		}
 	} else if (TLVP_PRES_LEN(tp, BSSGP_IE_BSS_AREA_ID, 1)) {
 		/* iterate over all bvcs and dispatch the paging to each matching one */
-		llist_for_each_entry(nse, &cfg->bss_nses, list) {
+		hash_for_each(cfg->bss_nses, i, nse, list) {
 			llist_for_each_entry(bvc, &nse->bvcs, list) {
 				LOGPNSE(nse, LOGL_INFO, "routing to NSE (broadcast)\n");
 				gbprox_relay2nse(msg, nse, ns_bvci);
@@ -1263,6 +1265,7 @@ static int rx_reset_from_sgsn(struct gbproxy_config *cfg,
 	struct gbproxy_nse *nse;
 	struct gbproxy_bvc *bvc;
 	uint16_t ptp_bvci;
+	int i;
 
 	if (!TLVP_PRES_LEN(tp, BSSGP_IE_BVCI, 2)) {
 		rate_ctr_inc(&cfg->ctrg->
@@ -1291,7 +1294,7 @@ static int rx_reset_from_sgsn(struct gbproxy_config *cfg,
 	 * from the SGSN.  As the signalling BVCI is shared
 	 * among all the BSS's that we multiplex, it needs to
 	 * be relayed  */
-	llist_for_each_entry(nse, &cfg->bss_nses, list) {
+	hash_for_each(cfg->bss_nses, i, nse, list) {
 		llist_for_each_entry(bvc, &nse->bvcs, list)
 			gbprox_relay2peer(msg, bvc, ns_bvci);
 	}
@@ -1315,6 +1318,7 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_config *cfg,
 	struct msgb *msg;
 	int rc = 0;
 	int cause;
+	int i;
 
 	if (ns_bvci != 0 && ns_bvci != 1) {
 		LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u/SGSN) BVCI=%05u is not "
@@ -1425,7 +1429,7 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_config *cfg,
 		LOGP(DGPRS, LOGL_DEBUG,
 			"NSE(%05u/SGSN) BSSGP %s: broadcasting\n", nsei, bssgp_pdu_str(pdu_type));
 		/* broadcast to all BSS-side bvcs */
-		llist_for_each_entry(nse, &cfg->bss_nses, list) {
+		hash_for_each(cfg->bss_nses, i, nse, list) {
 			gbprox_relay2nse(msg, nse, 0);
 		}
 		break;
@@ -1618,9 +1622,11 @@ int gprs_ns2_prim_cb(struct osmo_prim_hdr *oph, void *ctx)
 
 void gbprox_reset(struct gbproxy_config *cfg)
 {
-	struct gbproxy_nse *nse, *ntmp;
+	struct gbproxy_nse *nse;
+	struct hlist_node *ntmp;
+	int i;
 
-	llist_for_each_entry_safe(nse, ntmp, &cfg->bss_nses, list) {
+	hash_for_each_safe(cfg->bss_nses, i, ntmp, nse, list) {
 		struct gbproxy_bvc *bvc, *tmp;
 		llist_for_each_entry_safe(bvc, tmp, &nse->bvcs, list)
 			gbproxy_bvc_free(bvc);
@@ -1636,7 +1642,7 @@ int gbproxy_init_config(struct gbproxy_config *cfg)
 {
 	struct timespec tp;
 
-	INIT_LLIST_HEAD(&cfg->bss_nses);
+	hash_init(cfg->bss_nses);
 	cfg->ctrg = rate_ctr_group_alloc(tall_sgsn_ctx, &global_ctrg_desc, 0);
 	if (!cfg->ctrg) {
 		LOGP(DGPRS, LOGL_ERROR, "Cannot allocate global counter group!\n");

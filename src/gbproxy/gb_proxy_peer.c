@@ -86,8 +86,9 @@ static const struct rate_ctr_group_desc bvc_ctrg_desc = {
 struct gbproxy_bvc *gbproxy_bvc_by_bvci(struct gbproxy_config *cfg, uint16_t bvci)
 {
 	struct gbproxy_nse *nse;
+	int i;
 
-	llist_for_each_entry(nse, &cfg->bss_nses, list) {
+	hash_for_each(cfg->bss_nses, i, nse, list) {
 		struct gbproxy_bvc *bvc;
 		llist_for_each_entry(bvc, &nse->bvcs, list) {
 			if (bvc->bvci == bvci)
@@ -102,11 +103,11 @@ struct gbproxy_bvc *gbproxy_bvc_by_bvci(struct gbproxy_config *cfg, uint16_t bvc
 struct gbproxy_bvc *gbproxy_bvc_by_nsei(struct gbproxy_config *cfg,
 					  uint16_t nsei)
 {
-	struct gbproxy_nse *nse;
-	llist_for_each_entry(nse, &cfg->bss_nses, list) {
-		if (nse->nsei == nsei && !llist_empty(&nse->bvcs))
-			return llist_first_entry(&nse->bvcs, struct gbproxy_bvc, list);
-	}
+	struct gbproxy_nse *nse = gbproxy_nse_by_nsei(cfg, nsei);
+
+	if (nse && !llist_empty(&nse->bvcs))
+		return llist_first_entry(&nse->bvcs, struct gbproxy_bvc, list);
+
 	return NULL;
 }
 
@@ -116,8 +117,9 @@ struct gbproxy_bvc *gbproxy_bvc_by_rai(struct gbproxy_config *cfg,
 					 const uint8_t *ra)
 {
 	struct gbproxy_nse *nse;
+	int i;
 
-	llist_for_each_entry(nse, &cfg->bss_nses, list) {
+	hash_for_each(cfg->bss_nses, i, nse, list) {
 		struct gbproxy_bvc *bvc;
 		llist_for_each_entry(bvc, &nse->bvcs, list) {
 			if (!memcmp(bvc->ra, ra, 6))
@@ -134,8 +136,9 @@ struct gbproxy_bvc *gbproxy_bvc_by_lai(struct gbproxy_config *cfg,
 					 const uint8_t *la)
 {
 	struct gbproxy_nse *nse;
+	int i;
 
-	llist_for_each_entry(nse, &cfg->bss_nses, list) {
+	hash_for_each(cfg->bss_nses, i, nse, list) {
 		struct gbproxy_bvc *bvc;
 		llist_for_each_entry(bvc, &nse->bvcs, list) {
 			if (!memcmp(bvc->ra, la, 5))
@@ -151,8 +154,9 @@ struct gbproxy_bvc *gbproxy_bvc_by_lac(struct gbproxy_config *cfg,
 					 const uint8_t *la)
 {
 	struct gbproxy_nse *nse;
+	int i;
 
-	llist_for_each_entry(nse, &cfg->bss_nses, list) {
+	hash_for_each(cfg->bss_nses, i, nse, list) {
 		struct gbproxy_bvc *bvc;
 		llist_for_each_entry(bvc, &nse->bvcs, list) {
 			if (!memcmp(bvc->ra + 3, la + 3, 2))
@@ -268,11 +272,12 @@ void gbproxy_bvc_move(struct gbproxy_bvc *bvc, struct gbproxy_nse *nse)
  *  \param[in] bvci if 0: remove all BVCs; if != 0: BVCI of the single BVC to clean up */
 int gbproxy_cleanup_bvcs(struct gbproxy_config *cfg, uint16_t nsei, uint16_t bvci)
 {
-	int counter = 0;
-	struct gbproxy_nse *nse, *ntmp;
+	int i, counter = 0;
+	struct gbproxy_nse *nse;
+	struct hlist_node *ntmp;
 	OSMO_ASSERT(cfg);
 
-	llist_for_each_entry_safe(nse, ntmp, &cfg->bss_nses, list) {
+	hash_for_each_safe(cfg->bss_nses, i, ntmp, nse, list) {
 		struct gbproxy_bvc *bvc, *tmp;
 		if (nse->nsei != nsei)
 			continue;
@@ -300,7 +305,7 @@ struct gbproxy_nse *gbproxy_nse_alloc(struct gbproxy_config *cfg, uint16_t nsei)
 	nse->nsei = nsei;
 	nse->cfg = cfg;
 
-	llist_add(&nse->list, &cfg->bss_nses);
+	hash_add(cfg->bss_nses, &nse->list, nsei);
 
 	INIT_LLIST_HEAD(&nse->bvcs);
 
@@ -313,7 +318,7 @@ void gbproxy_nse_free(struct gbproxy_nse *nse)
 	if (!nse)
 		return;
 
-	llist_del(&nse->list);
+	hash_del(&nse->list);
 
 	llist_for_each_entry_safe(bvc, tmp, &nse->bvcs, list)
 		gbproxy_bvc_free(bvc);
@@ -326,7 +331,7 @@ struct gbproxy_nse *gbproxy_nse_by_nsei(struct gbproxy_config *cfg, uint16_t nse
 	struct gbproxy_nse *nse;
 	OSMO_ASSERT(cfg);
 
-	llist_for_each_entry(nse, &cfg->bss_nses, list) {
+	hash_for_each_possible(cfg->bss_nses, nse, list, nsei) {
 		if (nse->nsei == nsei)
 			return nse;
 	}

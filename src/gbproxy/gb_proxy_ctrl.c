@@ -56,6 +56,7 @@ static int get_nsvc_state(struct ctrl_cmd *cmd, void *data)
 	struct gprs_ns2_inst *nsi = cfg->nsi;
 	struct gprs_ns2_nse *nse;
 	struct gbproxy_nse *nse_peer;
+	int i;
 
 	cmd->reply = talloc_strdup(cmd, "");
 
@@ -69,7 +70,7 @@ static int get_nsvc_state(struct ctrl_cmd *cmd, void *data)
 		gprs_ns2_nse_foreach_nsvc(nse, &ctrl_nsvc_state_cb, cmd);
 
 	/* NS-VCs for BSS peers */
-	llist_for_each_entry(nse_peer, &cfg->bss_nses, list) {
+	hash_for_each(cfg->bss_nses, i, nse_peer, list) {
 		nse = gprs_ns2_nse_by_nsei(nsi, nse_peer->nsei);
 		if (nse)
 			gprs_ns2_nse_foreach_nsvc(nse, &ctrl_nsvc_state_cb, cmd);
@@ -84,10 +85,11 @@ static int get_gbproxy_state(struct ctrl_cmd *cmd, void *data)
 {
 	struct gbproxy_config *cfg = data;
 	struct gbproxy_nse *nse_peer;
+	int i;
 
 	cmd->reply = talloc_strdup(cmd, "");
 
-	llist_for_each_entry(nse_peer, &cfg->bss_nses, list) {
+	hash_for_each(cfg->bss_nses, i, nse_peer, list) {
 		struct gbproxy_bvc *bvc;
 		llist_for_each_entry(bvc, &nse_peer->bvcs, list) {
 			struct gprs_ra_id raid;
@@ -111,8 +113,9 @@ static int get_num_peers(struct ctrl_cmd *cmd, void *data)
 	struct gbproxy_config *cfg = data;
 	struct gbproxy_nse *nse_peer;
 	uint32_t count = 0;
+	int i;
 
-	llist_for_each_entry(nse_peer, &cfg->bss_nses, list)
+	hash_for_each(cfg->bss_nses, i, nse_peer, list)
 		count += llist_count(&nse_peer->bvcs);
 
 	cmd->reply = talloc_strdup(cmd, "");

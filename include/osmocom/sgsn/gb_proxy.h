@@ -4,6 +4,7 @@
 
 #include <osmocom/core/msgb.h>
 #include <osmocom/core/timer.h>
+#include <osmocom/core/hashtable.h>
 #include <osmocom/gsm/gsm23003.h>
 
 #include <osmocom/gprs/gprs_ns2.h>
@@ -102,7 +103,7 @@ struct gbproxy_config {
 	struct gprs_ns2_inst *nsi;
 
 	/* Linked list of all BSS side Gb peers */
-	struct llist_head bss_nses;
+	DECLARE_HASHTABLE(bss_nses, 8);
 
 	/* Counter */
 	struct rate_ctr_group *ctrg;
@@ -176,7 +177,7 @@ struct gbproxy_bvc {
 /* one NS Entity that we interact with (BSS/PCU) */
 struct gbproxy_nse {
 	/* linked to gbproxy_config.bss_nses */
-	struct llist_head list;
+	struct hlist_node list;
 
 	/* point back to the config */
 	struct gbproxy_config *cfg;

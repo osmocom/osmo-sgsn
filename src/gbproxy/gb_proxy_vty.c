@@ -422,13 +422,14 @@ DEFUN(cfg_gbproxy_link_list_clean_stale_timer,
       "Frequency at which the periodic timer is fired (in seconds)\n")
 {
 	struct gbproxy_nse *nse;
+	int i;
 	g_cfg->clean_stale_timer_freq = (unsigned int) atoi(argv[0]);
 
 	/* Re-schedule running timers soon in case prev frequency was really big
 	   and new frequency is desired to be lower. After initial run, periodic
 	   time is used. Use random() to avoid firing timers for all bvcs at
 	   the same time */
-	llist_for_each_entry(nse, &g_cfg->bss_nses, list) {
+	hash_for_each(g_cfg->bss_nses, i, nse, list) {
 		struct gbproxy_bvc *bvc;
 		llist_for_each_entry(bvc, &nse->bvcs, list)
 			osmo_timer_schedule(&bvc->clean_stale_timer,
@@ -445,9 +446,10 @@ DEFUN(cfg_gbproxy_link_list_no_clean_stale_timer,
 
 {
 	struct gbproxy_nse *nse;
+	int i;
 	g_cfg->clean_stale_timer_freq = 0;
 
-	llist_for_each_entry(nse, &g_cfg->bss_nses, list) {
+	hash_for_each(g_cfg->bss_nses, i, nse, list) {
 		struct gbproxy_bvc *bvc;
 		llist_for_each_entry(bvc, &nse->bvcs, list)
 			osmo_timer_del(&bvc->clean_stale_timer);
@@ -580,11 +582,12 @@ DEFUN(show_gbproxy, show_gbproxy_cmd, "show gbproxy [stats]",
 {
 	struct gbproxy_nse *nse;
 	int show_stats = argc >= 1;
+	int i;
 
 	if (show_stats)
 		vty_out_rate_ctr_group(vty, "", g_cfg->ctrg);
 
-	llist_for_each_entry(nse, &g_cfg->bss_nses, list) {
+	hash_for_each(g_cfg->bss_nses, i, nse, list) {
 		struct gbproxy_bvc *bvc;
 		llist_for_each_entry(bvc, &nse->bvcs, list) {
 			gbprox_vty_print_bvc(vty, bvc);
@@ -602,11 +605,12 @@ DEFUN(show_gbproxy_links, show_gbproxy_links_cmd, "show gbproxy links",
 	struct gbproxy_nse *nse;
 	time_t now;
 	struct timespec ts = {0,};
+	int i;
 
 	osmo_clock_gettime(CLOCK_MONOTONIC, &ts);
 	now = ts.tv_sec;
 
-	llist_for_each_entry(nse, &g_cfg->bss_nses, list) {
+	hash_for_each(g_cfg->bss_nses, i, nse, list) {
 		struct gbproxy_bvc *bvc;
 		llist_for_each_entry(bvc, &nse->bvcs, list) {
 			struct gbproxy_link_info *link_info;
@@ -703,8 +707,9 @@ DEFUN(delete_gb_nsei, delete_gb_nsei_cmd,
 		} else {
 			struct gbproxy_nse *nse;
 			struct gbproxy_bvc *bvc;
+			int i;
 			counter = 0;
-			llist_for_each_entry(nse, &g_cfg->bss_nses, list) {
+			hash_for_each(g_cfg->bss_nses, i, nse, list) {
 				if (nse->nsei != nsei)
 					continue;
 				llist_for_each_entry(bvc, &nse->bvcs, list) {

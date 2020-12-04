@@ -120,7 +120,7 @@ static int dump_peers(FILE *stream, int indent, time_t now,
 {
 	struct gbproxy_nse *nse;
 	struct gprs_ra_id raid;
-	unsigned int i;
+	unsigned int i, _nse;
 	const struct rate_ctr_group_desc *desc;
 	int rc;
 
@@ -129,7 +129,7 @@ static int dump_peers(FILE *stream, int indent, time_t now,
 		return rc;
 
 
-	llist_for_each_entry(nse, &cfg->bss_nses, list) {
+	hash_for_each(cfg->bss_nses, _nse, nse, list) {
 		struct gbproxy_bvc *peer;
 		llist_for_each_entry(peer, &nse->bvcs, list) {
 			struct gbproxy_link_info *link_info;

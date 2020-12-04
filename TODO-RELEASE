@@ -1,2 +1,3 @@
 #component	what		description / commit summary line
 manual				needs common chapter cs7-config.adoc, vty_cpu_sched.adoc from osmo-gsm-manuals > 0.3.0
+configure.ac	libosmocore	depend on next released libosmocore after 1.4.x with hashtable support
