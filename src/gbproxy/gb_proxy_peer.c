@@ -242,7 +242,8 @@ struct gbproxy_peer *gbproxy_peer_alloc(struct gbproxy_nse *nse, uint16_t bvci)
 
 void gbproxy_peer_free(struct gbproxy_peer *peer)
 {
-	OSMO_ASSERT(peer);
+	if (!peer)
+		return;
 
 	llist_del(&peer->list);
 	osmo_timer_del(&peer->clean_stale_timer);
@@ -305,7 +306,8 @@ struct gbproxy_nse *gbproxy_nse_alloc(struct gbproxy_config *cfg, uint16_t nsei)
 void gbproxy_nse_free(struct gbproxy_nse *nse)
 {
 	struct gbproxy_peer *peer, *tmp;
-	OSMO_ASSERT(nse);
+	if (!nse)
+		return;
 
 	llist_del(&nse->list);
 
