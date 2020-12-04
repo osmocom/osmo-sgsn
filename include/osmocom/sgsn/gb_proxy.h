@@ -37,7 +37,7 @@ enum gbproxy_global_ctr {
 	GBPROX_GLOB_CTR_PATCH_PEER_ERR,
 };
 
-enum gbproxy_peer_ctr {
+enum gbproxy_bvc_ctr {
 	GBPROX_PEER_CTR_BLOCKED,
 	GBPROX_PEER_CTR_UNBLOCKED,
 	GBPROX_PEER_CTR_DROPPED,
@@ -102,7 +102,7 @@ struct gbproxy_config {
 	struct gprs_ns2_inst *nsi;
 
 	/* Linked list of all Gb peers (except SGSN) */
-	struct llist_head nse_peers;
+	struct llist_head nses;
 
 	/* Counter */
 	struct rate_ctr_group *ctrg;
@@ -118,7 +118,7 @@ struct gbproxy_config {
 	unsigned int clean_stale_timer_freq;
 	/* If !0, Max age to consider a struct gbproxy_link_info as stale */
 	int tlli_max_age;
-	/* If !0, Max len of gbproxy_peer->list (list of struct gbproxy_link_info) */
+	/* If !0, Max len of gbproxy_bvc->list (list of struct gbproxy_link_info) */
 	int tlli_max_len;
 	/* If !0, Max len of gbproxy_link_info->stored_msgs (list of msgb) */
 	uint32_t stored_msgs_max_len;
@@ -147,17 +147,17 @@ struct gbproxy_patch_state {
 };
 
 /* One BVC inside an NSE */
-struct gbproxy_peer {
-	/* linked to gbproxy_nse.bts_peers */
+struct gbproxy_bvc {
+	/* linked to gbproxy_nse.bvcs */
 	struct llist_head list;
 
-	/* The peer this BVC belongs to */
+	/* The NSE this BVC belongs to */
 	struct gbproxy_nse *nse;
 
-	/* BVCI used for Point-to-Point to this peer */
+	/* PTP BVCI of this BVC */
 	uint16_t bvci;
 
-	/* Routing Area that this peer is part of (raw 04.08 encoding) */
+	/* Routing Area that this BVC is part of (raw 04.08 encoding) */
 	uint8_t ra[6];
 
 	/* true if this BVC is blocked */
@@ -173,19 +173,19 @@ struct gbproxy_peer {
 	struct osmo_timer_list clean_stale_timer;
 };
 
-/* one peer at NS level that we interact with (BSS/PCU) */
+/* one NS Entity that we interact with (BSS/PCU) */
 struct gbproxy_nse {
-	/* linked to gbproxy_config.nse_peers */
+	/* linked to gbproxy_config.nses */
 	struct llist_head list;
 
 	/* point back to the config */
 	struct gbproxy_config *cfg;
 
-	/* NSEI of the peer entity */
+	/* NSEI of the NSE */
 	uint16_t nsei;
 
 	/* List of all BVCs in this NSE */
-	struct llist_head bts_peers;
+	struct llist_head bvcs;
 };
 
 struct gbproxy_tlli_state {
@@ -205,7 +205,7 @@ struct gbproxy_tlli_state {
 
 /* One TLLI (= UE, = Subscriber) served via this proxy */
 struct gbproxy_link_info {
-	/* link to gbproxy_peer.patch_state.logical_links */
+	/* link to gbproxy_bvc.patch_state.logical_links */
 	struct llist_head list;
 
 	/* TLLI on the BSS/PCU side */
@@ -276,40 +276,40 @@ int gprs_ns2_prim_cb(struct osmo_prim_hdr *oph, void *ctx);
 void gbprox_reset(struct gbproxy_config *cfg);
 
 /* TLLI info handling */
-void gbproxy_delete_link_infos(struct gbproxy_peer *peer);
+void gbproxy_delete_link_infos(struct gbproxy_bvc *bvc);
 struct gbproxy_link_info *gbproxy_update_link_state_ul(
-	struct gbproxy_peer *peer, time_t now,
+	struct gbproxy_bvc *bvc, time_t now,
 	struct gprs_gb_parse_context *parse_ctx);
 struct gbproxy_link_info *gbproxy_update_link_state_dl(
-	struct gbproxy_peer *peer, time_t now,
+	struct gbproxy_bvc *bvc, time_t now,
 	struct gprs_gb_parse_context *parse_ctx);
 int gbproxy_update_link_state_after(
-	struct gbproxy_peer *peer, struct gbproxy_link_info *link_info,
+	struct gbproxy_bvc *bvc, struct gbproxy_link_info *link_info,
 	time_t now, struct gprs_gb_parse_context *parse_ctx);
-int gbproxy_remove_stale_link_infos(struct gbproxy_peer *peer, time_t now);
-void gbproxy_delete_link_info(struct gbproxy_peer *peer,
+int gbproxy_remove_stale_link_infos(struct gbproxy_bvc *bvc, time_t now);
+void gbproxy_delete_link_info(struct gbproxy_bvc *bvc,
 			 struct gbproxy_link_info *link_info);
 void gbproxy_link_info_discard_messages(struct gbproxy_link_info *link_info);
 
-void gbproxy_attach_link_info(struct gbproxy_peer *peer, time_t now,
+void gbproxy_attach_link_info(struct gbproxy_bvc *bvc, time_t now,
 			      struct gbproxy_link_info *link_info);
 void gbproxy_update_link_info(struct gbproxy_link_info *link_info,
 			      const uint8_t *imsi, size_t imsi_len);
-void gbproxy_detach_link_info(struct gbproxy_peer *peer,
+void gbproxy_detach_link_info(struct gbproxy_bvc *bvc,
 			      struct gbproxy_link_info *link_info);
-struct gbproxy_link_info *gbproxy_link_info_alloc( struct gbproxy_peer *peer);
+struct gbproxy_link_info *gbproxy_link_info_alloc( struct gbproxy_bvc *bvc);
 
 struct gbproxy_link_info *gbproxy_link_info_by_tlli(
-	struct gbproxy_peer *peer, uint32_t tlli);
+	struct gbproxy_bvc *bvc, uint32_t tlli);
 struct gbproxy_link_info *gbproxy_link_info_by_imsi(
-	struct gbproxy_peer *peer, const uint8_t *imsi, size_t imsi_len);
+	struct gbproxy_bvc *bvc, const uint8_t *imsi, size_t imsi_len);
 struct gbproxy_link_info *gbproxy_link_info_by_any_sgsn_tlli(
-	struct gbproxy_peer *peer, uint32_t tlli);
+	struct gbproxy_bvc *bvc, uint32_t tlli);
 struct gbproxy_link_info *gbproxy_link_info_by_sgsn_tlli(
-	struct gbproxy_peer *peer,
+	struct gbproxy_bvc *bvc,
 	uint32_t tlli, uint32_t sgsn_nsei);
 struct gbproxy_link_info *gbproxy_link_info_by_ptmsi(
-	struct gbproxy_peer *peer,
+	struct gbproxy_bvc *bvc,
 	uint32_t ptmsi);
 
 int gbproxy_imsi_matches(
@@ -320,9 +320,9 @@ uint32_t gbproxy_map_tlli(
 	uint32_t other_tlli, struct gbproxy_link_info *link_info, int to_bss);
 
 /* needed by gb_proxy_tlli.h */
-uint32_t gbproxy_make_bss_ptmsi(struct gbproxy_peer *peer, uint32_t sgsn_ptmsi);
+uint32_t gbproxy_make_bss_ptmsi(struct gbproxy_bvc *bvc, uint32_t sgsn_ptmsi);
 uint32_t gbproxy_make_sgsn_tlli(
-	struct gbproxy_peer *peer, struct gbproxy_link_info *link_info,
+	struct gbproxy_bvc *bvc, struct gbproxy_link_info *link_info,
 	uint32_t bss_tlli);
 void gbproxy_reset_link(struct gbproxy_link_info *link_info);
 int gbproxy_check_imsi(
@@ -331,12 +331,12 @@ int gbproxy_check_imsi(
 /* Message patching */
 void gbproxy_patch_bssgp(
 	struct msgb *msg, uint8_t *bssgp, size_t bssgp_len,
-	struct gbproxy_peer *peer, struct gbproxy_link_info *link_info,
+	struct gbproxy_bvc *bvc, struct gbproxy_link_info *link_info,
 	int *len_change, struct gprs_gb_parse_context *parse_ctx);
 
 int gbproxy_patch_llc(
 	struct msgb *msg, uint8_t *llc, size_t llc_len,
-	struct gbproxy_peer *peer, struct gbproxy_link_info *link_info,
+	struct gbproxy_bvc *bvc, struct gbproxy_link_info *link_info,
 	int *len_change, struct gprs_gb_parse_context *parse_ctx);
 
 int gbproxy_set_patch_filter(
@@ -344,22 +344,22 @@ int gbproxy_set_patch_filter(
 void gbproxy_clear_patch_filter(struct gbproxy_match *match);
 
 /* Peer handling */
-struct gbproxy_peer *gbproxy_peer_by_bvci(
+struct gbproxy_bvc *gbproxy_bvc_by_bvci(
 	struct gbproxy_config *cfg, uint16_t bvci);
-struct gbproxy_peer *gbproxy_peer_by_nsei(
+struct gbproxy_bvc *gbproxy_bvc_by_nsei(
 	struct gbproxy_config *cfg, uint16_t nsei);
-struct gbproxy_peer *gbproxy_peer_by_rai(
+struct gbproxy_bvc *gbproxy_bvc_by_rai(
 	struct gbproxy_config *cfg, const uint8_t *ra);
-struct gbproxy_peer *gbproxy_peer_by_lai(
+struct gbproxy_bvc *gbproxy_bvc_by_lai(
 	struct gbproxy_config *cfg, const uint8_t *la);
-struct gbproxy_peer *gbproxy_peer_by_lac(
+struct gbproxy_bvc *gbproxy_bvc_by_lac(
 	struct gbproxy_config *cfg, const uint8_t *la);
-struct gbproxy_peer *gbproxy_peer_by_bssgp_tlv(
+struct gbproxy_bvc *gbproxy_bvc_by_bssgp_tlv(
 	struct gbproxy_config *cfg, struct tlv_parsed *tp);
-struct gbproxy_peer *gbproxy_peer_alloc(struct gbproxy_nse *nse, uint16_t bvci);
-void gbproxy_peer_free(struct gbproxy_peer *peer);
-void gbproxy_peer_move(struct gbproxy_peer *peer, struct gbproxy_nse *nse);
-int gbproxy_cleanup_peers(struct gbproxy_config *cfg, uint16_t nsei, uint16_t bvci);
+struct gbproxy_bvc *gbproxy_bvc_alloc(struct gbproxy_nse *nse, uint16_t bvci);
+void gbproxy_bvc_free(struct gbproxy_bvc *bvc);
+void gbproxy_bvc_move(struct gbproxy_bvc *bvc, struct gbproxy_nse *nse);
+int gbproxy_cleanup_bvcs(struct gbproxy_config *cfg, uint16_t nsei, uint16_t bvci);
 
 /* NSE handling */
 struct gbproxy_nse *gbproxy_nse_alloc(struct gbproxy_config *cfg, uint16_t nsei);

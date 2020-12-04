@@ -68,14 +68,14 @@ static const struct value_string match_ids[] = {
 	{0, NULL}
 };
 
-static void gbprox_vty_print_peer(struct vty *vty, struct gbproxy_peer *peer)
+static void gbprox_vty_print_bvc(struct vty *vty, struct gbproxy_bvc *bvc)
 {
 	struct gprs_ra_id raid;
-	gsm48_parse_ra(&raid, peer->ra);
+	gsm48_parse_ra(&raid, bvc->ra);
 
 	vty_out(vty, "NSEI %5u, PTP-BVCI %5u, "
-		"RAI %s", peer->nse->nsei, peer->bvci, osmo_rai_name(&raid));
-	if (peer->blocked)
+		"RAI %s", bvc->nse->nsei, bvc->bvci, osmo_rai_name(&raid));
+	if (bvc->blocked)
 		vty_out(vty, " [BVC-BLOCKED]");
 
 	vty_out(vty, "%s", VTY_NEWLINE);
@@ -426,12 +426,12 @@ DEFUN(cfg_gbproxy_link_list_clean_stale_timer,
 
 	/* Re-schedule running timers soon in case prev frequency was really big
 	   and new frequency is desired to be lower. After initial run, periodic
-	   time is used. Use random() to avoid firing timers for all peers at
+	   time is used. Use random() to avoid firing timers for all bvcs at
 	   the same time */
-	llist_for_each_entry(nse, &g_cfg->nse_peers, list) {
-		struct gbproxy_peer *peer;
-		llist_for_each_entry(peer, &nse->bts_peers, list)
-			osmo_timer_schedule(&peer->clean_stale_timer,
+	llist_for_each_entry(nse, &g_cfg->nses, list) {
+		struct gbproxy_bvc *bvc;
+		llist_for_each_entry(bvc, &nse->bvcs, list)
+			osmo_timer_schedule(&bvc->clean_stale_timer,
 						random() % 5, random() % 1000000);
 	}
 
@@ -447,10 +447,10 @@ DEFUN(cfg_gbproxy_link_list_no_clean_stale_timer,
 	struct gbproxy_nse *nse;
 	g_cfg->clean_stale_timer_freq = 0;
 
-	llist_for_each_entry(nse, &g_cfg->nse_peers, list) {
-		struct gbproxy_peer *peer;
-		llist_for_each_entry(peer, &nse->bts_peers, list)
-			osmo_timer_del(&peer->clean_stale_timer);
+	llist_for_each_entry(nse, &g_cfg->nses, list) {
+		struct gbproxy_bvc *bvc;
+		llist_for_each_entry(bvc, &nse->bvcs, list)
+			osmo_timer_del(&bvc->clean_stale_timer);
 	}
 
 	return CMD_SUCCESS;
@@ -584,13 +584,13 @@ DEFUN(show_gbproxy, show_gbproxy_cmd, "show gbproxy [stats]",
 	if (show_stats)
 		vty_out_rate_ctr_group(vty, "", g_cfg->ctrg);
 
-	llist_for_each_entry(nse, &g_cfg->nse_peers, list) {
-		struct gbproxy_peer *peer;
-		llist_for_each_entry(peer, &nse->bts_peers, list) {
-			gbprox_vty_print_peer(vty, peer);
+	llist_for_each_entry(nse, &g_cfg->nses, list) {
+		struct gbproxy_bvc *bvc;
+		llist_for_each_entry(bvc, &nse->bvcs, list) {
+			gbprox_vty_print_bvc(vty, bvc);
 
 			if (show_stats)
-				vty_out_rate_ctr_group(vty, "  ", peer->ctrg);
+				vty_out_rate_ctr_group(vty, "  ", bvc->ctrg);
 		}
 	}
 	return CMD_SUCCESS;
@@ -606,13 +606,13 @@ DEFUN(show_gbproxy_links, show_gbproxy_links_cmd, "show gbproxy links",
 	osmo_clock_gettime(CLOCK_MONOTONIC, &ts);
 	now = ts.tv_sec;
 
-	llist_for_each_entry(nse, &g_cfg->nse_peers, list) {
-		struct gbproxy_peer *peer;
-		llist_for_each_entry(peer, &nse->bts_peers, list) {
+	llist_for_each_entry(nse, &g_cfg->nses, list) {
+		struct gbproxy_bvc *bvc;
+		llist_for_each_entry(bvc, &nse->bvcs, list) {
 			struct gbproxy_link_info *link_info;
-			struct gbproxy_patch_state *state = &peer->patch_state;
+			struct gbproxy_patch_state *state = &bvc->patch_state;
 
-			gbprox_vty_print_peer(vty, peer);
+			gbprox_vty_print_bvc(vty, bvc);
 
 			llist_for_each_entry(link_info, &state->logical_links, list) {
 				time_t age = now - link_info->timestamp;
@@ -652,16 +652,16 @@ DEFUN(show_gbproxy_links, show_gbproxy_links_cmd, "show gbproxy links",
 
 DEFUN(delete_gb_bvci, delete_gb_bvci_cmd,
 	"delete-gbproxy-peer <0-65534> bvci <2-65534>",
-	"Delete a GBProxy peer by NSEI and optionally BVCI\n"
+	"Delete a GBProxy bvc by NSEI and optionally BVCI\n"
 	"NSEI number\n"
-	"Only delete peer with a matching BVCI\n"
+	"Only delete bvc with a matching BVCI\n"
 	"BVCI number\n")
 {
 	const uint16_t nsei = atoi(argv[0]);
 	const uint16_t bvci = atoi(argv[1]);
 	int counter;
 
-	counter = gbproxy_cleanup_peers(g_cfg, nsei, bvci);
+	counter = gbproxy_cleanup_bvcs(g_cfg, nsei, bvci);
 
 	if (counter == 0) {
 		vty_out(vty, "BVC not found%s", VTY_NEWLINE);
@@ -673,7 +673,7 @@ DEFUN(delete_gb_bvci, delete_gb_bvci_cmd,
 
 DEFUN(delete_gb_nsei, delete_gb_nsei_cmd,
 	"delete-gbproxy-peer <0-65534> (only-bvc|only-nsvc|all) [dry-run]",
-	"Delete a GBProxy peer by NSEI and optionally BVCI\n"
+	"Delete a GBProxy bvc by NSEI and optionally BVCI\n"
 	"NSEI number\n"
 	"Only delete BSSGP connections (BVC)\n"
 	"Only delete dynamic NS connections (NS-VC)\n"
@@ -698,18 +698,18 @@ DEFUN(delete_gb_nsei, delete_gb_nsei_cmd,
 	if (delete_bvc) {
 		if (!dry_run) {
 			struct gbproxy_nse *nse = gbproxy_nse_by_nsei(g_cfg, nsei);
-			counter = gbproxy_cleanup_peers(g_cfg, nsei, 0);
+			counter = gbproxy_cleanup_bvcs(g_cfg, nsei, 0);
 			gbproxy_nse_free(nse);
 		} else {
 			struct gbproxy_nse *nse;
-			struct gbproxy_peer *peer;
+			struct gbproxy_bvc *bvc;
 			counter = 0;
-			llist_for_each_entry(nse, &g_cfg->nse_peers, list) {
+			llist_for_each_entry(nse, &g_cfg->nses, list) {
 				if (nse->nsei != nsei)
 					continue;
-				llist_for_each_entry(peer, &nse->bts_peers, list) {
+				llist_for_each_entry(bvc, &nse->bvcs, list) {
 					vty_out(vty, "BVC: ");
-					gbprox_vty_print_peer(vty, peer);
+					gbprox_vty_print_bvc(vty, bvc);
 					counter += 1;
 				}
 			}
@@ -754,7 +754,7 @@ DEFUN(delete_gb_link_by_id, delete_gb_link_by_id_cmd,
 	enum {MATCH_TLLI = 't', MATCH_IMSI = 'i', MATCH_SGSN = 's'} match;
 	uint32_t ident = 0;
 	const char *imsi = NULL;
-	struct gbproxy_peer *peer = 0;
+	struct gbproxy_bvc *bvc = 0;
 	struct gbproxy_link_info *link_info, *nxt;
 	struct gbproxy_patch_state *state;
 	int found = 0;
@@ -767,14 +767,14 @@ DEFUN(delete_gb_link_by_id, delete_gb_link_by_id_cmd,
 	case MATCH_SGSN: ident = strtoll(argv[2], NULL, 0); break;
 	};
 
-	peer = gbproxy_peer_by_nsei(g_cfg, nsei);
-	if (!peer) {
-		vty_out(vty, "Didn't find peer with NSEI %d%s",
+	bvc = gbproxy_bvc_by_nsei(g_cfg, nsei);
+	if (!bvc) {
+		vty_out(vty, "Didn't find bvc with NSEI %d%s",
 			nsei, VTY_NEWLINE);
 		return CMD_WARNING;
 	}
 
-	state = &peer->patch_state;
+	state = &bvc->patch_state;
 
 	llist_for_each_entry_safe(link_info, nxt, &state->logical_links, list) {
 		struct osmo_mobile_identity mi;
@@ -801,7 +801,7 @@ DEFUN(delete_gb_link_by_id, delete_gb_link_by_id_cmd,
 
 		vty_out(vty, "Deleting link with TLLI %08x%s", link_info->tlli.current,
 			VTY_NEWLINE);
-		gbproxy_delete_link_info(peer, link_info);
+		gbproxy_delete_link_info(bvc, link_info);
 		found += 1;
 	}
 
@@ -821,7 +821,7 @@ DEFUN(delete_gb_link, delete_gb_link_cmd,
 {
 	const uint16_t nsei = atoi(argv[0]);
 	enum {MATCH_STALE = 's', MATCH_DEREGISTERED = 'd'} match;
-	struct gbproxy_peer *peer = 0;
+	struct gbproxy_bvc *bvc = 0;
 	struct gbproxy_link_info *link_info, *nxt;
 	struct gbproxy_patch_state *state;
 	time_t now;
@@ -831,20 +831,20 @@ DEFUN(delete_gb_link, delete_gb_link_cmd,
 
 	match = argv[1][0];
 
-	peer = gbproxy_peer_by_nsei(g_cfg, nsei);
-	if (!peer) {
-		vty_out(vty, "Didn't find peer with NSEI %d%s",
+	bvc = gbproxy_bvc_by_nsei(g_cfg, nsei);
+	if (!bvc) {
+		vty_out(vty, "Didn't find bvc with NSEI %d%s",
 			nsei, VTY_NEWLINE);
 		return CMD_WARNING;
 	}
 
-	state = &peer->patch_state;
+	state = &bvc->patch_state;
 
 	osmo_clock_gettime(CLOCK_MONOTONIC, &ts);
 	now = ts.tv_sec;
 
 	if (match == MATCH_STALE) {
-		found = gbproxy_remove_stale_link_infos(peer, now);
+		found = gbproxy_remove_stale_link_infos(bvc, now);
 		if (found)
 			vty_out(vty, "Deleted %d stale logical link%s%s",
 				found, found == 1 ? "" : "s", VTY_NEWLINE);
@@ -854,7 +854,7 @@ DEFUN(delete_gb_link, delete_gb_link_cmd,
 			if (!link_info->is_deregistered)
 				continue;
 
-			gbproxy_delete_link_info(peer, link_info);
+			gbproxy_delete_link_info(bvc, link_info);
 			found += 1;
 		}
 	}

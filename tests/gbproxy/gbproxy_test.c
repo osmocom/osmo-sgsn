@@ -129,9 +129,9 @@ static int dump_peers(FILE *stream, int indent, time_t now,
 		return rc;
 
 
-	llist_for_each_entry(nse, &cfg->nse_peers, list) {
-		struct gbproxy_peer *peer;
-		llist_for_each_entry(peer, &nse->bts_peers, list) {
+	llist_for_each_entry(nse, &cfg->nses, list) {
+		struct gbproxy_bvc *peer;
+		llist_for_each_entry(peer, &nse->bvcs, list) {
 			struct gbproxy_link_info *link_info;
 			struct gbproxy_patch_state *state = &peer->patch_state;
 			gsm48_parse_ra(&raid, peer->ra);
@@ -1285,20 +1285,20 @@ static void test_gbproxy()
 	send_ns_unitdata(nsi, NULL, SGSN_NSEI, 0x10ff, (uint8_t *)"", 0);
 
 	/* Find peer */
-	OSMO_ASSERT(gbproxy_peer_by_bvci(&gbcfg, 0xeeee) == NULL);
-	OSMO_ASSERT(gbproxy_peer_by_bvci(&gbcfg, 0x1000) == NULL);
-	OSMO_ASSERT(gbproxy_peer_by_bvci(&gbcfg, 0x1012) != NULL);
-	OSMO_ASSERT(gbproxy_peer_by_nsei(&gbcfg, 0xeeee) == NULL);
-	OSMO_ASSERT(gbproxy_peer_by_nsei(&gbcfg, 0x1012) == NULL);
-	OSMO_ASSERT(gbproxy_peer_by_nsei(&gbcfg, 0x1000) != NULL);
+	OSMO_ASSERT(gbproxy_bvc_by_bvci(&gbcfg, 0xeeee) == NULL);
+	OSMO_ASSERT(gbproxy_bvc_by_bvci(&gbcfg, 0x1000) == NULL);
+	OSMO_ASSERT(gbproxy_bvc_by_bvci(&gbcfg, 0x1012) != NULL);
+	OSMO_ASSERT(gbproxy_bvc_by_nsei(&gbcfg, 0xeeee) == NULL);
+	OSMO_ASSERT(gbproxy_bvc_by_nsei(&gbcfg, 0x1012) == NULL);
+	OSMO_ASSERT(gbproxy_bvc_by_nsei(&gbcfg, 0x1000) != NULL);
 
 
 	/* Cleanup */
-	OSMO_ASSERT(gbproxy_cleanup_peers(&gbcfg, 0, 0) == 0);
-	OSMO_ASSERT(gbproxy_cleanup_peers(&gbcfg, 0x1000, 0xeeee) == 0);
-	OSMO_ASSERT(gbproxy_cleanup_peers(&gbcfg, 0, 0x1002) == 0);
-	OSMO_ASSERT(gbproxy_cleanup_peers(&gbcfg, 0x1000, 0x1012) == 1);
-	OSMO_ASSERT(gbproxy_cleanup_peers(&gbcfg, 0x1000, 0x1012) == 0);
+	OSMO_ASSERT(gbproxy_cleanup_bvcs(&gbcfg, 0, 0) == 0);
+	OSMO_ASSERT(gbproxy_cleanup_bvcs(&gbcfg, 0x1000, 0xeeee) == 0);
+	OSMO_ASSERT(gbproxy_cleanup_bvcs(&gbcfg, 0, 0x1002) == 0);
+	OSMO_ASSERT(gbproxy_cleanup_bvcs(&gbcfg, 0x1000, 0x1012) == 1);
+	OSMO_ASSERT(gbproxy_cleanup_bvcs(&gbcfg, 0x1000, 0x1012) == 0);
 
 	dump_peers(stdout, 0, 0, &gbcfg);
 
@@ -1411,7 +1411,7 @@ static void test_gbproxy_ra_patching()
 	const uint8_t imsi[] = {0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0xf8};
 	const char *patch_re = "^9898|^121314";
 	struct gbproxy_link_info *link_info;
-	struct gbproxy_peer *peer;
+	struct gbproxy_bvc *peer;
 	LLIST_HEAD(rcv_list);
 	struct expect_result *expect_res;
 
@@ -1450,7 +1450,7 @@ static void test_gbproxy_ra_patching()
 	setup_bssgp(nsi, bss_nsei[0], 0x1002);
 	dump_peers(stdout, 0, 0, &gbcfg);
 
-	peer = gbproxy_peer_by_nsei(&gbcfg, 0x1000);
+	peer = gbproxy_bvc_by_nsei(&gbcfg, 0x1000);
 	OSMO_ASSERT(peer != NULL);
 
 	OSMO_ASSERT(expect_bssgp_msg(SGSN_NSEI, 0, BSSGP_PDUT_BVC_RESET));
@@ -1509,17 +1509,17 @@ static void test_gbproxy_ra_patching()
 
 	OSMO_ASSERT(2 == peer->ctrg->ctr[GBPROX_PEER_CTR_RAID_PATCHED_SGSN].current);
 
-	OSMO_ASSERT(gbproxy_peer_by_rai(&gbcfg, convert_ra(&rai_bss)) != NULL);
-	OSMO_ASSERT(gbproxy_peer_by_rai(&gbcfg, convert_ra(&rai_sgsn)) == NULL);
-	OSMO_ASSERT(gbproxy_peer_by_rai(&gbcfg, convert_ra(&rai_unknown)) == NULL);
+	OSMO_ASSERT(gbproxy_bvc_by_rai(&gbcfg, convert_ra(&rai_bss)) != NULL);
+	OSMO_ASSERT(gbproxy_bvc_by_rai(&gbcfg, convert_ra(&rai_sgsn)) == NULL);
+	OSMO_ASSERT(gbproxy_bvc_by_rai(&gbcfg, convert_ra(&rai_unknown)) == NULL);
 
-	OSMO_ASSERT(gbproxy_peer_by_lai(&gbcfg, convert_ra(&rai_bss)) != NULL);
-	OSMO_ASSERT(gbproxy_peer_by_lai(&gbcfg, convert_ra(&rai_sgsn)) == NULL);
-	OSMO_ASSERT(gbproxy_peer_by_lai(&gbcfg, convert_ra(&rai_unknown)) == NULL);
+	OSMO_ASSERT(gbproxy_bvc_by_lai(&gbcfg, convert_ra(&rai_bss)) != NULL);
+	OSMO_ASSERT(gbproxy_bvc_by_lai(&gbcfg, convert_ra(&rai_sgsn)) == NULL);
+	OSMO_ASSERT(gbproxy_bvc_by_lai(&gbcfg, convert_ra(&rai_unknown)) == NULL);
 
-	OSMO_ASSERT(gbproxy_peer_by_lac(&gbcfg, convert_ra(&rai_bss)) != NULL);
-	OSMO_ASSERT(gbproxy_peer_by_lac(&gbcfg, convert_ra(&rai_sgsn)) != NULL);
-	OSMO_ASSERT(gbproxy_peer_by_lac(&gbcfg, convert_ra(&rai_unknown)) == NULL);
+	OSMO_ASSERT(gbproxy_bvc_by_lac(&gbcfg, convert_ra(&rai_bss)) != NULL);
+	OSMO_ASSERT(gbproxy_bvc_by_lac(&gbcfg, convert_ra(&rai_sgsn)) != NULL);
+	OSMO_ASSERT(gbproxy_bvc_by_lac(&gbcfg, convert_ra(&rai_unknown)) == NULL);
 
 	link_info = gbproxy_link_info_by_sgsn_tlli(peer, local_tlli, SGSN_NSEI);
 	OSMO_ASSERT(link_info);
@@ -1750,7 +1750,7 @@ static void test_gbproxy_ptmsi_assignment()
 	const uint8_t imsi2[] = {0x11, 0x12, 0x99, 0x99, 0x99, 0x16, 0x17, 0xf8};
 
 	struct gbproxy_link_info *link_info, *link_info2;
-	struct gbproxy_peer *peer;
+	struct gbproxy_bvc *peer;
 	unsigned bss_nu = 0;
 	unsigned sgsn_nu = 0;
 
@@ -1777,7 +1777,7 @@ static void test_gbproxy_ptmsi_assignment()
 	setup_ns(nsi, bss_nsei[0]);
 	setup_bssgp(nsi, bss_nsei[0], 0x1002);
 
-	peer = gbproxy_peer_by_nsei(&gbcfg, 0x1000);
+	peer = gbproxy_bvc_by_nsei(&gbcfg, 0x1000);
 	OSMO_ASSERT(peer != NULL);
 
 	send_bssgp_reset_ack(nsi, SGSN_NSEI, 0x1002);
@@ -1977,7 +1977,7 @@ static void test_gbproxy_ptmsi_patching()
 
 	const uint8_t imsi[] = {0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0xf8};
 	struct gbproxy_link_info *link_info;
-	struct gbproxy_peer *peer;
+	struct gbproxy_bvc *peer;
 	unsigned bss_nu = 0;
 	unsigned sgsn_nu = 0;
 	int old_ctr;
@@ -2010,7 +2010,7 @@ static void test_gbproxy_ptmsi_patching()
 	setup_ns(nsi, bss_nsei[0]);
 	setup_bssgp(nsi, bss_nsei[0], 0x1002);
 
-	peer = gbproxy_peer_by_nsei(&gbcfg, 0x1000);
+	peer = gbproxy_bvc_by_nsei(&gbcfg, 0x1000);
 	OSMO_ASSERT(peer != NULL);
 
 	send_bssgp_reset_ack(nsi, SGSN_NSEI, 0x1002);
@@ -2300,7 +2300,7 @@ static void test_gbproxy_ptmsi_patching_bad_cases()
 
 	const uint8_t imsi[] = {0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0xf8};
 	struct gbproxy_link_info *link_info;
-	struct gbproxy_peer *peer;
+	struct gbproxy_bvc *peer;
 	unsigned bss_nu = 0;
 	unsigned sgsn_nu = 0;
 	uint16_t bss_nsei[] = { 0x1000 };
@@ -2327,7 +2327,7 @@ static void test_gbproxy_ptmsi_patching_bad_cases()
 	setup_ns(nsi, bss_nsei[0]);
 	setup_bssgp(nsi, bss_nsei[0], 0x1002);
 
-	peer = gbproxy_peer_by_nsei(&gbcfg, 0x1000);
+	peer = gbproxy_bvc_by_nsei(&gbcfg, 0x1000);
 	OSMO_ASSERT(peer != NULL);
 
 	send_bssgp_reset_ack(nsi, SGSN_NSEI, 0x1002);
@@ -2483,7 +2483,7 @@ static void test_gbproxy_imsi_acquisition()
 
 	const uint8_t imsi[] = {0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0xf8};
 	struct gbproxy_link_info *link_info;
-	struct gbproxy_peer *peer;
+	struct gbproxy_bvc *peer;
 	unsigned bss_nu = 0;
 	unsigned sgsn_nu = 0;
 	uint16_t bss_nsei[] = { 0x1000 };
@@ -2510,7 +2510,7 @@ static void test_gbproxy_imsi_acquisition()
 	setup_ns(nsi, bss_nsei[0]);
 	setup_bssgp(nsi, bss_nsei[0], 0x1002);
 
-	peer = gbproxy_peer_by_nsei(&gbcfg, 0x1000);
+	peer = gbproxy_bvc_by_nsei(&gbcfg, 0x1000);
 	OSMO_ASSERT(peer != NULL);
 
 	send_bssgp_reset_ack(nsi, SGSN_NSEI, 0x1002);
@@ -2803,7 +2803,7 @@ static void test_gbproxy_secondary_sgsn()
 	const uint8_t imsi3[] = {0x11, 0x12, 0x99, 0x99, 0x99, 0x26, 0x27, 0xf8};
 	struct gbproxy_link_info *link_info;
 	struct gbproxy_link_info *other_info;
-	struct gbproxy_peer *peer;
+	struct gbproxy_bvc *peer;
 	unsigned bss_nu = 0;
 	unsigned sgsn_nu = 0;
 
@@ -2852,7 +2852,7 @@ static void test_gbproxy_secondary_sgsn()
 	send_bssgp_reset_ack(nsi, SGSN_NSEI, 0x1002);
 	send_bssgp_reset_ack(nsi, SGSN2_NSEI, 0x1002);
 
-	peer = gbproxy_peer_by_nsei(&gbcfg, 0x1000);
+	peer = gbproxy_bvc_by_nsei(&gbcfg, 0x1000);
 	OSMO_ASSERT(peer != NULL);
 
 	dump_global(stdout, 0);
@@ -3279,7 +3279,7 @@ static void test_gbproxy_keep_info()
 
 	const uint8_t imsi[] = {0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0xf8};
 	struct gbproxy_link_info *link_info, *link_info2;
-	struct gbproxy_peer *peer;
+	struct gbproxy_bvc *peer;
 	unsigned bss_nu = 0;
 	unsigned sgsn_nu = 0;
 	uint16_t bss_nsei[] = { 0x1000 };
@@ -3311,7 +3311,7 @@ static void test_gbproxy_keep_info()
 	setup_ns(nsi, bss_nsei[0]);
 	setup_bssgp(nsi, bss_nsei[0], 0x1002);
 
-	peer = gbproxy_peer_by_nsei(&gbcfg, 0x1000);
+	peer = gbproxy_bvc_by_nsei(&gbcfg, 0x1000);
 	OSMO_ASSERT(peer != NULL);
 
 	send_bssgp_reset_ack(nsi, SGSN_NSEI, 0x1002);
@@ -4208,7 +4208,7 @@ static void test_gbproxy_keep_info()
 }
 
 struct gbproxy_link_info *register_tlli(
-	struct gbproxy_peer *peer, uint32_t tlli,
+	struct gbproxy_bvc *peer, uint32_t tlli,
 	const uint8_t *imsi, size_t imsi_len, time_t now)
 {
 	struct gbproxy_link_info *link_info;
@@ -4264,7 +4264,7 @@ static void test_gbproxy_tlli_expire(void)
 {
 	struct gbproxy_config cfg = {0};
 	struct gbproxy_nse *nse;
-	struct gbproxy_peer *peer;
+	struct gbproxy_bvc *peer;
 	const char *err_msg = NULL;
 	const uint8_t imsi1[] = { GSM_MI_TYPE_IMSI, 0x23, 0x24, 0x25, 0xf6 };
 	const uint8_t imsi2[] = { GSM_MI_TYPE_IMSI, 0x26, 0x27, 0x28, 0xf9 };
@@ -4294,7 +4294,7 @@ static void test_gbproxy_tlli_expire(void)
 
 		cfg.tlli_max_len = 0;
 		cfg.tlli_max_age = 0;
-		peer = gbproxy_peer_alloc(nse, 20);
+		peer = gbproxy_bvc_alloc(nse, 20);
 		OSMO_ASSERT(peer->patch_state.logical_link_count == 0);
 
 		printf("  Add TLLI 1, IMSI 1\n");
@@ -4323,7 +4323,7 @@ static void test_gbproxy_tlli_expire(void)
 
 		printf("\n");
 
-		gbproxy_peer_free(peer);
+		gbproxy_bvc_free(peer);
 	}
 
 	{
@@ -4333,7 +4333,7 @@ static void test_gbproxy_tlli_expire(void)
 
 		cfg.tlli_max_len = 0;
 		cfg.tlli_max_age = 0;
-		peer = gbproxy_peer_alloc(nse, 20);
+		peer = gbproxy_bvc_alloc(nse, 20);
 		OSMO_ASSERT(peer->patch_state.logical_link_count == 0);
 
 		printf("  Add TLLI 1, IMSI 1\n");
@@ -4362,7 +4362,7 @@ static void test_gbproxy_tlli_expire(void)
 
 		printf("\n");
 
-		gbproxy_peer_free(peer);
+		gbproxy_bvc_free(peer);
 	}
 
 	{
@@ -4373,7 +4373,7 @@ static void test_gbproxy_tlli_expire(void)
 
 		cfg.tlli_max_len = 1;
 		cfg.tlli_max_age = 0;
-		peer = gbproxy_peer_alloc(nse, 20);
+		peer = gbproxy_bvc_alloc(nse, 20);
 		OSMO_ASSERT(peer->patch_state.logical_link_count == 0);
 
 		printf("  Add TLLI 1, IMSI 1\n");
@@ -4400,7 +4400,7 @@ static void test_gbproxy_tlli_expire(void)
 
 		printf("\n");
 
-		gbproxy_peer_free(peer);
+		gbproxy_bvc_free(peer);
 	}
 
 	{
@@ -4411,7 +4411,7 @@ static void test_gbproxy_tlli_expire(void)
 
 		cfg.tlli_max_len = 0;
 		cfg.tlli_max_age = 1;
-		peer = gbproxy_peer_alloc(nse, 20);
+		peer = gbproxy_bvc_alloc(nse, 20);
 		OSMO_ASSERT(peer->patch_state.logical_link_count == 0);
 
 		printf("  Add TLLI 1, IMSI 1 (should expire after timeout)\n");
@@ -4438,7 +4438,7 @@ static void test_gbproxy_tlli_expire(void)
 
 		printf("\n");
 
-		gbproxy_peer_free(peer);
+		gbproxy_bvc_free(peer);
 	}
 
 	{
@@ -4449,7 +4449,7 @@ static void test_gbproxy_tlli_expire(void)
 
 		cfg.tlli_max_len = 0;
 		cfg.tlli_max_age = 1;
-		peer = gbproxy_peer_alloc(nse, 20);
+		peer = gbproxy_bvc_alloc(nse, 20);
 		OSMO_ASSERT(peer->patch_state.logical_link_count == 0);
 
 		printf("  Add TLLI 1, IMSI 1 (should expire)\n");
@@ -4486,7 +4486,7 @@ static void test_gbproxy_tlli_expire(void)
 
 		printf("\n");
 
-		gbproxy_peer_free(peer);
+		gbproxy_bvc_free(peer);
 	}
 	gbproxy_clear_patch_filter(&cfg.matches[GBPROX_MATCH_PATCHING]);
 	gbprox_reset(&cfg);
@@ -4583,7 +4583,7 @@ static void test_gbproxy_stored_messages()
 
 	const uint32_t foreign_tlli1 = 0x8000dead;
 
-	struct gbproxy_peer *peer;
+	struct gbproxy_bvc *peer;
 	unsigned bss_nu = 0;
 	unsigned sgsn_nu = 0;
 	uint16_t bss_nsei[] = { 0x1000 };
@@ -4611,7 +4611,7 @@ static void test_gbproxy_stored_messages()
 	setup_ns(nsi, bss_nsei[0]);
 	setup_bssgp(nsi, bss_nsei[0], 0x1002);
 
-	peer = gbproxy_peer_by_nsei(&gbcfg, 0x1000);
+	peer = gbproxy_bvc_by_nsei(&gbcfg, 0x1000);
 	OSMO_ASSERT(peer != NULL);
 
 	send_bssgp_reset_ack(nsi, SGSN_NSEI, 0x1002);

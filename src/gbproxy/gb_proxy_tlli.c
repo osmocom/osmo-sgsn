@@ -32,11 +32,11 @@
 #include <osmocom/core/rate_ctr.h>
 #include <osmocom/core/talloc.h>
 
-struct gbproxy_link_info *gbproxy_link_info_by_tlli(struct gbproxy_peer *peer,
+struct gbproxy_link_info *gbproxy_link_info_by_tlli(struct gbproxy_bvc *bvc,
 					    uint32_t tlli)
 {
 	struct gbproxy_link_info *link_info;
-	struct gbproxy_patch_state *state = &peer->patch_state;
+	struct gbproxy_patch_state *state = &bvc->patch_state;
 
 	if (!tlli)
 		return NULL;
@@ -50,11 +50,11 @@ struct gbproxy_link_info *gbproxy_link_info_by_tlli(struct gbproxy_peer *peer,
 }
 
 struct gbproxy_link_info *gbproxy_link_info_by_ptmsi(
-	struct gbproxy_peer *peer,
+	struct gbproxy_bvc *bvc,
 	uint32_t ptmsi)
 {
 	struct gbproxy_link_info *link_info;
-	struct gbproxy_patch_state *state = &peer->patch_state;
+	struct gbproxy_patch_state *state = &bvc->patch_state;
 
 	if (ptmsi == GSM_RESERVED_TMSI)
 		return NULL;
@@ -67,11 +67,11 @@ struct gbproxy_link_info *gbproxy_link_info_by_ptmsi(
 }
 
 struct gbproxy_link_info *gbproxy_link_info_by_any_sgsn_tlli(
-	struct gbproxy_peer *peer,
+	struct gbproxy_bvc *bvc,
 	uint32_t tlli)
 {
 	struct gbproxy_link_info *link_info;
-	struct gbproxy_patch_state *state = &peer->patch_state;
+	struct gbproxy_patch_state *state = &bvc->patch_state;
 
 	if (!tlli)
 		return NULL;
@@ -86,11 +86,11 @@ struct gbproxy_link_info *gbproxy_link_info_by_any_sgsn_tlli(
 }
 
 struct gbproxy_link_info *gbproxy_link_info_by_sgsn_tlli(
-	struct gbproxy_peer *peer,
+	struct gbproxy_bvc *bvc,
 	uint32_t tlli, uint32_t sgsn_nsei)
 {
 	struct gbproxy_link_info *link_info;
-	struct gbproxy_patch_state *state = &peer->patch_state;
+	struct gbproxy_patch_state *state = &bvc->patch_state;
 
 	if (!tlli)
 		return NULL;
@@ -105,12 +105,12 @@ struct gbproxy_link_info *gbproxy_link_info_by_sgsn_tlli(
 }
 
 struct gbproxy_link_info *gbproxy_link_info_by_imsi(
-	struct gbproxy_peer *peer,
+	struct gbproxy_bvc *bvc,
 	const uint8_t *imsi,
 	size_t imsi_len)
 {
 	struct gbproxy_link_info *link_info;
-	struct gbproxy_patch_state *state = &peer->patch_state;
+	struct gbproxy_patch_state *state = &bvc->patch_state;
 
 	if (!gprs_is_mi_imsi(imsi, imsi_len))
 		return NULL;
@@ -137,10 +137,10 @@ void gbproxy_link_info_discard_messages(struct gbproxy_link_info *link_info)
 	}
 }
 
-void gbproxy_delete_link_info(struct gbproxy_peer *peer,
+void gbproxy_delete_link_info(struct gbproxy_bvc *bvc,
 			 struct gbproxy_link_info *link_info)
 {
-	struct gbproxy_patch_state *state = &peer->patch_state;
+	struct gbproxy_patch_state *state = &bvc->patch_state;
 
 	gbproxy_link_info_discard_messages(link_info);
 
@@ -148,44 +148,44 @@ void gbproxy_delete_link_info(struct gbproxy_peer *peer,
 	talloc_free(link_info);
 	state->logical_link_count -= 1;
 
-	peer->ctrg->ctr[GBPROX_PEER_CTR_TLLI_CACHE_SIZE].current =
+	bvc->ctrg->ctr[GBPROX_PEER_CTR_TLLI_CACHE_SIZE].current =
 		state->logical_link_count;
 }
 
-void gbproxy_delete_link_infos(struct gbproxy_peer *peer)
+void gbproxy_delete_link_infos(struct gbproxy_bvc *bvc)
 {
 	struct gbproxy_link_info *link_info, *nxt;
-	struct gbproxy_patch_state *state = &peer->patch_state;
+	struct gbproxy_patch_state *state = &bvc->patch_state;
 
 	llist_for_each_entry_safe(link_info, nxt, &state->logical_links, list)
-		gbproxy_delete_link_info(peer, link_info);
+		gbproxy_delete_link_info(bvc, link_info);
 
 	OSMO_ASSERT(state->logical_link_count == 0);
 	OSMO_ASSERT(llist_empty(&state->logical_links));
 }
 
-void gbproxy_attach_link_info(struct gbproxy_peer *peer, time_t now,
+void gbproxy_attach_link_info(struct gbproxy_bvc *bvc, time_t now,
 			      struct gbproxy_link_info *link_info)
 {
-	struct gbproxy_patch_state *state = &peer->patch_state;
+	struct gbproxy_patch_state *state = &bvc->patch_state;
 
 	link_info->timestamp = now;
 	llist_add(&link_info->list, &state->logical_links);
 	state->logical_link_count += 1;
 
-	peer->ctrg->ctr[GBPROX_PEER_CTR_TLLI_CACHE_SIZE].current =
+	bvc->ctrg->ctr[GBPROX_PEER_CTR_TLLI_CACHE_SIZE].current =
 		state->logical_link_count;
 }
 
-int gbproxy_remove_stale_link_infos(struct gbproxy_peer *peer, time_t now)
+int gbproxy_remove_stale_link_infos(struct gbproxy_bvc *bvc, time_t now)
 {
-	OSMO_ASSERT(peer);
-	struct gbproxy_patch_state *state = &peer->patch_state;
+	OSMO_ASSERT(bvc);
+	struct gbproxy_patch_state *state = &bvc->patch_state;
 	int exceeded_max_len = 0;
 	int deleted_count = 0;
 	int check_for_age;
-	OSMO_ASSERT(peer->nse);
-	struct gbproxy_config *cfg = peer->nse->cfg;
+	OSMO_ASSERT(bvc->nse);
+	struct gbproxy_config *cfg = bvc->nse->cfg;
 	OSMO_ASSERT(cfg);
 
 	if (cfg->tlli_max_len > 0)
@@ -200,12 +200,12 @@ int gbproxy_remove_stale_link_infos(struct gbproxy_peer *peer, time_t now)
 		link_info = llist_entry(state->logical_links.prev,
 					struct gbproxy_link_info,
 					list);
-		LOGPBVC(peer, LOGL_INFO,
+		LOGPBVC(bvc, LOGL_INFO,
 		     "Removing TLLI %08x from list "
 		     "(stale, length %d, max_len exceeded)\n",
 		     link_info->tlli.current, state->logical_link_count);
 
-		gbproxy_delete_link_info(peer, link_info);
+		gbproxy_delete_link_info(bvc, link_info);
 		deleted_count += 1;
 	}
 
@@ -222,23 +222,23 @@ int gbproxy_remove_stale_link_infos(struct gbproxy_peer *peer, time_t now)
 			continue;
 		}
 
-		LOGPBVC(peer, LOGL_INFO,
+		LOGPBVC(bvc, LOGL_INFO,
 		     "Removing TLLI %08x from list "
 		     "(stale, age %d, max_age exceeded)\n",
 		     link_info->tlli.current, (int)age);
 
-		gbproxy_delete_link_info(peer, link_info);
+		gbproxy_delete_link_info(bvc, link_info);
 		deleted_count += 1;
 	}
 
 	return deleted_count;
 }
 
-struct gbproxy_link_info *gbproxy_link_info_alloc( struct gbproxy_peer *peer)
+struct gbproxy_link_info *gbproxy_link_info_alloc( struct gbproxy_bvc *bvc)
 {
 	struct gbproxy_link_info *link_info;
 
-	link_info = talloc_zero(peer, struct gbproxy_link_info);
+	link_info = talloc_zero(bvc, struct gbproxy_link_info);
 	link_info->tlli.ptmsi = GSM_RESERVED_TMSI;
 	link_info->sgsn_tlli.ptmsi = GSM_RESERVED_TMSI;
 
@@ -250,16 +250,16 @@ struct gbproxy_link_info *gbproxy_link_info_alloc( struct gbproxy_peer *peer)
 }
 
 void gbproxy_detach_link_info(
-	struct gbproxy_peer *peer,
+	struct gbproxy_bvc *bvc,
 	struct gbproxy_link_info *link_info)
 {
-	struct gbproxy_patch_state *state = &peer->patch_state;
+	struct gbproxy_patch_state *state = &bvc->patch_state;
 
 	llist_del(&link_info->list);
 	OSMO_ASSERT(state->logical_link_count > 0);
 	state->logical_link_count -= 1;
 
-	peer->ctrg->ctr[GBPROX_PEER_CTR_TLLI_CACHE_SIZE].current =
+	bvc->ctrg->ctr[GBPROX_PEER_CTR_TLLI_CACHE_SIZE].current =
 		state->logical_link_count;
 }
 
@@ -277,13 +277,13 @@ void gbproxy_update_link_info(struct gbproxy_link_info *link_info,
 }
 
 void gbproxy_reassign_tlli(struct gbproxy_tlli_state *tlli_state,
-			   struct gbproxy_peer *peer, uint32_t new_tlli)
+			   struct gbproxy_bvc *bvc, uint32_t new_tlli)
 {
-	OSMO_ASSERT(peer);
+	OSMO_ASSERT(bvc);
 	if (new_tlli == tlli_state->current)
 		return;
 
-	LOGPBVC(peer, LOGL_INFO,
+	LOGPBVC(bvc, LOGL_INFO,
 	     "The TLLI has been reassigned from %08x to %08x\n",
 	     tlli_state->current, new_tlli);
 
@@ -345,26 +345,26 @@ static void gbproxy_validate_tlli(struct gbproxy_tlli_state *tlli_state,
 	tlli_state->assigned = 0;
 }
 
-static void gbproxy_touch_link_info(struct gbproxy_peer *peer,
+static void gbproxy_touch_link_info(struct gbproxy_bvc *bvc,
 				    struct gbproxy_link_info *link_info,
 				    time_t now)
 {
-	gbproxy_detach_link_info(peer, link_info);
-	gbproxy_attach_link_info(peer, now, link_info);
+	gbproxy_detach_link_info(bvc, link_info);
+	gbproxy_attach_link_info(bvc, now, link_info);
 }
 
-static int gbproxy_unregister_link_info(struct gbproxy_peer *peer,
+static int gbproxy_unregister_link_info(struct gbproxy_bvc *bvc,
 					 struct gbproxy_link_info *link_info)
 {
-	OSMO_ASSERT(peer);
+	OSMO_ASSERT(bvc);
 	if (!link_info)
 		return 1;
 
 	if (link_info->tlli.ptmsi == GSM_RESERVED_TMSI && !link_info->imsi_len) {
-		LOGPBVC(peer, LOGL_INFO,
+		LOGPBVC(bvc, LOGL_INFO,
 		     "Removing TLLI %08x from list (P-TMSI or IMSI are not set)\n",
 		     link_info->tlli.current);
-		gbproxy_delete_link_info(peer, link_info);
+		gbproxy_delete_link_info(bvc, link_info);
 		return 1;
 	}
 
@@ -394,32 +394,32 @@ int gbproxy_imsi_matches(struct gbproxy_config *cfg,
 	return link_info != NULL && link_info->is_matching[match_id];
 }
 
-static void gbproxy_assign_imsi(struct gbproxy_peer *peer,
+static void gbproxy_assign_imsi(struct gbproxy_bvc *bvc,
 			 struct gbproxy_link_info *link_info,
 			 struct gprs_gb_parse_context *parse_ctx)
 {
 	int imsi_matches;
 	struct gbproxy_link_info *other_link_info;
 	enum gbproxy_match_id match_id;
-	OSMO_ASSERT(peer);
-	OSMO_ASSERT(peer->nse);
-	struct gbproxy_config *cfg = peer->nse->cfg;
+	OSMO_ASSERT(bvc);
+	OSMO_ASSERT(bvc->nse);
+	struct gbproxy_config *cfg = bvc->nse->cfg;
 	OSMO_ASSERT(cfg);
 
 	/* Make sure that there is a second entry with the same IMSI */
 	other_link_info = gbproxy_link_info_by_imsi(
-		peer, parse_ctx->imsi, parse_ctx->imsi_len);
+		bvc, parse_ctx->imsi, parse_ctx->imsi_len);
 
 	if (other_link_info && other_link_info != link_info) {
 		struct osmo_mobile_identity mi;
 		if (osmo_mobile_identity_decode(&mi, parse_ctx->imsi, parse_ctx->imsi_len, false)
 		    || mi.type != GSM_MI_TYPE_IMSI) {
-			LOGPBVC(peer, LOGL_ERROR, "Failed to decode Mobile Identity\n");
+			LOGPBVC(bvc, LOGL_ERROR, "Failed to decode Mobile Identity\n");
 		} else {
-			LOGPBVC(peer, LOGL_INFO,
+			LOGPBVC(bvc, LOGL_INFO,
 			     "Removing TLLI %08x from list (IMSI %s re-used)\n",
 			     other_link_info->tlli.current, mi.imsi);
-			gbproxy_delete_link_info(peer, other_link_info);
+			gbproxy_delete_link_info(bvc, other_link_info);
 		}
 	}
 
@@ -456,11 +456,11 @@ static int gbproxy_tlli_match(const struct gbproxy_tlli_state *a,
 }
 
 static void gbproxy_remove_matching_link_infos(
-	struct gbproxy_peer *peer, struct gbproxy_link_info *link_info)
+	struct gbproxy_bvc *bvc, struct gbproxy_link_info *link_info)
 {
-	OSMO_ASSERT(peer);
+	OSMO_ASSERT(bvc);
 	struct gbproxy_link_info *info, *nxt;
-	struct gbproxy_patch_state *state = &peer->patch_state;
+	struct gbproxy_patch_state *state = &bvc->patch_state;
 
 	/* Make sure that there is no second entry with the same P-TMSI or TLLI */
 	llist_for_each_entry_safe(info, nxt, &state->logical_links, list) {
@@ -472,22 +472,22 @@ static void gbproxy_remove_matching_link_infos(
 		     !gbproxy_tlli_match(&link_info->sgsn_tlli, &info->sgsn_tlli)))
 			continue;
 
-		LOGPBVC(peer, LOGL_INFO,
+		LOGPBVC(bvc, LOGL_INFO,
 		     "Removing TLLI %08x from list (P-TMSI/TLLI re-used)\n",
 		     info->tlli.current);
-		gbproxy_delete_link_info(peer, info);
+		gbproxy_delete_link_info(bvc, info);
 	}
 }
 
 static struct gbproxy_link_info *gbproxy_get_link_info_ul(
-	struct gbproxy_peer *peer,
+	struct gbproxy_bvc *bvc,
 	int *tlli_is_valid,
 	struct gprs_gb_parse_context *parse_ctx)
 {
 	struct gbproxy_link_info *link_info = NULL;
 
 	if (parse_ctx->tlli_enc) {
-		link_info = gbproxy_link_info_by_tlli(peer, parse_ctx->tlli);
+		link_info = gbproxy_link_info_by_tlli(bvc, parse_ctx->tlli);
 
 		if (link_info) {
 			*tlli_is_valid = 1;
@@ -499,13 +499,13 @@ static struct gbproxy_link_info *gbproxy_get_link_info_ul(
 
 	if (!link_info && parse_ctx->imsi) {
 		link_info = gbproxy_link_info_by_imsi(
-			peer, parse_ctx->imsi, parse_ctx->imsi_len);
+			bvc, parse_ctx->imsi, parse_ctx->imsi_len);
 	}
 
 	if (!link_info && parse_ctx->ptmsi_enc && !parse_ctx->old_raid_is_foreign) {
 		uint32_t bss_ptmsi;
 		gprs_parse_tmsi(parse_ctx->ptmsi_enc, &bss_ptmsi);
-		link_info = gbproxy_link_info_by_ptmsi(peer, bss_ptmsi);
+		link_info = gbproxy_link_info_by_ptmsi(bvc, bss_ptmsi);
 	}
 
 	if (!link_info)
@@ -517,27 +517,27 @@ static struct gbproxy_link_info *gbproxy_get_link_info_ul(
 }
 
 struct gbproxy_link_info *gbproxy_update_link_state_ul(
-	struct gbproxy_peer *peer,
+	struct gbproxy_bvc *bvc,
 	time_t now,
 	struct gprs_gb_parse_context *parse_ctx)
 {
 	struct gbproxy_link_info *link_info;
 	int tlli_is_valid;
-	OSMO_ASSERT(peer);
+	OSMO_ASSERT(bvc);
 
-	link_info = gbproxy_get_link_info_ul(peer, &tlli_is_valid, parse_ctx);
+	link_info = gbproxy_get_link_info_ul(bvc, &tlli_is_valid, parse_ctx);
 
 	if (parse_ctx->tlli_enc && parse_ctx->llc) {
 		uint32_t sgsn_tlli;
 
 		if (!link_info) {
-			LOGPBVC(peer, LOGL_INFO, "Adding TLLI %08x to list\n",
+			LOGPBVC(bvc, LOGL_INFO, "Adding TLLI %08x to list\n",
 			    parse_ctx->tlli);
-			link_info = gbproxy_link_info_alloc(peer);
-			gbproxy_attach_link_info(peer, now, link_info);
+			link_info = gbproxy_link_info_alloc(bvc);
+			gbproxy_attach_link_info(bvc, now, link_info);
 
 			/* Setup TLLIs */
-			sgsn_tlli = gbproxy_make_sgsn_tlli(peer, link_info,
+			sgsn_tlli = gbproxy_make_sgsn_tlli(bvc, link_info,
 							   parse_ctx->tlli);
 			link_info->sgsn_tlli.current = sgsn_tlli;
 			link_info->tlli.current = parse_ctx->tlli;
@@ -546,34 +546,34 @@ struct gbproxy_link_info *gbproxy_update_link_state_ul(
 			link_info->tlli.current = parse_ctx->tlli;
 			link_info->tlli.assigned = 0;
 			link_info->sgsn_tlli.current =
-				gbproxy_make_sgsn_tlli(peer, link_info,
+				gbproxy_make_sgsn_tlli(bvc, link_info,
 						       parse_ctx->tlli);
 			link_info->sgsn_tlli.assigned = 0;
-			gbproxy_touch_link_info(peer, link_info, now);
+			gbproxy_touch_link_info(bvc, link_info, now);
 		} else {
 			sgsn_tlli = gbproxy_map_tlli(parse_ctx->tlli, link_info, 0);
 			if (!sgsn_tlli)
-				sgsn_tlli = gbproxy_make_sgsn_tlli(peer, link_info,
+				sgsn_tlli = gbproxy_make_sgsn_tlli(bvc, link_info,
 								   parse_ctx->tlli);
 
 			gbproxy_validate_tlli(&link_info->tlli,
 					      parse_ctx->tlli, 0);
 			gbproxy_validate_tlli(&link_info->sgsn_tlli,
 					      sgsn_tlli, 0);
-			gbproxy_touch_link_info(peer, link_info, now);
+			gbproxy_touch_link_info(bvc, link_info, now);
 		}
 	} else if (link_info) {
-		gbproxy_touch_link_info(peer, link_info, now);
+		gbproxy_touch_link_info(bvc, link_info, now);
 	}
 
 	if (parse_ctx->imsi && link_info && link_info->imsi_len == 0)
-		gbproxy_assign_imsi(peer, link_info, parse_ctx);
+		gbproxy_assign_imsi(bvc, link_info, parse_ctx);
 
 	return link_info;
 }
 
 static struct gbproxy_link_info *gbproxy_get_link_info_dl(
-	struct gbproxy_peer *peer,
+	struct gbproxy_bvc *bvc,
 	struct gprs_gb_parse_context *parse_ctx)
 {
 	struct gbproxy_link_info *link_info = NULL;
@@ -581,14 +581,14 @@ static struct gbproxy_link_info *gbproxy_get_link_info_dl(
 	/* Which key to use depends on its availability only, if that fails, do
 	 * not retry it with another key (e.g. IMSI). */
 	if (parse_ctx->tlli_enc)
-		link_info = gbproxy_link_info_by_sgsn_tlli(peer, parse_ctx->tlli,
+		link_info = gbproxy_link_info_by_sgsn_tlli(bvc, parse_ctx->tlli,
 							   parse_ctx->peer_nsei);
 
 	/* TODO: Get link_info by (SGSN) P-TMSI if that is available (see
 	 * GSM 08.18, 7.2) instead of using the IMSI as key. */
 	else if (parse_ctx->imsi)
 		link_info = gbproxy_link_info_by_imsi(
-			peer, parse_ctx->imsi, parse_ctx->imsi_len);
+			bvc, parse_ctx->imsi, parse_ctx->imsi_len);
 
 	if (link_info)
 		link_info->is_deregistered = false;
@@ -597,17 +597,17 @@ static struct gbproxy_link_info *gbproxy_get_link_info_dl(
 }
 
 struct gbproxy_link_info *gbproxy_update_link_state_dl(
-	struct gbproxy_peer *peer,
+	struct gbproxy_bvc *bvc,
 	time_t now,
 	struct gprs_gb_parse_context *parse_ctx)
 {
 	struct gbproxy_link_info *link_info = NULL;
-	OSMO_ASSERT(peer);
-	OSMO_ASSERT(peer->nse);
-	struct gbproxy_config *cfg = peer->nse->cfg;
+	OSMO_ASSERT(bvc);
+	OSMO_ASSERT(bvc->nse);
+	struct gbproxy_config *cfg = bvc->nse->cfg;
 	OSMO_ASSERT(cfg);
 
-	link_info = gbproxy_get_link_info_dl(peer, parse_ctx);
+	link_info = gbproxy_get_link_info_dl(bvc, parse_ctx);
 
 	if (parse_ctx->tlli_enc && parse_ctx->new_ptmsi_enc && link_info) {
 		/* A new P-TMSI has been signalled in the message,
@@ -620,9 +620,9 @@ struct gbproxy_link_info *gbproxy_update_link_state_dl(
 			new_bss_ptmsi = link_info->tlli.ptmsi;
 
 		if (new_bss_ptmsi == GSM_RESERVED_TMSI)
-			new_bss_ptmsi = gbproxy_make_bss_ptmsi(peer, new_sgsn_ptmsi);
+			new_bss_ptmsi = gbproxy_make_bss_ptmsi(bvc, new_sgsn_ptmsi);
 
-		LOGPBVC(peer, LOGL_INFO,
+		LOGPBVC(bvc, LOGL_INFO,
 		     "Got new PTMSI %08x from SGSN, using %08x for BSS\n",
 		     new_sgsn_ptmsi, new_bss_ptmsi);
 		/* Setup PTMSIs */
@@ -636,25 +636,25 @@ struct gbproxy_link_info *gbproxy_update_link_state_dl(
 		uint32_t new_ptmsi;
 		gprs_parse_tmsi(parse_ctx->new_ptmsi_enc, &new_ptmsi);
 
-		LOGPBVC(peer, LOGL_INFO,
+		LOGPBVC(bvc, LOGL_INFO,
 		     "Adding TLLI %08x to list (SGSN, new P-TMSI is %08x)\n",
 		     parse_ctx->tlli, new_ptmsi);
 
-		link_info = gbproxy_link_info_alloc(peer);
+		link_info = gbproxy_link_info_alloc(bvc);
 		link_info->sgsn_tlli.current = parse_ctx->tlli;
 		link_info->tlli.current = parse_ctx->tlli;
 		link_info->sgsn_tlli.ptmsi = new_ptmsi;
 		link_info->tlli.ptmsi = new_ptmsi;
-		gbproxy_attach_link_info(peer, now, link_info);
+		gbproxy_attach_link_info(bvc, now, link_info);
 	} else if (parse_ctx->tlli_enc && parse_ctx->llc && !link_info &&
 		   !cfg->patch_ptmsi) {
 		/* Unknown SGSN TLLI, create a new link_info */
 		uint32_t new_ptmsi;
-		link_info = gbproxy_link_info_alloc(peer);
-		LOGPBVC(peer, LOGL_INFO, "Adding TLLI %08x to list (SGSN)\n",
+		link_info = gbproxy_link_info_alloc(bvc);
+		LOGPBVC(bvc, LOGL_INFO, "Adding TLLI %08x to list (SGSN)\n",
 		     parse_ctx->tlli);
 
-		gbproxy_attach_link_info(peer, now, link_info);
+		gbproxy_attach_link_info(bvc, now, link_info);
 
 		/* Setup TLLIs */
 		link_info->sgsn_tlli.current = parse_ctx->tlli;
@@ -665,7 +665,7 @@ struct gbproxy_link_info *gbproxy_update_link_state_dl(
 		/* A new P-TMSI has been signalled in the message */
 
 		gprs_parse_tmsi(parse_ctx->new_ptmsi_enc, &new_ptmsi);
-		LOGPBVC(peer, LOGL_INFO,
+		LOGPBVC(bvc, LOGL_INFO,
 		     "Assigning new P-TMSI %08x\n", new_ptmsi);
 		/* Setup P-TMSIs */
 		link_info->sgsn_tlli.ptmsi = new_ptmsi;
@@ -675,27 +675,27 @@ struct gbproxy_link_info *gbproxy_update_link_state_dl(
 						     link_info, 1);
 		gbproxy_validate_tlli(&link_info->sgsn_tlli, parse_ctx->tlli, 1);
 		gbproxy_validate_tlli(&link_info->tlli, bss_tlli, 1);
-		gbproxy_touch_link_info(peer, link_info, now);
+		gbproxy_touch_link_info(bvc, link_info, now);
 	} else if (link_info) {
-		gbproxy_touch_link_info(peer, link_info, now);
+		gbproxy_touch_link_info(bvc, link_info, now);
 	}
 
 	if (parse_ctx->imsi && link_info && link_info->imsi_len == 0)
-		gbproxy_assign_imsi(peer, link_info, parse_ctx);
+		gbproxy_assign_imsi(bvc, link_info, parse_ctx);
 
 	return link_info;
 }
 
 int gbproxy_update_link_state_after(
-	struct gbproxy_peer *peer,
+	struct gbproxy_bvc *bvc,
 	struct gbproxy_link_info *link_info,
 	time_t now,
 	struct gprs_gb_parse_context *parse_ctx)
 {
 	int rc = 0;
-	OSMO_ASSERT(peer);
-	OSMO_ASSERT(peer->nse);
-	struct gbproxy_config *cfg = peer->nse->cfg;
+	OSMO_ASSERT(bvc);
+	OSMO_ASSERT(bvc->nse);
+	struct gbproxy_config *cfg = bvc->nse->cfg;
 	OSMO_ASSERT(cfg);
 
 	if (parse_ctx->invalidate_tlli && link_info) {
@@ -706,13 +706,13 @@ int gbproxy_update_link_state_after(
 			(cfg->keep_link_infos == GBPROX_KEEP_IDENTIFIED &&
 			 link_info->imsi_len > 0);
 		if (keep_info) {
-			LOGPBVC(peer, LOGL_INFO, "Unregistering TLLI %08x\n",
+			LOGPBVC(bvc, LOGL_INFO, "Unregistering TLLI %08x\n",
 			     link_info->tlli.current);
-			rc = gbproxy_unregister_link_info(peer, link_info);
+			rc = gbproxy_unregister_link_info(bvc, link_info);
 		} else {
-			LOGPBVC(peer, LOGL_INFO, "Removing TLLI %08x from list\n",
+			LOGPBVC(bvc, LOGL_INFO, "Removing TLLI %08x from list\n",
 			     link_info->tlli.current);
-			gbproxy_delete_link_info(peer, link_info);
+			gbproxy_delete_link_info(bvc, link_info);
 			rc = 1;
 		}
 	} else if (parse_ctx->to_bss && parse_ctx->tlli_enc &&
@@ -727,18 +727,18 @@ int gbproxy_update_link_state_after(
 		new_sgsn_tlli = gprs_tmsi2tlli(new_sgsn_ptmsi, TLLI_LOCAL);
 		if (new_bss_ptmsi != GSM_RESERVED_TMSI)
 			new_bss_tlli = gprs_tmsi2tlli(new_bss_ptmsi, TLLI_LOCAL);
-		LOGPBVC(peer, LOGL_INFO,
+		LOGPBVC(bvc, LOGL_INFO,
 		     "Assigning new TLLI %08x to SGSN, %08x to BSS\n",
 		     new_sgsn_tlli, new_bss_tlli);
 
 		gbproxy_reassign_tlli(&link_info->sgsn_tlli,
-				      peer, new_sgsn_tlli);
+				      bvc, new_sgsn_tlli);
 		gbproxy_reassign_tlli(&link_info->tlli,
-				      peer, new_bss_tlli);
-		gbproxy_remove_matching_link_infos(peer, link_info);
+				      bvc, new_bss_tlli);
+		gbproxy_remove_matching_link_infos(bvc, link_info);
 	}
 
-	gbproxy_remove_stale_link_infos(peer, now);
+	gbproxy_remove_stale_link_infos(bvc, now);
 
 	return rc;
 }

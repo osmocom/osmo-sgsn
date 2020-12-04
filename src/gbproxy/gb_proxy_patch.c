@@ -33,20 +33,20 @@
 extern void *tall_sgsn_ctx;
 
 /* patch RA identifier in place */
-static void gbproxy_patch_raid(struct gsm48_ra_id *raid_enc, struct gbproxy_peer *peer,
+static void gbproxy_patch_raid(struct gsm48_ra_id *raid_enc, struct gbproxy_bvc *bvc,
 			       int to_bss, const char *log_text)
 {
-	OSMO_ASSERT(peer);
-	struct gbproxy_patch_state *state = &peer->patch_state;
+	OSMO_ASSERT(bvc);
+	struct gbproxy_patch_state *state = &bvc->patch_state;
 	struct osmo_plmn_id old_plmn;
 	struct gprs_ra_id raid;
-	enum gbproxy_peer_ctr counter =
+	enum gbproxy_bvc_ctr counter =
 		to_bss ?
 		GBPROX_PEER_CTR_RAID_PATCHED_SGSN :
 		GBPROX_PEER_CTR_RAID_PATCHED_BSS;
 
-	OSMO_ASSERT(peer->nse);
-	struct gbproxy_config *cfg = peer->nse->cfg;
+	OSMO_ASSERT(bvc->nse);
+	struct gbproxy_config *cfg = bvc->nse->cfg;
 	OSMO_ASSERT(cfg);
 
 	if (!state->local_plmn.mcc || !state->local_plmn.mnc)
@@ -80,7 +80,7 @@ static void gbproxy_patch_raid(struct gsm48_ra_id *raid_enc, struct gbproxy_peer
 		}
 	}
 
-	LOGPBVC(peer, LOGL_DEBUG,
+	LOGPBVC(bvc, LOGL_DEBUG,
 	     "Patching %s to %s: "
 	     "%s-%d-%d -> %s\n",
 	     log_text,
@@ -89,12 +89,12 @@ static void gbproxy_patch_raid(struct gsm48_ra_id *raid_enc, struct gbproxy_peer
 	     osmo_rai_name(&raid));
 
 	gsm48_encode_ra(raid_enc, &raid);
-	rate_ctr_inc(&peer->ctrg->ctr[counter]);
+	rate_ctr_inc(&bvc->ctrg->ctr[counter]);
 }
 
 static void gbproxy_patch_apn_ie(struct msgb *msg,
 				 uint8_t *apn_ie, size_t apn_ie_len,
-				 struct gbproxy_peer *peer,
+				 struct gbproxy_bvc *bvc,
 				 size_t *new_apn_ie_len, const char *log_text)
 {
 	struct apn_ie_hdr {
@@ -105,9 +105,9 @@ static void gbproxy_patch_apn_ie(struct msgb *msg,
 
 	size_t apn_len = hdr->apn_len;
 	uint8_t *apn = hdr->apn;
-	OSMO_ASSERT(peer);
-	OSMO_ASSERT(peer->nse);
-	struct gbproxy_config *cfg = peer->nse->cfg;
+	OSMO_ASSERT(bvc);
+	OSMO_ASSERT(bvc->nse);
+	struct gbproxy_config *cfg = bvc->nse->cfg;
 	OSMO_ASSERT(cfg);
 
 	OSMO_ASSERT(apn_ie_len == apn_len + sizeof(struct apn_ie_hdr));
@@ -116,7 +116,7 @@ static void gbproxy_patch_apn_ie(struct msgb *msg,
 	if (cfg->core_apn_size == 0) {
 		char str1[110];
 		/* Remove the IE */
-		LOGPBVC(peer, LOGL_DEBUG,
+		LOGPBVC(bvc, LOGL_DEBUG,
 		     "Patching %s to SGSN: Removing APN '%s'\n",
 		     log_text,
 		     osmo_apn_to_str(str1, apn, apn_len));
@@ -130,7 +130,7 @@ static void gbproxy_patch_apn_ie(struct msgb *msg,
 
 		OSMO_ASSERT(cfg->core_apn_size <= 100);
 
-		LOGPBVC(peer, LOGL_DEBUG,
+		LOGPBVC(bvc, LOGL_DEBUG,
 		     "Patching %s to SGSN: "
 		     "Replacing APN '%s' -> '%s'\n",
 		     log_text,
@@ -144,21 +144,21 @@ static void gbproxy_patch_apn_ie(struct msgb *msg,
 		hdr->apn_len = cfg->core_apn_size;
 	}
 
-	rate_ctr_inc(&peer->ctrg->ctr[GBPROX_PEER_CTR_APN_PATCHED]);
+	rate_ctr_inc(&bvc->ctrg->ctr[GBPROX_PEER_CTR_APN_PATCHED]);
 }
 
 static int gbproxy_patch_tlli(uint8_t *tlli_enc,
-			      struct gbproxy_peer *peer,
+			      struct gbproxy_bvc *bvc,
 			      uint32_t new_tlli,
 			      int to_bss, const char *log_text)
 {
 	uint32_t tlli_be;
 	uint32_t tlli;
-	enum gbproxy_peer_ctr counter =
+	enum gbproxy_bvc_ctr counter =
 		to_bss ?
 		GBPROX_PEER_CTR_TLLI_PATCHED_SGSN :
 		GBPROX_PEER_CTR_TLLI_PATCHED_BSS;
-	OSMO_ASSERT(peer);
+	OSMO_ASSERT(bvc);
 
 	memcpy(&tlli_be, tlli_enc, sizeof(tlli_be));
 	tlli = ntohl(tlli_be);
@@ -166,7 +166,7 @@ static int gbproxy_patch_tlli(uint8_t *tlli_enc,
 	if (tlli == new_tlli)
 		return 0;
 
-	LOGPBVC(peer, LOGL_DEBUG,
+	LOGPBVC(bvc, LOGL_DEBUG,
 	     "Patching %ss: "
 	     "Replacing %08x -> %08x\n",
 	     log_text, tlli, new_tlli);
@@ -174,23 +174,23 @@ static int gbproxy_patch_tlli(uint8_t *tlli_enc,
 	tlli_be = htonl(new_tlli);
 	memcpy(tlli_enc, &tlli_be, sizeof(tlli_be));
 
-	rate_ctr_inc(&peer->ctrg->ctr[counter]);
+	rate_ctr_inc(&bvc->ctrg->ctr[counter]);
 
 	return 1;
 }
 
 static int gbproxy_patch_ptmsi(uint8_t *ptmsi_enc,
-			       struct gbproxy_peer *peer,
+			       struct gbproxy_bvc *bvc,
 			       uint32_t new_ptmsi,
 			       int to_bss, const char *log_text)
 {
 	uint32_t ptmsi_be;
 	uint32_t ptmsi;
-	enum gbproxy_peer_ctr counter =
+	enum gbproxy_bvc_ctr counter =
 		to_bss ?
 		GBPROX_PEER_CTR_PTMSI_PATCHED_SGSN :
 		GBPROX_PEER_CTR_PTMSI_PATCHED_BSS;
-	OSMO_ASSERT(peer);
+	OSMO_ASSERT(bvc);
 
 	memcpy(&ptmsi_be, ptmsi_enc, sizeof(ptmsi_be));
 	ptmsi = ntohl(ptmsi_be);
@@ -198,7 +198,7 @@ static int gbproxy_patch_ptmsi(uint8_t *ptmsi_enc,
 	if (ptmsi == new_ptmsi)
 		return 0;
 
-	LOGPBVC(peer, LOGL_DEBUG,
+	LOGPBVC(bvc, LOGL_DEBUG,
 	     "Patching %ss: "
 	     "Replacing %08x -> %08x\n",
 	     log_text, ptmsi, new_ptmsi);
@@ -206,22 +206,22 @@ static int gbproxy_patch_ptmsi(uint8_t *ptmsi_enc,
 	ptmsi_be = htonl(new_ptmsi);
 	memcpy(ptmsi_enc, &ptmsi_be, sizeof(ptmsi_be));
 
-	rate_ctr_inc(&peer->ctrg->ctr[counter]);
+	rate_ctr_inc(&bvc->ctrg->ctr[counter]);
 
 	return 1;
 }
 
 int gbproxy_patch_llc(struct msgb *msg, uint8_t *llc, size_t llc_len,
-		     struct gbproxy_peer *peer,
+		     struct gbproxy_bvc *bvc,
 		     struct gbproxy_link_info *link_info, int *len_change,
 		     struct gprs_gb_parse_context *parse_ctx)
 {
 	struct gprs_llc_hdr_parsed *ghp = &parse_ctx->llc_hdr_parsed;
 	int have_patched = 0;
 	int fcs;
-	OSMO_ASSERT(peer);
-	OSMO_ASSERT(peer->nse);
-	struct gbproxy_config *cfg = peer->nse->cfg;
+	OSMO_ASSERT(bvc);
+	OSMO_ASSERT(bvc->nse);
+	struct gbproxy_config *cfg = bvc->nse->cfg;
 	OSMO_ASSERT(cfg);
 
 	if (parse_ctx->ptmsi_enc && link_info &&
@@ -233,7 +233,7 @@ int gbproxy_patch_llc(struct msgb *msg, uint8_t *llc, size_t llc_len,
 			ptmsi = link_info->sgsn_tlli.ptmsi;
 
 		if (ptmsi != GSM_RESERVED_TMSI) {
-			if (gbproxy_patch_ptmsi(parse_ctx->ptmsi_enc, peer,
+			if (gbproxy_patch_ptmsi(parse_ctx->ptmsi_enc, bvc,
 						ptmsi, parse_ctx->to_bss, "P-TMSI"))
 				have_patched = 1;
 		} else {
@@ -249,20 +249,20 @@ int gbproxy_patch_llc(struct msgb *msg, uint8_t *llc, size_t llc_len,
 			ptmsi = link_info->sgsn_tlli.ptmsi;
 
 		OSMO_ASSERT(ptmsi);
-		if (gbproxy_patch_ptmsi(parse_ctx->new_ptmsi_enc, peer,
+		if (gbproxy_patch_ptmsi(parse_ctx->new_ptmsi_enc, bvc,
 					ptmsi, parse_ctx->to_bss, "new P-TMSI"))
 			have_patched = 1;
 	}
 
 	if (parse_ctx->raid_enc) {
-		gbproxy_patch_raid((struct gsm48_ra_id *)parse_ctx->raid_enc, peer, parse_ctx->to_bss,
+		gbproxy_patch_raid((struct gsm48_ra_id *)parse_ctx->raid_enc, bvc, parse_ctx->to_bss,
 				   parse_ctx->llc_msg_name);
 		have_patched = 1;
 	}
 
 	if (parse_ctx->old_raid_enc && !parse_ctx->old_raid_is_foreign) {
 		/* TODO: Patch to invalid if P-TMSI unknown. */
-		gbproxy_patch_raid((struct gsm48_ra_id *)parse_ctx->old_raid_enc, peer, parse_ctx->to_bss,
+		gbproxy_patch_raid((struct gsm48_ra_id *)parse_ctx->old_raid_enc, bvc, parse_ctx->to_bss,
 				   parse_ctx->llc_msg_name);
 		have_patched = 1;
 	}
@@ -275,7 +275,7 @@ int gbproxy_patch_llc(struct msgb *msg, uint8_t *llc, size_t llc_len,
 		size_t new_len;
 		gbproxy_patch_apn_ie(msg,
 				     parse_ctx->apn_ie, parse_ctx->apn_ie_len,
-				     peer, &new_len, parse_ctx->llc_msg_name);
+				     bvc, &new_len, parse_ctx->llc_msg_name);
 		*len_change += (int)new_len - (int)parse_ctx->apn_ie_len;
 
 		have_patched = 1;
@@ -287,7 +287,7 @@ int gbproxy_patch_llc(struct msgb *msg, uint8_t *llc, size_t llc_len,
 
 		/* Fix FCS */
 		fcs = gprs_llc_fcs(llc, ghp->crc_length);
-		LOGPBVC_CAT(peer, DLLC, LOGL_DEBUG, "Updated LLC message, CRC: %06x -> %06x\n",
+		LOGPBVC_CAT(bvc, DLLC, LOGL_DEBUG, "Updated LLC message, CRC: %06x -> %06x\n",
 		     ghp->fcs, fcs);
 
 		llc[llc_len - 3] = fcs & 0xff;
@@ -300,18 +300,18 @@ int gbproxy_patch_llc(struct msgb *msg, uint8_t *llc, size_t llc_len,
 
 /* patch BSSGP message to use core_plmn.mcc/mnc on the SGSN side */
 void gbproxy_patch_bssgp(struct msgb *msg, uint8_t *bssgp, size_t bssgp_len,
-			 struct gbproxy_peer *peer,
+			 struct gbproxy_bvc *bvc,
 			 struct gbproxy_link_info *link_info, int *len_change,
 			 struct gprs_gb_parse_context *parse_ctx)
 {
 	const char *err_info = NULL;
 	int err_ctr = -1;
-	OSMO_ASSERT(peer->nse);
-	struct gbproxy_config *cfg = peer->nse->cfg;
+	OSMO_ASSERT(bvc->nse);
+	struct gbproxy_config *cfg = bvc->nse->cfg;
 	OSMO_ASSERT(cfg);
 
 	if (parse_ctx->bssgp_raid_enc)
-		gbproxy_patch_raid((struct gsm48_ra_id *)parse_ctx->bssgp_raid_enc, peer,
+		gbproxy_patch_raid((struct gsm48_ra_id *)parse_ctx->bssgp_raid_enc, bvc,
 				   parse_ctx->to_bss, "BSSGP");
 
 	if (parse_ctx->need_decryption &&
@@ -342,7 +342,7 @@ void gbproxy_patch_bssgp(struct msgb *msg, uint8_t *bssgp, size_t bssgp_len,
 						 link_info, parse_ctx->to_bss);
 
 		if (tlli) {
-			gbproxy_patch_tlli(parse_ctx->tlli_enc, peer, tlli,
+			gbproxy_patch_tlli(parse_ctx->tlli_enc, bvc, tlli,
 					   parse_ctx->to_bss, "TLLI");
 			parse_ctx->tlli = tlli;
 		} else {
@@ -362,7 +362,7 @@ void gbproxy_patch_bssgp(struct msgb *msg, uint8_t *bssgp, size_t bssgp_len,
 
 		if (ptmsi != GSM_RESERVED_TMSI)
 			gbproxy_patch_ptmsi(
-				parse_ctx->bssgp_ptmsi_enc, peer,
+				parse_ctx->bssgp_ptmsi_enc, bvc,
 				ptmsi, parse_ctx->to_bss, "BSSGP P-TMSI");
 	}
 
@@ -371,7 +371,7 @@ void gbproxy_patch_bssgp(struct msgb *msg, uint8_t *bssgp, size_t bssgp_len,
 		size_t llc_len = parse_ctx->llc_len;
 		int llc_len_change = 0;
 
-		gbproxy_patch_llc(msg, llc, llc_len, peer, link_info,
+		gbproxy_patch_llc(msg, llc, llc_len, bvc, link_info,
 				  &llc_len_change, parse_ctx);
 		/* Note that the APN might have been resized here, but no
 		 * pointer int the parse_ctx will refer to an adress after the
@@ -406,8 +406,8 @@ void gbproxy_patch_bssgp(struct msgb *msg, uint8_t *bssgp, size_t bssgp_len,
 
 patch_error:
 	OSMO_ASSERT(err_ctr >= 0);
-	rate_ctr_inc(&peer->ctrg->ctr[err_ctr]);
-	LOGPBVC(peer, LOGL_ERROR,
+	rate_ctr_inc(&bvc->ctrg->ctr[err_ctr]);
+	LOGPBVC(bvc, LOGL_ERROR,
 	     "NSE(%05u/%s) failed to patch BSSGP message as requested: %s.\n",
 	     msgb_nsei(msg), parse_ctx->to_bss ? "SGSN" : "BSS",
 	     err_info);

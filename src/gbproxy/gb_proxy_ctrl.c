@@ -69,7 +69,7 @@ static int get_nsvc_state(struct ctrl_cmd *cmd, void *data)
 		gprs_ns2_nse_foreach_nsvc(nse, &ctrl_nsvc_state_cb, cmd);
 
 	/* NS-VCs for BSS peers */
-	llist_for_each_entry(nse_peer, &cfg->nse_peers, list) {
+	llist_for_each_entry(nse_peer, &cfg->nses, list) {
 		nse = gprs_ns2_nse_by_nsei(nsi, nse_peer->nsei);
 		if (nse)
 			gprs_ns2_nse_foreach_nsvc(nse, &ctrl_nsvc_state_cb, cmd);
@@ -87,17 +87,17 @@ static int get_gbproxy_state(struct ctrl_cmd *cmd, void *data)
 
 	cmd->reply = talloc_strdup(cmd, "");
 
-	llist_for_each_entry(nse_peer, &cfg->nse_peers, list) {
-		struct gbproxy_peer *peer;
-		llist_for_each_entry(peer, &nse_peer->bts_peers, list) {
+	llist_for_each_entry(nse_peer, &cfg->nses, list) {
+		struct gbproxy_bvc *bvc;
+		llist_for_each_entry(bvc, &nse_peer->bvcs, list) {
 			struct gprs_ra_id raid;
-			gsm48_parse_ra(&raid, peer->ra);
+			gsm48_parse_ra(&raid, bvc->ra);
 
 			cmd->reply = talloc_asprintf_append(cmd->reply, "%u,%u,%u,%u,%u,%u,%s\n",
-					nse_peer->nsei, peer->bvci,
+					nse_peer->nsei, bvc->bvci,
 					raid.mcc, raid.mnc,
 					raid.lac, raid.rac,
-					peer->blocked ? "BLOCKED" : "UNBLOCKED");
+					bvc->blocked ? "BLOCKED" : "UNBLOCKED");
 		}
 	}
 
@@ -112,8 +112,8 @@ static int get_num_peers(struct ctrl_cmd *cmd, void *data)
 	struct gbproxy_nse *nse_peer;
 	uint32_t count = 0;
 
-	llist_for_each_entry(nse_peer, &cfg->nse_peers, list)
-		count += llist_count(&nse_peer->bts_peers);
+	llist_for_each_entry(nse_peer, &cfg->nses, list)
+		count += llist_count(&nse_peer->bvcs);
 
 	cmd->reply = talloc_strdup(cmd, "");
 	cmd->reply = talloc_asprintf_append(cmd->reply, "%u", count);

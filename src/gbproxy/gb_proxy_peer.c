@@ -35,7 +35,7 @@
 
 extern void *tall_sgsn_ctx;
 
-static const struct rate_ctr_desc peer_ctr_description[] = {
+static const struct rate_ctr_desc bvc_ctr_description[] = {
 	{ "blocked",	   "BVC Block                       " },
 	{ "unblocked",	   "BVC Unblock                     " },
 	{ "dropped",	   "BVC blocked, dropped packet     " },
@@ -71,98 +71,98 @@ static const struct rate_ctr_desc peer_ctr_description[] = {
 	{ "tlli-cache",    "TLLI cache size                 " },
 };
 
-osmo_static_assert(ARRAY_SIZE(peer_ctr_description) == GBPROX_PEER_CTR_LAST, everything_described);
+osmo_static_assert(ARRAY_SIZE(bvc_ctr_description) == GBPROX_PEER_CTR_LAST, everything_described);
 
-static const struct rate_ctr_group_desc peer_ctrg_desc = {
+static const struct rate_ctr_group_desc bvc_ctrg_desc = {
 	.group_name_prefix = "gbproxy:peer",
 	.group_description = "GBProxy Peer Statistics",
-	.num_ctr = ARRAY_SIZE(peer_ctr_description),
-	.ctr_desc = peer_ctr_description,
+	.num_ctr = ARRAY_SIZE(bvc_ctr_description),
+	.ctr_desc = bvc_ctr_description,
 	.class_id = OSMO_STATS_CLASS_PEER,
 };
 
 
-/* Find the gbproxy_peer by its BVCI. There can only be one match */
-struct gbproxy_peer *gbproxy_peer_by_bvci(struct gbproxy_config *cfg, uint16_t bvci)
+/* Find the gbproxy_bvc by its BVCI. There can only be one match */
+struct gbproxy_bvc *gbproxy_bvc_by_bvci(struct gbproxy_config *cfg, uint16_t bvci)
 {
 	struct gbproxy_nse *nse;
 
-	llist_for_each_entry(nse, &cfg->nse_peers, list) {
-		struct gbproxy_peer *peer;
-		llist_for_each_entry(peer, &nse->bts_peers, list) {
-			if (peer->bvci == bvci)
-				return peer;
+	llist_for_each_entry(nse, &cfg->nses, list) {
+		struct gbproxy_bvc *bvc;
+		llist_for_each_entry(bvc, &nse->bvcs, list) {
+			if (bvc->bvci == bvci)
+				return bvc;
 		}
 	}
 	return NULL;
 }
 
-/* Find the gbproxy_peer by its NSEI */
-/* FIXME: Only returns the first peer, but we could have multiple on this nsei */
-struct gbproxy_peer *gbproxy_peer_by_nsei(struct gbproxy_config *cfg,
+/* Find the gbproxy_bvc by its NSEI */
+/* FIXME: Only returns the first bvc, but we could have multiple on this nsei */
+struct gbproxy_bvc *gbproxy_bvc_by_nsei(struct gbproxy_config *cfg,
 					  uint16_t nsei)
 {
 	struct gbproxy_nse *nse;
-	llist_for_each_entry(nse, &cfg->nse_peers, list) {
-		if (nse->nsei == nsei && !llist_empty(&nse->bts_peers))
-			return llist_first_entry(&nse->bts_peers, struct gbproxy_peer, list);
+	llist_for_each_entry(nse, &cfg->nses, list) {
+		if (nse->nsei == nsei && !llist_empty(&nse->bvcs))
+			return llist_first_entry(&nse->bvcs, struct gbproxy_bvc, list);
 	}
 	return NULL;
 }
 
-/* look-up a peer by its Routeing Area Identification (RAI) */
-/* FIXME: this doesn't make sense, as RA can span multiple peers! */
-struct gbproxy_peer *gbproxy_peer_by_rai(struct gbproxy_config *cfg,
+/* look-up a bvc by its Routeing Area Identification (RAI) */
+/* FIXME: this doesn't make sense, as RA can span multiple bvcs! */
+struct gbproxy_bvc *gbproxy_bvc_by_rai(struct gbproxy_config *cfg,
 					 const uint8_t *ra)
 {
 	struct gbproxy_nse *nse;
 
-	llist_for_each_entry(nse, &cfg->nse_peers, list) {
-		struct gbproxy_peer *peer;
-		llist_for_each_entry(peer, &nse->bts_peers, list) {
-			if (!memcmp(peer->ra, ra, 6))
-				return peer;
+	llist_for_each_entry(nse, &cfg->nses, list) {
+		struct gbproxy_bvc *bvc;
+		llist_for_each_entry(bvc, &nse->bvcs, list) {
+			if (!memcmp(bvc->ra, ra, 6))
+				return bvc;
 		}
 	}
 
 	return NULL;
 }
 
-/* look-up a peer by its Location Area Identification (LAI) */
-/* FIXME: this doesn't make sense, as LA can span multiple peers! */
-struct gbproxy_peer *gbproxy_peer_by_lai(struct gbproxy_config *cfg,
+/* look-up a bvc by its Location Area Identification (LAI) */
+/* FIXME: this doesn't make sense, as LA can span multiple bvcs! */
+struct gbproxy_bvc *gbproxy_bvc_by_lai(struct gbproxy_config *cfg,
 					 const uint8_t *la)
 {
 	struct gbproxy_nse *nse;
 
-	llist_for_each_entry(nse, &cfg->nse_peers, list) {
-		struct gbproxy_peer *peer;
-		llist_for_each_entry(peer, &nse->bts_peers, list) {
-			if (!memcmp(peer->ra, la, 5))
-				return peer;
+	llist_for_each_entry(nse, &cfg->nses, list) {
+		struct gbproxy_bvc *bvc;
+		llist_for_each_entry(bvc, &nse->bvcs, list) {
+			if (!memcmp(bvc->ra, la, 5))
+				return bvc;
 		}
 	}
 	return NULL;
 }
 
-/* look-up a peer by its Location Area Code (LAC) */
-/* FIXME: this doesn't make sense, as LAC can span multiple peers! */
-struct gbproxy_peer *gbproxy_peer_by_lac(struct gbproxy_config *cfg,
+/* look-up a bvc by its Location Area Code (LAC) */
+/* FIXME: this doesn't make sense, as LAC can span multiple bvcs! */
+struct gbproxy_bvc *gbproxy_bvc_by_lac(struct gbproxy_config *cfg,
 					 const uint8_t *la)
 {
 	struct gbproxy_nse *nse;
 
-	llist_for_each_entry(nse, &cfg->nse_peers, list) {
-		struct gbproxy_peer *peer;
-		llist_for_each_entry(peer, &nse->bts_peers, list) {
-			if (!memcmp(peer->ra + 3, la + 3, 2))
-				return peer;
+	llist_for_each_entry(nse, &cfg->nses, list) {
+		struct gbproxy_bvc *bvc;
+		llist_for_each_entry(bvc, &nse->bvcs, list) {
+			if (!memcmp(bvc->ra + 3, la + 3, 2))
+				return bvc;
 		}
 	}
 	return NULL;
 }
 
-struct gbproxy_peer *gbproxy_peer_by_bssgp_tlv(struct gbproxy_config *cfg,
+struct gbproxy_bvc *gbproxy_bvc_by_bssgp_tlv(struct gbproxy_config *cfg,
 					       struct tlv_parsed *tp)
 {
 	if (TLVP_PRES_LEN(tp, BSSGP_IE_BVCI, 2)) {
@@ -170,22 +170,22 @@ struct gbproxy_peer *gbproxy_peer_by_bssgp_tlv(struct gbproxy_config *cfg,
 
 		bvci = ntohs(tlvp_val16_unal(tp, BSSGP_IE_BVCI));
 		if (bvci >= 2)
-			return gbproxy_peer_by_bvci(cfg, bvci);
+			return gbproxy_bvc_by_bvci(cfg, bvci);
 	}
 
-	/* FIXME: this doesn't make sense, as RA can span multiple peers! */
+	/* FIXME: this doesn't make sense, as RA can span multiple bvcs! */
 	if (TLVP_PRES_LEN(tp, BSSGP_IE_ROUTEING_AREA, 6)) {
 		uint8_t *rai = (uint8_t *)TLVP_VAL(tp, BSSGP_IE_ROUTEING_AREA);
 		/* Only compare LAC part, since MCC/MNC are possibly patched.
 		 * Since the LAC of different BSS must be different when
 		 * MCC/MNC are patched, collisions shouldn't happen. */
-		return gbproxy_peer_by_lac(cfg, rai);
+		return gbproxy_bvc_by_lac(cfg, rai);
 	}
 
-	/* FIXME: this doesn't make sense, as LA can span multiple peers! */
+	/* FIXME: this doesn't make sense, as LA can span multiple bvcs! */
 	if (TLVP_PRES_LEN(tp, BSSGP_IE_LOCATION_AREA, 5)) {
 		uint8_t *lai = (uint8_t *)TLVP_VAL(tp, BSSGP_IE_LOCATION_AREA);
-		return gbproxy_peer_by_lac(cfg, lai);
+		return gbproxy_bvc_by_lac(cfg, lai);
 	}
 
 	return NULL;
@@ -195,88 +195,92 @@ static void clean_stale_timer_cb(void *data)
 {
 	time_t now;
 	struct timespec ts = {0,};
-	struct gbproxy_peer *peer = (struct gbproxy_peer *) data;
-	OSMO_ASSERT(peer);
-	OSMO_ASSERT(peer->nse);
-	struct gbproxy_config *cfg = peer->nse->cfg;
+	struct gbproxy_bvc *bvc = (struct gbproxy_bvc *) data;
+	OSMO_ASSERT(bvc);
+	OSMO_ASSERT(bvc->nse);
+	struct gbproxy_config *cfg = bvc->nse->cfg;
 	OSMO_ASSERT(cfg);
 
 	osmo_clock_gettime(CLOCK_MONOTONIC, &ts);
 	now = ts.tv_sec;
-	gbproxy_remove_stale_link_infos(peer, now);
+	gbproxy_remove_stale_link_infos(bvc, now);
 	if (cfg->clean_stale_timer_freq != 0)
-		osmo_timer_schedule(&peer->clean_stale_timer,
+		osmo_timer_schedule(&bvc->clean_stale_timer,
 					cfg->clean_stale_timer_freq, 0);
 }
 
-struct gbproxy_peer *gbproxy_peer_alloc(struct gbproxy_nse *nse, uint16_t bvci)
+struct gbproxy_bvc *gbproxy_bvc_alloc(struct gbproxy_nse *nse, uint16_t bvci)
 {
-	struct gbproxy_peer *peer;
+	struct gbproxy_bvc *bvc;
 	OSMO_ASSERT(nse);
 	struct gbproxy_config *cfg = nse->cfg;
 	OSMO_ASSERT(cfg);
 
-	peer = talloc_zero(tall_sgsn_ctx, struct gbproxy_peer);
-	if (!peer)
+	bvc = talloc_zero(tall_sgsn_ctx, struct gbproxy_bvc);
+	if (!bvc)
 		return NULL;
 
-	peer->bvci = bvci;
-	peer->ctrg = rate_ctr_group_alloc(peer, &peer_ctrg_desc, bvci);
-	if (!peer->ctrg) {
-		talloc_free(peer);
+	bvc->bvci = bvci;
+	bvc->ctrg = rate_ctr_group_alloc(bvc, &bvc_ctrg_desc, bvci);
+	if (!bvc->ctrg) {
+		talloc_free(bvc);
 		return NULL;
 	}
-	peer->nse = nse;
+	bvc->nse = nse;
 
-	llist_add(&peer->list, &nse->bts_peers);
+	llist_add(&bvc->list, &nse->bvcs);
 
-	INIT_LLIST_HEAD(&peer->patch_state.logical_links);
+	INIT_LLIST_HEAD(&bvc->patch_state.logical_links);
 
-	osmo_timer_setup(&peer->clean_stale_timer, clean_stale_timer_cb, peer);
+	osmo_timer_setup(&bvc->clean_stale_timer, clean_stale_timer_cb, bvc);
 	if (cfg->clean_stale_timer_freq != 0)
-		osmo_timer_schedule(&peer->clean_stale_timer,
+		osmo_timer_schedule(&bvc->clean_stale_timer,
 					cfg->clean_stale_timer_freq, 0);
 
-	return peer;
+	return bvc;
 }
 
-void gbproxy_peer_free(struct gbproxy_peer *peer)
+void gbproxy_bvc_free(struct gbproxy_bvc *bvc)
 {
-	if (!peer)
+	if (!bvc)
 		return;
 
-	llist_del(&peer->list);
-	osmo_timer_del(&peer->clean_stale_timer);
-	gbproxy_delete_link_infos(peer);
+	llist_del(&bvc->list);
+	osmo_timer_del(&bvc->clean_stale_timer);
+	gbproxy_delete_link_infos(bvc);
 
-	rate_ctr_group_free(peer->ctrg);
-	peer->ctrg = NULL;
+	rate_ctr_group_free(bvc->ctrg);
+	bvc->ctrg = NULL;
 
-	talloc_free(peer);
+	talloc_free(bvc);
 }
 
-void gbproxy_peer_move(struct gbproxy_peer *peer, struct gbproxy_nse *nse)
+void gbproxy_bvc_move(struct gbproxy_bvc *bvc, struct gbproxy_nse *nse)
 {
-	llist_del(&peer->list);
-	llist_add(&peer->list, &nse->bts_peers);
-	peer->nse = nse;
+	llist_del(&bvc->list);
+	llist_add(&bvc->list, &nse->bvcs);
+	bvc->nse = nse;
 }
 
-int gbproxy_cleanup_peers(struct gbproxy_config *cfg, uint16_t nsei, uint16_t bvci)
+/*! remove bvcs (BVCs) on NSE specified by NSEI.
+ *  \param[in] cfg proxy in which we operate
+ *  \param[in] nsei NS entity in which we should clean up
+ *  \param[in] bvci if 0: remove all BVCs; if != 0: BVCI of the single BVC to clean up */
+int gbproxy_cleanup_bvcs(struct gbproxy_config *cfg, uint16_t nsei, uint16_t bvci)
 {
 	int counter = 0;
 	struct gbproxy_nse *nse, *ntmp;
 	OSMO_ASSERT(cfg);
 
-	llist_for_each_entry_safe(nse, ntmp, &cfg->nse_peers, list) {
-		struct gbproxy_peer *peer, *tmp;
+	llist_for_each_entry_safe(nse, ntmp, &cfg->nses, list) {
+		struct gbproxy_bvc *bvc, *tmp;
 		if (nse->nsei != nsei)
 			continue;
-		llist_for_each_entry_safe(peer, tmp, &nse->bts_peers, list) {
-			if (bvci && peer->bvci != bvci)
+		llist_for_each_entry_safe(bvc, tmp, &nse->bvcs, list) {
+			if (bvci && bvc->bvci != bvci)
 				continue;
 
-			gbproxy_peer_free(peer);
+			gbproxy_bvc_free(bvc);
 			counter += 1;
 		}
 	}
@@ -296,23 +300,23 @@ struct gbproxy_nse *gbproxy_nse_alloc(struct gbproxy_config *cfg, uint16_t nsei)
 	nse->nsei = nsei;
 	nse->cfg = cfg;
 
-	llist_add(&nse->list, &cfg->nse_peers);
+	llist_add(&nse->list, &cfg->nses);
 
-	INIT_LLIST_HEAD(&nse->bts_peers);
+	INIT_LLIST_HEAD(&nse->bvcs);
 
 	return nse;
 }
 
 void gbproxy_nse_free(struct gbproxy_nse *nse)
 {
-	struct gbproxy_peer *peer, *tmp;
+	struct gbproxy_bvc *bvc, *tmp;
 	if (!nse)
 		return;
 
 	llist_del(&nse->list);
 
-	llist_for_each_entry_safe(peer, tmp, &nse->bts_peers, list)
-		gbproxy_peer_free(peer);
+	llist_for_each_entry_safe(bvc, tmp, &nse->bvcs, list)
+		gbproxy_bvc_free(bvc);
 
 	talloc_free(nse);
 }
@@ -322,7 +326,7 @@ struct gbproxy_nse *gbproxy_nse_by_nsei(struct gbproxy_config *cfg, uint16_t nse
 	struct gbproxy_nse *nse;
 	OSMO_ASSERT(cfg);
 
-	llist_for_each_entry(nse, &cfg->nse_peers, list) {
+	llist_for_each_entry(nse, &cfg->nses, list) {
 		if (nse->nsei == nsei)
 			return nse;
 	}
