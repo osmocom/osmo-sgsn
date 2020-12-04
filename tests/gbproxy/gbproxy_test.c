@@ -129,7 +129,7 @@ static int dump_peers(FILE *stream, int indent, time_t now,
 		return rc;
 
 
-	llist_for_each_entry(nse, &cfg->nses, list) {
+	llist_for_each_entry(nse, &cfg->bss_nses, list) {
 		struct gbproxy_bvc *peer;
 		llist_for_each_entry(peer, &nse->bvcs, list) {
 			struct gbproxy_link_info *link_info;

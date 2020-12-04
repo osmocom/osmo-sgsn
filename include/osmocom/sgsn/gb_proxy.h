@@ -101,8 +101,8 @@ struct gbproxy_config {
 	/* NS instance of libosmogb */
 	struct gprs_ns2_inst *nsi;
 
-	/* Linked list of all Gb peers (except SGSN) */
-	struct llist_head nses;
+	/* Linked list of all BSS side Gb peers */
+	struct llist_head bss_nses;
 
 	/* Counter */
 	struct rate_ctr_group *ctrg;
@@ -175,7 +175,7 @@ struct gbproxy_bvc {
 
 /* one NS Entity that we interact with (BSS/PCU) */
 struct gbproxy_nse {
-	/* linked to gbproxy_config.nses */
+	/* linked to gbproxy_config.bss_nses */
 	struct llist_head list;
 
 	/* point back to the config */

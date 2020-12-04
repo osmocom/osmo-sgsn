@@ -87,7 +87,7 @@ struct gbproxy_bvc *gbproxy_bvc_by_bvci(struct gbproxy_config *cfg, uint16_t bvc
 {
 	struct gbproxy_nse *nse;
 
-	llist_for_each_entry(nse, &cfg->nses, list) {
+	llist_for_each_entry(nse, &cfg->bss_nses, list) {
 		struct gbproxy_bvc *bvc;
 		llist_for_each_entry(bvc, &nse->bvcs, list) {
 			if (bvc->bvci == bvci)
@@ -103,7 +103,7 @@ struct gbproxy_bvc *gbproxy_bvc_by_nsei(struct gbproxy_config *cfg,
 					  uint16_t nsei)
 {
 	struct gbproxy_nse *nse;
-	llist_for_each_entry(nse, &cfg->nses, list) {
+	llist_for_each_entry(nse, &cfg->bss_nses, list) {
 		if (nse->nsei == nsei && !llist_empty(&nse->bvcs))
 			return llist_first_entry(&nse->bvcs, struct gbproxy_bvc, list);
 	}
@@ -117,7 +117,7 @@ struct gbproxy_bvc *gbproxy_bvc_by_rai(struct gbproxy_config *cfg,
 {
 	struct gbproxy_nse *nse;
 
-	llist_for_each_entry(nse, &cfg->nses, list) {
+	llist_for_each_entry(nse, &cfg->bss_nses, list) {
 		struct gbproxy_bvc *bvc;
 		llist_for_each_entry(bvc, &nse->bvcs, list) {
 			if (!memcmp(bvc->ra, ra, 6))
@@ -135,7 +135,7 @@ struct gbproxy_bvc *gbproxy_bvc_by_lai(struct gbproxy_config *cfg,
 {
 	struct gbproxy_nse *nse;
 
-	llist_for_each_entry(nse, &cfg->nses, list) {
+	llist_for_each_entry(nse, &cfg->bss_nses, list) {
 		struct gbproxy_bvc *bvc;
 		llist_for_each_entry(bvc, &nse->bvcs, list) {
 			if (!memcmp(bvc->ra, la, 5))
@@ -152,7 +152,7 @@ struct gbproxy_bvc *gbproxy_bvc_by_lac(struct gbproxy_config *cfg,
 {
 	struct gbproxy_nse *nse;
 
-	llist_for_each_entry(nse, &cfg->nses, list) {
+	llist_for_each_entry(nse, &cfg->bss_nses, list) {
 		struct gbproxy_bvc *bvc;
 		llist_for_each_entry(bvc, &nse->bvcs, list) {
 			if (!memcmp(bvc->ra + 3, la + 3, 2))
@@ -272,7 +272,7 @@ int gbproxy_cleanup_bvcs(struct gbproxy_config *cfg, uint16_t nsei, uint16_t bvc
 	struct gbproxy_nse *nse, *ntmp;
 	OSMO_ASSERT(cfg);
 
-	llist_for_each_entry_safe(nse, ntmp, &cfg->nses, list) {
+	llist_for_each_entry_safe(nse, ntmp, &cfg->bss_nses, list) {
 		struct gbproxy_bvc *bvc, *tmp;
 		if (nse->nsei != nsei)
 			continue;
@@ -300,7 +300,7 @@ struct gbproxy_nse *gbproxy_nse_alloc(struct gbproxy_config *cfg, uint16_t nsei)
 	nse->nsei = nsei;
 	nse->cfg = cfg;
 
-	llist_add(&nse->list, &cfg->nses);
+	llist_add(&nse->list, &cfg->bss_nses);
 
 	INIT_LLIST_HEAD(&nse->bvcs);
 
@@ -326,7 +326,7 @@ struct gbproxy_nse *gbproxy_nse_by_nsei(struct gbproxy_config *cfg, uint16_t nse
 	struct gbproxy_nse *nse;
 	OSMO_ASSERT(cfg);
 
-	llist_for_each_entry(nse, &cfg->nses, list) {
+	llist_for_each_entry(nse, &cfg->bss_nses, list) {
 		if (nse->nsei == nsei)
 			return nse;
 	}
