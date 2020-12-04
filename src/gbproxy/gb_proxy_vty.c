@@ -696,9 +696,11 @@ DEFUN(delete_gb_nsei, delete_gb_nsei_cmd,
 		delete_bvc = delete_nsvc = 1;
 
 	if (delete_bvc) {
-		if (!dry_run)
+		if (!dry_run) {
+			struct gbproxy_nse *nse = gbproxy_nse_by_nsei(g_cfg, nsei);
 			counter = gbproxy_cleanup_peers(g_cfg, nsei, 0);
-		else {
+			gbproxy_nse_free(nse);
+		} else {
 			struct gbproxy_nse *nse;
 			struct gbproxy_peer *peer;
 			counter = 0;
