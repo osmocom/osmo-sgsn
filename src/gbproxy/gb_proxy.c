@@ -1204,7 +1204,7 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 		llist_for_each_entry(nse, &cfg->nse_peers, list) {
 			llist_for_each_entry(peer, &nse->bts_peers, list) {
 				if (!memcmp(peer->ra, TLVP_VAL(tp, BSSGP_IE_ROUTEING_AREA), 6)) {
-					LOGPNSE(nse, LOGL_INFO, "routing to NSE (RAI match)");
+					LOGPNSE(nse, LOGL_INFO, "routing to NSE (RAI match)\n");
 					gbprox_relay2nse(msg, nse, ns_bvci);
 					n_nses++;
 					/* Only send it once to each NSE */
