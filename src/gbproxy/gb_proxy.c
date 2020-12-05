@@ -83,6 +83,12 @@ static int gbprox_relay2peer(struct msgb *old_msg, struct gbproxy_bvc *bvc,
 static int gbprox_relay2sgsn(struct gbproxy_config *cfg, struct msgb *old_msg,
 			     uint16_t ns_bvci, uint16_t sgsn_nsei);
 
+
+static int gbproxy_is_sgsn_nsei(struct gbproxy_config *cfg, uint16_t nsei)
+{
+	return nsei == cfg->nsip_sgsn_nsei;
+}
+
 static int check_bvc_nsei(struct gbproxy_bvc *bvc, uint16_t nsei)
 {
 	OSMO_ASSERT(bvc);
@@ -726,11 +732,6 @@ err_no_bvc:
 	return bssgp_tx_status(BSSGP_CAUSE_INV_MAND_INF, NULL, orig_msg);
 }
 
-static int gbproxy_is_sgsn_nsei(struct gbproxy_config *cfg, uint16_t nsei)
-{
-	return nsei == cfg->nsip_sgsn_nsei;
-}
-
 int gbprox_bssgp_send_cb(void *ctx, struct msgb *msg)
 {
 	int rc;
@@ -800,7 +801,7 @@ void gprs_ns_prim_status_cb(struct gbproxy_config *cfg, struct osmo_gprs_ns2_pri
 
 	case NS_AFF_CAUSE_RECOVERY:
 		LOGP(DPCU, LOGL_NOTICE, "NS-NSE %d became available\n", nsp->nsei);
-		if (nsp->nsei == cfg->nsip_sgsn_nsei) {
+		if (gbproxy_is_sgsn_nsei(cfg, nsp->nsei)) {
 			/* look-up or create the BTS context for this BVC */
 			struct bssgp_bvc_ctx *bctx = btsctx_by_bvci_nsei(nsp->bvci, nsp->nsei);
 			if (!bctx)
@@ -810,7 +811,7 @@ void gprs_ns_prim_status_cb(struct gbproxy_config *cfg, struct osmo_gprs_ns2_pri
 		}
 		break;
 	case NS_AFF_CAUSE_FAILURE:
-		if (nsp->nsei == cfg->nsip_sgsn_nsei) {
+		if (gbproxy_is_sgsn_nsei(cfg, nsp->nsei)) {
 			/* sgsn */
 			/* TODO: BSVC: block all PtP towards bss */
 			rate_ctr_inc(&cfg->ctrg->
