@@ -31,6 +31,7 @@
 #include <osmocom/gsm/gsm48.h>
 
 #include <osmocom/gprs/gprs_ns2.h>
+#include <osmocom/gprs/bssgp_bvc_fsm.h>
 #include <osmocom/gsm/apn.h>
 
 #include <osmocom/sgsn/debug.h>
@@ -42,6 +43,7 @@
 #include <osmocom/vty/logging.h>
 #include <osmocom/vty/vty.h>
 #include <osmocom/vty/misc.h>
+
 
 static struct gbproxy_config *g_cfg = NULL;
 
@@ -61,7 +63,7 @@ static void gbprox_vty_print_bvc(struct vty *vty, struct gbproxy_bvc *bvc)
 
 	vty_out(vty, "NSEI %5u, PTP-BVCI %5u, "
 		"RAI %s", bvc->nse->nsei, bvc->bvci, osmo_rai_name(&raid));
-	if (bvc->blocked)
+	if (bssgp_bvc_fsm_is_unblocked(bvc->fi))
 		vty_out(vty, " [BVC-BLOCKED]");
 
 	vty_out(vty, "%s", VTY_NEWLINE);
@@ -69,10 +71,14 @@ static void gbprox_vty_print_bvc(struct vty *vty, struct gbproxy_bvc *bvc)
 
 static int config_write_gbproxy(struct vty *vty)
 {
+	struct gbproxy_nse *nse;
+	int i;
+
 	vty_out(vty, "gbproxy%s", VTY_NEWLINE);
 
-	vty_out(vty, " sgsn nsei %u%s", g_cfg->nsip_sgsn_nsei,
-		VTY_NEWLINE);
+	hash_for_each(g_cfg->sgsn_nses, i, nse, list) {
+		vty_out(vty, " sgsn nsei %u%s", nse->nsei, VTY_NEWLINE);
+	}
 
 	return CMD_SUCCESS;
 }
@@ -86,6 +92,9 @@ DEFUN(cfg_gbproxy,
 	return CMD_SUCCESS;
 }
 
+extern const struct bssgp_bvc_fsm_ops sgsn_sig_bvc_fsm_ops;
+#include <osmocom/gprs/protocol/gsm_08_18.h>
+
 DEFUN(cfg_nsip_sgsn_nsei,
       cfg_nsip_sgsn_nsei_cmd,
       "sgsn nsei <0-65534>",
@@ -93,10 +102,36 @@ DEFUN(cfg_nsip_sgsn_nsei,
       "NSEI to be used in the connection with the SGSN\n"
       "The NSEI\n")
 {
+	uint32_t features = 0; // FIXME: make configurable
 	unsigned int nsei = atoi(argv[0]);
+	struct gbproxy_nse *nse;
+	struct gbproxy_bvc *bvc;
 
-	g_cfg->nsip_sgsn_nsei = nsei;
+	nse = gbproxy_nse_by_nsei_or_new(g_cfg, nsei, true);
+	if (!nse)
+		goto free_nothing;
+
+	if (!gbproxy_bvc_by_bvci(nse, 0)) {
+		uint8_t cause = BSSGP_CAUSE_OML_INTERV;
+		bvc = gbproxy_bvc_alloc(nse, 0);
+		if (!bvc)
+			goto free_nse;
+		bvc->fi = bssgp_bvc_fsm_alloc_sig_bss(bvc, nse->cfg->nsi, nsei, features);
+		if (!bvc->fi)
+			goto free_bvc;
+		bssgp_bvc_fsm_set_ops(bvc->fi, &sgsn_sig_bvc_fsm_ops, bvc);
+		osmo_fsm_inst_dispatch(bvc->fi, BSSGP_BVCFSM_E_REQ_RESET, &cause);
+	}
+
 	return CMD_SUCCESS;
+
+free_bvc:
+	gbproxy_bvc_free(bvc);
+free_nse:
+	gbproxy_nse_free(nse);
+free_nothing:
+	vty_out(vty, "%% Unable to create NSE for NSEI=%05u%s", nsei, VTY_NEWLINE);
+	return CMD_WARNING;
 }
 
 static void log_set_bvc_filter(struct log_target *target,
@@ -181,9 +216,15 @@ DEFUN(delete_gb_bvci, delete_gb_bvci_cmd,
 {
 	const uint16_t nsei = atoi(argv[0]);
 	const uint16_t bvci = atoi(argv[1]);
+	struct gbproxy_nse *nse = gbproxy_nse_by_nsei(g_cfg, nsei, NSE_F_BSS);
 	int counter;
 
-	counter = gbproxy_cleanup_bvcs(g_cfg, nsei, bvci);
+	if (!nse) {
+		vty_out(vty, "NSE not found%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+
+	counter = gbproxy_cleanup_bvcs(nse, bvci);
 
 	if (counter == 0) {
 		vty_out(vty, "BVC not found%s", VTY_NEWLINE);
@@ -219,8 +260,8 @@ DEFUN(delete_gb_nsei, delete_gb_nsei_cmd,
 
 	if (delete_bvc) {
 		if (!dry_run) {
-			struct gbproxy_nse *nse = gbproxy_nse_by_nsei(g_cfg, nsei);
-			counter = gbproxy_cleanup_bvcs(g_cfg, nsei, 0);
+			struct gbproxy_nse *nse = gbproxy_nse_by_nsei(g_cfg, nsei, NSE_F_BSS);
+			counter = gbproxy_cleanup_bvcs(nse, 0);
 			gbproxy_nse_free(nse);
 		} else {
 			struct gbproxy_nse *nse;

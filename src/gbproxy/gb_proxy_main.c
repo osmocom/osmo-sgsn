@@ -315,13 +315,6 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (!gprs_ns2_nse_by_nsei(gbcfg->nsi, gbcfg->nsip_sgsn_nsei)) {
-		LOGP(DGPRS, LOGL_FATAL, "You cannot proxy to NSE(%05u) "
-			"without creating that NSEI before\n",
-			gbcfg->nsip_sgsn_nsei);
-		exit(2);
-	}
-
 	if (daemonize) {
 		rc = osmo_daemonize();
 		if (rc < 0) {

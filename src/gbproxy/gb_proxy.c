@@ -1,6 +1,6 @@
 /* NS-over-IP proxy */
 
-/* (C) 2010 by Harald Welte <laforge@gnumonks.org>
+/* (C) 2010-2020 by Harald Welte <laforge@gnumonks.org>
  * (C) 2010-2013 by On-Waves
  * (C) 2013 by Holger Hans Peter Freyther
  * All Rights Reserved
@@ -41,6 +41,7 @@
 #include <osmocom/gprs/gprs_ns2.h>
 #include <osmocom/gprs/gprs_bssgp.h>
 #include <osmocom/gprs/gprs_bssgp_bss.h>
+#include <osmocom/gprs/bssgp_bvc_fsm.h>
 
 #include <osmocom/gsm/gsm_utils.h>
 
@@ -80,29 +81,7 @@ static const struct rate_ctr_group_desc global_ctrg_desc = {
 
 static int gbprox_relay2peer(struct msgb *old_msg, struct gbproxy_bvc *bvc,
 			     uint16_t ns_bvci);
-static int gbprox_relay2sgsn(struct gbproxy_config *cfg, struct msgb *old_msg,
-			     uint16_t ns_bvci, uint16_t sgsn_nsei);
 
-
-static int gbproxy_is_sgsn_nsei(struct gbproxy_config *cfg, uint16_t nsei)
-{
-	return nsei == cfg->nsip_sgsn_nsei;
-}
-
-static int check_bvc_nsei(struct gbproxy_bvc *bvc, uint16_t nsei)
-{
-	OSMO_ASSERT(bvc);
-	OSMO_ASSERT(bvc->nse);
-
-	if (bvc->nse->nsei != nsei) {
-		LOGPBVC(bvc, LOGL_NOTICE, "Peer entry doesn't match current NSEI "
-		     "via NSE(%05u/BSS)\n", nsei);
-		rate_ctr_inc(&bvc->ctrg->ctr[GBPROX_PEER_CTR_INV_NSEI]);
-		return 0;
-	}
-
-	return 1;
-}
 
 /* generate BVC-STATUS message with cause value derived from TLV-parser error */
 static int tx_status_from_tlvp(enum osmo_tlv_parser_error tlv_p_err, struct msgb *orig_msg)
@@ -125,6 +104,7 @@ static void strip_ns_hdr(struct msgb *msg)
 	msgb_pull(msg, strip_len);
 }
 
+#if 0
 /* feed a message down the NS-VC associated with the specified bvc */
 static int gbprox_relay2sgsn(struct gbproxy_config *cfg, struct msgb *old_msg,
 			     uint16_t ns_bvci, uint16_t sgsn_nsei)
@@ -150,6 +130,7 @@ static int gbprox_relay2sgsn(struct gbproxy_config *cfg, struct msgb *old_msg,
 		rate_ctr_inc(&cfg->ctrg->ctr[GBPROX_GLOB_CTR_TX_ERR_SGSN]);
 	return rc;
 }
+#endif
 
 /* feed a message down the NSE */
 static int gbprox_relay2nse(struct msgb *old_msg, struct gbproxy_nse *nse,
@@ -208,198 +189,456 @@ static int gbprox_relay2peer(struct msgb *old_msg, struct gbproxy_bvc *bvc,
 	return rc;
 }
 
-static int block_unblock_bvc(struct gbproxy_config *cfg, uint16_t ptp_bvci, uint8_t pdu_type)
-{
-	struct gbproxy_bvc *bvc;
-
-	bvc = gbproxy_bvc_by_bvci(cfg, ptp_bvci);
-	if (!bvc) {
-		LOGP(DGPRS, LOGL_ERROR, "BVC(%05u/??) Cannot find BSS\n",
-			ptp_bvci);
-		rate_ctr_inc(&cfg->ctrg->ctr[GBPROX_GLOB_CTR_INV_BVCI]);
-		return -ENOENT;
-	}
-
-	switch (pdu_type) {
-	case BSSGP_PDUT_BVC_BLOCK_ACK:
-		bvc->blocked = true;
-		rate_ctr_inc(&bvc->ctrg->ctr[GBPROX_PEER_CTR_BLOCKED]);
-		break;
-	case BSSGP_PDUT_BVC_UNBLOCK_ACK:
-		bvc->blocked = false;
-		rate_ctr_inc(&bvc->ctrg->ctr[GBPROX_PEER_CTR_UNBLOCKED]);
-		break;
-	default:
-		break;
-	}
-	return 0;
-}
-
-/* Send a message to a bvc identified by ptp_bvci but using ns_bvci
- * in the NS hdr */
-static int gbprox_relay2bvci(struct gbproxy_config *cfg, struct msgb *msg, uint16_t ptp_bvci,
-			  uint16_t ns_bvci)
-{
-	struct gbproxy_bvc *bvc;
-
-	bvc = gbproxy_bvc_by_bvci(cfg, ptp_bvci);
-	if (!bvc) {
-		LOGP(DGPRS, LOGL_ERROR, "BVC(%05u/??) Cannot find BSS\n",
-			ptp_bvci);
-		rate_ctr_inc(&cfg->ctrg->ctr[GBPROX_GLOB_CTR_INV_BVCI]);
-		return -ENOENT;
-	}
-
-	return gbprox_relay2peer(msg, bvc, ns_bvci);
-}
-
 int bssgp_prim_cb(struct osmo_prim_hdr *oph, void *ctx)
 {
 	return 0;
 }
 
+
+/***********************************************************************
+ * PTP BVC handling
+ ***********************************************************************/
+
+/* route an uplink message on a PTP-BVC to a SGSN using the TLLI */
+static int gbprox_bss2sgsn_tlli(struct gbproxy_cell *cell, struct msgb *msg, uint32_t tlli,
+				bool sig_bvci)
+{
+	struct gbproxy_bvc *sgsn_bvc;
+	unsigned int i;
+
+	/* FIXME: derive NRI from TLLI */
+	/* FIXME: find the SGSN for that NRI */
+
+	/* HACK: we currently simply pick the first SGSN we find */
+	for (i = 0; i < ARRAY_SIZE(cell->sgsn_bvc); i++) {
+		sgsn_bvc = cell->sgsn_bvc[i];
+		if (sgsn_bvc)
+			return gbprox_relay2peer(msg, sgsn_bvc, sig_bvci ? 0 : sgsn_bvc->bvci);
+	}
+	return 0;
+}
+
+static int gbprox_bss2sgsn_null_nri(struct gbproxy_cell *cell, struct msgb *msg)
+{
+	struct gbproxy_bvc *sgsn_bvc;
+	unsigned int i;
+
+	/* FIXME: find the SGSN for that NRI */
+
+	/* HACK: we currently simply pick the first SGSN we find */
+	for (i = 0; i < ARRAY_SIZE(cell->sgsn_bvc); i++) {
+		sgsn_bvc = cell->sgsn_bvc[i];
+		if (sgsn_bvc)
+			return gbprox_relay2peer(msg, sgsn_bvc, sgsn_bvc->bvci);
+	}
+	return 0;
+}
+
+
 /* Receive an incoming PTP message from a BSS-side NS-VC */
-static int gbprox_rx_ptp_from_bss(struct gbproxy_config *cfg,
-				  struct msgb *msg, uint16_t nsei,
-				  uint16_t ns_bvci)
+static int gbprox_rx_ptp_from_bss(struct gbproxy_nse *nse, struct msgb *msg, uint16_t ns_bvci)
 {
 	struct bssgp_normal_hdr *bgph = (struct bssgp_normal_hdr *) msgb_bssgph(msg);
-	struct gbproxy_bvc *bvc;
+	const char *pdut_name = osmo_tlv_prot_msg_name(&osmo_pdef_bssgp, bgph->pdu_type);
+	struct gbproxy_bvc *bss_bvc;
+	struct tlv_parsed tp;
+	char log_pfx[32];
+	uint32_t tlli;
+	int rc;
+
+	snprintf(log_pfx, sizeof(log_pfx), "NSE(%05u/BSS)-BVC(%05u/??)", nse->nsei, ns_bvci);
+
+	LOGP(DGPRS, LOGL_DEBUG, "%s Rx %s\n", log_pfx, pdut_name);
 
 	if (ns_bvci == 0 && ns_bvci == 1) {
-		LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u/BSS) BVCI=%05u is not PTP\n", nsei, ns_bvci);
+		LOGP(DGPRS, LOGL_NOTICE, "%s BVCI=%05u is not PTP\n", log_pfx, ns_bvci);
 		return bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, NULL, msg);
 	}
 
 	if (!(bssgp_pdu_type_flags(bgph->pdu_type) & BSSGP_PDUF_PTP)) {
-		LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u/%05u) %s not allowed in PTP BVC\n",
-		     nsei, ns_bvci, osmo_tlv_prot_msg_name(&osmo_pdef_bssgp, bgph->pdu_type));
+		LOGP(DGPRS, LOGL_NOTICE, "%s %s not allowed in PTP BVC\n", log_pfx, pdut_name);
 		return bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, NULL, msg);
 	}
 
 	if (!(bssgp_pdu_type_flags(bgph->pdu_type) & BSSGP_PDUF_UL)) {
-		LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u/%05u) %s not allowed in uplink direction\n",
-		     nsei, ns_bvci, osmo_tlv_prot_msg_name(&osmo_pdef_bssgp, bgph->pdu_type));
+		LOGP(DGPRS, LOGL_NOTICE, "%s %s not allowed in uplink direction\n", log_pfx, pdut_name);
 		return bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, NULL, msg);
 	}
 
-	bvc = gbproxy_bvc_by_bvci(cfg, ns_bvci);
-	if (!bvc) {
-		LOGP(DGPRS, LOGL_NOTICE, "BVC(%05u/??) Didn't find bvc "
-		     "for PTP message from NSE(%05u/BSS), "
-		     "discarding message\n",
-		     ns_bvci, nsei);
-		return bssgp_tx_status(BSSGP_CAUSE_UNKNOWN_BVCI,
-				       &ns_bvci, msg);
+	bss_bvc = gbproxy_bvc_by_bvci(nse, ns_bvci);
+	if (!bss_bvc) {
+		LOGP(DGPRS, LOGL_NOTICE, "%s %s - Didn't find BVC for PTP message, discarding\n",
+		     log_pfx, pdut_name);
+		return bssgp_tx_status(BSSGP_CAUSE_UNKNOWN_BVCI, &ns_bvci, msg);
 	}
 
-	/* TODO: Should we discard this message if the check fails */
-	check_bvc_nsei(bvc, nsei);
+	/* UL_UNITDATA has a different header than all other uplink PDUs */
+	if (bgph->pdu_type == BSSGP_PDUT_UL_UNITDATA) {
+		const struct bssgp_ud_hdr *budh = (struct bssgp_ud_hdr *) msgb_bssgph(msg);
+		if (msgb_bssgp_len(msg) < sizeof(*budh))
+			return bssgp_tx_status(BSSGP_CAUSE_INV_MAND_INF, NULL, msg);
+		rc = osmo_tlv_prot_parse(&osmo_pdef_bssgp, &tp, 1, bgph->pdu_type, budh->data,
+					 msgb_bssgp_len(msg) - sizeof(*budh), 0, 0, DGPRS, log_pfx);
+		/* populate TLLI from the fixed headser into the TLV-parsed array so later code
+		 * doesn't have to worry where the TLLI came from */
+		tp.lv[BSSGP_IE_TLLI].len = 4;
+		tp.lv[BSSGP_IE_TLLI].val = (const uint8_t *) &budh->tlli;
+	} else {
+		rc = osmo_tlv_prot_parse(&osmo_pdef_bssgp, &tp, 1, bgph->pdu_type, bgph->data,
+					 msgb_bssgp_len(msg) - sizeof(*bgph), 0, 0, DGPRS, log_pfx);
+	}
+	if (rc < 0) {
+		rate_ctr_inc(&nse->cfg->ctrg->ctr[GBPROX_GLOB_CTR_PROTO_ERR_BSS]);
+		return tx_status_from_tlvp(rc, msg);
+	}
 
-	return gbprox_relay2sgsn(cfg, msg, ns_bvci, cfg->nsip_sgsn_nsei);
+	switch (bgph->pdu_type) {
+	case BSSGP_PDUT_UL_UNITDATA:
+	case BSSGP_PDUT_RA_CAPA_UPDATE:
+	case BSSGP_PDUT_FLOW_CONTROL_MS:
+	case BSSGP_PDUT_DOWNLOAD_BSS_PFC:
+	case BSSGP_PDUT_CREATE_BSS_PFC_ACK:
+	case BSSGP_PDUT_CREATE_BSS_PFC_NACK:
+	case BSSGP_PDUT_MODIFY_BSS_PFC_ACK:
+	case BSSGP_PDUT_DELETE_BSS_PFC_ACK:
+	case BSSGP_PDUT_FLOW_CONTROL_PFC:
+	case BSSGP_PDUT_DELETE_BSS_PFC_REQ:
+	case BSSGP_PDUT_PS_HO_REQUIRED:
+	case BSSGP_PDUT_PS_HO_REQUEST_ACK:
+	case BSSGP_PDUT_PS_HO_REQUEST_NACK:
+	case BSSGP_PDUT_PS_HO_COMPLETE:
+	case BSSGP_PDUT_PS_HO_CANCEL:
+		/* We can route based on TLLI-NRI */
+		tlli = osmo_load32be(TLVP_VAL(&tp, BSSGP_IE_TLLI));
+		rc = gbprox_bss2sgsn_tlli(bss_bvc->cell, msg, tlli, false);
+		break;
+	case BSSGP_PDUT_RADIO_STATUS:
+		if (TLVP_PRESENT(&tp, BSSGP_IE_TLLI)) {
+			tlli = osmo_load32be(TLVP_VAL(&tp, BSSGP_IE_TLLI));
+			rc = gbprox_bss2sgsn_tlli(bss_bvc->cell, msg, tlli, false);
+		} else if (TLVP_PRESENT(&tp, BSSGP_IE_TMSI)) {
+			/* we treat the TMSI like a TLLI and extract the NRI from it */
+			tlli = osmo_load32be(TLVP_VAL(&tp, BSSGP_IE_TMSI));
+			rc = gbprox_bss2sgsn_tlli(bss_bvc->cell, msg, tlli, false);
+		} else if (TLVP_PRESENT(&tp, BSSGP_IE_IMSI)) {
+			rc = gbprox_bss2sgsn_null_nri(bss_bvc->cell, msg);
+		} else
+			LOGPBVC(bss_bvc, LOGL_ERROR, "Rx RADIO-STATUS without any of the conditional IEs\n");
+		break;
+	case BSSGP_PDUT_DUMMY_PAGING_PS_RESP:
+	case BSSGP_PDUT_PAGING_PS_REJECT:
+		/* TODO: Implement via state tracking of PAGING-PS + DUMMY_PAGING_PS */
+		LOGPBVC(bss_bvc, LOGL_ERROR, "Rx %s: Implementation missing\n", pdut_name);
+		break;
+	case BSSGP_PDUT_FLOW_CONTROL_BVC:
+		/* TODO: Implement via FSM */
+		//rc = osmo_fsm_inst_dispatch(bss_bvc->fi, FIXME, &tp);
+		LOGPBVC(bss_bvc, LOGL_ERROR, "Rx %s: Implementation missing\n", pdut_name);
+		break;
+	case BSSGP_PDUT_STATUS:
+		/* TODO: Implement by inspecting the contained PDU */
+		if (!TLVP_PRESENT(&tp, BSSGP_IE_PDU_IN_ERROR))
+			break;
+		LOGPBVC(bss_bvc, LOGL_ERROR, "Rx %s: Implementation missing\n", pdut_name);
+		break;
+	}
+
+	return 0;
 }
 
 /* Receive an incoming PTP message from a SGSN-side NS-VC */
-static int gbprox_rx_ptp_from_sgsn(struct gbproxy_config *cfg,
-				   struct msgb *msg, uint16_t nsei,
-				   uint16_t ns_bvci)
+static int gbprox_rx_ptp_from_sgsn(struct gbproxy_nse *nse, struct msgb *msg, uint16_t ns_bvci)
 {
 	struct bssgp_normal_hdr *bgph = (struct bssgp_normal_hdr *) msgb_bssgph(msg);
-	struct gbproxy_bvc *bvc;
+	const char *pdut_name = osmo_tlv_prot_msg_name(&osmo_pdef_bssgp, bgph->pdu_type);
+	struct gbproxy_bvc *sgsn_bvc, *bss_bvc;
+	char log_pfx[32];
+
+	snprintf(log_pfx, sizeof(log_pfx), "NSE(%05u/SGSN)-BVC(%05u/??)", nse->nsei, ns_bvci);
+
+	LOGP(DGPRS, LOGL_DEBUG, "%s Rx %s\n", log_pfx, pdut_name);
 
 	if (ns_bvci == 0 && ns_bvci == 1) {
-		LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u/BSS) BVCI=%05u is not PTP\n", nsei, ns_bvci);
+		LOGP(DGPRS, LOGL_NOTICE, "%s BVCI is not PTP\n", log_pfx);
 		return bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, NULL, msg);
 	}
 
 	if (!(bssgp_pdu_type_flags(bgph->pdu_type) & BSSGP_PDUF_PTP)) {
-		LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u/%05u) %s not allowed in PTP BVC\n",
-		     nsei, ns_bvci, osmo_tlv_prot_msg_name(&osmo_pdef_bssgp, bgph->pdu_type));
+		LOGP(DGPRS, LOGL_NOTICE, "%s %s not allowed in PTP BVC\n", log_pfx, pdut_name);
 		return bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, NULL, msg);
 	}
 
 	if (!(bssgp_pdu_type_flags(bgph->pdu_type) & BSSGP_PDUF_DL)) {
-		LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u/%05u) %s not allowed in downlink direction\n",
-		     nsei, ns_bvci, osmo_tlv_prot_msg_name(&osmo_pdef_bssgp, bgph->pdu_type));
+		LOGP(DGPRS, LOGL_NOTICE, "%s %s not allowed in downlink direction\n", log_pfx, pdut_name);
 		return bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, NULL, msg);
 	}
 
-	bvc = gbproxy_bvc_by_bvci(cfg, ns_bvci);
-	if (!bvc) {
-		LOGP(DGPRS, LOGL_INFO, "BVC(%05u/??) Didn't find bvc for "
-		     "for message from NSE(%05u/SGSN)\n",
-		     ns_bvci, nsei);
-		rate_ctr_inc(&cfg->ctrg->
-			     ctr[GBPROX_GLOB_CTR_INV_BVCI]);
-		return bssgp_tx_status(BSSGP_CAUSE_UNKNOWN_BVCI,
-				       &ns_bvci, msg);
+	sgsn_bvc = gbproxy_bvc_by_bvci(nse, ns_bvci);
+	if (!sgsn_bvc) {
+		LOGP(DGPRS, LOGL_NOTICE, "%s %s - Didn't find BVC for for PTP message, discarding\n",
+		     log_pfx, pdut_name);
+		rate_ctr_inc(&nse->cfg->ctrg-> ctr[GBPROX_GLOB_CTR_INV_BVCI]);
+		return bssgp_tx_status(BSSGP_CAUSE_UNKNOWN_BVCI, &ns_bvci, msg);
 	}
 
-	if (bvc->blocked) {
-		LOGPBVC(bvc, LOGL_NOTICE, "Dropping PDU for "
-		     "blocked BVC via NSE(%05u/SGSN)\n", nsei);
-		rate_ctr_inc(&bvc->ctrg->ctr[GBPROX_PEER_CTR_DROPPED]);
+	if (!bssgp_bvc_fsm_is_unblocked(sgsn_bvc->fi)) {
+		LOGPBVC(sgsn_bvc, LOGL_NOTICE, "Rx %s: Dropping on blocked BVC\n", pdut_name);
+		rate_ctr_inc(&sgsn_bvc->ctrg->ctr[GBPROX_PEER_CTR_DROPPED]);
 		return bssgp_tx_status(BSSGP_CAUSE_BVCI_BLOCKED, &ns_bvci, msg);
 	}
+	OSMO_ASSERT(sgsn_bvc->cell);
+	bss_bvc = sgsn_bvc->cell->bss_bvc;
 
-	return gbprox_relay2peer(msg, bvc, ns_bvci);
+	return gbprox_relay2peer(msg, bss_bvc, bss_bvc->bvci);
 }
 
-/* process a BVC-RESET message from the BSS side */
-static int gbprox_rx_bvc_reset_from_bss(struct gbproxy_config *cfg, struct msgb *msg,
-					uint16_t nsei, struct tlv_parsed *tp)
-{
-	struct gbproxy_bvc *from_bvc = NULL;
-	uint16_t bvci;
+/***********************************************************************
+ * BVC FSM call-backs
+ ***********************************************************************/
 
-	if (!TLVP_PRES_LEN(tp, BSSGP_IE_BVCI, 2) || !TLVP_PRES_LEN(tp, BSSGP_IE_CAUSE, 1)) {
-		rate_ctr_inc(&cfg->ctrg->ctr[GBPROX_GLOB_CTR_PROTO_ERR_BSS]);
-		return bssgp_tx_status(BSSGP_CAUSE_MISSING_MAND_IE, NULL, msg);
+/* helper function to dispatch a FSM event to all SGSN-side BVC FSMs of a cell */
+static void dispatch_to_all_sgsn_bvc(struct gbproxy_cell *cell, uint32_t event, void *priv)
+{
+	unsigned int i;
+
+	for (i = 0; i < ARRAY_SIZE(cell->sgsn_bvc); i++) {
+		struct gbproxy_bvc *sgsn_bvc = cell->sgsn_bvc[i];
+		if (!sgsn_bvc)
+			continue;
+		osmo_fsm_inst_dispatch(sgsn_bvc->fi, event, priv);
+	}
+}
+
+/* BVC FSM informs us about a BSS-side reset of the signaling BVC */
+static void bss_sig_bvc_reset_notif(uint16_t nsei, uint16_t bvci, const struct gprs_ra_id *ra_id,
+				    uint16_t cell_id, uint8_t cause, void *priv)
+{
+	struct gbproxy_bvc *sig_bvc = priv;
+	struct gbproxy_nse *nse = sig_bvc->nse;
+	struct gbproxy_bvc *ptp_bvc;
+	unsigned int i;
+
+	/* BLOCK all SGSN-side PTP BVC within this NSE */
+	hash_for_each(nse->bvcs, i, ptp_bvc, list) {
+		if (ptp_bvc == sig_bvc)
+			continue;
+		OSMO_ASSERT(ptp_bvc->cell);
+
+		dispatch_to_all_sgsn_bvc(ptp_bvc->cell, BSSGP_BVCFSM_E_REQ_BLOCK, &cause);
 	}
 
-	bvci = ntohs(tlvp_val16_unal(tp, BSSGP_IE_BVCI));
-	LOGP(DGPRS, LOGL_INFO, "NSE(%05u) Rx BVC RESET (BVCI=%05u)\n", nsei, bvci);
+	/* Delete all BSS-side PTP BVC within this NSE */
+	gbproxy_cleanup_bvcs(nse, 0);
+
+	/* TODO: we keep the "CELL" around for now, re-connecting it to
+	 * any (later) new PTP-BVC for that BVCI. Not sure if that's the
+	 * best idea ? */
+}
+
+/* forward declaration */
+static const struct bssgp_bvc_fsm_ops sgsn_ptp_bvc_fsm_ops;
+
+static const struct bssgp_bvc_fsm_ops bss_sig_bvc_fsm_ops = {
+	.reset_notification = bss_sig_bvc_reset_notif,
+};
+
+/* BVC FSM informs us about a BSS-side reset of a PTP BVC */
+static void bss_ptp_bvc_reset_notif(uint16_t nsei, uint16_t bvci, const struct gprs_ra_id *ra_id,
+				    uint16_t cell_id, uint8_t cause, void *priv)
+{
+	struct gbproxy_bvc *bvc = priv;
+	struct gbproxy_config *cfg = bvc->nse->cfg;
+	unsigned int i;
+
+	OSMO_ASSERT(bvci != 0);
+
+	if (!bvc->cell) {
+		/* see if we have a CELL dangling around */
+		bvc->cell = gbproxy_cell_by_bvci(cfg, bvci);
+		if (bvc->cell) {
+			/* the CELL already exists. This means either it * was created before at an
+			 * earlier PTP BVC-RESET, or that there are non-unique BVCIs and hence a
+			 * malconfiguration */
+			if (bvc->cell->bss_bvc) {
+				LOGPBVC(bvc, LOGL_NOTICE, "Rx BVC-RESET via this NSE, but CELL already "
+					"has BVC on NSEI=%05u\n", bvc->cell->bss_bvc->nse->nsei);
+				LOGPBVC(bvc->cell->bss_bvc, LOGL_NOTICE, "Destroying due to conflicting "
+					"BVCI configuration (new NSEI=%05u)!\n", bvc->nse->nsei);
+				gbproxy_bvc_free(bvc->cell->bss_bvc);
+			}
+			bvc->cell->bss_bvc = bvc;
+		}
+	}
+
+	if (!bvc->cell) {
+		struct gbproxy_nse *sgsn_nse;
+		/* if we end up here, it means this is the first time we received a BVC-RESET
+		 * for this BVC.  We need to create the 'cell' data structure and the SGSN-side
+		 * BVC counterparts */
+
+		bvc->cell = gbproxy_cell_alloc(cfg, bvci);
+		OSMO_ASSERT(bvc->cell);
+
+		/* link us to the cell and vice-versa */
+		bvc->cell->bss_bvc = bvc;
+
+		/* allocate the SGSN-side BVCs within the cell, and reset them */
+		hash_for_each(cfg->sgsn_nses, i, sgsn_nse, list) {
+			struct gbproxy_bvc *sgsn_bvc = gbproxy_bvc_by_bvci(sgsn_nse, bvci);
+			if (sgsn_bvc)
+				OSMO_ASSERT(!sgsn_bvc->cell);
+
+			if (!sgsn_bvc) {
+				sgsn_bvc = gbproxy_bvc_alloc(sgsn_nse, bvci);
+				OSMO_ASSERT(sgsn_bvc);
+
+				sgsn_bvc->cell = bvc->cell;
+				sgsn_bvc->fi = bssgp_bvc_fsm_alloc_ptp_bss(sgsn_bvc, cfg->nsi, sgsn_nse->nsei,
+									   bvci, ra_id, cell_id);
+				OSMO_ASSERT(sgsn_bvc->fi);
+				bssgp_bvc_fsm_set_ops(sgsn_bvc->fi, &sgsn_ptp_bvc_fsm_ops, sgsn_bvc);
+
+				gbproxy_cell_add_sgsn_bvc(bvc->cell, sgsn_bvc);
+			} else {
+				OSMO_ASSERT(sgsn_bvc->cell == bvc->cell);
+			}
+		}
+	}
+
+	/* Trigger outbound BVC-RESET procedure toward each SGSN */
+	dispatch_to_all_sgsn_bvc(bvc->cell, BSSGP_BVCFSM_E_REQ_RESET, &cause);
+}
+
+/* BVC FSM informs us about a BSS-side FSM state change */
+static void bss_ptp_bvc_state_chg_notif(uint16_t nsei, uint16_t bvci, int old_state, int state, void *priv)
+{
+	struct gbproxy_bvc *bvc = priv;
+	struct gbproxy_cell *cell = bvc->cell;
+	uint8_t cause = bssgp_bvc_fsm_get_block_cause(bvc->fi);
+
+	/* we have just been created but due to callback ordering the cell is not associated */
+	if (!cell)
+		return;
+
+	switch (state) {
+	case BSSGP_BVCFSM_S_BLOCKED:
+		/* block the corresponding SGSN-side PTP BVCs */
+		dispatch_to_all_sgsn_bvc(cell, BSSGP_BVCFSM_E_REQ_BLOCK, &cause);
+		break;
+	case BSSGP_BVCFSM_S_UNBLOCKED:
+		/* unblock the corresponding SGSN-side PTP BVCs */
+		dispatch_to_all_sgsn_bvc(cell, BSSGP_BVCFSM_E_REQ_UNBLOCK, NULL);
+		break;
+	}
+}
+
+static const struct bssgp_bvc_fsm_ops bss_ptp_bvc_fsm_ops = {
+	.reset_notification = bss_ptp_bvc_reset_notif,
+	.state_chg_notification = bss_ptp_bvc_state_chg_notif,
+};
+
+/* BVC FSM informs us about a SGSN-side reset of a PTP BVC */
+static void sgsn_ptp_bvc_reset_notif(uint16_t nsei, uint16_t bvci, const struct gprs_ra_id *ra_id,
+				     uint16_t cell_id, uint8_t cause, void *priv)
+{
+	struct gbproxy_bvc *bvc = priv;
+
+	if (!bvc->cell) {
+		LOGPBVC(bvc, LOGL_ERROR, "RESET of PTP BVC on SGSN side for which we have no BSS?\n");
+		return;
+	}
+
+	OSMO_ASSERT(bvc->cell->bss_bvc);
+
+	/* request reset of BSS-facing PTP-BVC */
+	osmo_fsm_inst_dispatch(bvc->cell->bss_bvc->fi, BSSGP_BVCFSM_E_REQ_RESET, &cause);
+}
+
+static const struct bssgp_bvc_fsm_ops sgsn_ptp_bvc_fsm_ops = {
+	.reset_notification = sgsn_ptp_bvc_reset_notif,
+};
+
+/* BVC FSM informs us about a SGSN-side reset of the signaling BVC */
+static void sgsn_sig_bvc_reset_notif(uint16_t nsei, uint16_t bvci, const struct gprs_ra_id *ra_id,
+				     uint16_t cell_id, uint8_t cause, void *priv)
+{
+	struct gbproxy_bvc *bvc = priv;
+	struct gbproxy_config *cfg = bvc->nse->cfg;
+	struct gbproxy_nse *bss_nse;
+	unsigned int i;
+
+	/* delete all SGSN-side PTP BVC for this SGSN */
+	gbproxy_cleanup_bvcs(bvc->nse, 0);
+	/* FIXME: what to do about the cells? */
+	/* FIXME: do we really want to RESET all signaling BVC on the BSS and affect all other SGSN? */
+
+	/* we need to trigger generating a reset procedure towards each BSS side signaling BVC */
+	hash_for_each(cfg->bss_nses, i, bss_nse, list) {
+		struct gbproxy_bvc *bss_bvc = gbproxy_bvc_by_bvci(bss_nse, 0);
+		if (!bss_bvc) {
+			LOGPNSE(bss_nse, LOGL_ERROR, "Doesn't have BVC with BVCI=0 ?!?\n");
+			continue;
+		}
+		osmo_fsm_inst_dispatch(bss_bvc->fi, BSSGP_BVCFSM_E_REQ_RESET, &cause);
+	}
+}
+
+const struct bssgp_bvc_fsm_ops sgsn_sig_bvc_fsm_ops = {
+	.reset_notification = sgsn_sig_bvc_reset_notif,
+};
+
+/***********************************************************************
+ * Signaling BVC handling
+ ***********************************************************************/
+
+/* process a BVC-RESET message from the BSS side */
+static int rx_bvc_reset_from_bss(struct gbproxy_nse *nse, struct msgb *msg, struct tlv_parsed *tp)
+{
+	struct gbproxy_bvc *from_bvc = NULL;
+	uint16_t bvci = ntohs(tlvp_val16_unal(tp, BSSGP_IE_BVCI));
+	uint32_t features = 0; // FIXME: make configurable
+
+	LOGPNSE(nse, LOGL_INFO, "Rx BVC-RESET (BVCI=%05u)\n", bvci);
+
 	if (bvci == 0) {
 		/* If we receive a BVC reset on the signalling endpoint, we
 		 * don't want the SGSN to reset, as the signalling endpoint
 		 * is common for all point-to-point BVCs (and thus all BTS) */
 
-		/* Ensure the NSE bvc is there and clear all PtP BVCs */
-		struct gbproxy_nse *nse = gbproxy_nse_by_nsei_or_new(cfg, nsei);
-		if (!nse) {
-			LOGP(DGPRS, LOGL_ERROR, "Could not create NSE(%05u)\n", nsei);
-			bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, 0, msg);
-			return 0;
-		}
-
-		gbproxy_cleanup_bvcs(cfg, nsei, 0);
-
-		/* FIXME: only do this if SGSN is alive! */
-		LOGPNSE(nse, LOGL_INFO, "Tx fake BVC RESET ACK of BVCI=0\n");
-		bssgp_tx_simple_bvci(BSSGP_PDUT_BVC_RESET_ACK, nsei, 0, 0);
-		return 0;
-	} else {
-		from_bvc = gbproxy_bvc_by_bvci(cfg, bvci);
+		from_bvc = gbproxy_bvc_by_bvci(nse, 0);
 		if (!from_bvc) {
-			struct gbproxy_nse *nse = gbproxy_nse_by_nsei(cfg, nsei);
-			if (!nse) {
-				LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u) Got PtP BVC reset before signalling reset for "
-					"BVCI=%05u\n", nsei, bvci);
-				bssgp_tx_status(BSSGP_CAUSE_PDU_INCOMP_STATE, NULL, msg);
-				return 0;
+			from_bvc = gbproxy_bvc_alloc(nse, 0);
+			OSMO_ASSERT(from_bvc);
+			from_bvc->fi = bssgp_bvc_fsm_alloc_sig_sgsn(from_bvc, nse->cfg->nsi, nse->nsei, features);
+			if (!from_bvc->fi) {
+				LOGPNSE(nse, LOGL_ERROR, "Cannot allocate SIG-BVC FSM\n");
+				gbproxy_bvc_free(from_bvc);
+				return -ENOMEM;
 			}
+			bssgp_bvc_fsm_set_ops(from_bvc->fi, &bss_sig_bvc_fsm_ops, from_bvc);
+		}
+	} else {
+		from_bvc = gbproxy_bvc_by_bvci(nse, bvci);
+		if (!from_bvc) {
 			/* if a PTP-BVC is reset, and we don't know that
 			 * PTP-BVCI yet, we should allocate a new bvc */
 			from_bvc = gbproxy_bvc_alloc(nse, bvci);
 			OSMO_ASSERT(from_bvc);
-			LOGPBVC(from_bvc, LOGL_INFO, "Allocated new bvc\n");
+			from_bvc->fi = bssgp_bvc_fsm_alloc_ptp_sgsn(from_bvc, nse->cfg->nsi,
+								    nse->nsei, bvci);
+			if (!from_bvc->fi) {
+				LOGPNSE(nse, LOGL_ERROR, "Cannot allocate SIG-BVC FSM\n");
+				gbproxy_bvc_free(from_bvc);
+				return -ENOMEM;
+			}
+			bssgp_bvc_fsm_set_ops(from_bvc->fi, &bss_ptp_bvc_fsm_ops, from_bvc);
 		}
-
+#if 0
 		/* Could have moved to a different NSE */
 		if (!check_bvc_nsei(from_bvc, nsei)) {
 			LOGPBVC(from_bvc, LOGL_NOTICE, "moving bvc to NSE(%05u)\n", nsei);
 
-			struct gbproxy_nse *nse_new = gbproxy_nse_by_nsei(cfg, nsei);
+			struct gbproxy_nse *nse_new = gbproxy_nse_by_nsei(cfg, nsei, false);
 			if (!nse_new) {
 				LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u) Got PtP BVC reset before signalling reset for "
 					"BVCI=%05u\n", bvci, nsei);
@@ -410,7 +649,8 @@ static int gbprox_rx_bvc_reset_from_bss(struct gbproxy_config *cfg, struct msgb 
 			/* Move bvc to different NSE */
 			gbproxy_bvc_move(from_bvc, nse_new);
 		}
-
+#endif
+		/* FIXME: do we need this, if it happens within FSM? */
 		if (TLVP_PRES_LEN(tp, BSSGP_IE_CELL_ID, 8)) {
 			struct gprs_ra_id raid;
 			/* We have a Cell Identifier present in this
@@ -422,126 +662,158 @@ static int gbprox_rx_bvc_reset_from_bss(struct gbproxy_config *cfg, struct msgb 
 			LOGPBVC(from_bvc, LOGL_INFO, "Cell ID %s\n", osmo_rai_name(&raid));
 		}
 	}
-	/* continue processing / relaying to SGSN[s] */
-	return 1;
+	/* hand into FSM for further processing */
+	osmo_fsm_inst_dispatch(from_bvc->fi, BSSGP_BVCFSM_E_RX_RESET, msg);
+	return 0;
 }
 
 /* Receive an incoming signalling message from a BSS-side NS-VC */
-static int gbprox_rx_sig_from_bss(struct gbproxy_config *cfg,
-				  struct msgb *msg, uint16_t nsei,
-				  uint16_t ns_bvci)
+static int gbprox_rx_sig_from_bss(struct gbproxy_nse *nse, struct msgb *msg, uint16_t ns_bvci)
 {
 	struct bssgp_normal_hdr *bgph = (struct bssgp_normal_hdr *) msgb_bssgph(msg);
-	struct tlv_parsed tp;
 	uint8_t pdu_type = bgph->pdu_type;
+	const char *pdut_name = osmo_tlv_prot_msg_name(&osmo_pdef_bssgp, bgph->pdu_type);
+	struct tlv_parsed tp;
 	int data_len = msgb_bssgp_len(msg) - sizeof(*bgph);
 	struct gbproxy_bvc *from_bvc = NULL;
-	struct gprs_ra_id raid;
 	char log_pfx[32];
+	uint16_t ptp_bvci;
+	uint32_t tlli;
 	int rc;
 
-	snprintf(log_pfx, sizeof(log_pfx), "NSE(%05u/BSS)", nsei);
+	snprintf(log_pfx, sizeof(log_pfx), "NSE(%05u/BSS)-BVC(%05u/??)", nse->nsei, ns_bvci);
+
+	LOGP(DGPRS, LOGL_DEBUG, "%s Rx %s\n", log_pfx, pdut_name);
 
 	if (ns_bvci != 0 && ns_bvci != 1) {
-		LOGP(DGPRS, LOGL_NOTICE, "%s BVCI=%05u is not signalling\n", log_pfx, ns_bvci);
+		LOGP(DGPRS, LOGL_NOTICE, "%s %s BVCI=%05u is not signalling\n", log_pfx, pdut_name, ns_bvci);
 		return bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, NULL, msg);
 	}
 
 	if (!(bssgp_pdu_type_flags(pdu_type) & BSSGP_PDUF_SIG)) {
-		LOGP(DGPRS, LOGL_NOTICE, "%s %s not allowed in signalling BVC\n", log_pfx,
-		     osmo_tlv_prot_msg_name(&osmo_pdef_bssgp, pdu_type));
+		LOGP(DGPRS, LOGL_NOTICE, "%s %s not allowed in signalling BVC\n", log_pfx, pdut_name);
 		return bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, NULL, msg);
 	}
 
 	if (!(bssgp_pdu_type_flags(pdu_type) & BSSGP_PDUF_UL)) {
-		LOGP(DGPRS, LOGL_NOTICE, "%s %s not allowed in uplink direction\n", log_pfx,
-		     osmo_tlv_prot_msg_name(&osmo_pdef_bssgp, pdu_type));
+		LOGP(DGPRS, LOGL_NOTICE, "%s %s not allowed in uplink direction\n", log_pfx, pdut_name);
 		return bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, NULL, msg);
 	}
 
 	rc = osmo_tlv_prot_parse(&osmo_pdef_bssgp, &tp, 1, pdu_type, bgph->data, data_len, 0, 0,
 				 DGPRS, log_pfx);
 	if (rc < 0) {
-		rate_ctr_inc(&cfg->ctrg->ctr[GBPROX_GLOB_CTR_PROTO_ERR_BSS]);
+		rate_ctr_inc(&nse->cfg->ctrg->ctr[GBPROX_GLOB_CTR_PROTO_ERR_BSS]);
 		return tx_status_from_tlvp(rc, msg);
 	}
+	/* hack to get both msg + tlv_parsed passed via osmo_fsm_inst_dispatch */
+	msgb_bcid(msg) = (void *)&tp;
 
+	/* special case handling for some PDU types */
 	switch (pdu_type) {
-	case BSSGP_PDUT_SUSPEND:
-	case BSSGP_PDUT_RESUME:
-		/* We implement RAI snooping during SUSPEND/RESUME, since it
-		 * establishes a relationsip between BVCI/bvc and the routeing
-		 * area identification.  The snooped information is then used
-		 * for routing the {SUSPEND,RESUME}_[N]ACK back to the correct
-		 * BSSGP */
-		if (!TLVP_PRES_LEN(&tp, BSSGP_IE_ROUTEING_AREA, 6))
-			goto err_mand_ie;
-		from_bvc = gbproxy_bvc_by_nsei(cfg, nsei);
+	case BSSGP_PDUT_BVC_RESET:
+		/* resolve or create gbproxy_bvc + handlei n BVC-FSM */
+		ptp_bvci = ntohs(tlvp_val16_unal(&tp, BSSGP_IE_BVCI));
+		return rx_bvc_reset_from_bss(nse, msg, &tp);
+	case BSSGP_PDUT_BVC_RESET_ACK:
+		ptp_bvci = ntohs(tlvp_val16_unal(&tp, BSSGP_IE_BVCI));
+		from_bvc = gbproxy_bvc_by_bvci(nse, ptp_bvci);
 		if (!from_bvc)
 			goto err_no_bvc;
-		memcpy(from_bvc->ra, TLVP_VAL(&tp, BSSGP_IE_ROUTEING_AREA),
-			sizeof(from_bvc->ra));
+		return osmo_fsm_inst_dispatch(from_bvc->fi, BSSGP_BVCFSM_E_RX_RESET_ACK, msg);
+	case BSSGP_PDUT_BVC_BLOCK:
+		ptp_bvci = ntohs(tlvp_val16_unal(&tp, BSSGP_IE_BVCI));
+		from_bvc = gbproxy_bvc_by_bvci(nse, ptp_bvci);
+		if (!from_bvc)
+			goto err_no_bvc;
+		return osmo_fsm_inst_dispatch(from_bvc->fi, BSSGP_BVCFSM_E_RX_BLOCK, msg);
+	case BSSGP_PDUT_BVC_UNBLOCK:
+		ptp_bvci = ntohs(tlvp_val16_unal(&tp, BSSGP_IE_BVCI));
+		from_bvc = gbproxy_bvc_by_bvci(nse, ptp_bvci);
+		if (!from_bvc)
+			goto err_no_bvc;
+		return osmo_fsm_inst_dispatch(from_bvc->fi, BSSGP_BVCFSM_E_RX_UNBLOCK, msg);
+	case BSSGP_PDUT_SUSPEND:
+	case BSSGP_PDUT_RESUME:
+		/* FIXME: Implement TLLI Cache.  Every SUSPEND/RESUME we must
+		 * take record of the TLLI->BVC mapping so we can map
+		 * back from TLLI->BVC when the SUSPEND/RESUME-ACK
+		 * arrives.  Cache should have a timeout of 1-3 seconds
+		 * and the ACK should explicitly delete entries. */
+#if 0
+		/* TODO: Validate the RAI for consistency with the RAI
+		 * we expect for any of the BVC within this BSS side NSE */
+		memcpy(ra, TLVP_VAL(&tp, BSSGP_IE_ROUTEING_AREA), sizeof(from_bvc->ra));
 		gsm48_parse_ra(&raid, from_bvc->ra);
-		LOGPBVC(from_bvc, LOGL_INFO, "BSSGP SUSPEND/RESUME "
-			"RAI snooping: RAI %s\n",
-			osmo_rai_name(&raid));
-		/* FIXME: This only supports one BSS per RA */
+#endif
 		break;
-	case BSSGP_PDUT_BVC_RESET:
-		rc = gbprox_rx_bvc_reset_from_bss(cfg, msg, nsei, &tp);
-		/* if function retruns 0, we terminate processing here */
-		if (rc == 0)
-			return 0;
+	case BSSGP_PDUT_STATUS:
+		/* FIXME: inspect the erroneous PDU IE (if any) and check
+		 * if we can extract a TLLI/RNI to route it to the correct SGSN */
+		break;
+	case BSSGP_PDUT_RAN_INFO:
+	case BSSGP_PDUT_RAN_INFO_REQ:
+	case BSSGP_PDUT_RAN_INFO_ACK:
+	case BSSGP_PDUT_RAN_INFO_ERROR:
+	case BSSGP_PDUT_RAN_INFO_APP_ERROR:
+		/* FIXME: route based in RIM Routing IE */
+		rc = bssgp_tx_status(BSSGP_CAUSE_PDU_INCOMP_FEAT, NULL, msg);
+		break;
+	case BSSGP_PDUT_LLC_DISCARD:
+	case BSSGP_PDUT_FLUSH_LL_ACK:
+		/* route based on BVCI + TLLI */
+		ptp_bvci = ntohs(tlvp_val16_unal(&tp, BSSGP_IE_BVCI));
+		tlli = osmo_load32be(TLVP_VAL(&tp, BSSGP_IE_TLLI));
+		from_bvc = gbproxy_bvc_by_bvci(nse, ptp_bvci);
+		if (!from_bvc)
+			goto err_no_bvc;
+		gbprox_bss2sgsn_tlli(from_bvc->cell, msg, tlli, true);
+		break;
+	default:
+		LOGPNSE(nse, LOGL_ERROR, "Rx %s: Implementation missing\n", pdut_name);
 		break;
 	}
 
-	return gbprox_relay2sgsn(cfg, msg, ns_bvci, cfg->nsip_sgsn_nsei);
+	return rc;
 err_no_bvc:
-	LOGP(DGPRS, LOGL_ERROR, "NSE(%05u/BSS) cannot find bvc based on NSEI\n",
-		nsei);
-	rate_ctr_inc(&cfg->ctrg->ctr[GBPROX_GLOB_CTR_INV_NSEI]);
+	LOGPNSE(nse, LOGL_ERROR, "Rx %s: cannot find BVC for BVCI=%05u\n", pdut_name, ptp_bvci);
+	rate_ctr_inc(&nse->cfg->ctrg->ctr[GBPROX_GLOB_CTR_INV_NSEI]);
 	return bssgp_tx_status(BSSGP_CAUSE_INV_MAND_INF, NULL, msg);
-err_mand_ie:
-	LOGP(DGPRS, LOGL_ERROR, "NSE(%05u/BSS) missing mandatory RA IE\n",
-		nsei);
-	rate_ctr_inc(&cfg->ctrg->ctr[GBPROX_GLOB_CTR_PROTO_ERR_BSS]);
-	return bssgp_tx_status(BSSGP_CAUSE_MISSING_MAND_IE, NULL, msg);
 }
 
 /* Receive paging request from SGSN, we need to relay to proper BSS */
-static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct tlv_parsed *tp,
-			    uint32_t nsei, uint16_t ns_bvci)
+static int gbprox_rx_paging(struct gbproxy_nse *nse, struct msgb *msg, const char *pdut_name,
+			    struct tlv_parsed *tp, uint16_t ns_bvci)
 {
-	struct gbproxy_nse *nse;
-	struct gbproxy_bvc *bvc;
+	struct gbproxy_config *cfg = nse->cfg;
+	struct gbproxy_bvc *sgsn_bvc, *bss_bvc;
 	unsigned int n_nses = 0;
 	int errctr = GBPROX_GLOB_CTR_PROTO_ERR_SGSN;
 	int i, j;
 
 	/* FIXME: Handle paging logic to only page each matching NSE */
 
-	LOGP(DGPRS, LOGL_INFO, "NSE(%05u/SGSN) BSSGP PAGING\n",
-		nsei);
 	if (TLVP_PRES_LEN(tp, BSSGP_IE_BVCI, 2)) {
 		uint16_t bvci = ntohs(tlvp_val16_unal(tp, BSSGP_IE_BVCI));
 		errctr = GBPROX_GLOB_CTR_OTHER_ERR;
-		bvc = gbproxy_bvc_by_bvci(cfg, bvci);
-		if (!bvc) {
-			LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u/SGSN) BSSGP PAGING: "
-				"unable to route: BVCI=%05u unknown\n", nsei, bvci);
+		sgsn_bvc = gbproxy_bvc_by_bvci(nse, bvci);
+		if (!sgsn_bvc) {
+			LOGPNSE(nse, LOGL_NOTICE, "Rx %s: unable to route: BVCI=%05u unknown\n",
+				pdut_name, bvci);
 			rate_ctr_inc(&cfg->ctrg->ctr[errctr]);
 			return -EINVAL;
 		}
-		LOGPBVC(bvc, LOGL_INFO, "routing by BVCI\n");
-		return gbprox_relay2peer(msg, bvc, ns_bvci);
+		LOGPBVC(sgsn_bvc, LOGL_INFO, "Rx %s: routing by BVCI\n", pdut_name);
+		return gbprox_relay2peer(msg, sgsn_bvc->cell->bss_bvc, ns_bvci);
 	} else if (TLVP_PRES_LEN(tp, BSSGP_IE_ROUTEING_AREA, 6)) {
 		errctr = GBPROX_GLOB_CTR_INV_RAI;
 		/* iterate over all bvcs and dispatch the paging to each matching one */
 		hash_for_each(cfg->bss_nses, i, nse, list) {
-			hash_for_each(nse->bvcs, j, bvc, list) {
-				if (!memcmp(bvc->ra, TLVP_VAL(tp, BSSGP_IE_ROUTEING_AREA), 6)) {
-					LOGPNSE(nse, LOGL_INFO, "routing to NSE (RAI match)\n");
-					gbprox_relay2peer(msg, bvc, ns_bvci);
+			hash_for_each(nse->bvcs, j, bss_bvc, list) {
+				if (!memcmp(bss_bvc->ra, TLVP_VAL(tp, BSSGP_IE_ROUTEING_AREA), 6)) {
+					LOGPNSE(nse, LOGL_INFO, "Rx %s: routing to NSE (RAI match)\n",
+						pdut_name);
+					gbprox_relay2peer(msg, bss_bvc, ns_bvci);
 					n_nses++;
 					/* Only send it once to each NSE */
 					break;
@@ -552,10 +824,11 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 		errctr = GBPROX_GLOB_CTR_INV_LAI;
 		/* iterate over all bvcs and dispatch the paging to each matching one */
 		hash_for_each(cfg->bss_nses, i, nse, list) {
-			hash_for_each(nse->bvcs, j, bvc, list) {
-				if (!memcmp(bvc->ra, TLVP_VAL(tp, BSSGP_IE_LOCATION_AREA), 5)) {
-					LOGPNSE(nse, LOGL_INFO, "routing to NSE (LAI match)\n");
-					gbprox_relay2peer(msg, bvc, ns_bvci);
+			hash_for_each(nse->bvcs, j, bss_bvc, list) {
+				if (!memcmp(bss_bvc->ra, TLVP_VAL(tp, BSSGP_IE_LOCATION_AREA), 5)) {
+					LOGPNSE(nse, LOGL_INFO, "Rx %s: routing to NSE (LAI match)\n",
+						pdut_name);
+					gbprox_relay2peer(msg, bss_bvc, ns_bvci);
 					n_nses++;
 					/* Only send it once to each NSE */
 					break;
@@ -565,23 +838,21 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 	} else if (TLVP_PRES_LEN(tp, BSSGP_IE_BSS_AREA_ID, 1)) {
 		/* iterate over all bvcs and dispatch the paging to each matching one */
 		hash_for_each(cfg->bss_nses, i, nse, list) {
-			hash_for_each(nse->bvcs, j, bvc, list) {
-				LOGPNSE(nse, LOGL_INFO, "routing to NSE (broadcast)\n");
-				gbprox_relay2peer(msg, bvc, ns_bvci);
+			hash_for_each(nse->bvcs, j, bss_bvc, list) {
+				LOGPNSE(nse, LOGL_INFO, "Rx %s:routing to NSE (broadcast)\n", pdut_name);
+				gbprox_relay2peer(msg, bss_bvc, ns_bvci);
 				n_nses++;
 				/* Only send it once to each NSE */
 				break;
 			}
 		}
 	} else {
-		LOGP(DGPRS, LOGL_ERROR, "NSE(%05u/SGSN) BSSGP PAGING: "
-			"unable to route, missing IE\n", nsei);
+		LOGPNSE(nse, LOGL_ERROR, "BSSGP PAGING: unable to route, missing IE\n");
 		rate_ctr_inc(&cfg->ctrg->ctr[errctr]);
 	}
 
 	if (n_nses == 0) {
-		LOGP(DGPRS, LOGL_ERROR, "NSE(%05u/SGSN) BSSGP PAGING: "
-			"unable to route, no destination found\n", nsei);
+		LOGPNSE(nse, LOGL_ERROR, "BSSGP PAGING: unable to route, no destination found\n");
 		rate_ctr_inc(&cfg->ctrg->ctr[errctr]);
 		return -EINVAL;
 	}
@@ -589,63 +860,41 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 }
 
 /* Receive an incoming BVC-RESET message from the SGSN */
-static int rx_reset_from_sgsn(struct gbproxy_config *cfg,
-			struct msgb *orig_msg,
-			struct msgb *msg, struct tlv_parsed *tp,
-			uint32_t nsei, uint16_t ns_bvci)
+static int rx_bvc_reset_from_sgsn(struct gbproxy_nse *nse, struct msgb *msg, struct tlv_parsed *tp,
+			uint16_t ns_bvci)
 {
-	struct gbproxy_nse *nse;
-	struct gbproxy_bvc *bvc;
-	uint16_t ptp_bvci;
-	int i, j;
+	uint16_t ptp_bvci = ntohs(tlvp_val16_unal(tp, BSSGP_IE_BVCI));
+	struct gbproxy_bvc *from_bvc;
 
-	if (!TLVP_PRES_LEN(tp, BSSGP_IE_BVCI, 2)) {
-		rate_ctr_inc(&cfg->ctrg->
-			     ctr[GBPROX_GLOB_CTR_PROTO_ERR_SGSN]);
-		return bssgp_tx_status(BSSGP_CAUSE_MISSING_MAND_IE,
-				       NULL, orig_msg);
-	}
-	ptp_bvci = ntohs(tlvp_val16_unal(tp, BSSGP_IE_BVCI));
+	LOGPNSE(nse, LOGL_INFO, "Rx BVC-RESET (BVCI=%05u)\n", ptp_bvci);
 
-	if (ptp_bvci >= 2) {
-		/* A reset for a PTP BVC was received, forward it to its
-		 * respective bvc */
-		bvc = gbproxy_bvc_by_bvci(cfg, ptp_bvci);
-		if (!bvc) {
-			LOGP(DGPRS, LOGL_ERROR, "NSE(%05u/SGSN) BVCI=%05u: Cannot find BSS\n",
-				nsei, ptp_bvci);
-			rate_ctr_inc(&cfg->ctrg->
-				     ctr[GBPROX_GLOB_CTR_INV_BVCI]);
-			return bssgp_tx_status(BSSGP_CAUSE_UNKNOWN_BVCI,
-					       &ptp_bvci, orig_msg);
+	if (ptp_bvci == 0) {
+		from_bvc = gbproxy_bvc_by_bvci(nse, 0);
+		OSMO_ASSERT(from_bvc);
+		osmo_fsm_inst_dispatch(from_bvc->fi, BSSGP_BVCFSM_E_RX_RESET, msg);
+	} else {
+		from_bvc = gbproxy_bvc_by_bvci(nse, ptp_bvci);
+		if (!from_bvc) {
+			LOGPNSE(nse, LOGL_ERROR, "Rx BVC-RESET BVCI=%05u: Cannot find BVC\n", ptp_bvci);
+			rate_ctr_inc(&nse->cfg->ctrg->ctr[GBPROX_GLOB_CTR_INV_BVCI]);
+			return bssgp_tx_status(BSSGP_CAUSE_UNKNOWN_BVCI, &ptp_bvci, msg);
 		}
-		return gbprox_relay2peer(msg, bvc, ns_bvci);
-	}
-
-	/* A reset for the Signalling entity has been received
-	 * from the SGSN.  As the signalling BVCI is shared
-	 * among all the BSS's that we multiplex, it needs to
-	 * be relayed  */
-	hash_for_each(cfg->bss_nses, i, nse, list) {
-		hash_for_each(nse->bvcs, j, bvc, list)
-			gbprox_relay2peer(msg, bvc, ns_bvci);
+		osmo_fsm_inst_dispatch(from_bvc->fi, BSSGP_BVCFSM_E_RX_RESET, msg);
 	}
 
 	return 0;
 }
 
 /* Receive an incoming signalling message from the SGSN-side NS-VC */
-static int gbprox_rx_sig_from_sgsn(struct gbproxy_config *cfg,
-				struct msgb *orig_msg, uint32_t nsei,
-				uint16_t ns_bvci)
+static int gbprox_rx_sig_from_sgsn(struct gbproxy_nse *nse, struct msgb *orig_msg, uint16_t ns_bvci)
 {
-	struct bssgp_normal_hdr *bgph =
-		(struct bssgp_normal_hdr *) msgb_bssgph(orig_msg);
-	struct tlv_parsed tp;
+	struct bssgp_normal_hdr *bgph = (struct bssgp_normal_hdr *) msgb_bssgph(orig_msg);
 	uint8_t pdu_type = bgph->pdu_type;
+	const char *pdut_name = osmo_tlv_prot_msg_name(&osmo_pdef_bssgp, bgph->pdu_type);
+	struct gbproxy_config *cfg = nse->cfg;
+	struct gbproxy_bvc *sgsn_bvc;
+	struct tlv_parsed tp;
 	int data_len;
-	struct gbproxy_nse *nse;
-	struct gbproxy_bvc *bvc;
 	uint16_t bvci;
 	struct msgb *msg;
 	char log_pfx[32];
@@ -653,7 +902,9 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_config *cfg,
 	int cause;
 	int i;
 
-	snprintf(log_pfx, sizeof(log_pfx), "NSE(%05u/SGSN)", nsei);
+	snprintf(log_pfx, sizeof(log_pfx), "NSE(%05u/SGSN)-BVC(%05u/??)", nse->nsei, ns_bvci);
+
+	LOGP(DGPRS, LOGL_DEBUG, "%s Rx %s\n", log_pfx, pdut_name);
 
 	if (ns_bvci != 0 && ns_bvci != 1) {
 		LOGP(DGPRS, LOGL_NOTICE, "%s BVCI=%05u is not signalling\n", log_pfx, ns_bvci);
@@ -661,14 +912,12 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_config *cfg,
 	}
 
 	if (!(bssgp_pdu_type_flags(pdu_type) & BSSGP_PDUF_SIG)) {
-		LOGP(DGPRS, LOGL_NOTICE, "%s %s not allowed in signalling BVC\n", log_pfx,
-		     osmo_tlv_prot_msg_name(&osmo_pdef_bssgp, pdu_type));
+		LOGP(DGPRS, LOGL_NOTICE, "%s %s not allowed in signalling BVC\n", log_pfx, pdut_name);
 		return bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, NULL, orig_msg);
 	}
 
 	if (!(bssgp_pdu_type_flags(pdu_type) & BSSGP_PDUF_DL)) {
-		LOGP(DGPRS, LOGL_NOTICE, "%s %s not allowed in downlink direction\n", log_pfx,
-		     osmo_tlv_prot_msg_name(&osmo_pdef_bssgp, pdu_type));
+		LOGP(DGPRS, LOGL_NOTICE, "%s %s not allowed in downlink direction\n", log_pfx, pdut_name);
 		return bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, NULL, orig_msg);
 	}
 
@@ -685,52 +934,62 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_config *cfg,
 		rate_ctr_inc(&cfg->ctrg->ctr[GBPROX_GLOB_CTR_PROTO_ERR_SGSN]);
 		return rc;
 	}
+	/* hack to get both msg + tlv_parsed passed via osmo_fsm_inst_dispatch */
+	msgb_bcid(msg) = (void *)&tp;
 
 	switch (pdu_type) {
 	case BSSGP_PDUT_BVC_RESET:
-		rc = rx_reset_from_sgsn(cfg, msg, orig_msg, &tp, nsei, ns_bvci);
+		/* resolve or create ggbproxy_bvc + handle in BVC-FSM */
+		bvci = ntohs(tlvp_val16_unal(&tp, BSSGP_IE_BVCI));
+		rc = rx_bvc_reset_from_sgsn(nse, msg, &tp, ns_bvci);
 		break;
 	case BSSGP_PDUT_BVC_RESET_ACK:
-		/* simple case: BVCI IE is mandatory */
-		if (!TLVP_PRES_LEN(&tp, BSSGP_IE_BVCI, 2))
-			goto err_mand_ie;
 		bvci = ntohs(tlvp_val16_unal(&tp, BSSGP_IE_BVCI));
-		if (bvci == BVCI_SIGNALLING) {
-			/* TODO: Reset all PTP BVCIs */
-		} else {
-			rc = gbprox_relay2bvci(cfg, msg, bvci, ns_bvci);
-		}
+		sgsn_bvc = gbproxy_bvc_by_bvci(nse, bvci);
+		if (!sgsn_bvc)
+			goto err_no_bvc;
+		rc = osmo_fsm_inst_dispatch(sgsn_bvc->fi, BSSGP_BVCFSM_E_RX_RESET_ACK, msg);
+		break;
+	case BSSGP_PDUT_BVC_BLOCK_ACK:
+		bvci = ntohs(tlvp_val16_unal(&tp, BSSGP_IE_BVCI));
+		sgsn_bvc = gbproxy_bvc_by_bvci(nse, bvci);
+		if (!sgsn_bvc)
+			goto err_no_bvc;
+		rc = osmo_fsm_inst_dispatch(sgsn_bvc->fi, BSSGP_BVCFSM_E_RX_BLOCK_ACK, msg);
+		break;
+	case BSSGP_PDUT_BVC_UNBLOCK_ACK:
+		bvci = ntohs(tlvp_val16_unal(&tp, BSSGP_IE_BVCI));
+		sgsn_bvc = gbproxy_bvc_by_bvci(nse, bvci);
+		if (!sgsn_bvc)
+			goto err_no_bvc;
+		rc = osmo_fsm_inst_dispatch(sgsn_bvc->fi, BSSGP_BVCFSM_E_RX_UNBLOCK_ACK, msg);
 		break;
 	case BSSGP_PDUT_FLUSH_LL:
 		/* simple case: BVCI IE is mandatory */
-		if (!TLVP_PRES_LEN(&tp, BSSGP_IE_BVCI, 2))
-			goto err_mand_ie;
 		bvci = ntohs(tlvp_val16_unal(&tp, BSSGP_IE_BVCI));
-		rc = gbprox_relay2bvci(cfg, msg, bvci, ns_bvci);
+		sgsn_bvc = gbproxy_bvc_by_bvci(nse, bvci);
+		if (!sgsn_bvc)
+			goto err_no_bvc;
+		if (sgsn_bvc->cell && sgsn_bvc->cell->bss_bvc)
+			rc = gbprox_relay2peer(msg, sgsn_bvc->cell->bss_bvc, ns_bvci);
 		break;
 	case BSSGP_PDUT_PAGING_PS:
 	case BSSGP_PDUT_PAGING_CS:
 		/* process the paging request (LAI/RAI lookup) */
-		rc = gbprox_rx_paging(cfg, msg, &tp, nsei, ns_bvci);
+		rc = gbprox_rx_paging(nse, msg, pdut_name, &tp, ns_bvci);
 		break;
 	case BSSGP_PDUT_STATUS:
 		/* Some exception has occurred */
-		LOGP(DGPRS, LOGL_NOTICE,
-			"NSE(%05u/SGSN) BSSGP STATUS ", nsei);
-		if (!TLVP_PRES_LEN(&tp, BSSGP_IE_CAUSE, 1)) {
-			LOGPC(DGPRS, LOGL_NOTICE, "\n");
-			goto err_mand_ie;
-		}
 		cause = *TLVP_VAL(&tp, BSSGP_IE_CAUSE);
-		LOGPC(DGPRS, LOGL_NOTICE,
-			"cause=0x%02x(%s) ", *TLVP_VAL(&tp, BSSGP_IE_CAUSE),
+		LOGPNSE(nse, LOGL_NOTICE, "Rx STATUS cause=0x%02x(%s) ", cause,
 			bssgp_cause_str(cause));
 		if (TLVP_PRES_LEN(&tp, BSSGP_IE_BVCI, 2)) {
 			bvci = ntohs(tlvp_val16_unal(&tp, BSSGP_IE_BVCI));
 			LOGPC(DGPRS, LOGL_NOTICE, "BVCI=%05u\n", bvci);
-
-			if (cause == BSSGP_CAUSE_UNKNOWN_BVCI)
-				rc = gbprox_relay2bvci(cfg, msg, bvci, ns_bvci);
+			sgsn_bvc = gbproxy_bvc_by_bvci(nse, bvci);
+			/* don't send STATUS in response to STATUS if !bvc */
+			if (sgsn_bvc && sgsn_bvc->cell && sgsn_bvc->cell->bss_bvc)
+				rc = gbprox_relay2peer(msg, sgsn_bvc->cell->bss_bvc, ns_bvci);
 		} else
 			LOGPC(DGPRS, LOGL_NOTICE, "\n");
 		break;
@@ -739,46 +998,30 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_config *cfg,
 	case BSSGP_PDUT_SUSPEND_NACK:
 	case BSSGP_PDUT_RESUME_ACK:
 	case BSSGP_PDUT_RESUME_NACK:
-		/* RAI IE is mandatory */
-		if (!TLVP_PRES_LEN(&tp, BSSGP_IE_ROUTEING_AREA, 6))
-			goto err_mand_ie;
-		bvc = gbproxy_bvc_by_rai(cfg, TLVP_VAL(&tp, BSSGP_IE_ROUTEING_AREA));
-		if (!bvc)
-			goto err_no_bvc;
-		rc = gbprox_relay2peer(msg, bvc, ns_bvci);
-		break;
-	case BSSGP_PDUT_BVC_BLOCK_ACK:
-	case BSSGP_PDUT_BVC_UNBLOCK_ACK:
-		if (!TLVP_PRES_LEN(&tp, BSSGP_IE_BVCI, 2))
-			goto err_mand_ie;
-		bvci = ntohs(tlvp_val16_unal(&tp, BSSGP_IE_BVCI));
-		if (bvci == 0) {
-			LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u/SGSN) BSSGP "
-			     "%sBLOCK_ACK for signalling BVCI ?!?\n", nsei,
-			     pdu_type == BSSGP_PDUT_BVC_UNBLOCK_ACK ? "UN":"");
-			/* TODO: should we send STATUS ? */
-			rate_ctr_inc(&cfg->ctrg->
-				     ctr[GBPROX_GLOB_CTR_INV_BVCI]);
-		} else {
-			/* Mark BVC as (un)blocked */
-			block_unblock_bvc(cfg, bvci, pdu_type);
-		}
-		rc = gbprox_relay2bvci(cfg, msg, bvci, ns_bvci);
+		/* FIXME: handle based on TLLI cache. The RA-ID is not a unique
+		 * criterion, so we have to rely on the TLLI->BVC state created
+		 * while processing the SUSPEND/RESUME in uplink */
+		/* FIXME: route to SGSN baed on NRI derived from TLLI */
 		break;
 	case BSSGP_PDUT_SGSN_INVOKE_TRACE:
 	case BSSGP_PDUT_OVERLOAD:
-		LOGP(DGPRS, LOGL_DEBUG,
-			"NSE(%05u/SGSN) BSSGP %s: broadcasting\n", nsei, bssgp_pdu_str(pdu_type));
+		LOGPNSE(nse, LOGL_DEBUG, "Rx %s: broadcasting\n", pdut_name);
 		/* broadcast to all BSS-side bvcs */
 		hash_for_each(cfg->bss_nses, i, nse, list) {
 			gbprox_relay2nse(msg, nse, 0);
 		}
 		break;
+	case BSSGP_PDUT_RAN_INFO:
+	case BSSGP_PDUT_RAN_INFO_REQ:
+	case BSSGP_PDUT_RAN_INFO_ACK:
+	case BSSGP_PDUT_RAN_INFO_ERROR:
+	case BSSGP_PDUT_RAN_INFO_APP_ERROR:
+		/* FIXME: route based in RIM Routing IE */
+		rc = bssgp_tx_status(BSSGP_CAUSE_PDU_INCOMP_FEAT, NULL, orig_msg);
+		break;
 	default:
-		LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u/SGSN) BSSGP PDU type %s not supported\n", nsei,
-		     bssgp_pdu_str(pdu_type));
-		rate_ctr_inc(&cfg->ctrg->
-			     ctr[GBPROX_GLOB_CTR_PROTO_ERR_SGSN]);
+		LOGPNSE(nse, LOGL_NOTICE, "Rx %s: Not supported\n", pdut_name);
+		rate_ctr_inc(&cfg->ctrg->ctr[GBPROX_GLOB_CTR_PROTO_ERR_SGSN]);
 		rc = bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, NULL, orig_msg);
 		break;
 	}
@@ -786,20 +1029,18 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_config *cfg,
 	msgb_free(msg);
 
 	return rc;
-err_mand_ie:
-	LOGP(DGPRS, LOGL_ERROR, "NSE(%05u/SGSN) missing mandatory IE\n",
-		nsei);
-	rate_ctr_inc(&cfg->ctrg->
-		     ctr[GBPROX_GLOB_CTR_PROTO_ERR_SGSN]);
-	msgb_free(msg);
-	return bssgp_tx_status(BSSGP_CAUSE_MISSING_MAND_IE, NULL, orig_msg);
+
 err_no_bvc:
-	LOGP(DGPRS, LOGL_ERROR, "NSE(%05u/SGSN) cannot find bvc based on RAI\n",
-		nsei);
+	LOGPNSE(nse, LOGL_ERROR, "Rx %s: Cannot find BVC\n", pdut_name);
 	rate_ctr_inc(&cfg->ctrg-> ctr[GBPROX_GLOB_CTR_INV_RAI]);
 	msgb_free(msg);
 	return bssgp_tx_status(BSSGP_CAUSE_INV_MAND_INF, NULL, orig_msg);
 }
+
+
+/***********************************************************************
+ * libosmogb NS/BSSGP integration
+ ***********************************************************************/
 
 int gbprox_bssgp_send_cb(void *ctx, struct msgb *msg)
 {
@@ -820,34 +1061,36 @@ int gbprox_bssgp_send_cb(void *ctx, struct msgb *msg)
 /* Main input function for Gb proxy */
 int gbprox_rcvmsg(void *ctx, struct msgb *msg)
 {
-	int rc;
-	uint16_t nsei = msgb_nsei(msg);
-	uint16_t ns_bvci = msgb_bvci(msg);
 	struct gbproxy_config *cfg = (struct gbproxy_config *) ctx;
-
-	int remote_end_is_sgsn = gbproxy_is_sgsn_nsei(cfg, nsei);
+	uint16_t ns_bvci = msgb_bvci(msg);
+	uint16_t nsei = msgb_nsei(msg);
+	struct gbproxy_nse *nse;
 
 	/* ensure minimum length to decode PCU type */
 	if (msgb_bssgp_len(msg) < sizeof(struct bssgp_normal_hdr))
 		return bssgp_tx_status(BSSGP_CAUSE_SEM_INCORR_PDU, NULL, msg);
 
-	/* Only BVCI=0 messages need special treatment */
-	if (ns_bvci == 0 || ns_bvci == 1) {
-		if (remote_end_is_sgsn)
-			rc = gbprox_rx_sig_from_sgsn(cfg, msg, nsei, ns_bvci);
+	nse = gbproxy_nse_by_nsei(cfg, nsei, NSE_F_SGSN);
+	if (nse) {
+		if (ns_bvci == 0 || ns_bvci == 1)
+			return gbprox_rx_sig_from_sgsn(nse, msg, ns_bvci);
 		else
-			rc = gbprox_rx_sig_from_bss(cfg, msg, nsei, ns_bvci);
-	} else {
-		/* All other BVCI are PTP */
-		if (remote_end_is_sgsn)
-			rc = gbprox_rx_ptp_from_sgsn(cfg, msg, nsei,
-						     ns_bvci);
-		else
-			rc = gbprox_rx_ptp_from_bss(cfg, msg, nsei,
-						    ns_bvci);
+			return gbprox_rx_ptp_from_sgsn(nse, msg, ns_bvci);
 	}
 
-	return rc;
+	nse = gbproxy_nse_by_nsei(cfg, nsei, NSE_F_BSS);
+	if (!nse) {
+		LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u/BSS) not known -> allocating\n", nsei);
+		nse = gbproxy_nse_alloc(cfg, nsei, false);
+	}
+	if (nse) {
+		if (ns_bvci == 0 || ns_bvci == 1)
+			return gbprox_rx_sig_from_bss(nse, msg, ns_bvci);
+		else
+			return gbprox_rx_ptp_from_bss(nse, msg, ns_bvci);
+	}
+
+	return 0;
 }
 
 /*  TODO: What about handling:
@@ -865,7 +1108,9 @@ void gprs_ns_prim_status_cb(struct gbproxy_config *cfg, struct osmo_gprs_ns2_pri
 	/* TODO: bss nsei available/unavailable  bssgp_tx_simple_bvci(BSSGP_PDUT_BVC_BLOCK, nsvc->nsei, bvc->bvci, 0);
 	 * TODO: sgsn nsei available/unavailable
 	 */
+
 	struct gbproxy_bvc *bvc;
+	struct gbproxy_nse *sgsn_nse;
 
 	switch (nsp->u.status.cause) {
 	case NS_AFF_CAUSE_SNS_FAILURE:
@@ -874,16 +1119,16 @@ void gprs_ns_prim_status_cb(struct gbproxy_config *cfg, struct osmo_gprs_ns2_pri
 
 	case NS_AFF_CAUSE_RECOVERY:
 		LOGP(DPCU, LOGL_NOTICE, "NS-NSE %d became available\n", nsp->nsei);
-		if (gbproxy_is_sgsn_nsei(cfg, nsp->nsei)) {
-			/* look-up or create the BTS context for this BVC */
-			struct bssgp_bvc_ctx *bctx = btsctx_by_bvci_nsei(nsp->bvci, nsp->nsei);
-			if (!bctx)
-				bctx = btsctx_alloc(nsp->bvci, nsp->nsei);
-
-			bssgp_tx_bvc_reset_nsei_bvci(cfg->nsip_sgsn_nsei, 0, BSSGP_CAUSE_OML_INTERV, NULL, 0);
+		sgsn_nse = gbproxy_nse_by_nsei(cfg, nsp->nsei, NSE_F_SGSN);
+		if (sgsn_nse) {
+			uint8_t cause = BSSGP_CAUSE_OML_INTERV;
+			bvc = gbproxy_bvc_by_bvci(sgsn_nse, 0);
+			if (bvc)
+				osmo_fsm_inst_dispatch(bvc->fi, BSSGP_BVCFSM_E_REQ_RESET, &cause); 
 		}
 		break;
 	case NS_AFF_CAUSE_FAILURE:
+#if 0
 		if (gbproxy_is_sgsn_nsei(cfg, nsp->nsei)) {
 			/* sgsn */
 			/* TODO: BSVC: block all PtP towards bss */
@@ -902,9 +1147,11 @@ void gprs_ns_prim_status_cb(struct gbproxy_config *cfg, struct osmo_gprs_ns2_pri
 
 			if (!bvc->blocked)
 				break;
-			bssgp_tx_simple_bvci(BSSGP_PDUT_BVC_BLOCK, cfg->nsip_sgsn_nsei,
-					     bvc->bvci, 0);
+			hash_for_each(cfg->sgsn_nses, _sgsn, sgsn_nse, list) {
+				bssgp_tx_simple_bvci(BSSGP_PDUT_BVC_BLOCK, sgsn_nse->nsei, bvc->bvci, 0);
+			}
 		}
+#endif
 		LOGP(DPCU, LOGL_NOTICE, "NS-NSE %d became unavailable\n", nsp->nsei);
 		break;
 	default:
@@ -973,6 +1220,8 @@ void gbprox_reset(struct gbproxy_config *cfg)
 
 		gbproxy_nse_free(nse);
 	}
+	/* FIXME: cells */
+	/* FIXME: SGSN side BVCs (except signaling) */
 
 	rate_ctr_group_free(cfg->ctrg);
 	gbproxy_init_config(cfg);

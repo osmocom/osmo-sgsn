@@ -61,9 +61,11 @@ static int get_nsvc_state(struct ctrl_cmd *cmd, void *data)
 	cmd->reply = talloc_strdup(cmd, "");
 
 	/* NS-VCs for SGSN */
-	nse = gprs_ns2_nse_by_nsei(nsi, cfg->nsip_sgsn_nsei);
-	if (nse)
-		gprs_ns2_nse_foreach_nsvc(nse, &ctrl_nsvc_state_cb, cmd);
+	hash_for_each(cfg->sgsn_nses, i, nse_peer, list) {
+		nse = gprs_ns2_nse_by_nsei(nsi, nse_peer->nsei);
+		if (nse)
+			gprs_ns2_nse_foreach_nsvc(nse, &ctrl_nsvc_state_cb, cmd);
+	}
 
 	/* NS-VCs for BSS peers */
 	hash_for_each(cfg->bss_nses, i, nse_peer, list) {
@@ -95,7 +97,7 @@ static int get_gbproxy_state(struct ctrl_cmd *cmd, void *data)
 					nse_peer->nsei, bvc->bvci,
 					raid.mcc, raid.mnc,
 					raid.lac, raid.rac,
-					bvc->blocked ? "BLOCKED" : "UNBLOCKED");
+					osmo_fsm_inst_state_name(bvc->fi));
 		}
 	}
 

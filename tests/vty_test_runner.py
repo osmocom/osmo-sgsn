@@ -102,7 +102,7 @@ class TestVTYGbproxy(TestVTYBase):
 
     def testVtyDeletePeer(self):
         self.vty.enable()
-        self.assertTrue(self.vty.verify('delete-gbproxy-peer 9999 bvci 7777', ['BVC not found']))
+        self.assertTrue(self.vty.verify('delete-gbproxy-peer 9999 bvci 7777', ['NSE not found']))
         res = self.vty.command("delete-gbproxy-peer 9999 all dry-run")
         self.assertTrue(res.find('Not Deleted 0 BVC') >= 0)
         self.assertTrue(res.find('NSEI not found') >= 0)
