@@ -64,10 +64,6 @@ static int get_nsvc_state(struct ctrl_cmd *cmd, void *data)
 	nse = gprs_ns2_nse_by_nsei(nsi, cfg->nsip_sgsn_nsei);
 	if (nse)
 		gprs_ns2_nse_foreach_nsvc(nse, &ctrl_nsvc_state_cb, cmd);
-	/* NS-VCs for SGSN2 */
-	nse = gprs_ns2_nse_by_nsei(nsi, cfg->nsip_sgsn2_nsei);
-	if (nse)
-		gprs_ns2_nse_foreach_nsvc(nse, &ctrl_nsvc_state_cb, cmd);
 
 	/* NS-VCs for BSS peers */
 	hash_for_each(cfg->bss_nses, i, nse_peer, list) {

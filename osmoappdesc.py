@@ -16,8 +16,7 @@
 
 
 app_configs = {
-    "gbproxy": ["doc/examples/osmo-gbproxy/osmo-gbproxy.cfg",
-             "doc/examples/osmo-gbproxy/osmo-gbproxy-legacy.cfg"],
+    "gbproxy": ["doc/examples/osmo-gbproxy/osmo-gbproxy.cfg"],
     "sgsn": ["doc/examples/osmo-sgsn/osmo-sgsn.cfg"],
     "gtphub": ["doc/examples/osmo-gtphub/osmo-gtphub-1iface.cfg"]
 }

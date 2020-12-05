@@ -41,34 +41,6 @@ static const struct rate_ctr_desc bvc_ctr_description[] = {
 	{ "dropped",	   "BVC blocked, dropped packet     " },
 	{ "inv-nsei",	   "NSEI mismatch                   " },
 	{ "tx-err",	   "NS Transmission error           " },
-	{ "raid-mod:bss",  "RAID patched              (BSS )" },
-	{ "raid-mod:sgsn", "RAID patched              (SGSN)" },
-	{ "apn-mod:sgsn",  "APN patched                     " },
-	{ "tlli-mod:bss",  "TLLI patched              (BSS )" },
-	{ "tlli-mod:sgsn", "TLLI patched              (SGSN)" },
-	{ "ptmsi-mod:bss", "P-TMSI patched            (BSS )" },
-	{ "ptmsi-mod:sgsn","P-TMSI patched            (SGSN)" },
-	{ "mod-crypt-err", "Patch error: encrypted          " },
-	{ "mod-err",	   "Patch error: other              " },
-	{ "attach-reqs",   "Attach Request count            " },
-	{ "attach-rejs",   "Attach Reject count             " },
-	{ "attach-acks",   "Attach Accept count             " },
-	{ "attach-cpls",   "Attach Completed count          " },
-	{ "ra-upd-reqs",   "RoutingArea Update Request count" },
-	{ "ra-upd-rejs",   "RoutingArea Update Reject count " },
-	{ "ra-upd-acks",   "RoutingArea Update Accept count " },
-	{ "ra-upd-cpls",   "RoutingArea Update Compltd count" },
-	{ "gmm-status",    "GMM Status count           (BSS)" },
-	{ "gmm-status",    "GMM Status count          (SGSN)" },
-	{ "detach-reqs",   "Detach Request count            " },
-	{ "detach-acks",   "Detach Accept count             " },
-	{ "pdp-act-reqs",  "PDP Activation Request count    " },
-	{ "pdp-act-rejs",  "PDP Activation Reject count     " },
-	{ "pdp-act-acks",  "PDP Activation Accept count     " },
-	{ "pdp-deact-reqs","PDP Deactivation Request count  " },
-	{ "pdp-deact-acks","PDP Deactivation Accept count   " },
-	{ "tlli-unknown",  "TLLI from SGSN unknown          " },
-	{ "tlli-cache",    "TLLI cache size                 " },
 };
 
 osmo_static_assert(ARRAY_SIZE(bvc_ctr_description) == GBPROX_PEER_CTR_LAST, everything_described);
@@ -136,89 +108,6 @@ struct gbproxy_bvc *gbproxy_bvc_by_rai(struct gbproxy_config *cfg,
 	return NULL;
 }
 
-/* look-up a bvc by its Location Area Identification (LAI) */
-/* FIXME: this doesn't make sense, as LA can span multiple bvcs! */
-struct gbproxy_bvc *gbproxy_bvc_by_lai(struct gbproxy_config *cfg,
-					 const uint8_t *la)
-{
-	struct gbproxy_nse *nse;
-	int i, j;
-
-	hash_for_each(cfg->bss_nses, i, nse, list) {
-		struct gbproxy_bvc *bvc;
-		hash_for_each(nse->bvcs, j, bvc, list) {
-			if (!memcmp(bvc->ra, la, 5))
-				return bvc;
-		}
-	}
-	return NULL;
-}
-
-/* look-up a bvc by its Location Area Code (LAC) */
-/* FIXME: this doesn't make sense, as LAC can span multiple bvcs! */
-struct gbproxy_bvc *gbproxy_bvc_by_lac(struct gbproxy_config *cfg,
-					 const uint8_t *la)
-{
-	struct gbproxy_nse *nse;
-	int i, j;
-
-	hash_for_each(cfg->bss_nses, i, nse, list) {
-		struct gbproxy_bvc *bvc;
-		hash_for_each(nse->bvcs, j, bvc, list) {
-			if (!memcmp(bvc->ra + 3, la + 3, 2))
-				return bvc;
-		}
-	}
-	return NULL;
-}
-
-struct gbproxy_bvc *gbproxy_bvc_by_bssgp_tlv(struct gbproxy_config *cfg,
-					       struct tlv_parsed *tp)
-{
-	if (TLVP_PRES_LEN(tp, BSSGP_IE_BVCI, 2)) {
-		uint16_t bvci;
-
-		bvci = ntohs(tlvp_val16_unal(tp, BSSGP_IE_BVCI));
-		if (bvci >= 2)
-			return gbproxy_bvc_by_bvci(cfg, bvci);
-	}
-
-	/* FIXME: this doesn't make sense, as RA can span multiple bvcs! */
-	if (TLVP_PRES_LEN(tp, BSSGP_IE_ROUTEING_AREA, 6)) {
-		uint8_t *rai = (uint8_t *)TLVP_VAL(tp, BSSGP_IE_ROUTEING_AREA);
-		/* Only compare LAC part, since MCC/MNC are possibly patched.
-		 * Since the LAC of different BSS must be different when
-		 * MCC/MNC are patched, collisions shouldn't happen. */
-		return gbproxy_bvc_by_lac(cfg, rai);
-	}
-
-	/* FIXME: this doesn't make sense, as LA can span multiple bvcs! */
-	if (TLVP_PRES_LEN(tp, BSSGP_IE_LOCATION_AREA, 5)) {
-		uint8_t *lai = (uint8_t *)TLVP_VAL(tp, BSSGP_IE_LOCATION_AREA);
-		return gbproxy_bvc_by_lac(cfg, lai);
-	}
-
-	return NULL;
-}
-
-static void clean_stale_timer_cb(void *data)
-{
-	time_t now;
-	struct timespec ts = {0,};
-	struct gbproxy_bvc *bvc = (struct gbproxy_bvc *) data;
-	OSMO_ASSERT(bvc);
-	OSMO_ASSERT(bvc->nse);
-	struct gbproxy_config *cfg = bvc->nse->cfg;
-	OSMO_ASSERT(cfg);
-
-	osmo_clock_gettime(CLOCK_MONOTONIC, &ts);
-	now = ts.tv_sec;
-	gbproxy_remove_stale_link_infos(bvc, now);
-	if (cfg->clean_stale_timer_freq != 0)
-		osmo_timer_schedule(&bvc->clean_stale_timer,
-					cfg->clean_stale_timer_freq, 0);
-}
-
 struct gbproxy_bvc *gbproxy_bvc_alloc(struct gbproxy_nse *nse, uint16_t bvci)
 {
 	struct gbproxy_bvc *bvc;
@@ -240,13 +129,6 @@ struct gbproxy_bvc *gbproxy_bvc_alloc(struct gbproxy_nse *nse, uint16_t bvci)
 
 	hash_add(nse->bvcs, &bvc->list, bvc->bvci);
 
-	INIT_LLIST_HEAD(&bvc->patch_state.logical_links);
-
-	osmo_timer_setup(&bvc->clean_stale_timer, clean_stale_timer_cb, bvc);
-	if (cfg->clean_stale_timer_freq != 0)
-		osmo_timer_schedule(&bvc->clean_stale_timer,
-					cfg->clean_stale_timer_freq, 0);
-
 	return bvc;
 }
 
@@ -256,8 +138,6 @@ void gbproxy_bvc_free(struct gbproxy_bvc *bvc)
 		return;
 
 	hash_del(&bvc->list);
-	osmo_timer_del(&bvc->clean_stale_timer);
-	gbproxy_delete_link_infos(bvc);
 
 	rate_ctr_group_free(bvc->ctrg);
 	bvc->ctrg = NULL;

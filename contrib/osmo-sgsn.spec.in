@@ -131,7 +131,6 @@ make %{?_smp_mflags} check || (find . -name testsuite.log -exec cat {} +)
 %files -n osmo-gbproxy
 %dir %{_docdir}/%{name}/examples
 %dir %{_docdir}/%{name}/examples/osmo-gbproxy
-%{_docdir}/%{name}/examples/osmo-gbproxy/osmo-gbproxy-legacy.cfg
 %{_docdir}/%{name}/examples/osmo-gbproxy/osmo-gbproxy.cfg
 %{_bindir}/osmo-gbproxy
 %dir %{_sysconfdir}/osmocom

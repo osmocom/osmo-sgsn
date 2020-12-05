@@ -24,7 +24,6 @@ Files:     .gitignore
            contrib/twisted_ipa.py
            doc/Makefile.am
            doc/examples/Makefile.am
-           doc/examples/osmo-gbproxy/osmo-gbproxy-legacy.cfg
            doc/examples/osmo-gbproxy/osmo-gbproxy.cfg
            doc/examples/osmo-gtphub/gtphub-example.txt
            doc/examples/osmo-gtphub/osmo-gtphub-1iface.cfg
@@ -88,9 +87,7 @@ Files:     include/osmocom/sgsn/a_reset.h
            src/gprs/sgsn_ares.c
            src/gbproxy/gb_proxy.c
            src/gbproxy/gb_proxy_main.c
-           src/gbproxy/gb_proxy_patch.c
            src/gbproxy/gb_proxy_peer.c
-           src/gbproxy/gb_proxy_tlli.c
            src/gbproxy/gb_proxy_vty.c
            src/gtphub/gtphub.c
            src/gtphub/gtphub_main.c
