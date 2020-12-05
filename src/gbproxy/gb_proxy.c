@@ -1184,7 +1184,7 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 	struct gbproxy_bvc *bvc;
 	unsigned int n_nses = 0;
 	int errctr = GBPROX_GLOB_CTR_PROTO_ERR_SGSN;
-	int i;
+	int i, j;
 
 	/* FIXME: Handle paging logic to only page each matching NSE */
 
@@ -1206,7 +1206,7 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 		errctr = GBPROX_GLOB_CTR_INV_RAI;
 		/* iterate over all bvcs and dispatch the paging to each matching one */
 		hash_for_each(cfg->bss_nses, i, nse, list) {
-			llist_for_each_entry(bvc, &nse->bvcs, list) {
+			hash_for_each(nse->bvcs, j, bvc, list) {
 				if (!memcmp(bvc->ra, TLVP_VAL(tp, BSSGP_IE_ROUTEING_AREA), 6)) {
 					LOGPNSE(nse, LOGL_INFO, "routing to NSE (RAI match)\n");
 					gbprox_relay2nse(msg, nse, ns_bvci);
@@ -1220,7 +1220,7 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 		errctr = GBPROX_GLOB_CTR_INV_LAI;
 		/* iterate over all bvcs and dispatch the paging to each matching one */
 		hash_for_each(cfg->bss_nses, i, nse, list) {
-			llist_for_each_entry(bvc, &nse->bvcs, list) {
+			hash_for_each(nse->bvcs, j, bvc, list) {
 				if (!memcmp(bvc->ra, TLVP_VAL(tp, BSSGP_IE_LOCATION_AREA), 5)) {
 					LOGPNSE(nse, LOGL_INFO, "routing to NSE (LAI match)\n");
 					gbprox_relay2nse(msg, nse, ns_bvci);
@@ -1233,7 +1233,7 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 	} else if (TLVP_PRES_LEN(tp, BSSGP_IE_BSS_AREA_ID, 1)) {
 		/* iterate over all bvcs and dispatch the paging to each matching one */
 		hash_for_each(cfg->bss_nses, i, nse, list) {
-			llist_for_each_entry(bvc, &nse->bvcs, list) {
+			hash_for_each(nse->bvcs, j, bvc, list) {
 				LOGPNSE(nse, LOGL_INFO, "routing to NSE (broadcast)\n");
 				gbprox_relay2nse(msg, nse, ns_bvci);
 				n_nses++;
@@ -1265,7 +1265,7 @@ static int rx_reset_from_sgsn(struct gbproxy_config *cfg,
 	struct gbproxy_nse *nse;
 	struct gbproxy_bvc *bvc;
 	uint16_t ptp_bvci;
-	int i;
+	int i, j;
 
 	if (!TLVP_PRES_LEN(tp, BSSGP_IE_BVCI, 2)) {
 		rate_ctr_inc(&cfg->ctrg->
@@ -1295,7 +1295,7 @@ static int rx_reset_from_sgsn(struct gbproxy_config *cfg,
 	 * among all the BSS's that we multiplex, it needs to
 	 * be relayed  */
 	hash_for_each(cfg->bss_nses, i, nse, list) {
-		llist_for_each_entry(bvc, &nse->bvcs, list)
+		hash_for_each(nse->bvcs, j, bvc, list)
 			gbprox_relay2peer(msg, bvc, ns_bvci);
 	}
 
@@ -1624,11 +1624,12 @@ void gbprox_reset(struct gbproxy_config *cfg)
 {
 	struct gbproxy_nse *nse;
 	struct hlist_node *ntmp;
-	int i;
+	int i, j;
 
 	hash_for_each_safe(cfg->bss_nses, i, ntmp, nse, list) {
-		struct gbproxy_bvc *bvc, *tmp;
-		llist_for_each_entry_safe(bvc, tmp, &nse->bvcs, list)
+		struct gbproxy_bvc *bvc;
+		struct hlist_node *tmp;
+		hash_for_each_safe(nse->bvcs, j, tmp, bvc, list)
 			gbproxy_bvc_free(bvc);
 
 		gbproxy_nse_free(nse);

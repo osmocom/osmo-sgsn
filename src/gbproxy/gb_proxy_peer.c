@@ -90,7 +90,7 @@ struct gbproxy_bvc *gbproxy_bvc_by_bvci(struct gbproxy_config *cfg, uint16_t bvc
 
 	hash_for_each(cfg->bss_nses, i, nse, list) {
 		struct gbproxy_bvc *bvc;
-		llist_for_each_entry(bvc, &nse->bvcs, list) {
+		hash_for_each_possible(nse->bvcs, bvc, list, bvci) {
 			if (bvc->bvci == bvci)
 				return bvc;
 		}
@@ -104,9 +104,15 @@ struct gbproxy_bvc *gbproxy_bvc_by_nsei(struct gbproxy_config *cfg,
 					  uint16_t nsei)
 {
 	struct gbproxy_nse *nse = gbproxy_nse_by_nsei(cfg, nsei);
+	struct gbproxy_bvc *bvc;
+	int i;
 
-	if (nse && !llist_empty(&nse->bvcs))
-		return llist_first_entry(&nse->bvcs, struct gbproxy_bvc, list);
+	if (!nse || hash_empty(nse->bvcs))
+		return NULL;
+
+	/* return the first entry we find */
+	hash_for_each(nse->bvcs, i, bvc, list)
+		return bvc;
 
 	return NULL;
 }
@@ -117,11 +123,11 @@ struct gbproxy_bvc *gbproxy_bvc_by_rai(struct gbproxy_config *cfg,
 					 const uint8_t *ra)
 {
 	struct gbproxy_nse *nse;
-	int i;
+	int i, j;
 
 	hash_for_each(cfg->bss_nses, i, nse, list) {
 		struct gbproxy_bvc *bvc;
-		llist_for_each_entry(bvc, &nse->bvcs, list) {
+		hash_for_each(nse->bvcs, j, bvc, list) {
 			if (!memcmp(bvc->ra, ra, 6))
 				return bvc;
 		}
@@ -136,11 +142,11 @@ struct gbproxy_bvc *gbproxy_bvc_by_lai(struct gbproxy_config *cfg,
 					 const uint8_t *la)
 {
 	struct gbproxy_nse *nse;
-	int i;
+	int i, j;
 
 	hash_for_each(cfg->bss_nses, i, nse, list) {
 		struct gbproxy_bvc *bvc;
-		llist_for_each_entry(bvc, &nse->bvcs, list) {
+		hash_for_each(nse->bvcs, j, bvc, list) {
 			if (!memcmp(bvc->ra, la, 5))
 				return bvc;
 		}
@@ -154,11 +160,11 @@ struct gbproxy_bvc *gbproxy_bvc_by_lac(struct gbproxy_config *cfg,
 					 const uint8_t *la)
 {
 	struct gbproxy_nse *nse;
-	int i;
+	int i, j;
 
 	hash_for_each(cfg->bss_nses, i, nse, list) {
 		struct gbproxy_bvc *bvc;
-		llist_for_each_entry(bvc, &nse->bvcs, list) {
+		hash_for_each(nse->bvcs, j, bvc, list) {
 			if (!memcmp(bvc->ra + 3, la + 3, 2))
 				return bvc;
 		}
@@ -232,7 +238,7 @@ struct gbproxy_bvc *gbproxy_bvc_alloc(struct gbproxy_nse *nse, uint16_t bvci)
 	}
 	bvc->nse = nse;
 
-	llist_add(&bvc->list, &nse->bvcs);
+	hash_add(nse->bvcs, &bvc->list, bvc->bvci);
 
 	INIT_LLIST_HEAD(&bvc->patch_state.logical_links);
 
@@ -249,7 +255,7 @@ void gbproxy_bvc_free(struct gbproxy_bvc *bvc)
 	if (!bvc)
 		return;
 
-	llist_del(&bvc->list);
+	hash_del(&bvc->list);
 	osmo_timer_del(&bvc->clean_stale_timer);
 	gbproxy_delete_link_infos(bvc);
 
@@ -261,8 +267,8 @@ void gbproxy_bvc_free(struct gbproxy_bvc *bvc)
 
 void gbproxy_bvc_move(struct gbproxy_bvc *bvc, struct gbproxy_nse *nse)
 {
-	llist_del(&bvc->list);
-	llist_add(&bvc->list, &nse->bvcs);
+	hash_del(&bvc->list);
+	hash_add(nse->bvcs, &bvc->list, bvc->bvci);
 	bvc->nse = nse;
 }
 
@@ -272,16 +278,17 @@ void gbproxy_bvc_move(struct gbproxy_bvc *bvc, struct gbproxy_nse *nse)
  *  \param[in] bvci if 0: remove all BVCs; if != 0: BVCI of the single BVC to clean up */
 int gbproxy_cleanup_bvcs(struct gbproxy_config *cfg, uint16_t nsei, uint16_t bvci)
 {
-	int i, counter = 0;
+	int i, j, counter = 0;
 	struct gbproxy_nse *nse;
 	struct hlist_node *ntmp;
 	OSMO_ASSERT(cfg);
 
 	hash_for_each_safe(cfg->bss_nses, i, ntmp, nse, list) {
-		struct gbproxy_bvc *bvc, *tmp;
+		struct gbproxy_bvc *bvc;
+		struct hlist_node *btmp;
 		if (nse->nsei != nsei)
 			continue;
-		llist_for_each_entry_safe(bvc, tmp, &nse->bvcs, list) {
+		hash_for_each_safe(nse->bvcs, j, btmp, bvc, list) {
 			if (bvci && bvc->bvci != bvci)
 				continue;
 
@@ -307,20 +314,23 @@ struct gbproxy_nse *gbproxy_nse_alloc(struct gbproxy_config *cfg, uint16_t nsei)
 
 	hash_add(cfg->bss_nses, &nse->list, nsei);
 
-	INIT_LLIST_HEAD(&nse->bvcs);
+	hash_init(nse->bvcs);
 
 	return nse;
 }
 
 void gbproxy_nse_free(struct gbproxy_nse *nse)
 {
-	struct gbproxy_bvc *bvc, *tmp;
+	struct gbproxy_bvc *bvc;
+	struct hlist_node *tmp;
+	int i;
+
 	if (!nse)
 		return;
 
 	hash_del(&nse->list);
 
-	llist_for_each_entry_safe(bvc, tmp, &nse->bvcs, list)
+	hash_for_each_safe(nse->bvcs, i, tmp, bvc, list)
 		gbproxy_bvc_free(bvc);
 
 	talloc_free(nse);

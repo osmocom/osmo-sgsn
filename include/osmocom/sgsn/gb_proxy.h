@@ -150,7 +150,7 @@ struct gbproxy_patch_state {
 /* One BVC inside an NSE */
 struct gbproxy_bvc {
 	/* linked to gbproxy_nse.bvcs */
-	struct llist_head list;
+	struct hlist_node list;
 
 	/* The NSE this BVC belongs to */
 	struct gbproxy_nse *nse;
@@ -186,7 +186,7 @@ struct gbproxy_nse {
 	uint16_t nsei;
 
 	/* List of all BVCs in this NSE */
-	struct llist_head bvcs;
+	DECLARE_HASHTABLE(bvcs, 10);
 };
 
 struct gbproxy_tlli_state {

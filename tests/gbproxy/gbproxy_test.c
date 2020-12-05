@@ -131,7 +131,8 @@ static int dump_peers(FILE *stream, int indent, time_t now,
 
 	hash_for_each(cfg->bss_nses, _nse, nse, list) {
 		struct gbproxy_bvc *peer;
-		llist_for_each_entry(peer, &nse->bvcs, list) {
+		int _peer;
+		hash_for_each(nse->bvcs, _peer, peer, list) {
 			struct gbproxy_link_info *link_info;
 			struct gbproxy_patch_state *state = &peer->patch_state;
 			gsm48_parse_ra(&raid, peer->ra);
