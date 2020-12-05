@@ -519,7 +519,7 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 			hash_for_each(nse->bvcs, j, bvc, list) {
 				if (!memcmp(bvc->ra, TLVP_VAL(tp, BSSGP_IE_ROUTEING_AREA), 6)) {
 					LOGPNSE(nse, LOGL_INFO, "routing to NSE (RAI match)\n");
-					gbprox_relay2nse(msg, nse, ns_bvci);
+					gbprox_relay2peer(msg, bvc, ns_bvci);
 					n_nses++;
 					/* Only send it once to each NSE */
 					break;
@@ -533,7 +533,7 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 			hash_for_each(nse->bvcs, j, bvc, list) {
 				if (!memcmp(bvc->ra, TLVP_VAL(tp, BSSGP_IE_LOCATION_AREA), 5)) {
 					LOGPNSE(nse, LOGL_INFO, "routing to NSE (LAI match)\n");
-					gbprox_relay2nse(msg, nse, ns_bvci);
+					gbprox_relay2peer(msg, bvc, ns_bvci);
 					n_nses++;
 					/* Only send it once to each NSE */
 					break;
@@ -545,7 +545,7 @@ static int gbprox_rx_paging(struct gbproxy_config *cfg, struct msgb *msg, struct
 		hash_for_each(cfg->bss_nses, i, nse, list) {
 			hash_for_each(nse->bvcs, j, bvc, list) {
 				LOGPNSE(nse, LOGL_INFO, "routing to NSE (broadcast)\n");
-				gbprox_relay2nse(msg, nse, ns_bvci);
+				gbprox_relay2peer(msg, bvc, ns_bvci);
 				n_nses++;
 				/* Only send it once to each NSE */
 				break;
