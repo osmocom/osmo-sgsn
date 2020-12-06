@@ -104,6 +104,20 @@ static int check_bvc_nsei(struct gbproxy_bvc *bvc, uint16_t nsei)
 	return 1;
 }
 
+/* generate BVC-STATUS message with cause value derived from TLV-parser error */
+static int tx_status_from_tlvp(enum osmo_tlv_parser_error tlv_p_err, struct msgb *orig_msg)
+{
+	uint8_t bssgp_cause;
+	switch (tlv_p_err) {
+	case OSMO_TLVP_ERR_MAND_IE_MISSING:
+		bssgp_cause = BSSGP_CAUSE_MISSING_MAND_IE;
+		break;
+	default:
+		bssgp_cause = BSSGP_CAUSE_PROTO_ERR_UNSPEC;
+	}
+	return bssgp_tx_status(bssgp_cause, NULL, orig_msg);
+}
+
 /* strip off the NS header */
 static void strip_ns_hdr(struct msgb *msg)
 {
@@ -423,26 +437,34 @@ static int gbprox_rx_sig_from_bss(struct gbproxy_config *cfg,
 	int data_len = msgb_bssgp_len(msg) - sizeof(*bgph);
 	struct gbproxy_bvc *from_bvc = NULL;
 	struct gprs_ra_id raid;
+	char log_pfx[32];
 	int rc;
 
+	snprintf(log_pfx, sizeof(log_pfx), "NSE(%05u/BSS)", nsei);
+
 	if (ns_bvci != 0 && ns_bvci != 1) {
-		LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u/BSS) BVCI=%05u is not signalling\n", nsei, ns_bvci);
+		LOGP(DGPRS, LOGL_NOTICE, "%s BVCI=%05u is not signalling\n", log_pfx, ns_bvci);
 		return bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, NULL, msg);
 	}
 
 	if (!(bssgp_pdu_type_flags(pdu_type) & BSSGP_PDUF_SIG)) {
-		LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u/BSS) %s not allowed in signalling BVC\n",
-		     nsei, osmo_tlv_prot_msg_name(&osmo_pdef_bssgp, pdu_type));
+		LOGP(DGPRS, LOGL_NOTICE, "%s %s not allowed in signalling BVC\n", log_pfx,
+		     osmo_tlv_prot_msg_name(&osmo_pdef_bssgp, pdu_type));
 		return bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, NULL, msg);
 	}
 
 	if (!(bssgp_pdu_type_flags(pdu_type) & BSSGP_PDUF_UL)) {
-		LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u/BSS) %s not allowed in uplink direction\n",
-		     nsei, osmo_tlv_prot_msg_name(&osmo_pdef_bssgp, pdu_type));
+		LOGP(DGPRS, LOGL_NOTICE, "%s %s not allowed in uplink direction\n", log_pfx,
+		     osmo_tlv_prot_msg_name(&osmo_pdef_bssgp, pdu_type));
 		return bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, NULL, msg);
 	}
 
-	bssgp_tlv_parse(&tp, bgph->data, data_len);
+	rc = osmo_tlv_prot_parse(&osmo_pdef_bssgp, &tp, 1, pdu_type, bgph->data, data_len, 0, 0,
+				 DGPRS, log_pfx);
+	if (rc < 0) {
+		rate_ctr_inc(&cfg->ctrg->ctr[GBPROX_GLOB_CTR_PROTO_ERR_BSS]);
+		return tx_status_from_tlvp(rc, msg);
+	}
 
 	switch (pdu_type) {
 	case BSSGP_PDUT_SUSPEND:
@@ -626,24 +648,27 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_config *cfg,
 	struct gbproxy_bvc *bvc;
 	uint16_t bvci;
 	struct msgb *msg;
+	char log_pfx[32];
 	int rc = 0;
 	int cause;
 	int i;
 
+	snprintf(log_pfx, sizeof(log_pfx), "NSE(%05u/SGSN)", nsei);
+
 	if (ns_bvci != 0 && ns_bvci != 1) {
-		LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u/SGSN) BVCI=%05u is not signalling\n", nsei, ns_bvci);
+		LOGP(DGPRS, LOGL_NOTICE, "%s BVCI=%05u is not signalling\n", log_pfx, ns_bvci);
 		return bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, NULL, orig_msg);
 	}
 
 	if (!(bssgp_pdu_type_flags(pdu_type) & BSSGP_PDUF_SIG)) {
-		LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u/SGSN) %s not allowed in signalling BVC\n",
-		     nsei, osmo_tlv_prot_msg_name(&osmo_pdef_bssgp, pdu_type));
+		LOGP(DGPRS, LOGL_NOTICE, "%s %s not allowed in signalling BVC\n", log_pfx,
+		     osmo_tlv_prot_msg_name(&osmo_pdef_bssgp, pdu_type));
 		return bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, NULL, orig_msg);
 	}
 
 	if (!(bssgp_pdu_type_flags(pdu_type) & BSSGP_PDUF_DL)) {
-		LOGP(DGPRS, LOGL_NOTICE, "NSE(%05u/SGSN) %s not allowed in downlink direction\n",
-		     nsei, osmo_tlv_prot_msg_name(&osmo_pdef_bssgp, pdu_type));
+		LOGP(DGPRS, LOGL_NOTICE, "%s %s not allowed in downlink direction\n", log_pfx,
+		     osmo_tlv_prot_msg_name(&osmo_pdef_bssgp, pdu_type));
 		return bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, NULL, orig_msg);
 	}
 
@@ -651,7 +676,15 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_config *cfg,
 	/* Update message info */
 	bgph = (struct bssgp_normal_hdr *) msgb_bssgph(msg);
 	data_len = msgb_bssgp_len(orig_msg) - sizeof(*bgph);
-	rc = bssgp_tlv_parse(&tp, bgph->data, data_len);
+
+	rc = osmo_tlv_prot_parse(&osmo_pdef_bssgp, &tp, 1, pdu_type, bgph->data, data_len, 0, 0,
+				 DGPRS, log_pfx);
+	if (rc < 0) {
+		rc = tx_status_from_tlvp(rc, msg);
+		msgb_free(msg);
+		rate_ctr_inc(&cfg->ctrg->ctr[GBPROX_GLOB_CTR_PROTO_ERR_SGSN]);
+		return rc;
+	}
 
 	switch (pdu_type) {
 	case BSSGP_PDUT_BVC_RESET:
