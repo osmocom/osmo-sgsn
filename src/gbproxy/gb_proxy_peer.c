@@ -77,7 +77,7 @@ struct gbproxy_bvc *gbproxy_bvc_alloc(struct gbproxy_nse *nse, uint16_t bvci)
 		return NULL;
 
 	bvc->bvci = bvci;
-	bvc->ctrg = rate_ctr_group_alloc(bvc, &bvc_ctrg_desc, bvci);
+	bvc->ctrg = rate_ctr_group_alloc(bvc, &bvc_ctrg_desc, (nse->nsei << 16) | bvci);
 	if (!bvc->ctrg) {
 		talloc_free(bvc);
 		return NULL;
