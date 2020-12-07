@@ -1,6 +1,5 @@
 SUBDIRS = \
 	gprs \
-	gbproxy \
 	gtphub \
 	sgsn \
 	xid \
