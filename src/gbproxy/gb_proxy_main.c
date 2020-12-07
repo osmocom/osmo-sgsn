@@ -209,6 +209,12 @@ static struct log_info_cat gprs_categories[] = {
 		.description = "GPRS Network Service (NS)",
 		.enabled = 1, .loglevel = LOGL_INFO,
 	},
+	[DOBJ] = {
+		.name = "DOBJ",
+		.description = "GbProxy object allocation/release",
+		.enabled = 1,
+		.color = "\033[38;5;121m"
+	},
 };
 
 static const struct log_info gprs_log_info = {

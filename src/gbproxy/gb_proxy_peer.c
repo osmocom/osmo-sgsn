@@ -86,6 +86,11 @@ struct gbproxy_bvc *gbproxy_bvc_alloc(struct gbproxy_nse *nse, uint16_t bvci)
 
 	hash_add(nse->bvcs, &bvc->list, bvc->bvci);
 
+	LOGPBVC_CAT(bvc, DOBJ, LOGL_INFO, "BVC Created\n");
+
+	/* We leave allocating the bvc->fi to the caller, as the FSM details depend
+	 * on the type of BVC (SIG/PTP) and role (SGSN/BSS) */
+
         return bvc;
 }
 
@@ -95,6 +100,8 @@ void gbproxy_bvc_free(struct gbproxy_bvc *bvc)
 
 	if (!bvc)
 		return;
+
+	LOGPBVC_CAT(bvc, DOBJ, LOGL_INFO, "BVC Destroying\n");
 
 	hash_del(&bvc->list);
 
@@ -167,6 +174,8 @@ struct gbproxy_cell *gbproxy_cell_alloc(struct gbproxy_config *cfg, uint16_t bvc
 
 	hash_add(cfg->cells, &cell->list, cell->bvci);
 
+	LOGPCELL_CAT(cell, DOBJ, LOGL_INFO, "CELL Created\n");
+
 	return cell;
 }
 
@@ -201,6 +210,8 @@ void gbproxy_cell_free(struct gbproxy_cell *cell)
 	if (!cell)
 		return;
 
+	LOGPCELL_CAT(cell, DOBJ, LOGL_INFO, "CELL Destroying\n");
+
 	/* remove from cfg.cells */
 	hash_del(&cell->list);
 
@@ -225,6 +236,8 @@ bool gbproxy_cell_add_sgsn_bvc(struct gbproxy_cell *cell, struct gbproxy_bvc *bv
 	for (i = 0; i < ARRAY_SIZE(cell->sgsn_bvc); i++) {
 		if (!cell->sgsn_bvc[i]) {
 			cell->sgsn_bvc[i] = bvc;
+			LOGPCELL_CAT(cell, DOBJ, LOGL_DEBUG, "CELL linked to SGSN\n");
+			LOGPBVC_CAT(bvc, DOBJ, LOGL_DEBUG, "BVC linked to CELL\n");
 			return true;
 		}
 	}
@@ -255,6 +268,8 @@ struct gbproxy_nse *gbproxy_nse_alloc(struct gbproxy_config *cfg, uint16_t nsei,
 
 	hash_init(nse->bvcs);
 
+	LOGPNSE_CAT(nse, DOBJ, LOGL_INFO, "NSE Created\n");
+
 	return nse;
 }
 
@@ -266,6 +281,8 @@ void gbproxy_nse_free(struct gbproxy_nse *nse)
 
 	if (!nse)
 		return;
+
+	LOGPNSE_CAT(nse, DOBJ, LOGL_INFO, "NSE Destroying\n");
 
 	hash_del(&nse->list);
 

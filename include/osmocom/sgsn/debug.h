@@ -39,6 +39,7 @@ enum {
 	DIUCS,
 	DSIGTRAN,
 	DGTP,
+	DOBJ,
 	Debug_LastEntry,
 };
 

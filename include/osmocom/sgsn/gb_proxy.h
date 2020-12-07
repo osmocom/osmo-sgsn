@@ -142,6 +142,11 @@ struct gbproxy_nse {
 #define LOGPBVC(BVC, LEVEL, FMT, ARGS...) \
 	LOGPBVC_CAT(BVC, DGPRS, LEVEL, FMT, ## ARGS)
 
+#define LOGPCELL_CAT(CELL, SUBSYS, LEVEL, FMT, ARGS...) \
+	LOGP(SUBSYS, LEVEL, "CELL(%05u) " FMT, (CELL)->bvci, ## ARGS)
+#define LOGPCELL(CELL, LEVEL, FMT, ARGS...) \
+	LOGPCELL_CAT(CELL, DGPRS, LEVEL, FMT, ## ARGS)
+
 /* gb_proxy_vty .c */
 
 int gbproxy_vty_init(void);
