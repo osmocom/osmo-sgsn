@@ -989,6 +989,7 @@ int gbproxy_init_config(struct gbproxy_config *cfg)
 		return -1;
 	}
 	osmo_clock_gettime(CLOCK_REALTIME, &tp);
+	osmo_fsm_log_timeouts(true);
 
 	return 0;
 }
