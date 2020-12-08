@@ -291,6 +291,8 @@ static int gbprox_rx_ptp_from_bss(struct gbproxy_nse *nse, struct msgb *msg, uin
 		rate_ctr_inc(&nse->cfg->ctrg->ctr[GBPROX_GLOB_CTR_PROTO_ERR_BSS]);
 		return tx_status_from_tlvp(rc, msg);
 	}
+	/* hack to get both msg + tlv_parsed passed via osmo_fsm_inst_dispatch */
+	msgb_bcid(msg) = (void *)&tp;
 
 	switch (bgph->pdu_type) {
 	case BSSGP_PDUT_UL_UNITDATA:
@@ -331,9 +333,7 @@ static int gbprox_rx_ptp_from_bss(struct gbproxy_nse *nse, struct msgb *msg, uin
 		LOGPBVC(bss_bvc, LOGL_ERROR, "Rx %s: Implementation missing\n", pdut_name);
 		break;
 	case BSSGP_PDUT_FLOW_CONTROL_BVC:
-		/* TODO: Implement via FSM */
-		//rc = osmo_fsm_inst_dispatch(bss_bvc->fi, FIXME, &tp);
-		LOGPBVC(bss_bvc, LOGL_ERROR, "Rx %s: Implementation missing\n", pdut_name);
+		osmo_fsm_inst_dispatch(bss_bvc->fi, BSSGP_BVCFSM_E_RX_FC_BVC, msg);
 		break;
 	case BSSGP_PDUT_STATUS:
 		/* TODO: Implement by inspecting the contained PDU */
@@ -352,7 +352,9 @@ static int gbprox_rx_ptp_from_sgsn(struct gbproxy_nse *nse, struct msgb *msg, ui
 	struct bssgp_normal_hdr *bgph = (struct bssgp_normal_hdr *) msgb_bssgph(msg);
 	const char *pdut_name = osmo_tlv_prot_msg_name(&osmo_pdef_bssgp, bgph->pdu_type);
 	struct gbproxy_bvc *sgsn_bvc, *bss_bvc;
+	struct tlv_parsed tp;
 	char log_pfx[32];
+	int rc;
 
 	snprintf(log_pfx, sizeof(log_pfx), "NSE(%05u/SGSN)-BVC(%05u/??)", nse->nsei, ns_bvci);
 
@@ -386,10 +388,39 @@ static int gbprox_rx_ptp_from_sgsn(struct gbproxy_nse *nse, struct msgb *msg, ui
 		rate_ctr_inc(&sgsn_bvc->ctrg->ctr[GBPROX_PEER_CTR_DROPPED]);
 		return bssgp_tx_status(BSSGP_CAUSE_BVCI_BLOCKED, &ns_bvci, msg);
 	}
+
+	/* DL_UNITDATA has a different header than all other uplink PDUs */
+	if (bgph->pdu_type == BSSGP_PDUT_DL_UNITDATA) {
+		const struct bssgp_ud_hdr *budh = (struct bssgp_ud_hdr *) msgb_bssgph(msg);
+		if (msgb_bssgp_len(msg) < sizeof(*budh))
+			return bssgp_tx_status(BSSGP_CAUSE_INV_MAND_INF, NULL, msg);
+		rc = osmo_tlv_prot_parse(&osmo_pdef_bssgp, &tp, 1, bgph->pdu_type, budh->data,
+					 msgb_bssgp_len(msg) - sizeof(*budh), 0, 0, DGPRS, log_pfx);
+		/* populate TLLI from the fixed headser into the TLV-parsed array so later code
+		 * doesn't have to worry where the TLLI came from */
+		tp.lv[BSSGP_IE_TLLI].len = 4;
+		tp.lv[BSSGP_IE_TLLI].val = (const uint8_t *) &budh->tlli;
+	} else {
+		rc = osmo_tlv_prot_parse(&osmo_pdef_bssgp, &tp, 1, bgph->pdu_type, bgph->data,
+					 msgb_bssgp_len(msg) - sizeof(*bgph), 0, 0, DGPRS, log_pfx);
+	}
+	if (rc < 0) {
+		rate_ctr_inc(&nse->cfg->ctrg->ctr[GBPROX_GLOB_CTR_PROTO_ERR_BSS]);
+		return tx_status_from_tlvp(rc, msg);
+	}
+	/* hack to get both msg + tlv_parsed passed via osmo_fsm_inst_dispatch */
+	msgb_bcid(msg) = (void *)&tp;
+
 	OSMO_ASSERT(sgsn_bvc->cell);
 	bss_bvc = sgsn_bvc->cell->bss_bvc;
 
-	return gbprox_relay2peer(msg, bss_bvc, bss_bvc->bvci);
+	switch (bgph->pdu_type) {
+	case BSSGP_PDUT_FLOW_CONTROL_BVC_ACK:
+		return osmo_fsm_inst_dispatch(sgsn_bvc->fi, BSSGP_BVCFSM_E_RX_FC_BVC_ACK, msg);
+	default:
+		return gbprox_relay2peer(msg, bss_bvc, bss_bvc->bvci);
+	}
+
 }
 
 /***********************************************************************
@@ -532,9 +563,24 @@ static void bss_ptp_bvc_state_chg_notif(uint16_t nsei, uint16_t bvci, int old_st
 	}
 }
 
+/* BVC FSM informs us about BVC-FC PDU receive */
+static void bss_ptp_bvc_fc_bvc(uint16_t nsei, uint16_t bvci, const struct bssgp2_flow_ctrl *fc, void *priv)
+{
+	struct gbproxy_bvc *bss_bvc = priv;
+	struct gbproxy_cell *cell = bss_bvc->cell;
+
+	if (!cell)
+		return;
+
+	/* FIXME: actually split the bandwidth among the SGSNs! */
+
+	dispatch_to_all_sgsn_bvc(cell, BSSGP_BVCFSM_E_REQ_FC_BVC, (void *) fc);
+}
+
 static const struct bssgp_bvc_fsm_ops bss_ptp_bvc_fsm_ops = {
 	.reset_notification = bss_ptp_bvc_reset_notif,
 	.state_chg_notification = bss_ptp_bvc_state_chg_notif,
+	.rx_fc_bvc = bss_ptp_bvc_fc_bvc,
 };
 
 /* BVC FSM informs us about a SGSN-side reset of a PTP BVC */
