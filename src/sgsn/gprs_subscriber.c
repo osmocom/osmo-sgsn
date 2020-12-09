@@ -870,6 +870,8 @@ struct gprs_subscr *gprs_subscr_get_or_create_by_mmctx(struct sgsn_mm_ctx *mmctx
 
 	if (!subscr) {
 		subscr = gprs_subscr_get_or_create(mmctx->imsi);
+		if (!subscr)
+			return NULL;
 		subscr->flags |= GPRS_SUBSCRIBER_FIRST_CONTACT;
 		subscr->flags &= ~GPRS_SUBSCRIBER_ENABLE_PURGE;
 	}
@@ -893,6 +895,8 @@ int gprs_subscr_request_update_location(struct sgsn_mm_ctx *mmctx)
 	LOGMMCTXP(LOGL_DEBUG, mmctx, "Requesting subscriber data update\n");
 
 	subscr = gprs_subscr_get_or_create_by_mmctx(mmctx);
+	if (!subscr)
+		return -ENOMEM;
 
 	subscr->flags |= GPRS_SUBSCRIBER_UPDATE_LOCATION_PENDING;
 
@@ -918,6 +922,8 @@ int gprs_subscr_request_auth_info(struct sgsn_mm_ctx *mmctx,
 	LOGMMCTXP(LOGL_DEBUG, mmctx, "Requesting subscriber authentication info\n");
 
 	subscr = gprs_subscr_get_or_create_by_mmctx(mmctx);
+	if (!subscr)
+		return -ENOMEM;
 
 	subscr->flags |= GPRS_SUBSCRIBER_UPDATE_AUTH_INFO_PENDING;
 

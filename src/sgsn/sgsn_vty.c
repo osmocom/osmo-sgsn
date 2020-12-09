@@ -1020,6 +1020,10 @@ DEFUN(update_subscr_create, update_subscr_create_cmd,
 	}
 
 	subscr = gprs_subscr_get_or_create(imsi);
+	if (!subscr) {
+		vty_out(vty, "Can not create subscriber. Out of memory.%s", imsi);
+		return CMD_WARNING;
+	}
 	subscr->keep_in_ram = 1;
 	gprs_subscr_put(subscr);
 
