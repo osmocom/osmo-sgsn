@@ -209,11 +209,6 @@ static struct log_info_cat gprs_categories[] = {
 		.description = "GPRS Network Service (NS)",
 		.enabled = 1, .loglevel = LOGL_INFO,
 	},
-	[DBSSGP] = {
-		.name = "DBSSGP",
-		.description = "GPRS BSS Gateway Protocol (BSSGP)",
-		.enabled = 1, .loglevel = LOGL_DEBUG,
-	},
 };
 
 static const struct log_info gprs_log_info = {
@@ -288,7 +283,7 @@ int main(int argc, char **argv)
 	}
 
 	gprs_ns2_vty_init(gbcfg->nsi, NULL);
-	bssgp_set_log_ss(DBSSGP);
+	logging_vty_add_deprecated_subsys(tall_sgsn_ctx, "bssgp");
 	gprs_ns2_dynamic_create_nse(gbcfg->nsi, true);
 
 	bssgp_set_bssgp_callback(gbprox_bssgp_send_cb, gbcfg);

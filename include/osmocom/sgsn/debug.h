@@ -24,7 +24,6 @@ enum {
 	DREF,
 	DGPRS,
 	DNS,
-	DBSSGP,
 	DLLC,
 	DSNDCP,
 	DSLHC,

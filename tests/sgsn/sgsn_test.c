@@ -1625,11 +1625,6 @@ static struct log_info_cat gprs_categories[] = {
 		.description = "GPRS Network Service (NS)",
 		.enabled = 1, .loglevel = LOGL_INFO,
 	},
-	[DBSSGP] = {
-		.name = "DBSSGP",
-		.description = "GPRS BSS Gateway Protocol (BSSGP)",
-		.enabled = 1, .loglevel = LOGL_DEBUG,
-	},
 	[DLLC] = {
 		.name = "DLLC",
 		.description = "GPRS Logical Link Control Protocol (LLC)",

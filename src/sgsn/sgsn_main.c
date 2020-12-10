@@ -312,11 +312,6 @@ static struct log_info_cat gprs_categories[] = {
 		.description = "GPRS Network Service (NS)",
 		.enabled = 1, .loglevel = LOGL_NOTICE,
 	},
-	[DBSSGP] = {
-		.name = "DBSSGP",
-		.description = "GPRS BSS Gateway Protocol (BSSGP)",
-		.enabled = 1, .loglevel = LOGL_NOTICE,
-	},
 	[DLLC] = {
 		.name = "DLLC",
 		.description = "GPRS Logical Link Control Protocol (LLC)",
@@ -424,7 +419,7 @@ int main(int argc, char **argv)
 	rate_ctr_init(tall_sgsn_ctx);
 
 	gprs_ns_set_log_ss(DNS);
-	bssgp_set_log_ss(DBSSGP);
+	logging_vty_add_deprecated_subsys(tall_sgsn_ctx, "bssgp");
 
 	sgsn_nsi = gprs_ns_instantiate(&sgsn_ns_cb, tall_sgsn_ctx);
 	if (!sgsn_nsi) {
