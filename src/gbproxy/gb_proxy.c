@@ -250,7 +250,7 @@ static int gbprox_rx_ptp_from_bss(struct gbproxy_nse *nse, struct msgb *msg, uin
 
 	LOGP(DGPRS, LOGL_DEBUG, "%s Rx %s\n", log_pfx, pdut_name);
 
-	if (ns_bvci == 0 && ns_bvci == 1) {
+	if (ns_bvci == 0 || ns_bvci == 1) {
 		LOGP(DGPRS, LOGL_NOTICE, "%s BVCI=%05u is not PTP\n", log_pfx, ns_bvci);
 		return bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, NULL, msg);
 	}
@@ -360,7 +360,7 @@ static int gbprox_rx_ptp_from_sgsn(struct gbproxy_nse *nse, struct msgb *msg, ui
 
 	LOGP(DGPRS, LOGL_DEBUG, "%s Rx %s\n", log_pfx, pdut_name);
 
-	if (ns_bvci == 0 && ns_bvci == 1) {
+	if (ns_bvci == 0 || ns_bvci == 1) {
 		LOGP(DGPRS, LOGL_NOTICE, "%s BVCI is not PTP\n", log_pfx);
 		return bssgp_tx_status(BSSGP_CAUSE_PROTO_ERR_UNSPEC, NULL, msg);
 	}
