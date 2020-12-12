@@ -828,11 +828,12 @@ err_no_bvc:
 }
 
 /* Receive paging request from SGSN, we need to relay to proper BSS */
-static int gbprox_rx_paging(struct gbproxy_nse *nse, struct msgb *msg, const char *pdut_name,
+static int gbprox_rx_paging(struct gbproxy_nse *sgsn_nse, struct msgb *msg, const char *pdut_name,
 			    struct tlv_parsed *tp, uint16_t ns_bvci)
 {
-	struct gbproxy_config *cfg = nse->cfg;
+	struct gbproxy_config *cfg = sgsn_nse->cfg;
 	struct gbproxy_bvc *sgsn_bvc, *bss_bvc;
+	struct gbproxy_nse *nse;
 	unsigned int n_nses = 0;
 	int errctr = GBPROX_GLOB_CTR_PROTO_ERR_SGSN;
 	int i, j;
@@ -842,9 +843,9 @@ static int gbprox_rx_paging(struct gbproxy_nse *nse, struct msgb *msg, const cha
 	if (TLVP_PRES_LEN(tp, BSSGP_IE_BVCI, 2)) {
 		uint16_t bvci = ntohs(tlvp_val16_unal(tp, BSSGP_IE_BVCI));
 		errctr = GBPROX_GLOB_CTR_OTHER_ERR;
-		sgsn_bvc = gbproxy_bvc_by_bvci(nse, bvci);
+		sgsn_bvc = gbproxy_bvc_by_bvci(sgsn_nse, bvci);
 		if (!sgsn_bvc) {
-			LOGPNSE(nse, LOGL_NOTICE, "Rx %s: unable to route: BVCI=%05u unknown\n",
+			LOGPNSE(sgsn_nse, LOGL_NOTICE, "Rx %s: unable to route: BVCI=%05u unknown\n",
 				pdut_name, bvci);
 			rate_ctr_inc(&cfg->ctrg->ctr[errctr]);
 			return -EINVAL;
@@ -893,12 +894,12 @@ static int gbprox_rx_paging(struct gbproxy_nse *nse, struct msgb *msg, const cha
 			}
 		}
 	} else {
-		LOGPNSE(nse, LOGL_ERROR, "BSSGP PAGING: unable to route, missing IE\n");
+		LOGPNSE(sgsn_nse, LOGL_ERROR, "BSSGP PAGING: unable to route, missing IE\n");
 		rate_ctr_inc(&cfg->ctrg->ctr[errctr]);
 	}
 
 	if (n_nses == 0) {
-		LOGPNSE(nse, LOGL_ERROR, "BSSGP PAGING: unable to route, no destination found\n");
+		LOGPNSE(sgsn_nse, LOGL_ERROR, "BSSGP PAGING: unable to route, no destination found\n");
 		rate_ctr_inc(&cfg->ctrg->ctr[errctr]);
 		return -EINVAL;
 	}
