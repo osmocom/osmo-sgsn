@@ -198,8 +198,9 @@ DEFUN(logging_fltr_bvc,
 	return CMD_SUCCESS;
 }
 
-DEFUN(show_gbproxy, show_gbproxy_cmd, "show gbproxy (bss|sgsn) [stats]",
+DEFUN(show_gbproxy_bvc, show_gbproxy_bvc_cmd, "show gbproxy bvc (bss|sgsn) [stats]",
        SHOW_STR "Display information about the Gb proxy\n"
+       "Show BSSGP Virtual Connections\n"
        "Display BSS-side BVCs\n"
        "Display SGSN-side BVCs\n"
        "Show statistics\n")
@@ -334,7 +335,7 @@ DEFUN(delete_gb_nsei, delete_gb_nsei_cmd,
 
 int gbproxy_vty_init(void)
 {
-	install_element_ve(&show_gbproxy_cmd);
+	install_element_ve(&show_gbproxy_bvc_cmd);
 	install_element_ve(&show_gbproxy_links_cmd);
 	install_element_ve(&logging_fltr_bvc_cmd);
 
