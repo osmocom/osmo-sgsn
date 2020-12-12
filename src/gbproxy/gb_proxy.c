@@ -479,6 +479,7 @@ static void bss_ptp_bvc_reset_notif(uint16_t nsei, uint16_t bvci, const struct g
 {
 	struct gbproxy_bvc *bvc = priv;
 	struct gbproxy_config *cfg = bvc->nse->cfg;
+	struct gbproxy_nse *sgsn_nse;
 	unsigned int i;
 
 	OSMO_ASSERT(bvci != 0);
@@ -502,7 +503,6 @@ static void bss_ptp_bvc_reset_notif(uint16_t nsei, uint16_t bvci, const struct g
 	}
 
 	if (!bvc->cell) {
-		struct gbproxy_nse *sgsn_nse;
 		/* if we end up here, it means this is the first time we received a BVC-RESET
 		 * for this BVC.  We need to create the 'cell' data structure and the SGSN-side
 		 * BVC counterparts */
@@ -513,28 +513,26 @@ static void bss_ptp_bvc_reset_notif(uint16_t nsei, uint16_t bvci, const struct g
 
 		/* link us to the cell and vice-versa */
 		bvc->cell->bss_bvc = bvc;
+	}
 
-		/* allocate the SGSN-side BVCs within the cell, and reset them */
-		hash_for_each(cfg->sgsn_nses, i, sgsn_nse, list) {
-			struct gbproxy_bvc *sgsn_bvc = gbproxy_bvc_by_bvci(sgsn_nse, bvci);
-			if (sgsn_bvc)
-				OSMO_ASSERT(!sgsn_bvc->cell);
+	/* allocate (any missing) SGSN-side BVCs within the cell, and reset them */
+	hash_for_each(cfg->sgsn_nses, i, sgsn_nse, list) {
+		struct gbproxy_bvc *sgsn_bvc = gbproxy_bvc_by_bvci(sgsn_nse, bvci);
+		if (sgsn_bvc)
+			OSMO_ASSERT(sgsn_bvc->cell == bvc->cell || !sgsn_bvc->cell);
 
-			if (!sgsn_bvc) {
-				sgsn_bvc = gbproxy_bvc_alloc(sgsn_nse, bvci);
-				OSMO_ASSERT(sgsn_bvc);
+		if (!sgsn_bvc) {
+			sgsn_bvc = gbproxy_bvc_alloc(sgsn_nse, bvci);
+			OSMO_ASSERT(sgsn_bvc);
 
-				sgsn_bvc->cell = bvc->cell;
-				memcpy(sgsn_bvc->ra, bvc->cell->ra, sizeof(sgsn_bvc->ra));
-				sgsn_bvc->fi = bssgp_bvc_fsm_alloc_ptp_bss(sgsn_bvc, cfg->nsi, sgsn_nse->nsei,
-									   bvci, ra_id, cell_id);
-				OSMO_ASSERT(sgsn_bvc->fi);
-				bssgp_bvc_fsm_set_ops(sgsn_bvc->fi, &sgsn_ptp_bvc_fsm_ops, sgsn_bvc);
+			sgsn_bvc->cell = bvc->cell;
+			memcpy(sgsn_bvc->ra, bvc->cell->ra, sizeof(sgsn_bvc->ra));
+			sgsn_bvc->fi = bssgp_bvc_fsm_alloc_ptp_bss(sgsn_bvc, cfg->nsi, sgsn_nse->nsei,
+								   bvci, ra_id, cell_id);
+			OSMO_ASSERT(sgsn_bvc->fi);
+			bssgp_bvc_fsm_set_ops(sgsn_bvc->fi, &sgsn_ptp_bvc_fsm_ops, sgsn_bvc);
 
-				gbproxy_cell_add_sgsn_bvc(bvc->cell, sgsn_bvc);
-			} else {
-				OSMO_ASSERT(sgsn_bvc->cell == bvc->cell);
-			}
+			gbproxy_cell_add_sgsn_bvc(bvc->cell, sgsn_bvc);
 		}
 	}
 
