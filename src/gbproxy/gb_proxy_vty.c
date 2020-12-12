@@ -58,15 +58,29 @@ static struct cmd_node gbproxy_node = {
 
 static void gbprox_vty_print_bvc(struct vty *vty, struct gbproxy_bvc *bvc)
 {
-	struct gprs_ra_id raid;
-	gsm48_parse_ra(&raid, bvc->ra);
 
-	vty_out(vty, "NSEI %5u, PTP-BVCI %5u, "
-		"RAI %s", bvc->nse->nsei, bvc->bvci, osmo_rai_name(&raid));
-	if (bssgp_bvc_fsm_is_unblocked(bvc->fi))
-		vty_out(vty, " [BVC-BLOCKED]");
+	if (bvc->bvci == 0) {
+		vty_out(vty, "NSEI %5u, SIG-BVCI %5u [%s]%s", bvc->nse->nsei, bvc->bvci,
+			osmo_fsm_inst_state_name(bvc->fi), VTY_NEWLINE);
+	} else {
+		struct gprs_ra_id raid;
+		gsm48_parse_ra(&raid, bvc->ra);
+		vty_out(vty, "NSEI %5u, PTP-BVCI %5u, RAI %s [%s]%s", bvc->nse->nsei, bvc->bvci,
+			osmo_rai_name(&raid), osmo_fsm_inst_state_name(bvc->fi), VTY_NEWLINE);
+	}
+}
 
-	vty_out(vty, "%s", VTY_NEWLINE);
+static void gbproxy_vty_print_nse(struct vty *vty, struct gbproxy_nse *nse, bool show_stats)
+{
+	struct gbproxy_bvc *bvc;
+	int j;
+
+	hash_for_each(nse->bvcs, j, bvc, list) {
+		gbprox_vty_print_bvc(vty, bvc);
+
+		if (show_stats)
+			vty_out_rate_ctr_group(vty, "  ", bvc->ctrg);
+	}
 }
 
 static int config_write_gbproxy(struct vty *vty)
@@ -184,24 +198,25 @@ DEFUN(logging_fltr_bvc,
 	return CMD_SUCCESS;
 }
 
-DEFUN(show_gbproxy, show_gbproxy_cmd, "show gbproxy [stats]",
-       SHOW_STR "Display information about the Gb proxy\n" "Show statistics\n")
+DEFUN(show_gbproxy, show_gbproxy_cmd, "show gbproxy (bss|sgsn) [stats]",
+       SHOW_STR "Display information about the Gb proxy\n"
+       "Display BSS-side BVCs\n"
+       "Display SGSN-side BVCs\n"
+       "Show statistics\n")
 {
 	struct gbproxy_nse *nse;
-	int show_stats = argc >= 1;
-	int i, j;
+	bool show_stats = argc >= 2;
+	int i;
 
 	if (show_stats)
 		vty_out_rate_ctr_group(vty, "", g_cfg->ctrg);
 
-	hash_for_each(g_cfg->bss_nses, i, nse, list) {
-		struct gbproxy_bvc *bvc;
-		hash_for_each(nse->bvcs, j, bvc, list) {
-			gbprox_vty_print_bvc(vty, bvc);
-
-			if (show_stats)
-				vty_out_rate_ctr_group(vty, "  ", bvc->ctrg);
-		}
+	if (!strcmp(argv[0], "bss")) {
+		hash_for_each(g_cfg->bss_nses, i, nse, list)
+			gbproxy_vty_print_nse(vty, nse, show_stats);
+	} else {
+		hash_for_each(g_cfg->sgsn_nses, i, nse, list)
+			gbproxy_vty_print_nse(vty, nse, show_stats);
 	}
 	return CMD_SUCCESS;
 }

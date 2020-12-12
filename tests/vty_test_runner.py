@@ -97,7 +97,7 @@ class TestVTYGbproxy(TestVTYBase):
         res = self.vty.command("show ns")
         self.assertTrue(res.find('UDP bind') >= 0)
 
-        res = self.vty.command("show gbproxy stats")
+        res = self.vty.command("show gbproxy bss stats")
         self.assertTrue(res.find('GBProxy Global Statistics') >= 0)
 
     def testVtyDeletePeer(self):
