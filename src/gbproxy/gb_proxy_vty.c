@@ -83,6 +83,32 @@ static void gbproxy_vty_print_nse(struct vty *vty, struct gbproxy_nse *nse, bool
 	}
 }
 
+static void gbproxy_vty_print_cell(struct vty *vty, struct gbproxy_cell *cell, bool show_stats)
+{
+	struct gprs_ra_id raid;
+	gsm48_parse_ra(&raid, cell->ra);
+	unsigned int num_sgsn_bvc = 0;
+	unsigned int i;
+
+	vty_out(vty, "BVCI %5u RAI %s: ", cell->bvci, osmo_rai_name(&raid));
+	if (cell->bss_bvc)
+		vty_out(vty, "BSS NSEI %5u, SGSN NSEI ", cell->bss_bvc->nse->nsei);
+	else
+		vty_out(vty, "BSS NSEI <none>, SGSN NSEI ");
+
+	for (i = 0; i < ARRAY_SIZE(cell->sgsn_bvc); i++) {
+		struct gbproxy_bvc *sgsn_bvc = cell->sgsn_bvc[i];
+		if (sgsn_bvc) {
+			vty_out(vty, "%5u ", sgsn_bvc->nse->nsei);
+			num_sgsn_bvc++;
+		}
+	}
+	if (num_sgsn_bvc)
+		vty_out(vty, "%s", VTY_NEWLINE);
+	else
+		vty_out(vty, "<none>%s", VTY_NEWLINE);
+}
+
 static int config_write_gbproxy(struct vty *vty)
 {
 	struct gbproxy_nse *nse;
@@ -222,6 +248,21 @@ DEFUN(show_gbproxy_bvc, show_gbproxy_bvc_cmd, "show gbproxy bvc (bss|sgsn) [stat
 	return CMD_SUCCESS;
 }
 
+DEFUN(show_gbproxy_cell, show_gbproxy_cell_cmd, "show gbproxy cell [stats]",
+       SHOW_STR "Display information about the Gb proxy\n"
+       "Show GPRS Cell Information\n"
+       "Show statistics\n")
+{
+	struct gbproxy_cell *cell;
+	bool show_stats = argc >= 1;
+	int i;
+
+	hash_for_each(g_cfg->cells, i, cell, list)
+		gbproxy_vty_print_cell(vty, cell, show_stats);
+
+	return CMD_SUCCESS;
+}
+
 DEFUN(show_gbproxy_links, show_gbproxy_links_cmd, "show gbproxy links",
        SHOW_STR "Display information about the Gb proxy\n" "Show logical links\n")
 {
@@ -336,6 +377,7 @@ DEFUN(delete_gb_nsei, delete_gb_nsei_cmd,
 int gbproxy_vty_init(void)
 {
 	install_element_ve(&show_gbproxy_bvc_cmd);
+	install_element_ve(&show_gbproxy_cell_cmd);
 	install_element_ve(&show_gbproxy_links_cmd);
 	install_element_ve(&logging_fltr_bvc_cmd);
 
