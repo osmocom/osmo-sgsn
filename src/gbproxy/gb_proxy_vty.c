@@ -76,6 +76,9 @@ static int config_write_gbproxy(struct vty *vty)
 
 	vty_out(vty, "gbproxy%s", VTY_NEWLINE);
 
+	if (g_cfg->pool.bvc_fc_ratio != 100)
+		vty_out(vty, " pool bvc-flow-control-ratio %u%s", g_cfg->pool.bvc_fc_ratio, VTY_NEWLINE);
+
 	hash_for_each(g_cfg->sgsn_nses, i, nse, list) {
 		vty_out(vty, " sgsn nsei %u%s", nse->nsei, VTY_NEWLINE);
 	}
@@ -132,6 +135,17 @@ free_nse:
 free_nothing:
 	vty_out(vty, "%% Unable to create NSE for NSEI=%05u%s", nsei, VTY_NEWLINE);
 	return CMD_WARNING;
+}
+
+DEFUN(cfg_pool_bvc_fc_ratio,
+      cfg_pool_bvc_fc_ratio_cmd,
+      "pool bvc-flow-control-ratio <1-100>",
+      "SGSN Pool related configuration\n"
+      "Ratio of BSS-advertised bucket size + leak rate advertised to each SGSN\n"
+      "Ratio of BSS-advertised bucket size + leak rate advertised to each SGSN (Percent)\n")
+{
+	g_cfg->pool.bvc_fc_ratio = atoi(argv[0]);
+	return CMD_SUCCESS;
 }
 
 static void log_set_bvc_filter(struct log_target *target,
@@ -315,6 +329,7 @@ int gbproxy_vty_init(void)
 	install_element(CONFIG_NODE, &cfg_gbproxy_cmd);
 	install_node(&gbproxy_node, config_write_gbproxy);
 	install_element(GBPROXY_NODE, &cfg_nsip_sgsn_nsei_cmd);
+	install_element(GBPROXY_NODE, &cfg_pool_bvc_fc_ratio_cmd);
 
 	return 0;
 }

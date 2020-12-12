@@ -40,6 +40,7 @@
 
 #include <osmocom/gprs/gprs_ns2.h>
 #include <osmocom/gprs/gprs_bssgp.h>
+#include <osmocom/gprs/gprs_bssgp2.h>
 #include <osmocom/gprs/gprs_bssgp_bss.h>
 #include <osmocom/gprs/bssgp_bvc_fsm.h>
 
@@ -566,15 +567,28 @@ static void bss_ptp_bvc_state_chg_notif(uint16_t nsei, uint16_t bvci, int old_st
 /* BVC FSM informs us about BVC-FC PDU receive */
 static void bss_ptp_bvc_fc_bvc(uint16_t nsei, uint16_t bvci, const struct bssgp2_flow_ctrl *fc, void *priv)
 {
+	struct bssgp2_flow_ctrl fc_reduced;
 	struct gbproxy_bvc *bss_bvc = priv;
-	struct gbproxy_cell *cell = bss_bvc->cell;
+	struct gbproxy_cell *cell;
+	struct gbproxy_config *cfg;
 
+	OSMO_ASSERT(bss_bvc);
+	OSMO_ASSERT(fc);
+
+	cell = bss_bvc->cell;
 	if (!cell)
 		return;
 
-	/* FIXME: actually split the bandwidth among the SGSNs! */
+	cfg = cell->cfg;
 
-	dispatch_to_all_sgsn_bvc(cell, BSSGP_BVCFSM_E_REQ_FC_BVC, (void *) fc);
+	/* reduce / scale according to configuration to make sure we only advertise a fraction
+	 * of the capacity to each of the SGSNs in the pool */
+	fc_reduced = *fc;
+	fc_reduced.bucket_size_max = (fc->bucket_size_max * cfg->pool.bvc_fc_ratio) / 100;
+	fc_reduced.bucket_leak_rate = (fc->bucket_leak_rate * cfg->pool.bvc_fc_ratio) / 100;
+	/* we don't modify the per-MS related values as any single MS is only served by one SGSN */
+
+	dispatch_to_all_sgsn_bvc(cell, BSSGP_BVCFSM_E_REQ_FC_BVC, (void *) &fc_reduced);
 }
 
 static const struct bssgp_bvc_fsm_ops bss_ptp_bvc_fsm_ops = {
@@ -1270,6 +1284,8 @@ int gbproxy_init_config(struct gbproxy_config *cfg)
 {
 	struct timespec tp;
 
+	/* by default we advertise 100% of the BSS-side capacity to _each_ SGSN */
+	cfg->pool.bvc_fc_ratio = 100;
 	hash_init(cfg->bss_nses);
 	cfg->ctrg = rate_ctr_group_alloc(tall_sgsn_ctx, &global_ctrg_desc, 0);
 	if (!cfg->ctrg) {

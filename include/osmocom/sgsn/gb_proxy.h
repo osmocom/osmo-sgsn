@@ -52,6 +52,11 @@ struct gbproxy_config {
 	/* NS instance of libosmogb */
 	struct gprs_ns2_inst *nsi;
 
+	struct {
+		/* percentage of BVC flow control advertised to each SGSN in the pool */
+		uint8_t bvc_fc_ratio;
+	} pool;
+
 	/* Linked list of all BSS side Gb peers */
 	DECLARE_HASHTABLE(bss_nses, 8);
 
