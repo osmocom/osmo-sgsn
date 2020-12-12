@@ -509,6 +509,7 @@ static void bss_ptp_bvc_reset_notif(uint16_t nsei, uint16_t bvci, const struct g
 
 		bvc->cell = gbproxy_cell_alloc(cfg, bvci);
 		OSMO_ASSERT(bvc->cell);
+		memcpy(bvc->cell->ra, bvc->ra, sizeof(bvc->cell->ra));
 
 		/* link us to the cell and vice-versa */
 		bvc->cell->bss_bvc = bvc;
@@ -524,6 +525,7 @@ static void bss_ptp_bvc_reset_notif(uint16_t nsei, uint16_t bvci, const struct g
 				OSMO_ASSERT(sgsn_bvc);
 
 				sgsn_bvc->cell = bvc->cell;
+				memcpy(sgsn_bvc->ra, bvc->cell->ra, sizeof(sgsn_bvc->ra));
 				sgsn_bvc->fi = bssgp_bvc_fsm_alloc_ptp_bss(sgsn_bvc, cfg->nsi, sgsn_nse->nsei,
 									   bvci, ra_id, cell_id);
 				OSMO_ASSERT(sgsn_bvc->fi);
