@@ -27,6 +27,7 @@ enum {
 	DSIGTRAN,
 	DGTP,
 	DOBJ,
+	DRIM,
 	Debug_LastEntry,
 };
 

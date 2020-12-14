@@ -67,6 +67,7 @@
 #include <osmocom/ctrl/ports.h>
 
 #include <gtp.h>
+#include <osmocom/sgsn/sgsn_rim.h>
 
 #include "../../bscconfig.h"
 
@@ -120,6 +121,8 @@ int bssgp_prim_cb(struct osmo_prim_hdr *oph, void *ctx)
 		break;
 	case SAP_BSSGP_NM:
 		break;
+	case SAP_BSSGP_RIM:
+		return sgsn_rim_rx(bp, oph->msg);
 	}
 	return 0;
 }
@@ -309,6 +312,11 @@ static struct log_info_cat gprs_categories[] = {
 	[DGTP] = {
 		.name = "DGTP",
 		.description = "GPRS Tunnelling Protocol (GTP)",
+		.enabled = 1, .loglevel = LOGL_NOTICE,
+	},
+	[DRIM] = {
+		.name = "DRIM",
+		.description = "RAN Information Management (RIM)",
 		.enabled = 1, .loglevel = LOGL_NOTICE,
 	},
 };

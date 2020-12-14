@@ -62,6 +62,7 @@ osmo_sgsn_SOURCES = \
 	sgsn_auth.c \
 	gprs_subscriber.c \
 	sgsn_cdr.c \
+	sgsn_rim.c \
 	slhc.c \
 	gprs_llc_xid.c \
 	v42bis.c \

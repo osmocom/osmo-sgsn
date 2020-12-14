@@ -24,6 +24,7 @@ noinst_HEADERS = \
 	gprs_utils.h \
 	gtphub.h \
 	sgsn.h \
+	sgsn_rim.h \
 	signal.h \
 	slhc.h \
 	v42bis.h \
