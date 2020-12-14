@@ -26,6 +26,7 @@
 
 #include <osmocom/gprs/protocol/gsm_08_18.h>
 #include <osmocom/core/logging.h>
+#include <osmocom/core/linuxlist.h>
 #include <osmocom/core/rate_ctr.h>
 #include <osmocom/core/stats.h>
 #include <osmocom/core/talloc.h>
@@ -273,7 +274,7 @@ struct gbproxy_nse *gbproxy_nse_alloc(struct gbproxy_config *cfg, uint16_t nsei,
 	return nse;
 }
 
-void gbproxy_nse_free(struct gbproxy_nse *nse)
+static void _nse_free(struct gbproxy_nse *nse)
 {
 	struct gbproxy_bvc *bvc;
 	struct hlist_node *tmp;
@@ -290,6 +291,22 @@ void gbproxy_nse_free(struct gbproxy_nse *nse)
 		gbproxy_bvc_free(bvc);
 
 	talloc_free(nse);
+}
+static void _sgsn_free(struct gbproxy_sgsn *sgsn);
+
+void gbproxy_nse_free(struct gbproxy_nse *nse)
+{
+	if (!nse)
+		return;
+	OSMO_ASSERT(nse->cfg);
+
+	if (nse->sgsn_facing) {
+		struct gbproxy_sgsn *sgsn = gbproxy_sgsn_by_nsei(nse->cfg, nse->nsei);
+		OSMO_ASSERT(sgsn);
+		_sgsn_free(sgsn);
+	}
+
+	_nse_free(nse);
 }
 
 struct gbproxy_nse *gbproxy_nse_by_nsei(struct gbproxy_config *cfg, uint16_t nsei, uint32_t flags)
@@ -324,4 +341,105 @@ struct gbproxy_nse *gbproxy_nse_by_nsei_or_new(struct gbproxy_config *cfg, uint1
 		nse = gbproxy_nse_alloc(cfg, nsei, sgsn_facing);
 
 	return nse;
+}
+
+/* SGSN */
+struct gbproxy_sgsn *gbproxy_sgsn_alloc(struct gbproxy_config *cfg, uint16_t nsei)
+{
+	struct gbproxy_sgsn *sgsn;
+	OSMO_ASSERT(cfg);
+
+	sgsn = talloc_zero(tall_sgsn_ctx, struct gbproxy_sgsn);
+	if (!sgsn)
+		return NULL;
+
+	sgsn->nse = gbproxy_nse_alloc(cfg, nsei, true);
+	if (!sgsn->nse) {
+		LOGPSGSN_CAT(sgsn, DOBJ, LOGL_INFO, "Could not allocate NSE(%05u) for SGSN\n", nsei);
+		talloc_free(sgsn);
+		return NULL;
+	}
+
+	sgsn->pool.allow_attach = true;
+	sgsn->pool.nri_ranges = osmo_nri_ranges_alloc(sgsn);
+
+	llist_add_tail(&sgsn->list, &cfg->sgsns);
+	LOGPSGSN_CAT(sgsn, DOBJ, LOGL_INFO, "SGSN Created\n");
+	return sgsn;
+}
+
+/* Only free gbproxy_sgsn, sgsn can't be NULL */
+static void _sgsn_free(struct gbproxy_sgsn *sgsn) {
+	struct gbproxy_config *cfg;
+
+	OSMO_ASSERT(sgsn->nse);
+	cfg = sgsn->nse->cfg;
+	OSMO_ASSERT(cfg);
+
+	LOGPSGSN_CAT(sgsn, DOBJ, LOGL_INFO, "SGSN Destroying\n");
+	llist_del(&sgsn->list);
+	talloc_free(sgsn);
+}
+
+void gbproxy_sgsn_free(struct gbproxy_sgsn *sgsn)
+{
+	if (!sgsn)
+		return;
+
+	OSMO_ASSERT(sgsn->nse)
+
+	_nse_free(sgsn->nse);
+	_sgsn_free(sgsn);
+}
+
+struct gbproxy_sgsn *gbproxy_sgsn_by_nsei(struct gbproxy_config *cfg, uint16_t nsei)
+{
+	struct gbproxy_sgsn *sgsn;
+	OSMO_ASSERT(cfg);
+
+	llist_for_each_entry(sgsn, &cfg->sgsns, list) {
+		if (sgsn->nse->nsei == nsei)
+			return sgsn;
+	}
+
+	return NULL;
+}
+
+struct gbproxy_sgsn *gbproxy_sgsn_by_nsei_or_new(struct gbproxy_config *cfg, uint16_t nsei)
+{
+	struct gbproxy_sgsn *sgsn;
+	OSMO_ASSERT(cfg);
+
+	sgsn = gbproxy_sgsn_by_nsei(cfg, nsei);
+	if (!sgsn)
+		sgsn = gbproxy_sgsn_alloc(cfg, nsei);
+
+	return sgsn;
+}
+
+/*! Return the gbproxy_sgsn matching that NRI
+ *  \param[in] cfg proxy in which we operate
+ *  \param[in] nri NRI to look for
+ *  \param[out] null_nri If not NULL this indicates whether the NRI is a null NRI
+ *  \return The SGSN this NRI has been added to, NULL if no matching SGSN could be found
+ */
+struct gbproxy_sgsn *gbproxy_sgsn_by_nri(struct gbproxy_config *cfg, uint16_t nri, bool *null_nri)
+{
+	struct gbproxy_sgsn *sgsn;
+	OSMO_ASSERT(cfg);
+
+	llist_for_each_entry(sgsn, &cfg->sgsns, list) {
+		if (osmo_nri_v_matches_ranges(nri, sgsn->pool.nri_ranges)) {
+			/* Also check if the NRI we're looking for is a NULL NRI */
+			if (sgsn && null_nri) {
+				if (osmo_nri_v_matches_ranges(nri, cfg->pool.null_nri_ranges))
+					*null_nri = true;
+				else
+					*null_nri = false;
+			}
+			return sgsn;
+		}
+	}
+
+	return NULL;
 }

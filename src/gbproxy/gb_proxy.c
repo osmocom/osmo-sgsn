@@ -33,6 +33,7 @@
 
 #include <osmocom/core/hashtable.h>
 #include <osmocom/core/logging.h>
+#include <osmocom/core/linuxlist.h>
 #include <osmocom/core/talloc.h>
 #include <osmocom/core/select.h>
 #include <osmocom/core/rate_ctr.h>
@@ -1286,9 +1287,13 @@ int gbproxy_init_config(struct gbproxy_config *cfg)
 
 	/* by default we advertise 100% of the BSS-side capacity to _each_ SGSN */
 	cfg->pool.bvc_fc_ratio = 100;
+	cfg->pool.null_nri_ranges = osmo_nri_ranges_alloc(cfg);
+
 	hash_init(cfg->bss_nses);
 	hash_init(cfg->sgsn_nses);
 	hash_init(cfg->cells);
+	INIT_LLIST_HEAD(&cfg->sgsns);
+
 	cfg->ctrg = rate_ctr_group_alloc(tall_sgsn_ctx, &global_ctrg_desc, 0);
 	if (!cfg->ctrg) {
 		LOGP(DGPRS, LOGL_ERROR, "Cannot allocate global counter group!\n");

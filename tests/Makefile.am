@@ -32,7 +32,8 @@ EXTRA_DIST = \
 	$(TESTSUITE) \
 	vty_test_runner.py \
 	ctrl_test_runner.py \
-	test_nodes.vty \
+	osmo-sgsn_test-nodes.vty \
+	osmo-gbproxy_test-nodes.vty \
 	$(NULL)
 
 TESTSUITE = $(srcdir)/testsuite
@@ -61,9 +62,13 @@ vty-python-test: $(BUILT_SOURCES)
 #   make vty-transcript-test U=-u
 vty-transcript-test:
 	osmo_verify_transcript_vty.py -v \
+		-n OsmoGbProxy -p 4246 \
+		-r "$(top_builddir)/src/gbproxy/osmo-gbproxy -c $(top_srcdir)/doc/examples/osmo-gbproxy/osmo-gbproxy.cfg" \
+		$(U) $${T:-$(srcdir)/osmo-gbproxy*.vty}
+	osmo_verify_transcript_vty.py -v \
 		-n OsmoSGSN -p 4245 \
 		-r "$(top_builddir)/src/sgsn/osmo-sgsn -c $(top_srcdir)/doc/examples/osmo-sgsn/osmo-sgsn.cfg" \
-		$(U) $${T:-$(srcdir)/*.vty}
+		$(U) $${T:-$(srcdir)/osmo-sgsn*.vty}
 	rm -f $(builddir)/sms.db $(builddir)/gsn_restart
 
 # don't run multiple tests concurrently so that the ports don't conflict
