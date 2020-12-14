@@ -25,14 +25,17 @@
 #include <time.h>
 #include <inttypes.h>
 
+#include <osmocom/core/hashtable.h>
 #include <osmocom/core/talloc.h>
 #include <osmocom/core/timer.h>
 #include <osmocom/core/rate_ctr.h>
-#include <osmocom/gsm/gsm48.h>
 
 #include <osmocom/gprs/gprs_ns2.h>
 #include <osmocom/gprs/bssgp_bvc_fsm.h>
+
 #include <osmocom/gsm/apn.h>
+#include <osmocom/gsm/gsm23236.h>
+#include <osmocom/gsm/gsm48.h>
 
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/gb_proxy.h>
@@ -44,6 +47,17 @@
 #include <osmocom/vty/vty.h>
 #include <osmocom/vty/misc.h>
 
+#define NRI_STR "Mapping of Network Resource Indicators to this SGSN, for SGSN pooling\n"
+#define NULL_NRI_STR "Define NULL-NRI values that cause re-assignment of an MS to a different SGSN, for SGSN pooling.\n"
+#define NRI_FIRST_LAST_STR "First value of the NRI value range, should not surpass the configured 'nri bitlen'.\n" \
+	"Last value of the NRI value range, should not surpass the configured 'nri bitlen' and be larger than the" \
+	" first value; if omitted, apply only the first value.\n"
+#define NRI_ARGS_TO_STR_FMT "%s%s%s"
+#define NRI_ARGS_TO_STR_ARGS(ARGC, ARGV) ARGV[0], (ARGC>1)? ".." : "", (ARGC>1)? ARGV[1] : ""
+#define NRI_WARN(SGSN, FORMAT, args...) do { \
+		vty_out(vty, "%% Warning: NSE(%05d/SGSN): " FORMAT "%s", (SGSN)->nse->nsei, ##args, VTY_NEWLINE); \
+		LOGP(DLBSSGP, LOGL_ERROR, "NSE(%05d/SGSN): " FORMAT "\n", (SGSN)->nse->nsei, ##args); \
+	} while (0)
 
 static struct gbproxy_config *g_cfg = NULL;
 
@@ -111,18 +125,22 @@ static void gbproxy_vty_print_cell(struct vty *vty, struct gbproxy_cell *cell, b
 
 static int config_write_gbproxy(struct vty *vty)
 {
-	struct gbproxy_nse *nse;
-	int i;
+	struct osmo_nri_range *r;
 
 	vty_out(vty, "gbproxy%s", VTY_NEWLINE);
 
 	if (g_cfg->pool.bvc_fc_ratio != 100)
 		vty_out(vty, " pool bvc-flow-control-ratio %u%s", g_cfg->pool.bvc_fc_ratio, VTY_NEWLINE);
 
-	hash_for_each(g_cfg->sgsn_nses, i, nse, list) {
-		vty_out(vty, " sgsn nsei %u%s", nse->nsei, VTY_NEWLINE);
-	}
+	if (g_cfg->pool.nri_bitlen != OSMO_NRI_BITLEN_DEFAULT)
+		vty_out(vty, " nri bitlen %u%s", g_cfg->pool.nri_bitlen, VTY_NEWLINE);
 
+	llist_for_each_entry(r, &g_cfg->pool.null_nri_ranges->entries, entry) {
+		vty_out(vty, " nri null add %d", r->first);
+		if (r->first != r->last)
+			vty_out(vty, " %d", r->last);
+		vty_out(vty, "%s", VTY_NEWLINE);
+	}
 	return CMD_SUCCESS;
 }
 
@@ -135,30 +153,89 @@ DEFUN(cfg_gbproxy,
 	return CMD_SUCCESS;
 }
 
+/* VTY code for SGSN (pool) configuration */
 extern const struct bssgp_bvc_fsm_ops sgsn_sig_bvc_fsm_ops;
 #include <osmocom/gprs/protocol/gsm_08_18.h>
 
-DEFUN(cfg_nsip_sgsn_nsei,
-      cfg_nsip_sgsn_nsei_cmd,
+static struct cmd_node sgsn_node = {
+	SGSN_NODE,
+	"%s(config-sgsn)# ",
+	1,
+};
+
+static void sgsn_write_nri(struct vty *vty, struct gbproxy_sgsn *sgsn, bool verbose)
+{
+	struct osmo_nri_range *r;
+
+	if (verbose) {
+		vty_out(vty, "sgsn nsei %d%s", sgsn->nse->nsei, VTY_NEWLINE);
+		if (llist_empty(&sgsn->pool.nri_ranges->entries)) {
+			vty_out(vty, " %% no NRI mappings%s", VTY_NEWLINE);
+			return;
+		}
+	}
+
+	llist_for_each_entry(r, &sgsn->pool.nri_ranges->entries, entry) {
+		if (osmo_nri_range_validate(r, 255))
+			vty_out(vty, " %% INVALID RANGE:");
+		vty_out(vty, " nri add %d", r->first);
+		if (r->first != r->last)
+			vty_out(vty, " %d", r->last);
+		vty_out(vty, "%s", VTY_NEWLINE);
+	}
+}
+
+static void write_sgsn(struct vty *vty, struct gbproxy_sgsn *sgsn)
+{
+	vty_out(vty, "sgsn nsei %u%s", sgsn->nse->nsei, VTY_NEWLINE);
+	vty_out(vty, " %sallow-attach%s", sgsn->pool.allow_attach ? "" : "no ", VTY_NEWLINE);
+	sgsn_write_nri(vty, sgsn, false);
+}
+
+static int config_write_sgsn(struct vty *vty)
+{
+	struct gbproxy_sgsn *sgsn;
+
+	llist_for_each_entry(sgsn, &g_cfg->sgsns, list)
+		write_sgsn(vty, sgsn);
+
+	return CMD_SUCCESS;
+}
+
+DEFUN(cfg_sgsn_nsei,
+      cfg_sgsn_nsei_cmd,
       "sgsn nsei <0-65534>",
-      "SGSN information\n"
+      "Configure the SGSN\n"
       "NSEI to be used in the connection with the SGSN\n"
       "The NSEI\n")
 {
 	uint32_t features = 0; // FIXME: make configurable
 	unsigned int nsei = atoi(argv[0]);
+	unsigned int num_sgsn = llist_count(&g_cfg->sgsns);
+	struct gbproxy_sgsn *sgsn;
 	struct gbproxy_nse *nse;
 	struct gbproxy_bvc *bvc;
 
-	nse = gbproxy_nse_by_nsei_or_new(g_cfg, nsei, true);
-	if (!nse)
+	if (num_sgsn >= GBPROXY_MAX_NR_SGSN) {
+		vty_out(vty, "%% Too many SGSN NSE defined (%d), increase GBPROXY_MAX_NR_SGSN%s",
+			num_sgsn, VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+
+	/* This will have created the gbproxy_nse as well */
+	sgsn = gbproxy_sgsn_by_nsei_or_new(g_cfg, nsei);
+	if (!sgsn)
 		goto free_nothing;
+	nse = sgsn->nse;
+	if (num_sgsn > 1 && g_cfg->pool.nri_bitlen == 0)
+		vty_out(vty, "%% Multiple SGSNs defined, but no pooling enabled%s", VTY_NEWLINE);
+
 
 	if (!gbproxy_bvc_by_bvci(nse, 0)) {
 		uint8_t cause = BSSGP_CAUSE_OML_INTERV;
 		bvc = gbproxy_bvc_alloc(nse, 0);
 		if (!bvc)
-			goto free_nse;
+			goto free_sgsn;
 		bvc->fi = bssgp_bvc_fsm_alloc_sig_bss(bvc, nse->cfg->nsi, nsei, features);
 		if (!bvc->fi)
 			goto free_bvc;
@@ -166,15 +243,132 @@ DEFUN(cfg_nsip_sgsn_nsei,
 		osmo_fsm_inst_dispatch(bvc->fi, BSSGP_BVCFSM_E_REQ_RESET, &cause);
 	}
 
+	vty->node = SGSN_NODE;
+	vty->index = sgsn;
 	return CMD_SUCCESS;
 
 free_bvc:
 	gbproxy_bvc_free(bvc);
-free_nse:
-	gbproxy_nse_free(nse);
+free_sgsn:
+	gbproxy_sgsn_free(sgsn);
 free_nothing:
 	vty_out(vty, "%% Unable to create NSE for NSEI=%05u%s", nsei, VTY_NEWLINE);
 	return CMD_WARNING;
+}
+
+DEFUN_ATTR(cfg_sgsn_nri_add, cfg_sgsn_nri_add_cmd,
+	   "nri add <0-32767> [<0-32767>]",
+	   NRI_STR "Add NRI value or range to the NRI mapping for this MSC\n"
+	   NRI_FIRST_LAST_STR,
+	   CMD_ATTR_IMMEDIATE)
+{
+	struct gbproxy_sgsn *sgsn = vty->index;
+	struct gbproxy_sgsn *other_sgsn;
+	bool before;
+	int rc;
+	const char *message;
+	struct osmo_nri_range add_range;
+
+	rc = osmo_nri_ranges_vty_add(&message, &add_range, sgsn->pool.nri_ranges, argc, argv, g_cfg->pool.nri_bitlen);
+	if (message) {
+		NRI_WARN(sgsn, "%s: " NRI_ARGS_TO_STR_FMT, message, NRI_ARGS_TO_STR_ARGS(argc, argv));
+	}
+	if (rc < 0)
+		return CMD_WARNING;
+
+	/* Issue a warning about NRI range overlaps (but still allow them).
+	 * Overlapping ranges will map to whichever SGSN comes fist in the gbproxy_config->sgsns llist,
+	 * which should be the first one defined in the config */
+	before = true;
+
+	llist_for_each_entry(other_sgsn, &g_cfg->sgsns, list) {
+		if (other_sgsn == sgsn) {
+			before = false;
+			continue;
+		}
+		if (osmo_nri_range_overlaps_ranges(&add_range, other_sgsn->pool.nri_ranges)) {
+			uint16_t nsei = sgsn->nse->nsei;
+			uint16_t other_nsei = other_sgsn->nse->nsei;
+			NRI_WARN(sgsn, "NRI range [%d..%d] overlaps between NSE %05d and NSE %05d."
+				 " For overlaps, NSE %05d has higher priority than NSE %05d",
+				 add_range.first, add_range.last, nsei, other_nsei,
+				 before ? other_nsei : nsei, before ? nsei : other_nsei);
+		}
+	}
+	return CMD_SUCCESS;
+}
+
+DEFUN_ATTR(cfg_sgsn_nri_del, cfg_sgsn_nri_del_cmd,
+	   "nri del <0-32767> [<0-32767>]",
+	   NRI_STR "Remove NRI value or range from the NRI mapping for this MSC\n"
+	   NRI_FIRST_LAST_STR,
+	   CMD_ATTR_IMMEDIATE)
+{
+	struct gbproxy_sgsn *sgsn = vty->index;
+	int rc;
+	const char *message;
+
+	rc = osmo_nri_ranges_vty_del(&message, NULL, sgsn->pool.nri_ranges, argc, argv);
+	if (message) {
+		NRI_WARN(sgsn, "%s: " NRI_ARGS_TO_STR_FMT, message, NRI_ARGS_TO_STR_ARGS(argc, argv));
+	}
+	if (rc < 0)
+		return CMD_WARNING;
+	return CMD_SUCCESS;
+}
+
+DEFUN_ATTR(cfg_sgsn_allow_attach, cfg_sgsn_allow_attach_cmd,
+	   "allow-attach",
+	   "Allow this SGSN to attach new subscribers (default).\n",
+	   CMD_ATTR_IMMEDIATE)
+{
+	struct gbproxy_sgsn *sgsn = vty->index;
+	sgsn->pool.allow_attach = true;
+	return CMD_SUCCESS;
+}
+
+DEFUN_ATTR(cfg_sgsn_no_allow_attach, cfg_sgsn_no_allow_attach_cmd,
+	   "no allow-attach",
+	   NO_STR
+	   "Do not assign new subscribers to this MSC."
+	   " Useful if an MSC in an MSC pool is configured to off-load subscribers."
+	   " The MSC will still be operational for already IMSI-Attached subscribers,"
+	   " but the NAS node selection function will skip this MSC for new subscribers\n",
+	   CMD_ATTR_IMMEDIATE)
+{
+	struct gbproxy_sgsn *sgsn = vty->index;
+	sgsn->pool.allow_attach = false;
+	return CMD_SUCCESS;
+}
+
+DEFUN(cfg_sgsn_show_nri_all, show_nri_all_cmd,
+      "show nri all",
+      SHOW_STR NRI_STR "Show all SGSNs\n")
+{
+	struct gbproxy_sgsn *sgsn;
+
+	llist_for_each_entry(sgsn, &g_cfg->sgsns, list)
+		sgsn_write_nri(vty, sgsn, true);
+
+	return CMD_SUCCESS;
+}
+
+DEFUN(show_nri, show_nri_nsei_cmd,
+      "show nri nsei <0-65535>",
+      SHOW_STR NRI_STR "Identify SGSN by NSEI\n"
+      "NSEI of the SGSN\n")
+{
+	struct gbproxy_sgsn *sgsn;
+	int nsei = atoi(argv[0]);
+
+	sgsn = gbproxy_sgsn_by_nsei(g_cfg, nsei);
+	if (!sgsn) {
+		vty_out(vty, "%% No SGSN with found for NSEI %05d%s", nsei, VTY_NEWLINE);
+		return CMD_SUCCESS;
+	}
+	sgsn_write_nri(vty, sgsn, true);
+
+	return CMD_SUCCESS;
 }
 
 DEFUN(cfg_pool_bvc_fc_ratio,
@@ -185,6 +379,64 @@ DEFUN(cfg_pool_bvc_fc_ratio,
       "Ratio of BSS-advertised bucket size + leak rate advertised to each SGSN (Percent)\n")
 {
 	g_cfg->pool.bvc_fc_ratio = atoi(argv[0]);
+	return CMD_SUCCESS;
+}
+DEFUN_ATTR(cfg_gbproxy_nri_bitlen,
+	   cfg_gbproxy_nri_bitlen_cmd,
+	   "nri bitlen <0-15>",
+	   NRI_STR
+	   "Set number of bits that an NRI has, to extract from TMSI identities (always starting just after the TMSI's most significant octet).\n"
+	   "bit count (0 disables) pooling)\n",
+	   CMD_ATTR_IMMEDIATE)
+{
+	g_cfg->pool.nri_bitlen = atoi(argv[0]);
+
+	if (llist_count(&g_cfg->sgsns) > 1 && g_cfg->pool.nri_bitlen == 0)
+		vty_out(vty, "%% Pooling disabled, but multiple SGSNs defined%s", VTY_NEWLINE);
+
+	/* TODO: Verify all nri ranges and warn on mismatch */
+
+	return CMD_SUCCESS;
+}
+
+DEFUN_ATTR(cfg_gbproxy_nri_null_add,
+	   cfg_gbproxy_nri_null_add_cmd,
+	   "nri null add <0-32767> [<0-32767>]",
+	   NRI_STR NULL_NRI_STR "Add NULL-NRI value (or range)\n"
+	   NRI_FIRST_LAST_STR,
+	   CMD_ATTR_IMMEDIATE)
+{
+	int rc;
+	const char *message;
+
+	rc = osmo_nri_ranges_vty_add(&message, NULL, g_cfg->pool.null_nri_ranges, argc, argv,
+				     g_cfg->pool.nri_bitlen);
+	if (message) {
+		vty_out(vty, "%% nri null add: %s: " NRI_ARGS_TO_STR_FMT "%s", message, NRI_ARGS_TO_STR_ARGS(argc, argv),
+			VTY_NEWLINE);
+		vty_out(vty, "%s: \n" NRI_ARGS_TO_STR_FMT, message, NRI_ARGS_TO_STR_ARGS(argc, argv));
+	}
+	if (rc < 0)
+		return CMD_WARNING;
+	return CMD_SUCCESS;
+}
+
+DEFUN_ATTR(cfg_gbproxy_nri_null_del,
+	   cfg_gbproxy_nri_null_del_cmd,
+	   "nri null del <0-32767> [<0-32767>]",
+	   NRI_STR NULL_NRI_STR "Remove NRI value or range from the NRI mapping for this MSC\n"
+	   NRI_FIRST_LAST_STR,
+	   CMD_ATTR_IMMEDIATE)
+{
+	int rc;
+	const char *message;
+	rc = osmo_nri_ranges_vty_del(&message, NULL, g_cfg->pool.null_nri_ranges, argc, argv);
+	if (message) {
+		vty_out(vty, "%% %s: " NRI_ARGS_TO_STR_FMT "%s", message, NRI_ARGS_TO_STR_ARGS(argc, argv),
+			VTY_NEWLINE);
+	}
+	if (rc < 0)
+		return CMD_WARNING;
 	return CMD_SUCCESS;
 }
 
@@ -379,6 +631,8 @@ int gbproxy_vty_init(void)
 	install_element_ve(&show_gbproxy_bvc_cmd);
 	install_element_ve(&show_gbproxy_cell_cmd);
 	install_element_ve(&show_gbproxy_links_cmd);
+	install_element_ve(&show_nri_all_cmd);
+	install_element_ve(&show_nri_nsei_cmd);
 	install_element_ve(&logging_fltr_bvc_cmd);
 
 	install_element(ENABLE_NODE, &delete_gb_bvci_cmd);
@@ -386,8 +640,18 @@ int gbproxy_vty_init(void)
 
 	install_element(CONFIG_NODE, &cfg_gbproxy_cmd);
 	install_node(&gbproxy_node, config_write_gbproxy);
-	install_element(GBPROXY_NODE, &cfg_nsip_sgsn_nsei_cmd);
 	install_element(GBPROXY_NODE, &cfg_pool_bvc_fc_ratio_cmd);
+	install_element(GBPROXY_NODE, &cfg_gbproxy_nri_bitlen_cmd);
+	install_element(GBPROXY_NODE, &cfg_gbproxy_nri_null_add_cmd);
+	install_element(GBPROXY_NODE, &cfg_gbproxy_nri_null_del_cmd);
+
+	install_element(CONFIG_NODE, &cfg_sgsn_nsei_cmd);
+	install_node(&sgsn_node, config_write_sgsn);
+	install_element(SGSN_NODE, &cfg_sgsn_allow_attach_cmd);
+	install_element(SGSN_NODE, &cfg_sgsn_no_allow_attach_cmd);
+	install_element(SGSN_NODE, &cfg_sgsn_nri_add_cmd);
+	install_element(SGSN_NODE, &cfg_sgsn_nri_del_cmd);
+
 
 	return 0;
 }

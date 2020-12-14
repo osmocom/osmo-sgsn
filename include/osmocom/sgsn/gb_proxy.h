@@ -7,6 +7,7 @@
 #include <osmocom/core/fsm.h>
 #include <osmocom/core/hashtable.h>
 #include <osmocom/gsm/gsm23003.h>
+#include <osmocom/gsm/gsm23236.h>
 
 #include <osmocom/gprs/gprs_ns2.h>
 #include <osmocom/vty/command.h>
@@ -16,6 +17,7 @@
 #include <stdbool.h>
 
 #define GBPROXY_INIT_VU_GEN_TX 256
+#define GBPROXY_MAX_NR_SGSN	16
 
 /* BVCI uses 16 bits */
 #define BVC_LOG_CTX_FLAG (1<<17)
@@ -55,9 +57,12 @@ struct gbproxy_config {
 	struct {
 		/* percentage of BVC flow control advertised to each SGSN in the pool */
 		uint8_t bvc_fc_ratio;
+		/* NRI bitlen and usable NULL-NRI ranges */
+		uint8_t nri_bitlen;
+		struct osmo_nri_ranges *null_nri_ranges;
 	} pool;
 
-	/* Linked list of all BSS side Gb peers */
+	/* hash table of all BSS side Gb peers */
 	DECLARE_HASHTABLE(bss_nses, 8);
 
 	/* hash table of all SGSN-side Gb peers */
@@ -65,6 +70,9 @@ struct gbproxy_config {
 
 	/* hash table of all gbproxy_cell */
 	DECLARE_HASHTABLE(cells, 8);
+
+	/* List of all SGSNs */
+	struct llist_head sgsns;
 
 	/* Counter */
 	struct rate_ctr_group *ctrg;
@@ -88,7 +96,7 @@ struct gbproxy_cell {
 	struct gbproxy_bvc *bss_bvc;
 
 	/* pointers to SGSN-side BVC (one for each pool member) */
-	struct gbproxy_bvc *sgsn_bvc[16];
+	struct gbproxy_bvc *sgsn_bvc[GBPROXY_MAX_NR_SGSN];
 };
 
 /* One BVC inside an NSE */
@@ -133,6 +141,21 @@ struct gbproxy_nse {
 	DECLARE_HASHTABLE(bvcs, 10);
 };
 
+/* SGSN configuration such as pool options (only for NSE where sgsn_facing == true) */
+struct gbproxy_sgsn {
+	/* linked to gbproxy_config.sgsns */
+	struct llist_head list;
+
+	/* The NSE belonging to this SGSN */
+	struct gbproxy_nse *nse;
+
+	/* Pool configuration for the sgsn (only valid if sgsn_facing == true) */
+	struct {
+		bool allow_attach;
+		struct osmo_nri_ranges *nri_ranges;
+	} pool;
+};
+
 /* Convenience logging macros for NSE/BVC */
 #define LOGPNSE_CAT(NSE, SUBSYS, LEVEL, FMT, ARGS...) \
 	LOGP(SUBSYS, LEVEL, "NSE(%05u/%s) " FMT, (NSE)->nsei, \
@@ -151,6 +174,11 @@ struct gbproxy_nse {
 	LOGP(SUBSYS, LEVEL, "CELL(%05u) " FMT, (CELL)->bvci, ## ARGS)
 #define LOGPCELL(CELL, LEVEL, FMT, ARGS...) \
 	LOGPCELL_CAT(CELL, DGPRS, LEVEL, FMT, ## ARGS)
+
+#define LOGPSGSN_CAT(SGSN, SUBSYS, LEVEL, FMT, ARGS...) \
+	LOGP(SUBSYS, LEVEL, "NSE(%05u)-SGSN " FMT, (SGSN)->nse->nsei, ## ARGS)
+#define LOGPSGSN(SGSN, LEVEL, FMT, ARGS...) \
+	LOGPSGSN_CAT(SGSN, DGPRS, LEVEL, FMT, ## ARGS)
 
 /* gb_proxy_vty .c */
 
@@ -194,5 +222,12 @@ struct gbproxy_nse *gbproxy_nse_alloc(struct gbproxy_config *cfg, uint16_t nsei,
 void gbproxy_nse_free(struct gbproxy_nse *nse);
 struct gbproxy_nse *gbproxy_nse_by_nsei(struct gbproxy_config *cfg, uint16_t nsei, uint32_t flags);
 struct gbproxy_nse *gbproxy_nse_by_nsei_or_new(struct gbproxy_config *cfg, uint16_t nsei, bool sgsn_facing);
+
+/* SGSN handling */
+struct gbproxy_sgsn *gbproxy_sgsn_alloc(struct gbproxy_config *cfg, uint16_t nsei);
+void gbproxy_sgsn_free(struct gbproxy_sgsn *sgsn);
+struct gbproxy_sgsn *gbproxy_sgsn_by_nsei(struct gbproxy_config *cfg, uint16_t nsei);
+struct gbproxy_sgsn *gbproxy_sgsn_by_nsei_or_new(struct gbproxy_config *cfg, uint16_t nsei);
+struct gbproxy_sgsn *gbproxy_sgsn_by_nri(struct gbproxy_config *cfg, uint16_t nri, bool *null_nri);
 
 #endif
