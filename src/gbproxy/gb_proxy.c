@@ -1287,6 +1287,8 @@ int gbproxy_init_config(struct gbproxy_config *cfg)
 	/* by default we advertise 100% of the BSS-side capacity to _each_ SGSN */
 	cfg->pool.bvc_fc_ratio = 100;
 	hash_init(cfg->bss_nses);
+	hash_init(cfg->sgsn_nses);
+	hash_init(cfg->cells);
 	cfg->ctrg = rate_ctr_group_alloc(tall_sgsn_ctx, &global_ctrg_desc, 0);
 	if (!cfg->ctrg) {
 		LOGP(DGPRS, LOGL_ERROR, "Cannot allocate global counter group!\n");
