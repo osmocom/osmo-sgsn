@@ -38,6 +38,7 @@
 #include <osmocom/core/select.h>
 #include <osmocom/core/rate_ctr.h>
 #include <osmocom/core/stats.h>
+#include <osmocom/core/utils.h>
 
 #include <osmocom/gprs/gprs_ns2.h>
 #include <osmocom/gprs/gprs_bssgp.h>
@@ -45,6 +46,7 @@
 #include <osmocom/gprs/gprs_bssgp_bss.h>
 #include <osmocom/gprs/bssgp_bvc_fsm.h>
 
+#include <osmocom/gsm/gsm23236.h>
 #include <osmocom/gsm/gsm_utils.h>
 
 #include <osmocom/sgsn/signal.h>
@@ -201,41 +203,130 @@ int bssgp_prim_cb(struct osmo_prim_hdr *oph, void *ctx)
  * PTP BVC handling
  ***********************************************************************/
 
-/* route an uplink message on a PTP-BVC to a SGSN using the TLLI */
-static int gbprox_bss2sgsn_tlli(struct gbproxy_cell *cell, struct msgb *msg, uint32_t tlli,
+/* FIXME: Handle the tlli NULL case correctly,
+ * This function should take a generic selector
+ * and choose an sgsn based on that
+ */
+static struct gbproxy_sgsn *gbproxy_select_sgsn(struct gbproxy_config *cfg, const uint32_t *tlli)
+{
+	struct gbproxy_sgsn *sgsn = NULL;
+	struct gbproxy_sgsn *sgsn_avoid = NULL;
+
+	int tlli_type;
+	int16_t nri;
+	bool null_nri = false;
+
+	if (!tlli) {
+		sgsn = llist_first_entry(&cfg->sgsns, struct gbproxy_sgsn, list);
+		if (!sgsn) {
+			return NULL;
+		}
+		LOGPSGSN(sgsn, LOGL_INFO, "Could not get TLLI, using first SGSN\n");
+		return sgsn;
+	}
+
+	if (cfg->pool.nri_bitlen == 0) {
+		/* Pooling is disabled */
+		sgsn = llist_first_entry(&cfg->sgsns, struct gbproxy_sgsn, list);
+		if (!sgsn) {
+			return NULL;
+		}
+
+		LOGPSGSN(sgsn, LOGL_INFO, "Pooling disabled, using first configured SGSN\n");
+	} else {
+		/* Pooling is enabled, try to use the NRI for routing to an SGSN
+		 * See 3GPP TS 23.236 Ch. 5.3.2 */
+		tlli_type = gprs_tlli_type(*tlli);
+		if (tlli_type == TLLI_LOCAL || tlli_type == TLLI_FOREIGN) {
+			/* Only get/use the NRI if tlli type is local */
+			osmo_tmsi_nri_v_get(&nri, *tlli, cfg->pool.nri_bitlen);
+			if (nri >= 0) {
+				/* Get the SGSN for the NRI */
+				sgsn = gbproxy_sgsn_by_nri(cfg, nri, &null_nri);
+				if (sgsn && !null_nri)
+					return sgsn;
+				/* If the NRI is the null NRI, we need to avoid the chosen SGSN */
+				if (null_nri && sgsn) {
+					sgsn_avoid = sgsn;
+				}
+			} else {
+				/* We couldn't get the NRI from the TLLI */
+				LOGP(DGPRS, LOGL_ERROR, "Could not extract NRI from local TLLI %u\n", *tlli);
+			}
+		}
+	}
+
+	/* If we haven't found an SGSN yet we need to choose one, but avoid the one in sgsn_avoid
+	 * NOTE: This function is not stable if the number of SGSNs or allow_attach changes
+	 * We could implement TLLI tracking here, but 3GPP TS 23.236 Ch. 5.3.2 (see NOTE) argues that
+	 * we can just wait for the MS to reattempt the procedure.
+	 */
+	if (!sgsn)
+		sgsn = gbproxy_sgsn_by_tlli(cfg, sgsn_avoid, *tlli);
+
+	if (!sgsn) {
+		LOGP(DGPRS, LOGL_ERROR, "No suitable SGSN found for TLLI %u\n", *tlli);
+		return NULL;
+	}
+
+	return sgsn;
+}
+
+/*! Find the correct gbproxy_bvc given a cell and an SGSN
+ *  \param[in] cfg The gbproxy configuration
+ *  \param[in] cell The cell the message belongs to
+ *  \param[in] tlli An optional TLLI used for tracking
+ *  \return Returns 0 on success, otherwise a negative value
+ */
+static struct gbproxy_bvc *gbproxy_select_sgsn_bvc(struct gbproxy_config *cfg, struct gbproxy_cell *cell, const uint32_t *tlli)
+{
+	struct gbproxy_sgsn *sgsn;
+	struct gbproxy_bvc *sgsn_bvc = NULL;
+
+	sgsn = gbproxy_select_sgsn(cfg, tlli);
+	if (!sgsn) {
+		LOGPCELL(cell, LOGL_ERROR, "Could not find any SGSN, dropping message!\n");
+		return NULL;
+	}
+
+	/* Get the BVC for this SGSN/NSE */
+	for (int i = 0; i < ARRAY_SIZE(cell->sgsn_bvc); i++) {
+		sgsn_bvc = cell->sgsn_bvc[i];
+		if (!sgsn_bvc)
+			continue;
+		if (sgsn->nse != sgsn_bvc->nse)
+			continue;
+
+		return sgsn_bvc;
+	}
+
+	/* This shouldn't happen */
+	LOGPCELL(cell, LOGL_ERROR, "Could not find matching BVC for SGSN, dropping message!\n");
+	return NULL;
+}
+
+/*! Send a message to the next SGSN, possibly ignoring the null SGSN
+ *  route an uplink message on a PTP-BVC to a SGSN using the TLLI
+ *  \param[in] cell The cell the message belongs to
+ *  \param[in] msg The BSSGP message
+ *  \param[in] null_sgsn If not NULL then avoid this SGSN (because this message contains its null NRI)
+ *  \param[in] tlli An optional TLLI used for tracking
+ *  \return Returns 0 on success, otherwise a negative value
+ */
+static int gbprox_bss2sgsn_tlli(struct gbproxy_cell *cell, struct msgb *msg, const uint32_t *tlli,
 				bool sig_bvci)
 {
+	struct gbproxy_config *cfg = cell->cfg;
 	struct gbproxy_bvc *sgsn_bvc;
-	unsigned int i;
 
-	/* FIXME: derive NRI from TLLI */
-	/* FIXME: find the SGSN for that NRI */
-
-	/* HACK: we currently simply pick the first SGSN we find */
-	for (i = 0; i < ARRAY_SIZE(cell->sgsn_bvc); i++) {
-		sgsn_bvc = cell->sgsn_bvc[i];
-		if (sgsn_bvc)
-			return gbprox_relay2peer(msg, sgsn_bvc, sig_bvci ? 0 : sgsn_bvc->bvci);
+	sgsn_bvc = gbproxy_select_sgsn_bvc(cfg, cell, tlli);
+	if (!sgsn_bvc) {
+		LOGPCELL(cell, LOGL_NOTICE, "Could not find any SGSN for TLLI %u, dropping message!\n", *tlli);
+		return -EINVAL;
 	}
-	return 0;
+
+	return gbprox_relay2peer(msg, sgsn_bvc, sig_bvci ? 0 : sgsn_bvc->bvci);
 }
-
-static int gbprox_bss2sgsn_null_nri(struct gbproxy_cell *cell, struct msgb *msg)
-{
-	struct gbproxy_bvc *sgsn_bvc;
-	unsigned int i;
-
-	/* FIXME: find the SGSN for that NRI */
-
-	/* HACK: we currently simply pick the first SGSN we find */
-	for (i = 0; i < ARRAY_SIZE(cell->sgsn_bvc); i++) {
-		sgsn_bvc = cell->sgsn_bvc[i];
-		if (sgsn_bvc)
-			return gbprox_relay2peer(msg, sgsn_bvc, sgsn_bvc->bvci);
-	}
-	return 0;
-}
-
 
 /* Receive an incoming PTP message from a BSS-side NS-VC */
 static int gbprox_rx_ptp_from_bss(struct gbproxy_nse *nse, struct msgb *msg, uint16_t ns_bvci)
@@ -314,18 +405,20 @@ static int gbprox_rx_ptp_from_bss(struct gbproxy_nse *nse, struct msgb *msg, uin
 	case BSSGP_PDUT_PS_HO_CANCEL:
 		/* We can route based on TLLI-NRI */
 		tlli = osmo_load32be(TLVP_VAL(&tp, BSSGP_IE_TLLI));
-		rc = gbprox_bss2sgsn_tlli(bss_bvc->cell, msg, tlli, false);
+		rc = gbprox_bss2sgsn_tlli(bss_bvc->cell, msg, &tlli, false);
 		break;
 	case BSSGP_PDUT_RADIO_STATUS:
 		if (TLVP_PRESENT(&tp, BSSGP_IE_TLLI)) {
 			tlli = osmo_load32be(TLVP_VAL(&tp, BSSGP_IE_TLLI));
-			rc = gbprox_bss2sgsn_tlli(bss_bvc->cell, msg, tlli, false);
+			rc = gbprox_bss2sgsn_tlli(bss_bvc->cell, msg, &tlli, false);
 		} else if (TLVP_PRESENT(&tp, BSSGP_IE_TMSI)) {
 			/* we treat the TMSI like a TLLI and extract the NRI from it */
 			tlli = osmo_load32be(TLVP_VAL(&tp, BSSGP_IE_TMSI));
-			rc = gbprox_bss2sgsn_tlli(bss_bvc->cell, msg, tlli, false);
+			rc = gbprox_bss2sgsn_tlli(bss_bvc->cell, msg, &tlli, false);
 		} else if (TLVP_PRESENT(&tp, BSSGP_IE_IMSI)) {
-			rc = gbprox_bss2sgsn_null_nri(bss_bvc->cell, msg);
+			// FIXME: Use the IMSI as selector?
+			rc = gbprox_bss2sgsn_tlli(bss_bvc->cell, msg, NULL, false);
+			//rc = gbprox_bss2sgsn_hashed(bss_bvc->cell, msg, NULL);
 		} else
 			LOGPBVC(bss_bvc, LOGL_ERROR, "Rx RADIO-STATUS without any of the conditional IEs\n");
 		break;
@@ -828,7 +921,7 @@ static int gbprox_rx_sig_from_bss(struct gbproxy_nse *nse, struct msgb *msg, uin
 		from_bvc = gbproxy_bvc_by_bvci(nse, ptp_bvci);
 		if (!from_bvc)
 			goto err_no_bvc;
-		gbprox_bss2sgsn_tlli(from_bvc->cell, msg, tlli, true);
+		gbprox_bss2sgsn_tlli(from_bvc->cell, msg, &tlli, true);
 		break;
 	default:
 		LOGPNSE(nse, LOGL_ERROR, "Rx %s: Implementation missing\n", pdut_name);

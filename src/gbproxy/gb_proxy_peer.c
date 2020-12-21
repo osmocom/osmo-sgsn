@@ -443,3 +443,47 @@ struct gbproxy_sgsn *gbproxy_sgsn_by_nri(struct gbproxy_config *cfg, uint16_t nr
 
 	return NULL;
 }
+
+/*! Seleect a pseudo-random SGSN for a given TLLI, ignoring any SGSN that is not accepting connections
+ *  \param[in] cfg The gbproxy configuration
+ *  \param[in] sgsn_avoid If not NULL then avoid this SGSN when selecting a new one. Use for load redistribution
+ *  \param[in] tlli The tlli to choose an SGSN for. The same tlli will map to the same SGSN as long as no SGSN is
+ *		added/removed or allow_attach changes.
+ *  \return Returns the sgsn on success, NULL if no SGSN that allows new connections could be found
+ */
+struct gbproxy_sgsn *gbproxy_sgsn_by_tlli(struct gbproxy_config *cfg, struct gbproxy_sgsn *sgsn_avoid,
+					  uint32_t tlli)
+{
+	uint32_t i = 0;
+	uint32_t index, num_sgsns;
+	struct gbproxy_sgsn *sgsn;
+	OSMO_ASSERT(cfg);
+
+	// TODO: We should keep track of count in cfg
+	num_sgsns = llist_count(&cfg->sgsns);
+
+	if (num_sgsns == 0)
+		return NULL;
+
+	// FIXME: 256 SGSNs ought to be enough for everyone
+	index = hash_32(tlli, 8) % num_sgsns;
+
+	// Get the first enabled SGSN after index
+	llist_for_each_entry(sgsn, &cfg->sgsns, list) {
+		if (i >= index && sgsn->pool.allow_attach) {
+			return sgsn;
+		}
+		i++;
+	}
+	// Start again from the beginning
+	llist_for_each_entry(sgsn, &cfg->sgsns, list) {
+		if (i > index) {
+			break;
+		} else if (sgsn->pool.allow_attach) {
+			return sgsn;
+		}
+		i++;
+	}
+
+	return NULL;
+}
