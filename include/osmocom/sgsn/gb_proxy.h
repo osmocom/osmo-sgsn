@@ -60,6 +60,10 @@ struct gbproxy_config {
 		/* NRI bitlen and usable NULL-NRI ranges */
 		uint8_t nri_bitlen;
 		struct osmo_nri_ranges *null_nri_ranges;
+
+		/* Used for testing: If not NULL then this SGSN is returned by
+		 * gbproxy_sgsn_by_tlli() */
+		struct gbproxy_sgsn *nsf_override;
 	} pool;
 
 	/* hash table of all BSS side Gb peers */
@@ -229,5 +233,7 @@ void gbproxy_sgsn_free(struct gbproxy_sgsn *sgsn);
 struct gbproxy_sgsn *gbproxy_sgsn_by_nsei(struct gbproxy_config *cfg, uint16_t nsei);
 struct gbproxy_sgsn *gbproxy_sgsn_by_nsei_or_new(struct gbproxy_config *cfg, uint16_t nsei);
 struct gbproxy_sgsn *gbproxy_sgsn_by_nri(struct gbproxy_config *cfg, uint16_t nri, bool *null_nri);
+struct gbproxy_sgsn *gbproxy_sgsn_by_tlli(struct gbproxy_config *cfg, struct gbproxy_sgsn *sgsn_avoid,
+					  uint32_t tlli);
 
 #endif

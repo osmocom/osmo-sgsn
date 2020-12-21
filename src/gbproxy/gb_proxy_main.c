@@ -303,6 +303,8 @@ int main(int argc, char **argv)
 
 	gprs_ns2_vty_create();
 
+	/* TODO: Warn if we create a gbproxy_nse for an NSEI which we don't have a bind */
+
 	/* start telnet after reading config for vty_get_bind_addr() */
 	rc = telnet_init_dynif(tall_sgsn_ctx, NULL,
 			       vty_get_bind_addr(), OSMO_VTY_PORT_GBPROXY);
