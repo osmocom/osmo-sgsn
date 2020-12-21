@@ -289,7 +289,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	gprs_ns2_vty_init(gbcfg->nsi, NULL);
+	gprs_ns2_vty2_init(gbcfg->nsi);
 	logging_vty_add_deprecated_subsys(tall_sgsn_ctx, "bssgp");
 	gprs_ns2_dynamic_create_nse(gbcfg->nsi, true);
 
@@ -300,10 +300,6 @@ int main(int argc, char **argv)
 		LOGP(DGPRS, LOGL_FATAL, "Cannot parse config file '%s'\n", config_file);
 		exit(2);
 	}
-
-	gprs_ns2_vty_create();
-
-	/* TODO: Warn if we create a gbproxy_nse for an NSEI which we don't have a bind */
 
 	/* start telnet after reading config for vty_get_bind_addr() */
 	rc = telnet_init_dynif(tall_sgsn_ctx, NULL,
