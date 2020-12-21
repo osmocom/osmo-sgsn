@@ -148,8 +148,8 @@ static int gbprox_relay2nse(struct msgb *old_msg, struct gbproxy_nse *nse,
 	uint32_t tlli;
 	int rc;
 
-	DEBUGP(DGPRS, "NSE(%05u/SGSN)-BVC(%05u) proxying SGSN->BSS NSE(%05u/BSS)\n",
-		msgb_nsei(msg), ns_bvci, nse->nsei);
+	DEBUGP(DGPRS, "NSE(%05u/%s)-BVC(%05u/??) proxying to NSE(%05u/%s)\n", msgb_nsei(msg),
+	       !nse->sgsn_facing ? "SGSN" : "BSS", ns_bvci, nse->nsei, nse->sgsn_facing ? "SGSN" : "BSS");
 
 	nsp.bvci = ns_bvci;
 	nsp.nsei = nse->nsei;
