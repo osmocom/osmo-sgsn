@@ -507,8 +507,14 @@ struct gbproxy_sgsn *gbproxy_sgsn_by_tlli(struct gbproxy_config *cfg, struct gbp
 {
 	uint32_t i = 0;
 	uint32_t index, num_sgsns;
-	struct gbproxy_sgsn *sgsn;
 	OSMO_ASSERT(cfg);
+
+	struct gbproxy_sgsn *sgsn = cfg->pool.nsf_override;
+
+	if (sgsn) {
+		LOGPSGSN(sgsn, LOGL_ERROR, "Node select function is overridden by config\n");
+		return sgsn;
+	}
 
 	// TODO: We should keep track of count in cfg
 	num_sgsns = llist_count(&cfg->sgsns);

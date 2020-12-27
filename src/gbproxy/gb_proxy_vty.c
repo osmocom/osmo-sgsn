@@ -649,6 +649,36 @@ DEFUN(delete_gb_nsei, delete_gb_nsei_cmd,
 	return CMD_SUCCESS;
 }
 
+/* Only for ttcn3 testing */
+DEFUN_HIDDEN(sgsn_pool_nsf_fixed, sgsn_pool_nsf_fixed_cmd,
+	     "sgsn-pool nsf fixed NAME",
+	     "SGSN pooling: load balancing across multiple SGSNs.\n"
+	     "Customize the Network Selection Function.\n"
+	     "Set a fixed SGSN to use (for testing).\n"
+	     "The name of the SGSN to use.\n")
+{
+	const char *name = argv[0];
+	struct gbproxy_sgsn *sgsn = gbproxy_sgsn_by_name(g_cfg, name);
+
+	if (!sgsn) {
+		vty_out(vty, "%% Could not find SGSN with name %s%s", name, VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+
+	g_cfg->pool.nsf_override = sgsn;
+	return CMD_SUCCESS;
+}
+
+DEFUN_HIDDEN(sgsn_pool_nsf_normal, sgsn_pool_nsf_normal_cmd,
+	     "sgsn-pool nsf normal",
+	     "SGSN pooling: load balancing across multiple SGSNs.\n"
+	     "Customize the Network Selection Function.\n"
+	     "Reset the NSF back to regular operation (for testing).\n")
+{
+	g_cfg->pool.nsf_override = NULL;
+	return CMD_SUCCESS;
+}
+
 int gbproxy_vty_init(void)
 {
 	install_element_ve(&show_gbproxy_bvc_cmd);
@@ -660,6 +690,8 @@ int gbproxy_vty_init(void)
 
 	install_element(ENABLE_NODE, &delete_gb_bvci_cmd);
 	install_element(ENABLE_NODE, &delete_gb_nsei_cmd);
+	install_element(ENABLE_NODE, &sgsn_pool_nsf_fixed_cmd);
+	install_element(ENABLE_NODE, &sgsn_pool_nsf_normal_cmd);
 
 	install_element(CONFIG_NODE, &cfg_gbproxy_cmd);
 	install_node(&gbproxy_node, config_write_gbproxy);
