@@ -149,6 +149,9 @@ struct gbproxy_sgsn {
 	/* The NSE belonging to this SGSN */
 	struct gbproxy_nse *nse;
 
+	/* Name of the SGSN */
+	char *name;
+
 	/* Pool configuration for the sgsn (only valid if sgsn_facing == true) */
 	struct {
 		bool allow_attach;
@@ -176,7 +179,7 @@ struct gbproxy_sgsn {
 	LOGPCELL_CAT(CELL, DGPRS, LEVEL, FMT, ## ARGS)
 
 #define LOGPSGSN_CAT(SGSN, SUBSYS, LEVEL, FMT, ARGS...) \
-	LOGP(SUBSYS, LEVEL, "NSE(%05u)-SGSN " FMT, (SGSN)->nse->nsei, ## ARGS)
+	LOGP(SUBSYS, LEVEL, "NSE(%05u)-SGSN(%s) " FMT, (SGSN)->nse->nsei, (SGSN)->name, ## ARGS)
 #define LOGPSGSN(SGSN, LEVEL, FMT, ARGS...) \
 	LOGPSGSN_CAT(SGSN, DGPRS, LEVEL, FMT, ## ARGS)
 
@@ -224,8 +227,9 @@ struct gbproxy_nse *gbproxy_nse_by_nsei(struct gbproxy_config *cfg, uint16_t nse
 struct gbproxy_nse *gbproxy_nse_by_nsei_or_new(struct gbproxy_config *cfg, uint16_t nsei, bool sgsn_facing);
 
 /* SGSN handling */
-struct gbproxy_sgsn *gbproxy_sgsn_alloc(struct gbproxy_config *cfg, uint16_t nsei);
+struct gbproxy_sgsn *gbproxy_sgsn_alloc(struct gbproxy_config *cfg, uint16_t nsei, const char *name);
 void gbproxy_sgsn_free(struct gbproxy_sgsn *sgsn);
+struct gbproxy_sgsn *gbproxy_sgsn_by_name(struct gbproxy_config *cfg, const char *name);
 struct gbproxy_sgsn *gbproxy_sgsn_by_nsei(struct gbproxy_config *cfg, uint16_t nsei);
 struct gbproxy_sgsn *gbproxy_sgsn_by_nsei_or_new(struct gbproxy_config *cfg, uint16_t nsei);
 struct gbproxy_sgsn *gbproxy_sgsn_by_nri(struct gbproxy_config *cfg, uint16_t nri, bool *null_nri);

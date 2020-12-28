@@ -302,7 +302,7 @@ static struct gbproxy_bvc *gbproxy_select_sgsn_bvc(struct gbproxy_config *cfg, s
 	}
 
 	/* This shouldn't happen */
-	LOGPCELL(cell, LOGL_ERROR, "Could not find matching BVC for SGSN, dropping message!\n");
+	LOGPCELL(cell, LOGL_ERROR, "Could not find matching BVC for SGSN %s, dropping message!\n", sgsn->name);
 	return NULL;
 }
 
