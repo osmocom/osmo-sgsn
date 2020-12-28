@@ -188,6 +188,7 @@ static void sgsn_write_nri(struct vty *vty, struct gbproxy_sgsn *sgsn, bool verb
 static void write_sgsn(struct vty *vty, struct gbproxy_sgsn *sgsn)
 {
 	vty_out(vty, "sgsn nsei %u%s", sgsn->nse->nsei, VTY_NEWLINE);
+	vty_out(vty, " name %s%s", sgsn->name, VTY_NEWLINE);
 	vty_out(vty, " %sallow-attach%s", sgsn->pool.allow_attach ? "" : "no ", VTY_NEWLINE);
 	sgsn_write_nri(vty, sgsn, false);
 }
@@ -254,6 +255,28 @@ free_sgsn:
 free_nothing:
 	vty_out(vty, "%% Unable to create NSE for NSEI=%05u%s", nsei, VTY_NEWLINE);
 	return CMD_WARNING;
+}
+
+DEFUN(cfg_sgsn_name,
+      cfg_sgsn_name_cmd,
+      "name NAME",
+      "Configure the SGSN\n"
+      "Name the SGSN\n"
+      "The name\n")
+{
+	struct gbproxy_sgsn *sgsn = vty->index;
+	const char *name = argv[0];
+
+	if (sgsn->name)
+		talloc_free((void *)sgsn->name);
+
+	sgsn->name = talloc_strdup(sgsn, name);
+	if (!sgsn->name) {
+		vty_out(vty, "%% Unable to set name for SGSN with nsei %05u%s", sgsn->nse->nsei, VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+
+	return CMD_SUCCESS;
 }
 
 DEFUN_ATTR(cfg_sgsn_nri_add, cfg_sgsn_nri_add_cmd,
@@ -647,6 +670,7 @@ int gbproxy_vty_init(void)
 
 	install_element(CONFIG_NODE, &cfg_sgsn_nsei_cmd);
 	install_node(&sgsn_node, config_write_sgsn);
+	install_element(SGSN_NODE, &cfg_sgsn_name_cmd);
 	install_element(SGSN_NODE, &cfg_sgsn_allow_attach_cmd);
 	install_element(SGSN_NODE, &cfg_sgsn_no_allow_attach_cmd);
 	install_element(SGSN_NODE, &cfg_sgsn_nri_add_cmd);

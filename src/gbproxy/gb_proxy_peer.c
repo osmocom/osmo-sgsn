@@ -350,9 +350,10 @@ struct gbproxy_nse *gbproxy_nse_by_nsei_or_new(struct gbproxy_config *cfg, uint1
 /*! Allocate a new SGSN. This ensures the corresponding gbproxy_nse is allocated as well
  *  \param[in] cfg The gbproxy configuration
  *  \param[in] nsei The nsei where the SGSN can be reached
+ *  \param[in] name A name to give the SGSN
  *  \return The SGSN, NULL if it couldn't be allocated
  */
-struct gbproxy_sgsn *gbproxy_sgsn_alloc(struct gbproxy_config *cfg, uint16_t nsei)
+struct gbproxy_sgsn *gbproxy_sgsn_alloc(struct gbproxy_config *cfg, uint16_t nsei, const char *name)
 {
 	struct gbproxy_sgsn *sgsn;
 	OSMO_ASSERT(cfg);
@@ -364,9 +365,15 @@ struct gbproxy_sgsn *gbproxy_sgsn_alloc(struct gbproxy_config *cfg, uint16_t nse
 	sgsn->nse = gbproxy_nse_alloc(cfg, nsei, true);
 	if (!sgsn->nse) {
 		LOGPSGSN_CAT(sgsn, DOBJ, LOGL_INFO, "Could not allocate NSE(%05u) for SGSN\n", nsei);
-		talloc_free(sgsn);
-		return NULL;
+		goto free_sgsn;
 	}
+
+	if (name)
+		sgsn->name = talloc_strdup(sgsn, name);
+	else
+		sgsn->name = talloc_asprintf(sgsn, "NSE(%05u)", sgsn->nse->nsei);
+	if (!sgsn->name)
+		goto free_sgsn;
 
 	sgsn->pool.allow_attach = true;
 	sgsn->pool.nri_ranges = osmo_nri_ranges_alloc(sgsn);
@@ -374,6 +381,10 @@ struct gbproxy_sgsn *gbproxy_sgsn_alloc(struct gbproxy_config *cfg, uint16_t nse
 	llist_add_tail(&sgsn->list, &cfg->sgsns);
 	LOGPSGSN_CAT(sgsn, DOBJ, LOGL_INFO, "SGSN Created\n");
 	return sgsn;
+
+free_sgsn:
+	talloc_free(sgsn);
+	return NULL;
 }
 
 /* Only free gbproxy_sgsn, sgsn can't be NULL */
@@ -386,6 +397,7 @@ static void _sgsn_free(struct gbproxy_sgsn *sgsn) {
 
 	LOGPSGSN_CAT(sgsn, DOBJ, LOGL_INFO, "SGSN Destroying\n");
 	llist_del(&sgsn->list);
+	// talloc will free ->name and ->pool.nri_ranges
 	talloc_free(sgsn);
 }
 
@@ -401,6 +413,24 @@ void gbproxy_sgsn_free(struct gbproxy_sgsn *sgsn)
 
 	_nse_free(sgsn->nse);
 	_sgsn_free(sgsn);
+}
+
+/*! Return the SGSN for a given NSEI
+ *  \param[in] cfg The gbproxy configuration
+ *  \param[in] nsei The nsei where the SGSN can be reached
+ *  \return Returns the matching SGSN or NULL if it couldn't be found
+ */
+struct gbproxy_sgsn *gbproxy_sgsn_by_name(struct gbproxy_config *cfg, const char *name)
+{
+	struct gbproxy_sgsn *sgsn;
+	OSMO_ASSERT(cfg);
+
+	llist_for_each_entry(sgsn, &cfg->sgsns, list) {
+		if (!strcmp(sgsn->name, name))
+			return sgsn;
+	}
+
+	return NULL;
 }
 
 /*! Return the SGSN for a given NSEI
@@ -433,7 +463,7 @@ struct gbproxy_sgsn *gbproxy_sgsn_by_nsei_or_new(struct gbproxy_config *cfg, uin
 
 	sgsn = gbproxy_sgsn_by_nsei(cfg, nsei);
 	if (!sgsn)
-		sgsn = gbproxy_sgsn_alloc(cfg, nsei);
+		sgsn = gbproxy_sgsn_alloc(cfg, nsei, NULL);
 
 	return sgsn;
 }
