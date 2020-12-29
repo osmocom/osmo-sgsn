@@ -343,7 +343,15 @@ struct gbproxy_nse *gbproxy_nse_by_nsei_or_new(struct gbproxy_config *cfg, uint1
 	return nse;
 }
 
-/* SGSN */
+/***********************************************************************
+ * SGSN - Serving GPRS Support Node
+ ***********************************************************************/
+
+/*! Allocate a new SGSN. This ensures the corresponding gbproxy_nse is allocated as well
+ *  \param[in] cfg The gbproxy configuration
+ *  \param[in] nsei The nsei where the SGSN can be reached
+ *  \return The SGSN, NULL if it couldn't be allocated
+ */
 struct gbproxy_sgsn *gbproxy_sgsn_alloc(struct gbproxy_config *cfg, uint16_t nsei)
 {
 	struct gbproxy_sgsn *sgsn;
@@ -381,6 +389,9 @@ static void _sgsn_free(struct gbproxy_sgsn *sgsn) {
 	talloc_free(sgsn);
 }
 
+/*! Free the SGSN. This ensures the corresponding gbproxy_nse is freed as well
+ *  \param[in] sgsn The SGSN
+ */
 void gbproxy_sgsn_free(struct gbproxy_sgsn *sgsn)
 {
 	if (!sgsn)
@@ -392,6 +403,11 @@ void gbproxy_sgsn_free(struct gbproxy_sgsn *sgsn)
 	_sgsn_free(sgsn);
 }
 
+/*! Return the SGSN for a given NSEI
+ *  \param[in] cfg The gbproxy configuration
+ *  \param[in] nsei The nsei where the SGSN can be reached
+ *  \return Returns the matching SGSN or NULL if it couldn't be found
+ */
 struct gbproxy_sgsn *gbproxy_sgsn_by_nsei(struct gbproxy_config *cfg, uint16_t nsei)
 {
 	struct gbproxy_sgsn *sgsn;
@@ -405,6 +421,11 @@ struct gbproxy_sgsn *gbproxy_sgsn_by_nsei(struct gbproxy_config *cfg, uint16_t n
 	return NULL;
 }
 
+/*! Return the SGSN for a given NSEI, creating a new one if none exists
+ *  \param[in] cfg The gbproxy configuration
+ *  \param[in] nsei The nsei where the SGSN can be reached
+ *  \return Returns the SGSN
+ */
 struct gbproxy_sgsn *gbproxy_sgsn_by_nsei_or_new(struct gbproxy_config *cfg, uint16_t nsei)
 {
 	struct gbproxy_sgsn *sgsn;
