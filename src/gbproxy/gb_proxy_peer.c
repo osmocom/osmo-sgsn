@@ -192,6 +192,17 @@ struct gbproxy_cell *gbproxy_cell_by_bvci(struct gbproxy_config *cfg, uint16_t b
 	return NULL;
 }
 
+static inline struct gbproxy_tlli_cache_entry *_get_tlli_entry(struct gbproxy_config *cfg, uint32_t tlli)
+{
+	struct gbproxy_tlli_cache_entry *cache_entry;
+
+	hash_for_each_possible(cfg->tlli_cache.entries, cache_entry, list, tlli) {
+		if (cache_entry->tlli == tlli)
+			return cache_entry;
+	}
+	return NULL;
+}
+
 struct gbproxy_cell *gbproxy_cell_by_bvci_or_new(struct gbproxy_config *cfg, uint16_t bvci)
 {
 	struct gbproxy_cell *cell;
@@ -245,6 +256,83 @@ bool gbproxy_cell_add_sgsn_bvc(struct gbproxy_cell *cell, struct gbproxy_bvc *bv
 	return false;
 }
 
+
+/***********************************************************************
+ * TLLI cache
+ ***********************************************************************/
+
+void gbproxy_tlli_cache_update(struct gbproxy_nse *nse, uint32_t tlli)
+{
+	struct gbproxy_config *cfg = nse->cfg;
+	struct timespec now;
+	struct gbproxy_tlli_cache_entry *cache_entry = _get_tlli_entry(cfg, tlli);
+
+	osmo_clock_gettime(CLOCK_MONOTONIC, &now);
+
+	if (cache_entry) {
+		/* Update the entry if it already exists */
+		cache_entry->nse = nse;
+		cache_entry->tstamp = now.tv_sec;
+		return;
+	}
+
+	cache_entry = talloc_zero(cfg, struct gbproxy_tlli_cache_entry);
+	cache_entry->tlli = tlli;
+	cache_entry->nse = nse;
+	cache_entry->tstamp = now.tv_sec;
+	hash_add(cfg->tlli_cache.entries, &cache_entry->list, cache_entry->tlli);
+}
+
+static void _tlli_cache_remove_nse(struct gbproxy_nse *nse) {
+	uint i;
+	struct gbproxy_config *cfg = nse->cfg;
+	struct gbproxy_tlli_cache_entry *tlli_cache;
+	struct hlist_node *tmp;
+
+	hash_for_each_safe(cfg->tlli_cache.entries, i, tmp, tlli_cache, list) {
+		if (tlli_cache->nse == nse) {
+			hash_del(&tlli_cache->list);
+			talloc_free(tlli_cache);
+		}
+	}
+}
+
+void gbproxy_tlli_cache_remove(struct gbproxy_config *cfg, uint32_t tlli)
+{
+	struct gbproxy_tlli_cache_entry *tlli_cache;
+	struct hlist_node *tmp;
+
+	hash_for_each_possible_safe(cfg->tlli_cache.entries, tlli_cache, tmp, list, tlli) {
+		if (tlli_cache->tlli == tlli) {
+			hash_del(&tlli_cache->list);
+			talloc_free(tlli_cache);
+			return;
+		}
+	}
+}
+
+int gbproxy_tlli_cache_cleanup(struct gbproxy_config *cfg)
+{
+	int i, count = 0;
+	struct gbproxy_tlli_cache_entry *tlli_cache;
+	struct hlist_node *tmp;
+	struct timespec now;
+	time_t expiry;
+
+	osmo_clock_gettime(CLOCK_MONOTONIC, &now);
+	expiry = now.tv_sec - cfg->tlli_cache.timeout;
+
+	hash_for_each_safe(cfg->tlli_cache.entries, i, tmp, tlli_cache, list) {
+		if (tlli_cache->tstamp < expiry) {
+			count++;
+			LOGP(DGPRS, LOGL_NOTICE, "Cache entry for TLLI %08x expired, removing\n", tlli_cache->tlli);
+			hash_del(&tlli_cache->list);
+			talloc_free(tlli_cache);
+		}
+	}
+	return count;
+}
+
 /***********************************************************************
  * NSE - NS Entity
  ***********************************************************************/
@@ -286,6 +374,8 @@ static void _nse_free(struct gbproxy_nse *nse)
 	LOGPNSE_CAT(nse, DOBJ, LOGL_INFO, "NSE Destroying\n");
 
 	hash_del(&nse->list);
+	/* Clear the tlli_cache from this NSE */
+	_tlli_cache_remove_nse(nse);
 
 	hash_for_each_safe(nse->bvcs, i, tmp, bvc, list)
 		gbproxy_bvc_free(bvc);
@@ -342,6 +432,18 @@ struct gbproxy_nse *gbproxy_nse_by_nsei_or_new(struct gbproxy_config *cfg, uint1
 
 	return nse;
 }
+
+struct gbproxy_nse *gbproxy_nse_by_tlli(struct gbproxy_config *cfg, uint32_t tlli)
+{
+	struct gbproxy_tlli_cache_entry *tlli_cache;
+
+	hash_for_each_possible(cfg->tlli_cache.entries, tlli_cache, list, tlli) {
+		if (tlli_cache->tlli == tlli)
+			return tlli_cache->nse;
+	}
+	return NULL;
+}
+
 
 /***********************************************************************
  * SGSN - Serving GPRS Support Node

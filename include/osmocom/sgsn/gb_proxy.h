@@ -75,6 +75,14 @@ struct gbproxy_config {
 	/* hash table of all gbproxy_cell */
 	DECLARE_HASHTABLE(cells, 8);
 
+	/* tlli<->nse cache used to map SUSPEND/RESUME (N)ACKS */
+	struct {
+		DECLARE_HASHTABLE(entries, 10);
+		struct osmo_timer_list timer;
+		/* Time in seconds that the entries should be valid */
+		uint8_t timeout;
+	} tlli_cache;
+
 	/* List of all SGSNs */
 	struct llist_head sgsns;
 
@@ -163,6 +171,19 @@ struct gbproxy_sgsn {
 	} pool;
 };
 
+/* TLLI cache */
+struct gbproxy_tlli_cache_entry {
+	/* linked to gbproxy_config.tlli_cache */
+	struct hlist_node list;
+
+	/* TLLI of the entry */
+	uint32_t tlli;
+	/* When was this entry last seen */
+	time_t tstamp;
+	/* The Cell this TLLI was last seen */
+	struct gbproxy_nse *nse;
+};
+
 /* Convenience logging macros for NSE/BVC */
 #define LOGPNSE_CAT(NSE, SUBSYS, LEVEL, FMT, ARGS...) \
 	LOGP(SUBSYS, LEVEL, "NSE(%05u/%s) " FMT, (NSE)->nsei, \
@@ -229,6 +250,12 @@ struct gbproxy_nse *gbproxy_nse_alloc(struct gbproxy_config *cfg, uint16_t nsei,
 void gbproxy_nse_free(struct gbproxy_nse *nse);
 struct gbproxy_nse *gbproxy_nse_by_nsei(struct gbproxy_config *cfg, uint16_t nsei, uint32_t flags);
 struct gbproxy_nse *gbproxy_nse_by_nsei_or_new(struct gbproxy_config *cfg, uint16_t nsei, bool sgsn_facing);
+struct gbproxy_nse *gbproxy_nse_by_tlli(struct gbproxy_config *cfg, uint32_t tlli);
+
+/* TLLI cache */
+void gbproxy_tlli_cache_update(struct gbproxy_nse *nse, uint32_t tlli);
+void gbproxy_tlli_cache_remove(struct gbproxy_config *cfg, uint32_t tlli);
+int gbproxy_tlli_cache_cleanup(struct gbproxy_config *cfg);
 
 /* SGSN handling */
 struct gbproxy_sgsn *gbproxy_sgsn_alloc(struct gbproxy_config *cfg, uint16_t nsei, const char *name);

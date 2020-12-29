@@ -890,11 +890,20 @@ static int gbprox_rx_sig_from_bss(struct gbproxy_nse *nse, struct msgb *msg, uin
 		return osmo_fsm_inst_dispatch(from_bvc->fi, BSSGP_BVCFSM_E_RX_UNBLOCK, msg);
 	case BSSGP_PDUT_SUSPEND:
 	case BSSGP_PDUT_RESUME:
-		/* FIXME: Implement TLLI Cache.  Every SUSPEND/RESUME we must
-		 * take record of the TLLI->BVC mapping so we can map
-		 * back from TLLI->BVC when the SUSPEND/RESUME-ACK
-		 * arrives.  Cache should have a timeout of 1-3 seconds
-		 * and the ACK should explicitly delete entries. */
+	{
+		struct gbproxy_sgsn *sgsn;
+
+		tlli = osmo_load32be(TLVP_VAL(&tp, BSSGP_IE_TLLI));
+		sgsn = gbproxy_select_sgsn(nse->cfg, &tlli);
+		if (!sgsn) {
+			LOGP(DGPRS, LOGL_ERROR, "Could not find any SGSN for TLLI, dropping message!\n");
+			rc = -EINVAL;
+			break;
+		}
+
+		gbproxy_tlli_cache_update(nse, tlli);
+
+		rc = gbprox_relay2nse(msg, sgsn->nse, 0);
 #if 0
 		/* TODO: Validate the RAI for consistency with the RAI
 		 * we expect for any of the BVC within this BSS side NSE */
@@ -902,6 +911,7 @@ static int gbprox_rx_sig_from_bss(struct gbproxy_nse *nse, struct msgb *msg, uin
 		gsm48_parse_ra(&raid, from_bvc->ra);
 #endif
 		break;
+	}
 	case BSSGP_PDUT_STATUS:
 		/* FIXME: inspect the erroneous PDU IE (if any) and check
 		 * if we can extract a TLLI/RNI to route it to the correct SGSN */
@@ -1149,11 +1159,22 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_nse *nse, struct msgb *msg, ui
 	case BSSGP_PDUT_SUSPEND_NACK:
 	case BSSGP_PDUT_RESUME_ACK:
 	case BSSGP_PDUT_RESUME_NACK:
-		/* FIXME: handle based on TLLI cache. The RA-ID is not a unique
-		 * criterion, so we have to rely on the TLLI->BVC state created
-		 * while processing the SUSPEND/RESUME in uplink */
-		/* FIXME: route to SGSN baed on NRI derived from TLLI */
+	{
+		struct gbproxy_nse *nse_peer;
+		uint32_t tlli = osmo_load32be(TLVP_VAL(&tp, BSSGP_IE_TLLI));
+
+		nse_peer = gbproxy_nse_by_tlli(cfg, tlli);
+		if (!nse_peer) {
+			LOGPNSE(nse, LOGL_ERROR, "Rx %s: Cannot find NSE\n", pdut_name);
+			/* TODO: Counter */
+			return bssgp_tx_status(BSSGP_CAUSE_INV_MAND_INF, NULL, msg);
+		}
+		/* Delete the entry after we're done */
+		gbproxy_tlli_cache_remove(cfg, tlli);
+		LOGPNSE(nse_peer, LOGL_DEBUG, "Rx %s: forwarding\n", pdut_name);
+		gbprox_relay2nse(msg, nse_peer, ns_bvci);
 		break;
+	}
 	case BSSGP_PDUT_SGSN_INVOKE_TRACE:
 	case BSSGP_PDUT_OVERLOAD:
 		LOGPNSE(nse, LOGL_DEBUG, "Rx %s: broadcasting\n", pdut_name);
@@ -1375,6 +1396,15 @@ void gbprox_reset(struct gbproxy_config *cfg)
 	gbproxy_init_config(cfg);
 }
 
+static void tlli_cache_cleanup(void *data)
+{
+	struct gbproxy_config *cfg = data;
+	gbproxy_tlli_cache_cleanup(cfg);
+
+	/* TODO: Disable timer when cache is empty */
+	osmo_timer_schedule(&cfg->tlli_cache.timer, 2, 0);
+}
+
 int gbproxy_init_config(struct gbproxy_config *cfg)
 {
 	struct timespec tp;
@@ -1382,11 +1412,17 @@ int gbproxy_init_config(struct gbproxy_config *cfg)
 	/* by default we advertise 100% of the BSS-side capacity to _each_ SGSN */
 	cfg->pool.bvc_fc_ratio = 100;
 	cfg->pool.null_nri_ranges = osmo_nri_ranges_alloc(cfg);
+	/* TODO: Make configurable */
+	cfg->tlli_cache.timeout = 5;
 
 	hash_init(cfg->bss_nses);
 	hash_init(cfg->sgsn_nses);
 	hash_init(cfg->cells);
+	hash_init(cfg->tlli_cache.entries);
 	INIT_LLIST_HEAD(&cfg->sgsns);
+
+	osmo_timer_setup(&cfg->tlli_cache.timer, tlli_cache_cleanup, cfg);
+	osmo_timer_schedule(&cfg->tlli_cache.timer, 2, 0);
 
 	cfg->ctrg = rate_ctr_group_alloc(tall_sgsn_ctx, &global_ctrg_desc, 0);
 	if (!cfg->ctrg) {
