@@ -282,6 +282,7 @@ static struct gbproxy_bvc *gbproxy_select_sgsn_bvc(struct gbproxy_config *cfg, s
 {
 	struct gbproxy_sgsn *sgsn;
 	struct gbproxy_bvc *sgsn_bvc = NULL;
+	int i;
 
 	sgsn = gbproxy_select_sgsn(cfg, tlli);
 	if (!sgsn) {
@@ -290,7 +291,7 @@ static struct gbproxy_bvc *gbproxy_select_sgsn_bvc(struct gbproxy_config *cfg, s
 	}
 
 	/* Get the BVC for this SGSN/NSE */
-	for (int i = 0; i < ARRAY_SIZE(cell->sgsn_bvc); i++) {
+	for (i = 0; i < ARRAY_SIZE(cell->sgsn_bvc); i++) {
 		sgsn_bvc = cell->sgsn_bvc[i];
 		if (!sgsn_bvc)
 			continue;
