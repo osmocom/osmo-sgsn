@@ -39,6 +39,9 @@ m4_ifdef([AX_CHECK_COMPILE_FLAG], [], [
 	AC_MSG_ERROR([Please install autoconf-archive; re-run 'autoreconf -fi' for it to take effect.])
 	])
 
+dnl use a defined standard across all builds and don't depend on compiler default
+CFLAGS="$CFLAGS -std=gnu11"
+
 dnl checks for libraries
 AC_SEARCH_LIBS([dlopen], [dl dld], [LIBRARY_DL="$LIBS";LIBS=""])
 AC_SUBST(LIBRARY_DL)
