@@ -364,7 +364,8 @@ struct gbproxy_sgsn *gbproxy_sgsn_alloc(struct gbproxy_config *cfg, uint16_t nse
 
 	sgsn->nse = gbproxy_nse_alloc(cfg, nsei, true);
 	if (!sgsn->nse) {
-		LOGPSGSN_CAT(sgsn, DOBJ, LOGL_INFO, "Could not allocate NSE(%05u) for SGSN\n", nsei);
+		LOGP(DOBJ, LOGL_ERROR, "Could not allocate NSE(%05u) for SGSN(%s)\n",
+		     nsei, sgsn->name);
 		goto free_sgsn;
 	}
 
