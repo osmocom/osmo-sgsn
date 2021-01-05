@@ -534,8 +534,9 @@ struct gbproxy_sgsn *gbproxy_sgsn_by_tlli(struct gbproxy_config *cfg, struct gbp
 		i++;
 	}
 	// Start again from the beginning
+	i = 0;
 	llist_for_each_entry(sgsn, &cfg->sgsns, list) {
-		if (i > index) {
+		if (i >= index) {
 			break;
 		} else if (sgsn->pool.allow_attach) {
 			return sgsn;
