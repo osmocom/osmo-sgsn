@@ -482,7 +482,7 @@ struct gbproxy_sgsn *gbproxy_sgsn_by_nri(struct gbproxy_config *cfg, uint16_t nr
 	llist_for_each_entry(sgsn, &cfg->sgsns, list) {
 		if (osmo_nri_v_matches_ranges(nri, sgsn->pool.nri_ranges)) {
 			/* Also check if the NRI we're looking for is a NULL NRI */
-			if (sgsn && null_nri) {
+			if (null_nri) {
 				if (osmo_nri_v_matches_ranges(nri, cfg->pool.null_nri_ranges))
 					*null_nri = true;
 				else
