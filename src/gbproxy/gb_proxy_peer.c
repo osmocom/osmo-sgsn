@@ -609,7 +609,7 @@ static void _sgsn_free(struct gbproxy_sgsn *sgsn) {
 
 	LOGPSGSN_CAT(sgsn, DOBJ, LOGL_INFO, "SGSN Destroying\n");
 	llist_del(&sgsn->list);
-	// talloc will free ->name and ->pool.nri_ranges
+	/* talloc will free ->name and ->pool.nri_ranges */
 	talloc_free(sgsn);
 }
 
@@ -728,23 +728,23 @@ struct gbproxy_sgsn *gbproxy_sgsn_by_tlli(struct gbproxy_config *cfg, struct gbp
 		return sgsn;
 	}
 
-	// TODO: We should keep track of count in cfg
+	/* TODO: We should keep track of count in cfg */
 	num_sgsns = llist_count(&cfg->sgsns);
 
 	if (num_sgsns == 0)
 		return NULL;
 
-	// FIXME: 256 SGSNs ought to be enough for everyone
+	/* FIXME: 256 SGSNs ought to be enough for everyone */
 	index = hash_32(tlli, 8) % num_sgsns;
 
-	// Get the first enabled SGSN after index
+	/* Get the first enabled SGSN after index */
 	llist_for_each_entry(sgsn, &cfg->sgsns, list) {
 		if (i >= index && sgsn->pool.allow_attach) {
 			return sgsn;
 		}
 		i++;
 	}
-	// Start again from the beginning
+	/* Start again from the beginning */
 	i = 0;
 	llist_for_each_entry(sgsn, &cfg->sgsns, list) {
 		if (i >= index) {

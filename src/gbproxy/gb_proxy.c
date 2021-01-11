@@ -417,9 +417,9 @@ static int gbprox_rx_ptp_from_bss(struct gbproxy_nse *nse, struct msgb *msg, uin
 			tlli = osmo_load32be(TLVP_VAL(&tp, BSSGP_IE_TMSI));
 			rc = gbprox_bss2sgsn_tlli(bss_bvc->cell, msg, &tlli, false);
 		} else if (TLVP_PRESENT(&tp, BSSGP_IE_IMSI)) {
-			// FIXME: Use the IMSI as selector?
+			/* FIXME: Use the IMSI as selector? */
 			rc = gbprox_bss2sgsn_tlli(bss_bvc->cell, msg, NULL, false);
-			//rc = gbprox_bss2sgsn_hashed(bss_bvc->cell, msg, NULL);
+			/* rc = gbprox_bss2sgsn_hashed(bss_bvc->cell, msg, NULL); */
 		} else
 			LOGPBVC(bss_bvc, LOGL_ERROR, "Rx RADIO-STATUS without any of the conditional IEs\n");
 		break;
