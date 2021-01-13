@@ -1413,7 +1413,7 @@ int gbproxy_init_config(struct gbproxy_config *cfg)
 	cfg->pool.bvc_fc_ratio = 100;
 	cfg->pool.null_nri_ranges = osmo_nri_ranges_alloc(cfg);
 	/* TODO: Make configurable */
-	cfg->tlli_cache.timeout = 5;
+	cfg->tlli_cache.timeout = 10;
 
 	hash_init(cfg->bss_nses);
 	hash_init(cfg->sgsn_nses);
