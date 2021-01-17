@@ -868,7 +868,6 @@ static int gbprox_rx_sig_from_bss(struct gbproxy_nse *nse, struct msgb *msg, uin
 	switch (pdu_type) {
 	case BSSGP_PDUT_BVC_RESET:
 		/* resolve or create gbproxy_bvc + handlei n BVC-FSM */
-		ptp_bvci = ntohs(tlvp_val16_unal(&tp, BSSGP_IE_BVCI));
 		return rx_bvc_reset_from_bss(nse, msg, &tp);
 	case BSSGP_PDUT_BVC_RESET_ACK:
 		ptp_bvci = ntohs(tlvp_val16_unal(&tp, BSSGP_IE_BVCI));
