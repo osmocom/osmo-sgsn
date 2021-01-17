@@ -1405,6 +1405,15 @@ static void tlli_cache_cleanup(void *data)
 	osmo_timer_schedule(&cfg->tlli_cache.timer, 2, 0);
 }
 
+static void imsi_cache_cleanup(void *data)
+{
+	struct gbproxy_config *cfg = data;
+	gbproxy_imsi_cache_cleanup(cfg);
+
+	/* TODO: Disable timer when cache is empty */
+	osmo_timer_schedule(&cfg->imsi_cache.timer, 2, 0);
+}
+
 int gbproxy_init_config(struct gbproxy_config *cfg)
 {
 	struct timespec tp;
@@ -1414,6 +1423,7 @@ int gbproxy_init_config(struct gbproxy_config *cfg)
 	cfg->pool.null_nri_ranges = osmo_nri_ranges_alloc(cfg);
 	/* TODO: Make configurable */
 	cfg->tlli_cache.timeout = 10;
+	cfg->imsi_cache.timeout = 10;
 
 	hash_init(cfg->bss_nses);
 	hash_init(cfg->sgsn_nses);
@@ -1423,6 +1433,10 @@ int gbproxy_init_config(struct gbproxy_config *cfg)
 
 	osmo_timer_setup(&cfg->tlli_cache.timer, tlli_cache_cleanup, cfg);
 	osmo_timer_schedule(&cfg->tlli_cache.timer, 2, 0);
+
+	/* We could also combine both timers */
+	osmo_timer_setup(&cfg->imsi_cache.timer, imsi_cache_cleanup, cfg);
+	osmo_timer_schedule(&cfg->imsi_cache.timer, 2, 0);
 
 	cfg->ctrg = rate_ctr_group_alloc(tall_sgsn_ctx, &global_ctrg_desc, 0);
 	if (!cfg->ctrg) {

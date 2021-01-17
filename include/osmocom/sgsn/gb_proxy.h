@@ -8,6 +8,7 @@
 #include <osmocom/core/hashtable.h>
 #include <osmocom/gsm/gsm23003.h>
 #include <osmocom/gsm/gsm23236.h>
+#include <osmocom/gsm/protocol/gsm_23_003.h>
 
 #include <osmocom/gprs/gprs_ns2.h>
 #include <osmocom/vty/command.h>
@@ -82,6 +83,14 @@ struct gbproxy_config {
 		/* Time in seconds that the entries should be valid */
 		uint8_t timeout;
 	} tlli_cache;
+
+	/* imsi<->nse cache used for PAGING REJECT */
+	struct {
+		DECLARE_HASHTABLE(entries, 10);
+		struct osmo_timer_list timer;
+		/* Time in seconds that the entries should be valid */
+		uint8_t timeout;
+	} imsi_cache;
 
 	/* List of all SGSNs */
 	struct llist_head sgsns;
@@ -173,7 +182,7 @@ struct gbproxy_sgsn {
 
 /* TLLI cache */
 struct gbproxy_tlli_cache_entry {
-	/* linked to gbproxy_config.tlli_cache */
+	/* linked to gbproxy_config.tlli_cache.entries */
 	struct hlist_node list;
 
 	/* TLLI of the entry */
@@ -181,6 +190,19 @@ struct gbproxy_tlli_cache_entry {
 	/* When was this entry last seen */
 	time_t tstamp;
 	/* The Cell this TLLI was last seen */
+	struct gbproxy_nse *nse;
+};
+
+/* IMSI cache */
+struct gbproxy_imsi_cache_entry {
+	/* linked to gbproxy_config.imsi_cache.entries */
+	struct hlist_node list;
+
+	/* IMSI of the entry */
+	char imsi[OSMO_IMSI_BUF_SIZE];
+	/* When was this entry last seen */
+	time_t tstamp;
+	/* The SGSN where the request came from */
 	struct gbproxy_nse *nse;
 };
 
@@ -251,11 +273,17 @@ void gbproxy_nse_free(struct gbproxy_nse *nse);
 struct gbproxy_nse *gbproxy_nse_by_nsei(struct gbproxy_config *cfg, uint16_t nsei, uint32_t flags);
 struct gbproxy_nse *gbproxy_nse_by_nsei_or_new(struct gbproxy_config *cfg, uint16_t nsei, bool sgsn_facing);
 struct gbproxy_nse *gbproxy_nse_by_tlli(struct gbproxy_config *cfg, uint32_t tlli);
+struct gbproxy_nse *gbproxy_nse_by_imsi(struct gbproxy_config *cfg, const char *imsi);
 
 /* TLLI cache */
 void gbproxy_tlli_cache_update(struct gbproxy_nse *nse, uint32_t tlli);
 void gbproxy_tlli_cache_remove(struct gbproxy_config *cfg, uint32_t tlli);
 int gbproxy_tlli_cache_cleanup(struct gbproxy_config *cfg);
+
+/* IMSI cache */
+void gbproxy_imsi_cache_update(struct gbproxy_nse *nse, const char *imsi);
+void gbproxy_imsi_cache_remove(struct gbproxy_config *cfg, const char *imsi);
+int gbproxy_imsi_cache_cleanup(struct gbproxy_config *cfg);
 
 /* SGSN handling */
 struct gbproxy_sgsn *gbproxy_sgsn_alloc(struct gbproxy_config *cfg, uint16_t nsei, const char *name);

@@ -25,11 +25,13 @@
 #include <osmocom/sgsn/debug.h>
 
 #include <osmocom/gprs/protocol/gsm_08_18.h>
+#include <osmocom/core/crc16.h>
 #include <osmocom/core/logging.h>
 #include <osmocom/core/linuxlist.h>
 #include <osmocom/core/rate_ctr.h>
 #include <osmocom/core/stats.h>
 #include <osmocom/core/talloc.h>
+#include <osmocom/core/utils.h>
 #include <osmocom/gsm/tlv.h>
 
 #include <string.h>
@@ -331,6 +333,101 @@ int gbproxy_tlli_cache_cleanup(struct gbproxy_config *cfg)
 		}
 	}
 	return count;
+
+}
+/***********************************************************************
+ * IMSI cache
+ ***********************************************************************/
+static inline uint16_t _checksum_imsi(const char *imsi)
+{
+	size_t len = strlen(imsi);
+	return osmo_crc16(0, (const uint8_t *)imsi, len);
+}
+
+static inline struct gbproxy_imsi_cache_entry *_get_imsi_entry(struct gbproxy_config *cfg, const char *imsi)
+{
+	struct gbproxy_imsi_cache_entry *cache_entry;
+	uint16_t imsi_hash = _checksum_imsi(imsi);
+
+	hash_for_each_possible(cfg->imsi_cache.entries, cache_entry, list, imsi_hash) {
+		if (!strncmp(cache_entry->imsi, imsi, sizeof(cache_entry->imsi)))
+			return cache_entry;
+	}
+	return NULL;
+}
+
+void gbproxy_imsi_cache_update(struct gbproxy_nse *nse, const char *imsi)
+{
+	struct gbproxy_config *cfg = nse->cfg;
+	struct timespec now;
+	struct gbproxy_imsi_cache_entry *cache_entry = _get_imsi_entry(cfg, imsi);
+	uint16_t imsi_hash = _checksum_imsi(imsi);
+
+	osmo_clock_gettime(CLOCK_MONOTONIC, &now);
+
+	if (cache_entry) {
+		/* Update the entry if it already exists */
+		cache_entry->nse = nse;
+		cache_entry->tstamp = now.tv_sec;
+		return;
+	}
+
+	cache_entry = talloc_zero(cfg, struct gbproxy_imsi_cache_entry);
+	OSMO_STRLCPY_ARRAY(cache_entry->imsi, imsi);
+	cache_entry->nse = nse;
+	cache_entry->tstamp = now.tv_sec;
+	hash_add(cfg->imsi_cache.entries, &cache_entry->list, imsi_hash);
+}
+
+static void _imsi_cache_remove_nse(struct gbproxy_nse *nse) {
+	uint i;
+	struct gbproxy_config *cfg = nse->cfg;
+	struct gbproxy_imsi_cache_entry *imsi_cache;
+	struct hlist_node *tmp;
+
+	hash_for_each_safe(cfg->imsi_cache.entries, i, tmp, imsi_cache, list) {
+		if (imsi_cache->nse == nse) {
+			hash_del(&imsi_cache->list);
+			talloc_free(imsi_cache);
+		}
+	}
+}
+
+void gbproxy_imsi_cache_remove(struct gbproxy_config *cfg, const char *imsi)
+{
+	struct gbproxy_imsi_cache_entry *imsi_cache;
+	struct hlist_node *tmp;
+	uint16_t imsi_hash = _checksum_imsi(imsi);
+
+	hash_for_each_possible_safe(cfg->imsi_cache.entries, imsi_cache, tmp, list, imsi_hash) {
+		if (!(strncmp(imsi_cache->imsi, imsi, sizeof(imsi_cache->imsi)))) {
+			hash_del(&imsi_cache->list);
+			talloc_free(imsi_cache);
+			return;
+		}
+	}
+}
+
+int gbproxy_imsi_cache_cleanup(struct gbproxy_config *cfg)
+{
+	int i, count = 0;
+	struct gbproxy_imsi_cache_entry *imsi_cache;
+	struct hlist_node *tmp;
+	struct timespec now;
+	time_t expiry;
+
+	osmo_clock_gettime(CLOCK_MONOTONIC, &now);
+	expiry = now.tv_sec - cfg->imsi_cache.timeout;
+
+	hash_for_each_safe(cfg->imsi_cache.entries, i, tmp, imsi_cache, list) {
+		if (imsi_cache->tstamp < expiry) {
+			count++;
+			LOGP(DGPRS, LOGL_NOTICE, "Cache entry for IMSI %s expired, removing\n", imsi_cache->imsi);
+			hash_del(&imsi_cache->list);
+			talloc_free(imsi_cache);
+		}
+	}
+	return count;
 }
 
 /***********************************************************************
@@ -374,8 +471,9 @@ static void _nse_free(struct gbproxy_nse *nse)
 	LOGPNSE_CAT(nse, DOBJ, LOGL_INFO, "NSE Destroying\n");
 
 	hash_del(&nse->list);
-	/* Clear the tlli_cache from this NSE */
+	/* Clear the cache entries of this NSE */
 	_tlli_cache_remove_nse(nse);
+	_imsi_cache_remove_nse(nse);
 
 	hash_for_each_safe(nse->bvcs, i, tmp, bvc, list)
 		gbproxy_bvc_free(bvc);
@@ -444,6 +542,17 @@ struct gbproxy_nse *gbproxy_nse_by_tlli(struct gbproxy_config *cfg, uint32_t tll
 	return NULL;
 }
 
+struct gbproxy_nse *gbproxy_nse_by_imsi(struct gbproxy_config *cfg, const char *imsi)
+{
+	struct gbproxy_imsi_cache_entry *imsi_cache;
+	uint16_t imsi_hash = _checksum_imsi(imsi);
+
+	hash_for_each_possible(cfg->imsi_cache.entries, imsi_cache, list, imsi_hash) {
+		if (!strncmp(imsi_cache->imsi, imsi, sizeof(imsi_cache->imsi)))
+			return imsi_cache->nse;
+	}
+	return NULL;
+}
 
 /***********************************************************************
  * SGSN - Serving GPRS Support Node
