@@ -934,6 +934,20 @@ static int gbprox_rx_sig_from_bss(struct gbproxy_nse *nse, struct msgb *msg, uin
 			goto err_no_bvc;
 		gbprox_bss2sgsn_tlli(from_bvc->cell, msg, &tlli, true);
 		break;
+	case BSSGP_PDUT_PAGING_PS_REJECT:
+	{
+		/* Route according to IMSI<->NSE cache entry */
+		struct osmo_mobile_identity mi;
+		const uint8_t *mi_data = TLVP_VAL(&tp, BSSGP_IE_IMSI);
+		uint8_t mi_len = TLVP_LEN(&tp, BSSGP_IE_IMSI);
+		osmo_mobile_identity_decode(&mi, mi_data, mi_len, false);
+		nse = gbproxy_nse_by_imsi(nse->cfg, mi.imsi);
+		if (!nse) {
+			return bssgp_tx_status(BSSGP_CAUSE_INV_MAND_INF, NULL, msg);
+		}
+		rc = gbprox_relay2nse(msg, nse, 0);
+		break;
+	}
 	default:
 		LOGPNSE(nse, LOGL_ERROR, "Rx %s: Implementation missing\n", pdut_name);
 		break;
@@ -1135,6 +1149,15 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_nse *nse, struct msgb *msg, ui
 			rc = gbprox_relay2peer(msg, sgsn_bvc->cell->bss_bvc, ns_bvci);
 		break;
 	case BSSGP_PDUT_PAGING_PS:
+	{
+		/* Cache the IMSI<->NSE to route PAGING REJECT */
+		struct osmo_mobile_identity mi;
+		const uint8_t *mi_data = TLVP_VAL(&tp, BSSGP_IE_IMSI);
+		uint8_t mi_len = TLVP_LEN(&tp, BSSGP_IE_IMSI);
+		osmo_mobile_identity_decode(&mi, mi_data, mi_len, false);
+		gbproxy_imsi_cache_update(nse, mi.imsi);
+		/* fall through */
+	}
 	case BSSGP_PDUT_PAGING_CS:
 		/* process the paging request (LAI/RAI lookup) */
 		rc = gbprox_rx_paging(nse, msg, pdut_name, &tp, ns_bvci);
