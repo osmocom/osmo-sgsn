@@ -194,17 +194,6 @@ struct gbproxy_cell *gbproxy_cell_by_bvci(struct gbproxy_config *cfg, uint16_t b
 	return NULL;
 }
 
-static inline struct gbproxy_tlli_cache_entry *_get_tlli_entry(struct gbproxy_config *cfg, uint32_t tlli)
-{
-	struct gbproxy_tlli_cache_entry *cache_entry;
-
-	hash_for_each_possible(cfg->tlli_cache.entries, cache_entry, list, tlli) {
-		if (cache_entry->tlli == tlli)
-			return cache_entry;
-	}
-	return NULL;
-}
-
 struct gbproxy_cell *gbproxy_cell_by_bvci_or_new(struct gbproxy_config *cfg, uint16_t bvci)
 {
 	struct gbproxy_cell *cell;
@@ -262,6 +251,17 @@ bool gbproxy_cell_add_sgsn_bvc(struct gbproxy_cell *cell, struct gbproxy_bvc *bv
 /***********************************************************************
  * TLLI cache
  ***********************************************************************/
+
+static inline struct gbproxy_tlli_cache_entry *_get_tlli_entry(struct gbproxy_config *cfg, uint32_t tlli)
+{
+	struct gbproxy_tlli_cache_entry *cache_entry;
+
+	hash_for_each_possible(cfg->tlli_cache.entries, cache_entry, list, tlli) {
+		if (cache_entry->tlli == tlli)
+			return cache_entry;
+	}
+	return NULL;
+}
 
 void gbproxy_tlli_cache_update(struct gbproxy_nse *nse, uint32_t tlli)
 {
