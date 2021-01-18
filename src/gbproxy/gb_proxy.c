@@ -425,9 +425,21 @@ static int gbprox_rx_ptp_from_bss(struct gbproxy_nse *nse, struct msgb *msg, uin
 		break;
 	case BSSGP_PDUT_DUMMY_PAGING_PS_RESP:
 	case BSSGP_PDUT_PAGING_PS_REJECT:
-		/* TODO: Implement via state tracking of PAGING-PS + DUMMY_PAGING_PS */
-		LOGPBVC(bss_bvc, LOGL_ERROR, "Rx %s: Implementation missing\n", pdut_name);
+	{
+		/* Route according to IMSI<->NSE cache entry */
+		struct osmo_mobile_identity mi;
+		const uint8_t *mi_data = TLVP_VAL(&tp, BSSGP_IE_IMSI);
+		uint8_t mi_len = TLVP_LEN(&tp, BSSGP_IE_IMSI);
+		osmo_mobile_identity_decode(&mi, mi_data, mi_len, false);
+		nse = gbproxy_nse_by_imsi(nse->cfg, mi.imsi);
+		if (nse) {
+			OSMO_ASSERT(nse->sgsn_facing);
+			rc = gbprox_relay2nse(msg, nse, ns_bvci);
+		} else {
+			LOGPBVC(bss_bvc, LOGL_ERROR, "Rx unmatched PAGING REJECT/DUMMY PAGING RESP with IMSI %s\n", mi.imsi);
+		}
 		break;
+	}
 	case BSSGP_PDUT_FLOW_CONTROL_BVC:
 		osmo_fsm_inst_dispatch(bss_bvc->fi, BSSGP_BVCFSM_E_RX_FC_BVC, msg);
 		break;
@@ -513,9 +525,21 @@ static int gbprox_rx_ptp_from_sgsn(struct gbproxy_nse *nse, struct msgb *msg, ui
 	switch (bgph->pdu_type) {
 	case BSSGP_PDUT_FLOW_CONTROL_BVC_ACK:
 		return osmo_fsm_inst_dispatch(sgsn_bvc->fi, BSSGP_BVCFSM_E_RX_FC_BVC_ACK, msg);
-	default:
-		return gbprox_relay2peer(msg, bss_bvc, bss_bvc->bvci);
+	case BSSGP_PDUT_DUMMY_PAGING_PS:
+	case BSSGP_PDUT_PAGING_PS:
+	{
+		/* Cache the IMSI<->NSE to route PAGING REJECT */
+		struct osmo_mobile_identity mi;
+		const uint8_t *mi_data = TLVP_VAL(&tp, BSSGP_IE_IMSI);
+		uint8_t mi_len = TLVP_LEN(&tp, BSSGP_IE_IMSI);
+		osmo_mobile_identity_decode(&mi, mi_data, mi_len, false);
+		gbproxy_imsi_cache_update(nse, mi.imsi);
+		break;
 	}
+	default:
+		break;
+	}
+	return gbprox_relay2peer(msg, bss_bvc, bss_bvc->bvci);
 
 }
 
@@ -934,6 +958,7 @@ static int gbprox_rx_sig_from_bss(struct gbproxy_nse *nse, struct msgb *msg, uin
 		gbprox_bss2sgsn_tlli(from_bvc->cell, msg, &tlli, true);
 		break;
 	case BSSGP_PDUT_PAGING_PS_REJECT:
+	case BSSGP_PDUT_DUMMY_PAGING_PS_RESP:
 	{
 		/* Route according to IMSI<->NSE cache entry */
 		struct osmo_mobile_identity mi;
@@ -944,6 +969,7 @@ static int gbprox_rx_sig_from_bss(struct gbproxy_nse *nse, struct msgb *msg, uin
 		if (!nse) {
 			return bssgp_tx_status(BSSGP_CAUSE_INV_MAND_INF, NULL, msg);
 		}
+		OSMO_ASSERT(nse->sgsn_facing);
 		rc = gbprox_relay2nse(msg, nse, 0);
 		break;
 	}
@@ -961,7 +987,7 @@ err_no_bvc:
 
 /* Receive paging request from SGSN, we need to relay to proper BSS */
 static int gbprox_rx_paging(struct gbproxy_nse *sgsn_nse, struct msgb *msg, const char *pdut_name,
-			    struct tlv_parsed *tp, uint16_t ns_bvci)
+			    struct tlv_parsed *tp, uint16_t ns_bvci, bool broadcast)
 {
 	struct gbproxy_config *cfg = sgsn_nse->cfg;
 	struct gbproxy_bvc *sgsn_bvc, *bss_bvc;
@@ -1014,7 +1040,7 @@ static int gbprox_rx_paging(struct gbproxy_nse *sgsn_nse, struct msgb *msg, cons
 				}
 			}
 		}
-	} else if (TLVP_PRES_LEN(tp, BSSGP_IE_BSS_AREA_ID, 1)) {
+	} else if (TLVP_PRES_LEN(tp, BSSGP_IE_BSS_AREA_ID, 1) || broadcast) {
 		/* iterate over all bvcs and dispatch the paging to each matching one */
 		hash_for_each(cfg->bss_nses, i, nse, list) {
 			hash_for_each(nse->bvcs, j, bss_bvc, list) {
@@ -1079,6 +1105,7 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_nse *nse, struct msgb *msg, ui
 	int rc = 0;
 	int cause;
 	int i;
+	bool paging_bc = false;
 
 	snprintf(log_pfx, sizeof(log_pfx), "NSE(%05u/SGSN)-BVC(%05u/??)", nse->nsei, ns_bvci);
 
@@ -1147,6 +1174,11 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_nse *nse, struct msgb *msg, ui
 		if (sgsn_bvc->cell && sgsn_bvc->cell->bss_bvc)
 			rc = gbprox_relay2peer(msg, sgsn_bvc->cell->bss_bvc, ns_bvci);
 		break;
+	case BSSGP_PDUT_DUMMY_PAGING_PS:
+		/* Routing area is optional in dummy paging and we have nothing else to go by
+		 * so in case it is missing we need to broadcast the paging */
+		paging_bc = true;
+		/* fall through */
 	case BSSGP_PDUT_PAGING_PS:
 	{
 		/* Cache the IMSI<->NSE to route PAGING REJECT */
@@ -1159,7 +1191,7 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_nse *nse, struct msgb *msg, ui
 	}
 	case BSSGP_PDUT_PAGING_CS:
 		/* process the paging request (LAI/RAI lookup) */
-		rc = gbprox_rx_paging(nse, msg, pdut_name, &tp, ns_bvci);
+		rc = gbprox_rx_paging(nse, msg, pdut_name, &tp, ns_bvci, paging_bc);
 		break;
 	case BSSGP_PDUT_STATUS:
 		/* Some exception has occurred */
