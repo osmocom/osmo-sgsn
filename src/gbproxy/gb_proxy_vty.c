@@ -553,6 +553,55 @@ DEFUN(show_gbproxy_links, show_gbproxy_links_cmd, "show gbproxy links",
 	return CMD_SUCCESS;
 }
 
+DEFUN(show_gbproxy_tlli_cache, show_gbproxy_tlli_cache_cmd,
+      "show gbproxy tlli-cache",
+      SHOW_STR GBPROXY_STR "Show TLLI cache entries\n")
+{
+	struct gbproxy_tlli_cache_entry *entry;
+	struct timespec now;
+	time_t expiry;
+	int i, count = 0;
+
+	osmo_clock_gettime(CLOCK_MONOTONIC, &now);
+	expiry = now.tv_sec - g_cfg->tlli_cache.timeout;
+
+	vty_out(vty, "TLLI cache timeout %us%s", g_cfg->tlli_cache.timeout, VTY_NEWLINE);
+	hash_for_each(g_cfg->tlli_cache.entries, i, entry, list) {
+		time_t valid = entry->tstamp - expiry;
+		struct gbproxy_nse *nse = entry->nse;
+
+		vty_out(vty, " TLLI %08x -> NSE(%05u/%s) valid %lds%s", entry->tlli, nse->nsei,
+			nse->sgsn_facing ? "SGSN" : "BSS", valid, VTY_NEWLINE);
+		count++;
+	}
+	vty_out(vty, "TLLI cache contains %u entries%s", count, VTY_NEWLINE);
+	return CMD_SUCCESS;
+}
+
+DEFUN(show_gbproxy_imsi_cache, show_gbproxy_imsi_cache_cmd,
+      "show gbproxy imsi-cache",
+      SHOW_STR GBPROXY_STR "Show IMSI cache entries\n")
+{
+	struct gbproxy_imsi_cache_entry *entry;
+	struct timespec now;
+	time_t expiry;
+	int i, count = 0;
+
+	osmo_clock_gettime(CLOCK_MONOTONIC, &now);
+	expiry = now.tv_sec - g_cfg->imsi_cache.timeout;
+
+	vty_out(vty, "IMSI cache timeout %us%s", g_cfg->imsi_cache.timeout, VTY_NEWLINE);
+	hash_for_each(g_cfg->imsi_cache.entries, i, entry, list) {
+		time_t valid = entry->tstamp - expiry;
+		struct gbproxy_nse *nse = entry->nse;
+		vty_out(vty, " IMSI %s -> NSE(%05u/%s): valid %lds%s", entry->imsi, nse->nsei,
+			nse->sgsn_facing ? "SGSN" : "BSS", valid, VTY_NEWLINE);
+		count++;
+	}
+	vty_out(vty, "IMSI cache contains %u entries%s", count, VTY_NEWLINE);
+	return CMD_SUCCESS;
+}
+
 DEFUN(delete_gb_bvci, delete_gb_bvci_cmd,
 	"delete-gbproxy-peer <0-65534> bvci <2-65534>",
 	"Delete a GBProxy bvc by NSEI and optionally BVCI\n"
@@ -684,6 +733,8 @@ int gbproxy_vty_init(void)
 	install_element_ve(&show_gbproxy_bvc_cmd);
 	install_element_ve(&show_gbproxy_cell_cmd);
 	install_element_ve(&show_gbproxy_links_cmd);
+	install_element_ve(&show_gbproxy_tlli_cache_cmd);
+	install_element_ve(&show_gbproxy_imsi_cache_cmd);
 	install_element_ve(&show_nri_all_cmd);
 	install_element_ve(&show_nri_nsei_cmd);
 	install_element_ve(&logging_fltr_bvc_cmd);
