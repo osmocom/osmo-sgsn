@@ -48,6 +48,7 @@
 #include <osmocom/vty/vty.h>
 #include <osmocom/vty/misc.h>
 
+#define GBPROXY_STR "Display information about the Gb proxy\n"
 #define NRI_STR "Mapping of Network Resource Indicators to this SGSN, for SGSN pooling\n"
 #define NULL_NRI_STR "Define NULL-NRI values that cause re-assignment of an MS to a different SGSN, for SGSN pooling.\n"
 #define NRI_FIRST_LAST_STR "First value of the NRI value range, should not surpass the configured 'nri bitlen'.\n" \
@@ -499,7 +500,7 @@ DEFUN(logging_fltr_bvc,
 }
 
 DEFUN(show_gbproxy_bvc, show_gbproxy_bvc_cmd, "show gbproxy bvc (bss|sgsn) [stats]",
-       SHOW_STR "Display information about the Gb proxy\n"
+       SHOW_STR GBPROXY_STR
        "Show BSSGP Virtual Connections\n"
        "Display BSS-side BVCs\n"
        "Display SGSN-side BVCs\n"
@@ -523,7 +524,7 @@ DEFUN(show_gbproxy_bvc, show_gbproxy_bvc_cmd, "show gbproxy bvc (bss|sgsn) [stat
 }
 
 DEFUN(show_gbproxy_cell, show_gbproxy_cell_cmd, "show gbproxy cell [stats]",
-       SHOW_STR "Display information about the Gb proxy\n"
+       SHOW_STR GBPROXY_STR
        "Show GPRS Cell Information\n"
        "Show statistics\n")
 {
@@ -538,7 +539,7 @@ DEFUN(show_gbproxy_cell, show_gbproxy_cell_cmd, "show gbproxy cell [stats]",
 }
 
 DEFUN(show_gbproxy_links, show_gbproxy_links_cmd, "show gbproxy links",
-       SHOW_STR "Display information about the Gb proxy\n" "Show logical links\n")
+       SHOW_STR GBPROXY_STR "Show logical links\n")
 {
 	struct gbproxy_nse *nse;
 	int i, j;
