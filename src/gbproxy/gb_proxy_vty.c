@@ -363,7 +363,7 @@ DEFUN_ATTR(cfg_sgsn_no_allow_attach, cfg_sgsn_no_allow_attach_cmd,
 	return CMD_SUCCESS;
 }
 
-DEFUN(cfg_sgsn_show_nri_all, show_nri_all_cmd,
+DEFUN(sgsn_show_nri_all, show_nri_all_cmd,
       "show nri all",
       SHOW_STR NRI_STR "Show all SGSNs\n")
 {
@@ -375,7 +375,7 @@ DEFUN(cfg_sgsn_show_nri_all, show_nri_all_cmd,
 	return CMD_SUCCESS;
 }
 
-DEFUN(show_nri, show_nri_nsei_cmd,
+DEFUN(show_nri_nsei, show_nri_nsei_cmd,
       "show nri nsei <0-65535>",
       SHOW_STR NRI_STR "Identify SGSN by NSEI\n"
       "NSEI of the SGSN\n")
