@@ -1309,7 +1309,7 @@ void gprs_ns_prim_status_cb(struct gbproxy_config *cfg, struct osmo_gprs_ns2_pri
 		break;
 
 	case NS_AFF_CAUSE_RECOVERY:
-		LOGP(DPCU, LOGL_NOTICE, "NS-NSE %d became available\n", nsp->nsei);
+		LOGP(DGPRS, LOGL_NOTICE, "NS-NSE %d became available\n", nsp->nsei);
 		sgsn_nse = gbproxy_nse_by_nsei(cfg, nsp->nsei, NSE_F_SGSN);
 		if (sgsn_nse) {
 			uint8_t cause = BSSGP_CAUSE_OML_INTERV;
@@ -1343,10 +1343,10 @@ void gprs_ns_prim_status_cb(struct gbproxy_config *cfg, struct osmo_gprs_ns2_pri
 			}
 		}
 #endif
-		LOGP(DPCU, LOGL_NOTICE, "NS-NSE %d became unavailable\n", nsp->nsei);
+		LOGP(DGPRS, LOGL_NOTICE, "NS-NSE %d became unavailable\n", nsp->nsei);
 		break;
 	default:
-		LOGP(DPCU, LOGL_NOTICE, "NS: Unknown NS-STATUS.ind cause=%s from NS\n",
+		LOGP(DGPRS, LOGL_NOTICE, "NS: Unknown NS-STATUS.ind cause=%s from NS\n",
 		     gprs_ns2_aff_cause_prim_str(nsp->u.status.cause));
 		break;
 	}
@@ -1366,7 +1366,7 @@ int gprs_ns2_prim_cb(struct osmo_prim_hdr *oph, void *ctx)
 	nsp = container_of(oph, struct osmo_gprs_ns2_prim, oph);
 
 	if (oph->operation != PRIM_OP_INDICATION) {
-		LOGP(DPCU, LOGL_NOTICE, "NS: Unexpected primitive operation %s from NS\n",
+		LOGP(DGPRS, LOGL_NOTICE, "NS: Unexpected primitive operation %s from NS\n",
 		     get_value_string(osmo_prim_op_names, oph->operation));
 		return 0;
 	}
@@ -1388,7 +1388,7 @@ int gprs_ns2_prim_cb(struct osmo_prim_hdr *oph, void *ctx)
 		gprs_ns_prim_status_cb(cfg, nsp);
 		break;
 	default:
-		LOGP(DPCU, LOGL_NOTICE, "NS: Unknown prim %s %s from NS\n",
+		LOGP(DGPRS, LOGL_NOTICE, "NS: Unknown prim %s %s from NS\n",
 		     gprs_ns2_prim_str(oph->primitive),
 		     get_value_string(osmo_prim_op_names, oph->operation));
 		break;
