@@ -45,6 +45,7 @@
 #include <osmocom/gprs/gprs_bssgp2.h>
 #include <osmocom/gprs/gprs_bssgp_bss.h>
 #include <osmocom/gprs/bssgp_bvc_fsm.h>
+#include <osmocom/gprs/protocol/gsm_08_18.h>
 
 #include <osmocom/gsm/gsm23236.h>
 #include <osmocom/gsm/gsm_utils.h>
@@ -944,9 +945,34 @@ static int gbprox_rx_sig_from_bss(struct gbproxy_nse *nse, struct msgb *msg, uin
 	case BSSGP_PDUT_RAN_INFO_ACK:
 	case BSSGP_PDUT_RAN_INFO_ERROR:
 	case BSSGP_PDUT_RAN_INFO_APP_ERROR:
-		/* FIXME: route based in RIM Routing IE */
-		rc = bssgp_tx_status(BSSGP_CAUSE_PDU_INCOMP_FEAT, NULL, msg);
+	{
+		struct gbproxy_cell *cell;
+		struct gbproxy_sgsn *sgsn;
+		struct bssgp_rim_routing_info ri;
+
+		/* TODO: Check the RIM src addr and insure it matches a Cell we have for this BSS */
+		/* Reply with STATUS if BSSGP didn't negotiate RIM feature */
+		/* FIXME: Check negotiated features
+		if (0) {
+			rc = bssgp_tx_status(BSSGP_CAUSE_PDU_INCOMP_FEAT, NULL, msg);
+		} */
+
+		rc = bssgp_parse_rim_ri(&ri, TLVP_VAL(&tp, BSSGP_IE_RIM_ROUTING_INFO), TLVP_LEN(&tp, BSSGP_IE_RIM_ROUTING_INFO));
+
+		/* Check RIM destination addr */
+		if (ri.discr == BSSGP_RIM_ROUTING_INFO_GERAN) {
+			cell = gbproxy_cell_by_cellid(nse->cfg, &ri.geran.raid, ri.geran.cid);
+			if (cell) {
+				/* Destination is known by gbproxy, route directly */
+				return gbprox_relay2peer(msg, cell->bss_bvc, 0);
+			}
+		}
+		/* Otherwise pass on to a RIM-capable SGSN */
+		/* TODO: Check SGSN is RIM-capable */
+		sgsn = gbproxy_select_sgsn(nse->cfg, NULL);
+		gbprox_relay2nse(msg, sgsn->nse, 0);
 		break;
+	}
 	case BSSGP_PDUT_LLC_DISCARD:
 	case BSSGP_PDUT_FLUSH_LL_ACK:
 		/* route based on BVCI + TLLI */
@@ -1242,9 +1268,33 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_nse *nse, struct msgb *msg, ui
 	case BSSGP_PDUT_RAN_INFO_ACK:
 	case BSSGP_PDUT_RAN_INFO_ERROR:
 	case BSSGP_PDUT_RAN_INFO_APP_ERROR:
-		/* FIXME: route based in RIM Routing IE */
-		rc = bssgp_tx_status(BSSGP_CAUSE_PDU_INCOMP_FEAT, NULL, msg);
+	{
+		struct gbproxy_cell *cell;
+		struct bssgp_rim_routing_info ri;
+
+		/* TODO: Check the RIM src addr and insure it matches a Cell we have for this BSS */
+		/* Reply with STATUS if BSSGP didn't negotiate RIM feature */
+		/* FIXME: Check negotiated features
+		if (0) {
+			rc = bssgp_tx_status(BSSGP_CAUSE_PDU_INCOMP_FEAT, NULL, msg);
+		} */
+
+		rc = bssgp_parse_rim_ri(&ri, TLVP_VAL(&tp, BSSGP_IE_RIM_ROUTING_INFO), TLVP_LEN(&tp, BSSGP_IE_RIM_ROUTING_INFO));
+
+		/* Check RIM destination addr */
+		if (ri.discr == BSSGP_RIM_ROUTING_INFO_GERAN) {
+			cell = gbproxy_cell_by_cellid(cfg, &ri.geran.raid, ri.geran.cid);
+			if (!cell) {
+				/* TODO: Log error */
+			} else {
+				return gbprox_relay2peer(msg, cell->bss_bvc, 0);
+			}
+		}
+		/* If it's not a GERAN Cell or it's a Cell gbproxy doesn't know about: Return STATUS PDU with
+		 * "Unknown Destination Address" */
+		rc = bssgp_tx_status(BSSGP_CAUSE_UNKN_DST, NULL, msg);
 		break;
+	}
 	default:
 		LOGPNSE(nse, LOGL_NOTICE, "Rx %s: Not supported\n", pdut_name);
 		rate_ctr_inc(&cfg->ctrg->ctr[GBPROX_GLOB_CTR_PROTO_ERR_SGSN]);

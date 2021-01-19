@@ -206,6 +206,19 @@ struct gbproxy_cell *gbproxy_cell_by_bvci_or_new(struct gbproxy_config *cfg, uin
 	return cell;
 }
 
+struct gbproxy_cell *gbproxy_cell_by_cellid(struct gbproxy_config *cfg, const struct gprs_ra_id *raid, uint16_t cid)
+{
+	int i;
+	struct gbproxy_cell *cell;
+
+	hash_for_each(cfg->cells, i, cell, list) {
+		if ((cell->id.cid == cid) && (!memcmp(&cell->id.raid, raid, sizeof(*raid)))) {
+			return cell;
+		}
+	}
+	return NULL;
+}
+
 void gbproxy_cell_free(struct gbproxy_cell *cell)
 {
 	unsigned int i;
