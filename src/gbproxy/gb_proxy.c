@@ -436,7 +436,7 @@ static int gbprox_rx_ptp_from_bss(struct gbproxy_nse *nse, struct msgb *msg, uin
 			OSMO_ASSERT(nse->sgsn_facing);
 			rc = gbprox_relay2nse(msg, nse, ns_bvci);
 		} else {
-			LOGPBVC(bss_bvc, LOGL_ERROR, "Rx unmatched PAGING REJECT/DUMMY PAGING RESP with IMSI %s\n", mi.imsi);
+			LOGPBVC(bss_bvc, LOGL_ERROR, "Rx unmatched %s with IMSI %s\n", pdut_name, mi.imsi);
 		}
 		break;
 	}
