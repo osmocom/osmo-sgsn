@@ -251,8 +251,10 @@ static struct gbproxy_sgsn *gbproxy_select_sgsn(struct gbproxy_config *cfg, cons
 				}
 			} else {
 				/* We couldn't get the NRI from the TLLI */
-				LOGP(DGPRS, LOGL_ERROR, "Could not extract NRI from local TLLI %u\n", *tlli);
+				LOGP(DGPRS, LOGL_ERROR, "Could not extract NRI from local TLLI %08x\n", *tlli);
 			}
+		} else {
+			LOGP(DGPRS, LOGL_INFO, "TLLI %08x is neither local nor foreign, not routing by NRI\n", *tlli);
 		}
 	}
 
