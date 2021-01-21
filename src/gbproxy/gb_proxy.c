@@ -417,6 +417,8 @@ static int gbprox_rx_ptp_from_bss(struct gbproxy_nse *nse, struct msgb *msg, uin
 		} else if (TLVP_PRESENT(&tp, BSSGP_IE_TMSI)) {
 			/* we treat the TMSI like a TLLI and extract the NRI from it */
 			tlli = osmo_load32be(TLVP_VAL(&tp, BSSGP_IE_TMSI));
+			/* Convert the TMSI into a FOREIGN TLLI so it is routed appropriately */
+			tlli = gprs_tmsi2tlli(tlli, TLLI_FOREIGN);
 			rc = gbprox_bss2sgsn_tlli(bss_bvc->cell, msg, &tlli, false);
 		} else if (TLVP_PRESENT(&tp, BSSGP_IE_IMSI)) {
 			/* FIXME: Use the IMSI as selector? */
