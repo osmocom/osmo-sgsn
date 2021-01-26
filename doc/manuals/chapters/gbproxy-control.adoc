@@ -3,7 +3,7 @@
 
 The actual protocol is described in <<common-control-if>>, the variables
 common to all programs using it are described in <<ctrl_common_vars>>. Here we
-describe variables specific to OsmoGbPROXY.
+describe variables specific to OsmoGbProxy.
 
 .Variables available over control interface
 [options="header",width="100%",cols="20%,5%,5%,50%,20%"]

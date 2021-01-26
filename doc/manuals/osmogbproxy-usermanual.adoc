@@ -1,6 +1,6 @@
 :gfdl-enabled:
 
-OsmoGbPROXY User Manual
+OsmoGbProxy User Manual
 =======================
 Harald Welte <hwelte@sysmocom.de>
 

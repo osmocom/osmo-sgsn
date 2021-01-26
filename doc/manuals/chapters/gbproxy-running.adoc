@@ -1,6 +1,6 @@
-== Running OsmoGbPROXY
+== Running OsmoGbProxy
 
-The OsmoGbPROXY executable (`osmo-gbproxy`) offers the following command-line
+The OsmoGbProxy executable (`osmo-gbproxy`) offers the following command-line
 options:
 
 

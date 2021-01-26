@@ -1,4 +1,4 @@
-== Configuring OsmoGbPROXY
+== Configuring OsmoGbProxy
 
 TBD.  Unfortunately this chapter of the manual still needs to be written.
 Osmocom has very limited funding and support resources; Feel free to help
