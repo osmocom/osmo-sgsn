@@ -39,27 +39,3 @@ sgsn 101 <1>
 <1> Each SGSN is identified by its NSEI (same as in the NS configuration)
 <2> An SGSN can optionally have a name. If none is set a default name will be used.
 
-=== SGSN pool support
-
-In a SGSN pool, osmo-gbproxy is facing the problem of dividing the downlink
-capacity of a cell towards the SGSN.  The BSS advertises the per-BVC capacity
-by means of the BSSGP FLOW-CONTROL-BVC messages, but as there are multiple
-SGSN in a pool, they all have to share / divide that total capacity.
-
-By default, osmo-gbproxy advertises the full capacity to _each_ of the SGSN
-pool members, which results in significant over-provisioning and can lead to
-overload situations.
-
-The administrator can configure the _percentage_ of the overall BSS-advertised
-capacity that shall be reported to each pool member SGSN using the
-`pool bvc-flow-control-ratio <1-100>` configuration command.
-
-A setting of 100 means that each pool member is informed of 100% of the
-BSS side capacity.
-
-A setting of 25 means that each pool member is informed of 25% of the
-BSS side capacity.  This would make most sense in a set-up with four
-SGSN of equal share.
-
-More complex capacity division schemes are so far not supported by
-osmo-gbproxy.
