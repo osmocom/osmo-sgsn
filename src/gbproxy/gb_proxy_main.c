@@ -288,8 +288,7 @@ int main(int argc, char **argv)
 		LOGP(DGPRS, LOGL_ERROR, "Unable to instantiate NS\n");
 		exit(1);
 	}
-
-	gprs_ns2_vty2_init(gbcfg->nsi);
+	gprs_ns2_vty_init(gbcfg->nsi);
 	logging_vty_add_deprecated_subsys(tall_sgsn_ctx, "bssgp");
 	gprs_ns2_dynamic_create_nse(gbcfg->nsi, true);
 
