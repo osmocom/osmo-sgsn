@@ -1,10 +1,43 @@
 == Configuring OsmoGbProxy
 
-TBD.  Unfortunately this chapter of the manual still needs to be written.
-Osmocom has very limited funding and support resources; Feel free to help
-us completing this documentation by contributing with code, documentation
-or by supporting the developers financially.
+OsmoGbProxy requires very little configuration, most of it being the
+configuration of the NS links.
+Most config options specific to OsmoGbProxy are related to SGSN pooling and
+telling the proxy which NSE(s) it should use to talk to the SGSN(s).
 
+=== Configure the Network Service (NS)
+
+A detailed description of the NS configuration can be found in <<libosmogb>>.
+The following config snippets assume the SGSN(s) (NSEI 101 and 102) are using
+IP-SNS and listen on 10.0.1.1:23000 and 10.0.1.2:23000 respectively.
+
+This would be the NS config for the SGSN(s):
+
+.Example: NS configuration example (SGSN)
+----
+ns
+ bind udp local
+  listen 10.0.0.1 23000 <1>
+ nse 101 <2>
+  ip-sns 10.0.1.1 23000 <3>
+ nse 102
+  ip-sns 10.0.1.2 23000
+----
+<1> Define the local IP/port from which to connect
+<2> Define an NSE with NSEI
+<3> Use IP-SNS to connect to the SGSN
+
+=== Configure an SGSN
+
+Configuration of a single (non-pooling) SGSN is rather simple.
+
+.Example: SGSN configuration example
+----
+sgsn 101 <1>
+ name Main SGSN <2>
+----
+<1> Each SGSN is identified by its NSEI (same as in the NS configuration)
+<2> An SGSN can optionally have a name. If none is set a default name will be used.
 
 === SGSN pool support
 
