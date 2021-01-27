@@ -290,7 +290,6 @@ int main(int argc, char **argv)
 	}
 	gprs_ns2_vty_init(gbcfg->nsi);
 	logging_vty_add_deprecated_subsys(tall_sgsn_ctx, "bssgp");
-	gprs_ns2_dynamic_create_nse(gbcfg->nsi, true);
 
 	bssgp_set_bssgp_callback(gbprox_bssgp_send_cb, gbcfg);
 

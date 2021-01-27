@@ -444,8 +444,6 @@ int main(int argc, char **argv)
 		exit(2);
 	}
 
-	gprs_ns2_dynamic_create_nse(sgsn_nsi, true);
-
 	if (sgsn->cfg.dynamic_lookup) {
 		if (sgsn_ares_init(sgsn) != 0) {
 			LOGP(DGPRS, LOGL_FATAL,
