@@ -168,7 +168,7 @@ static int gbprox_relay2nse(struct msgb *old_msg, struct gbproxy_nse *nse,
 	if (gprs_gb_parse_tlli(msgb_data(msg), msgb_length(msg), &tlli) == 1)
 		nsp.u.unitdata.link_selector = tlli;
 
-	osmo_prim_init(&nsp.oph, SAP_NS, PRIM_NS_UNIT_DATA,
+	osmo_prim_init(&nsp.oph, SAP_NS, GPRS_NS2_PRIM_UNIT_DATA,
 		       PRIM_OP_REQUEST, msg);
 	rc = gprs_ns2_recv_prim(nsi, &nsp.oph);
 	/* FIXME: We need a counter group for gbproxy_nse */
@@ -1279,7 +1279,7 @@ int gbprox_bssgp_send_cb(void *ctx, struct msgb *msg)
 	nsp.bvci = msgb_bvci(msg);
 	nsp.nsei = msgb_nsei(msg);
 
-	osmo_prim_init(&nsp.oph, SAP_NS, PRIM_NS_UNIT_DATA, PRIM_OP_REQUEST, msg);
+	osmo_prim_init(&nsp.oph, SAP_NS, GPRS_NS2_PRIM_UNIT_DATA, PRIM_OP_REQUEST, msg);
 	rc = gprs_ns2_recv_prim(nsi, &nsp.oph);
 
 	return rc;
@@ -1321,13 +1321,13 @@ int gbprox_rcvmsg(void *ctx, struct msgb *msg)
 }
 
 /*  TODO: What about handling:
- * 	NS_AFF_CAUSE_VC_FAILURE,
-	NS_AFF_CAUSE_VC_RECOVERY,
-	NS_AFF_CAUSE_FAILURE,
-	NS_AFF_CAUSE_RECOVERY,
+ * 	GPRS_NS2_AFF_CAUSE_VC_FAILURE,
+	GPRS_NS2_AFF_CAUSE_VC_RECOVERY,
+	GPRS_NS2_AFF_CAUSE_FAILURE,
+	GPRS_NS2_AFF_CAUSE_RECOVERY,
 	osmocom own causes
-	NS_AFF_CAUSE_SNS_CONFIGURED,
-	NS_AFF_CAUSE_SNS_FAILURE,
+	GPRS_NS2_AFF_CAUSE_SNS_CONFIGURED,
+	GPRS_NS2_AFF_CAUSE_SNS_FAILURE,
 	*/
 
 void gprs_ns_prim_status_cb(struct gbproxy_config *cfg, struct osmo_gprs_ns2_prim *nsp)
@@ -1340,11 +1340,11 @@ void gprs_ns_prim_status_cb(struct gbproxy_config *cfg, struct osmo_gprs_ns2_pri
 	struct gbproxy_nse *sgsn_nse;
 
 	switch (nsp->u.status.cause) {
-	case NS_AFF_CAUSE_SNS_FAILURE:
-	case NS_AFF_CAUSE_SNS_CONFIGURED:
+	case GPRS_NS2_AFF_CAUSE_SNS_FAILURE:
+	case GPRS_NS2_AFF_CAUSE_SNS_CONFIGURED:
 		break;
 
-	case NS_AFF_CAUSE_RECOVERY:
+	case GPRS_NS2_AFF_CAUSE_RECOVERY:
 		LOGP(DGPRS, LOGL_NOTICE, "NS-NSE %d became available\n", nsp->nsei);
 		sgsn_nse = gbproxy_nse_by_nsei(cfg, nsp->nsei, NSE_F_SGSN);
 		if (sgsn_nse) {
@@ -1354,7 +1354,7 @@ void gprs_ns_prim_status_cb(struct gbproxy_config *cfg, struct osmo_gprs_ns2_pri
 				osmo_fsm_inst_dispatch(bvc->fi, BSSGP_BVCFSM_E_REQ_RESET, &cause); 
 		}
 		break;
-	case NS_AFF_CAUSE_FAILURE:
+	case GPRS_NS2_AFF_CAUSE_FAILURE:
 #if 0
 		if (gbproxy_is_sgsn_nsei(cfg, nsp->nsei)) {
 			/* sgsn */
@@ -1408,7 +1408,7 @@ int gprs_ns2_prim_cb(struct osmo_prim_hdr *oph, void *ctx)
 	}
 
 	switch (oph->primitive) {
-	case PRIM_NS_UNIT_DATA:
+	case GPRS_NS2_PRIM_UNIT_DATA:
 
 		/* hand the message into the BSSGP implementation */
 		msgb_bssgph(oph->msg) = oph->msg->l3h;
@@ -1420,7 +1420,7 @@ int gprs_ns2_prim_cb(struct osmo_prim_hdr *oph, void *ctx)
 		rc = gbprox_rcvmsg(cfg, oph->msg);
 		msgb_free(oph->msg);
 		break;
-	case PRIM_NS_STATUS:
+	case GPRS_NS2_PRIM_STATUS:
 		gprs_ns_prim_status_cb(cfg, nsp);
 		break;
 	default:

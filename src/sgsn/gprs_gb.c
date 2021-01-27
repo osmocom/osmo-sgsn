@@ -114,17 +114,17 @@ int gprs_gb_send_cb(void *ctx, struct msgb *msg)
 	struct osmo_gprs_ns2_prim nsp = {};
 	nsp.nsei = msgb_nsei(msg);
 	nsp.bvci = msgb_bvci(msg);
-	osmo_prim_init(&nsp.oph, SAP_NS, PRIM_NS_UNIT_DATA, PRIM_OP_REQUEST, msg);
+	osmo_prim_init(&nsp.oph, SAP_NS, GPRS_NS2_PRIM_UNIT_DATA, PRIM_OP_REQUEST, msg);
 	return gprs_ns2_recv_prim(nsi, &nsp.oph);
 }
 
 void gprs_ns_prim_status_cb(struct osmo_gprs_ns2_prim *nsp)
 {
 	switch (nsp->u.status.cause) {
-	case NS_AFF_CAUSE_SNS_CONFIGURED:
+	case GPRS_NS2_AFF_CAUSE_SNS_CONFIGURED:
 		LOGP(DGPRS, LOGL_NOTICE, "NS-E %d SNS configured.\n", nsp->nsei);
 		break;
-	case NS_AFF_CAUSE_RECOVERY:
+	case GPRS_NS2_AFF_CAUSE_RECOVERY:
 		LOGP(DGPRS, LOGL_NOTICE, "NS-E %d became available\n", nsp->nsei);
 		/* workaround for broken BSS which doesn't respond correct to BSSGP status message.
 		 * Sent a BSSGP Reset when a persistent NSVC comes up for the first time. */
@@ -135,7 +135,7 @@ void gprs_ns_prim_status_cb(struct osmo_gprs_ns2_prim *nsp)
 			bssgp_tx_bvc_reset2(&bctx, BVCI_SIGNALLING, BSSGP_CAUSE_EQUIP_FAIL, false);
 		}
 		break;
-	case NS_AFF_CAUSE_FAILURE:
+	case GPRS_NS2_AFF_CAUSE_FAILURE:
 		LOGP(DGPRS, LOGL_NOTICE, "NS-E %d became unavailable\n", nsp->nsei);
 		break;
 	default:
@@ -164,7 +164,7 @@ int gprs_ns_prim_cb(struct osmo_prim_hdr *oph, void *ctx)
 	}
 
 	switch (oph->primitive) {
-	case PRIM_NS_UNIT_DATA:
+	case GPRS_NS2_PRIM_UNIT_DATA:
 		/* hand the message into the BSSGP implementation */
 		/* add required msg fields for Gb layer */
 		msgb_bssgph(oph->msg) = oph->msg->l3h;
@@ -172,7 +172,7 @@ int gprs_ns_prim_cb(struct osmo_prim_hdr *oph, void *ctx)
 		msgb_nsei(oph->msg) = nsp->nsei;
 		rc = bssgp_rcvmsg(oph->msg);
 		break;
-	case PRIM_NS_STATUS:
+	case GPRS_NS2_PRIM_STATUS:
 		gprs_ns_prim_status_cb(nsp);
 		break;
 	default:
