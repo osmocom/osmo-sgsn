@@ -328,11 +328,6 @@ static bool file_exists(const char *path)
 int main(int argc, char **argv)
 {
 	int rc;
-	struct osmo_sockaddr_str bind_address = {
-		.af = AF_INET,
-		.ip = "0.0.0.0",
-		.port = 23000,
-	};
 #if BUILD_IU
 	struct osmo_sccp_instance *sccp;
 #endif
@@ -402,7 +397,7 @@ int main(int argc, char **argv)
 	sgsn_inst_init(sgsn);
 
 
-	gprs_ns2_vty_init(sgsn_nsi, &bind_address);
+	gprs_ns2_vty_init(sgsn_nsi);
 	bssgp_vty_init();
 	gprs_llc_vty_init();
 	gprs_sndcp_vty_init();
@@ -446,12 +441,6 @@ int main(int argc, char **argv)
 	rc = gprs_subscr_init(sgsn);
 	if (rc < 0) {
 		LOGP(DGPRS, LOGL_FATAL, "Cannot set up subscriber management\n");
-		exit(2);
-	}
-
-	rc = gprs_ns2_vty_create();
-	if (rc < 0) {
-		LOGP(DGPRS, LOGL_FATAL, "Cannot bind/listen on NSIP socket\n");
 		exit(2);
 	}
 
