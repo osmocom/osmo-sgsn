@@ -136,6 +136,47 @@ static int gbprox_relay2sgsn(struct gbproxy_config *cfg, struct msgb *old_msg,
 }
 #endif
 
+/*! Determine the TLLI from the given BSSGP message.
+ *  \param[in] bssgp pointer to start of BSSGP header
+ *  \param[in] bssgp_len length of BSSGP message in octets
+ *  \param[out] tlli TLLI (if any) in host byte order
+ *  \returns 1 if TLLI found; 0 if none found; negative on parse error */
+int gprs_gb_parse_tlli(const uint8_t *bssgp, size_t bssgp_len, uint32_t *tlli)
+{
+	const struct bssgp_normal_hdr *bgph;
+	uint8_t pdu_type;
+
+	if (bssgp_len < sizeof(struct bssgp_normal_hdr))
+		return -EINVAL;
+
+	bgph = (struct bssgp_normal_hdr *)bssgp;
+	pdu_type = bgph->pdu_type;
+
+	if (pdu_type == BSSGP_PDUT_UL_UNITDATA ||
+	    pdu_type == BSSGP_PDUT_DL_UNITDATA) {
+		const struct bssgp_ud_hdr *budh = (struct bssgp_ud_hdr *)bssgp;
+		if (bssgp_len < sizeof(struct bssgp_ud_hdr))
+			return -EINVAL;
+		*tlli = osmo_load32be((const uint8_t *)&budh->tlli);
+		return 1;
+	} else {
+		const uint8_t *data = bgph->data;
+		size_t data_len = bssgp_len - sizeof(*bgph);
+		struct tlv_parsed tp;
+
+		if (bssgp_tlv_parse(&tp, data, data_len) < 0)
+			return -EINVAL;
+
+		if (TLVP_PRESENT(&tp, BSSGP_IE_TLLI)) {
+			*tlli = osmo_load32be(TLVP_VAL(&tp, BSSGP_IE_TLLI));
+			return 1;
+		}
+	}
+
+	/* No TLLI present in message */
+	return 0;
+}
+
 /* feed a message down the NSE */
 static int gbprox_relay2nse(struct msgb *old_msg, struct gbproxy_nse *nse,
 			     uint16_t ns_bvci)
