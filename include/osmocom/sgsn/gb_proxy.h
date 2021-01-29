@@ -267,7 +267,7 @@ struct gbproxy_bvc *gbproxy_bvc_alloc(struct gbproxy_nse *nse, uint16_t bvci);
 void gbproxy_bvc_free(struct gbproxy_bvc *bvc);
 int gbproxy_cleanup_bvcs(struct gbproxy_nse *nse, uint16_t bvci);
 
-struct gbproxy_cell *gbproxy_cell_alloc(struct gbproxy_config *cfg, uint16_t bvci);
+struct gbproxy_cell *gbproxy_cell_alloc(struct gbproxy_config *cfg, uint16_t bvci, uint16_t cid, const struct gprs_ra_id *raid);
 struct gbproxy_cell *gbproxy_cell_by_bvci(struct gbproxy_config *cfg, uint16_t bvci);
 struct gbproxy_cell *gbproxy_cell_by_cellid(struct gbproxy_config *cfg, const struct gprs_ra_id *raid, uint16_t cid);
 void gbproxy_cell_free(struct gbproxy_cell *cell);

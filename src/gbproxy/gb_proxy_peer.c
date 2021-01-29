@@ -163,7 +163,7 @@ int gbproxy_cleanup_bvcs(struct gbproxy_nse *nse, uint16_t bvci)
  ***********************************************************************/
 
 /* Allocate a new 'cell' object */
-struct gbproxy_cell *gbproxy_cell_alloc(struct gbproxy_config *cfg, uint16_t bvci)
+struct gbproxy_cell *gbproxy_cell_alloc(struct gbproxy_config *cfg, uint16_t bvci, uint16_t cid, const struct gprs_ra_id *raid)
 {
 	struct gbproxy_cell *cell;
 	OSMO_ASSERT(cfg);
@@ -174,11 +174,15 @@ struct gbproxy_cell *gbproxy_cell_alloc(struct gbproxy_config *cfg, uint16_t bvc
 
 	cell->cfg = cfg;
 	cell->bvci = bvci;
+	cell->id.cid = cid;
+	memcpy(&cell->id.raid, raid, sizeof(cell->id.raid));
 
 	hash_add(cfg->cells, &cell->list, cell->bvci);
 
-	LOGPCELL_CAT(cell, DOBJ, LOGL_INFO, "CELL Created\n");
+	LOGPCELL_CAT(cell, DOBJ, LOGL_INFO, "CELL Created: cid=%u\n", cid);
 
+	printf("=========================> MAKING A NEW CELL: %u\n", cell->id.cid);
+	
 	return cell;
 }
 
@@ -194,6 +198,7 @@ struct gbproxy_cell *gbproxy_cell_by_bvci(struct gbproxy_config *cfg, uint16_t b
 	return NULL;
 }
 
+#if 0
 struct gbproxy_cell *gbproxy_cell_by_bvci_or_new(struct gbproxy_config *cfg, uint16_t bvci)
 {
 	struct gbproxy_cell *cell;
@@ -205,6 +210,7 @@ struct gbproxy_cell *gbproxy_cell_by_bvci_or_new(struct gbproxy_config *cfg, uin
 
 	return cell;
 }
+#endif
 
 struct gbproxy_cell *gbproxy_cell_by_cellid(struct gbproxy_config *cfg, const struct gprs_ra_id *raid, uint16_t cid)
 {
@@ -212,6 +218,7 @@ struct gbproxy_cell *gbproxy_cell_by_cellid(struct gbproxy_config *cfg, const st
 	struct gbproxy_cell *cell;
 
 	hash_for_each(cfg->cells, i, cell, list) {
+		printf("=========> I LOOK FOR: %u, I HAVE: %u\n",cid, cell->id.cid);
 		if ((cell->id.cid == cid) && (!memcmp(&cell->id.raid, raid, sizeof(*raid)))) {
 			return cell;
 		}

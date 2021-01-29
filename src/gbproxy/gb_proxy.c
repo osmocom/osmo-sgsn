@@ -152,6 +152,8 @@ static int gbprox_relay2nse(struct msgb *old_msg, struct gbproxy_nse *nse,
 	uint32_t tlli;
 	int rc;
 
+	printf("========================> NOW IN gbprox_relay2nse()\n");
+	
 	DEBUGP(DGPRS, "NSE(%05u/%s)-BVC(%05u/??) proxying to NSE(%05u/%s)\n", msgb_nsei(msg),
 	       !nse->sgsn_facing ? "SGSN" : "BSS", ns_bvci, nse->nsei, nse->sgsn_facing ? "SGSN" : "BSS");
 
@@ -176,6 +178,7 @@ static int gbprox_relay2nse(struct msgb *old_msg, struct gbproxy_nse *nse,
 	//if (rc < 0)
 	//	rate_ctr_inc(&bvc->ctrg->ctr[GBPROX_PEER_CTR_TX_ERR]);
 
+	printf("==============================> THROUGH! WHAT NOW?\n");
 	return rc;
 }
 
@@ -628,7 +631,8 @@ static void bss_ptp_bvc_reset_notif(uint16_t nsei, uint16_t bvci, const struct g
 		 * for this BVC.  We need to create the 'cell' data structure and the SGSN-side
 		 * BVC counterparts */
 
-		bvc->cell = gbproxy_cell_alloc(cfg, bvci);
+		printf("============================> RESET AND WE HAVE NO CELL YET, THE CID IS: %u\n", cell_id);
+		bvc->cell = gbproxy_cell_alloc(cfg, bvci, cell_id, ra_id);
 		OSMO_ASSERT(bvc->cell);
 		memcpy(bvc->cell->ra, bvc->ra, sizeof(bvc->cell->ra));
 
@@ -840,6 +844,11 @@ static int rx_bvc_reset_from_bss(struct gbproxy_nse *nse, struct msgb *msg, stru
 			memcpy(from_bvc->ra, TLVP_VAL(tp, BSSGP_IE_CELL_ID), sizeof(from_bvc->ra));
 			gsm48_parse_ra(&raid, from_bvc->ra);
 			LOGPBVC(from_bvc, LOGL_INFO, "Cell ID %s\n", osmo_rai_name(&raid));
+
+			uint16_t cid = osmo_load16be(TLVP_VAL(tp, BSSGP_IE_CELL_ID)+6);
+			printf("========================> GOT CID: %u\n", cid);
+			
+			
 		}
 	}
 	/* hand into FSM for further processing */
@@ -950,6 +959,8 @@ static int gbprox_rx_sig_from_bss(struct gbproxy_nse *nse, struct msgb *msg, uin
 		struct gbproxy_sgsn *sgsn;
 		struct bssgp_rim_routing_info ri;
 
+		printf("==========================================> GOT A RIM PDU IN!\n");
+
 		/* TODO: Check the RIM src addr and insure it matches a Cell we have for this BSS */
 		/* Reply with STATUS if BSSGP didn't negotiate RIM feature */
 		/* FIXME: Check negotiated features
@@ -959,10 +970,13 @@ static int gbprox_rx_sig_from_bss(struct gbproxy_nse *nse, struct msgb *msg, uin
 
 		rc = bssgp_parse_rim_ri(&ri, TLVP_VAL(&tp, BSSGP_IE_RIM_ROUTING_INFO), TLVP_LEN(&tp, BSSGP_IE_RIM_ROUTING_INFO));
 
+		printf("===============================================> DEST: %s\n", bssgp_rim_ri_name(&ri));
+		
 		/* Check RIM destination addr */
 		if (ri.discr == BSSGP_RIM_ROUTING_INFO_GERAN) {
 			cell = gbproxy_cell_by_cellid(nse->cfg, &ri.geran.raid, ri.geran.cid);
 			if (cell) {
+				printf("=====================================> GOT CELL!\n");
 				/* Destination is known by gbproxy, route directly */
 				return gbprox_relay2peer(msg, cell->bss_bvc, 0);
 			}
@@ -970,6 +984,10 @@ static int gbprox_rx_sig_from_bss(struct gbproxy_nse *nse, struct msgb *msg, uin
 		/* Otherwise pass on to a RIM-capable SGSN */
 		/* TODO: Check SGSN is RIM-capable */
 		sgsn = gbproxy_select_sgsn(nse->cfg, NULL);
+
+		if (sgsn)
+			printf("===================================> GOT AN SGSN!\n");
+		
 		gbprox_relay2nse(msg, sgsn->nse, 0);
 		break;
 	}
@@ -1272,6 +1290,8 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_nse *nse, struct msgb *msg, ui
 		struct gbproxy_cell *cell;
 		struct bssgp_rim_routing_info ri;
 
+		printf("=============================================================> RIM PDU IS COMMING IM FROM THE OTHER SIDE!\n");
+
 		/* TODO: Check the RIM src addr and insure it matches a Cell we have for this BSS */
 		/* Reply with STATUS if BSSGP didn't negotiate RIM feature */
 		/* FIXME: Check negotiated features
@@ -1280,11 +1300,13 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_nse *nse, struct msgb *msg, ui
 		} */
 
 		rc = bssgp_parse_rim_ri(&ri, TLVP_VAL(&tp, BSSGP_IE_RIM_ROUTING_INFO), TLVP_LEN(&tp, BSSGP_IE_RIM_ROUTING_INFO));
+		printf("===============================================> DEST: %s\n", bssgp_rim_ri_name(&ri));
 
 		/* Check RIM destination addr */
 		if (ri.discr == BSSGP_RIM_ROUTING_INFO_GERAN) {
 			cell = gbproxy_cell_by_cellid(cfg, &ri.geran.raid, ri.geran.cid);
 			if (!cell) {
+				printf("===============================================> I DONT HAVE A CELL!\n");
 				/* TODO: Log error */
 			} else {
 				return gbprox_relay2peer(msg, cell->bss_bvc, 0);
@@ -1293,6 +1315,9 @@ static int gbprox_rx_sig_from_sgsn(struct gbproxy_nse *nse, struct msgb *msg, ui
 		/* If it's not a GERAN Cell or it's a Cell gbproxy doesn't know about: Return STATUS PDU with
 		 * "Unknown Destination Address" */
 		rc = bssgp_tx_status(BSSGP_CAUSE_UNKN_DST, NULL, msg);
+
+
+		printf("==================> THROUGH FROM THE OTHER SIDE - WHAT NOW?\n");
 		break;
 	}
 	default:
