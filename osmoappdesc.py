@@ -16,18 +16,16 @@
 
 
 app_configs = {
-    "gbproxy": ["doc/examples/osmo-gbproxy/osmo-gbproxy.cfg"],
     "sgsn": ["doc/examples/osmo-sgsn/osmo-sgsn.cfg"],
     "gtphub": ["doc/examples/osmo-gtphub/osmo-gtphub-1iface.cfg"]
 }
 
 
-apps = [(4246, "src/gbproxy/osmo-gbproxy", "OsmoGbProxy", "gbproxy"),
-        (4245, "src/sgsn/osmo-sgsn", "OsmoSGSN", "sgsn"),
+apps = [(4245, "src/sgsn/osmo-sgsn", "OsmoSGSN", "sgsn"),
         (4253, "src/gtphub/osmo-gtphub", "OsmoGTPhub", "gtphub")
         ]
 
 vty_command = ["./src/sgsn/osmo-sgsn", "-c",
                "doc/examples/osmo-sgsn/osmo-sgsn.cfg"]
 
-vty_app = apps[1]
+vty_app = apps[0]

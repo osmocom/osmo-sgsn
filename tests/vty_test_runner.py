@@ -67,53 +67,6 @@ class TestVTYBase(unittest.TestCase):
         self.vty = None
         osmoutil.end_proc(self.proc)
 
-
-class TestVTYGbproxy(TestVTYBase):
-
-    def vty_command(self):
-        return ["./src/gbproxy/osmo-gbproxy", "-c",
-                "doc/examples/osmo-gbproxy/osmo-gbproxy.cfg"]
-
-    def vty_app(self):
-        return (4246, "./src/gbproxy/osmo-gbproxy", "OsmoGbProxy", "gbproxy")
-
-    def testVtyTree(self):
-        self.vty.enable()
-        self.assertTrue(self.vty.verify('configure terminal', ['']))
-        self.assertEqual(self.vty.node(), 'config')
-        self.checkForEndAndExit()
-        self.assertTrue(self.vty.verify('ns', ['']))
-        self.assertEqual(self.vty.node(), 'config-ns')
-        self.checkForEndAndExit()
-        self.assertTrue(self.vty.verify('exit', ['']))
-        self.assertEqual(self.vty.node(), 'config')
-        self.assertTrue(self.vty.verify('gbproxy', ['']))
-        self.assertEqual(self.vty.node(), 'config-gbproxy')
-        self.checkForEndAndExit()
-        self.assertTrue(self.vty.verify('exit', ['']))
-        self.assertEqual(self.vty.node(), 'config')
-
-    def testVtyShow(self):
-        res = self.vty.command("show ns")
-        self.assertTrue(res.find('UDP bind') >= 0)
-
-        res = self.vty.command("show gbproxy bvc bss stats")
-        self.assertTrue(res.find('GBProxy Global Statistics') >= 0)
-
-    def testVtyDeletePeer(self):
-        self.vty.enable()
-        self.assertTrue(self.vty.verify('delete-gbproxy-peer 9999 bvci 7777', ['NSE not found']))
-        res = self.vty.command("delete-gbproxy-peer 9999 all dry-run")
-        self.assertTrue(res.find('Not Deleted 0 BVC') >= 0)
-        self.assertTrue(res.find('NSEI not found') >= 0)
-        res = self.vty.command("delete-gbproxy-peer 9999 only-bvc dry-run")
-        self.assertTrue(res.find('Not Deleted 0 BVC') >= 0)
-        res = self.vty.command("delete-gbproxy-peer 9999 only-nsvc dry-run")
-        self.assertTrue(res.find('NSEI not found') >= 0)
-        res = self.vty.command("delete-gbproxy-peer 9999 all")
-        self.assertTrue(res.find('Deleted 0 BVC') >= 0)
-        self.assertTrue(res.find('NSEI not found') >= 0)
-
 class TestVTYSGSN(TestVTYBase):
 
     def vty_command(self):
@@ -274,13 +227,6 @@ class TestVTYSGSN(TestVTYBase):
         for t in [3312, 3322, 3350, 3360, 3370, 3313, 3314, 3316, 3385, 3395, 3397]:
             self.assertTrue(self.vty.verify('timer t%d 10' % t, ['']))
 
-def add_gbproxy_test(suite, workdir):
-    if not os.path.isfile(os.path.join(workdir, "src/gbproxy/osmo-gbproxy")):
-        print("Skipping the Gb-Proxy test")
-        return
-    test = unittest.TestLoader().loadTestsFromTestCase(TestVTYGbproxy)
-    suite.addTest(test)
-
 def add_sgsn_test(suite, workdir):
     if not os.path.isfile(os.path.join(workdir, "src/sgsn/osmo-sgsn")):
         print("Skipping the SGSN test")
@@ -318,7 +264,6 @@ if __name__ == '__main__':
     os.chdir(workdir)
     print("Running tests for specific VTY commands")
     suite = unittest.TestSuite()
-    add_gbproxy_test(suite, workdir)
     add_sgsn_test(suite, workdir)
 
     if args.test_name:

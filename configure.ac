@@ -259,7 +259,6 @@ AC_OUTPUT(
     src/Makefile
     src/gprs/Makefile
     src/sgsn/Makefile
-    src/gbproxy/Makefile
     src/gtphub/Makefile
     tests/Makefile
     tests/atlocal

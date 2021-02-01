@@ -2,7 +2,6 @@ noinst_HEADERS = \
 	common.h \
 	crc24.h \
 	debug.h \
-	gb_proxy.h \
 	gprs_gb.h \
 	gprs_gb_parse.h \
 	gprs_gmm.h \

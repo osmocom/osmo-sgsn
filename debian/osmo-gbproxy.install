@@ -1,4 +1,0 @@
-etc/osmocom/osmo-gbproxy.cfg
-lib/systemd/system/osmo-gbproxy.service
-usr/bin/osmo-gbproxy
-usr/share/doc/osmo-sgsn/examples/osmo-gbproxy/osmo-gbproxy.cfg usr/share/doc/osmo-gbproxy/examples

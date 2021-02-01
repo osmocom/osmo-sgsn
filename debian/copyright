@@ -19,12 +19,10 @@ Files:     .gitignore
            contrib/ipa.py
            contrib/jenkins.sh
            contrib/soap.py
-           contrib/systemd/osmo-gbproxy.service
            contrib/systemd/osmo-sgsn.service
            contrib/twisted_ipa.py
            doc/Makefile.am
            doc/examples/Makefile.am
-           doc/examples/osmo-gbproxy/osmo-gbproxy.cfg
            doc/examples/osmo-gtphub/gtphub-example.txt
            doc/examples/osmo-gtphub/osmo-gtphub-1iface.cfg
            doc/examples/osmo-gtphub/osmo-gtphub.cfg
@@ -50,8 +48,6 @@ Files:     .gitignore
            src/gprs/osmo_sgsn.cfg
            tests/Makefile.am
            tests/atlocal.in
-           tests/gbproxy/Makefile.am
-           tests/gbproxy/gbproxy_test.ok
            tests/gprs/Makefile.am
            tests/gprs/gprs_test.c
            tests/gprs/gprs_test.ok
@@ -85,10 +81,6 @@ Files:     include/osmocom/sgsn/a_reset.h
            src/gprs/gprs_gb_parse.c
            src/gprs/gprs_utils.c
            src/gprs/sgsn_ares.c
-           src/gbproxy/gb_proxy.c
-           src/gbproxy/gb_proxy_main.c
-           src/gbproxy/gb_proxy_peer.c
-           src/gbproxy/gb_proxy_vty.c
            src/gtphub/gtphub.c
            src/gtphub/gtphub_main.c
            src/gtphub/gtphub_vty.c
@@ -139,7 +131,6 @@ License:   AGPL-3.0+
 
 Files:     src/gtphub/gtphub_ares.c
            src/gtphub/gtphub_sock.c
-           tests/gbproxy/gbproxy_test.c
 Copyright: 2013 Jacob Erlbeck <jerlbeck@sysmocom.de>
            2013 sysmocom s.f.m.c. GmbH
            2014 Holger Hans Peter Freyther

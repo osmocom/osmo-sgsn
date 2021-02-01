@@ -61,14 +61,6 @@ Group:          Productivity/Telephony/Servers
 %description -n osmo-gtphub
 Osmocom GTP Hub: Proxy for GTP traffic between multiple SGSNs and GGSNs.
 
-%package -n osmo-gbproxy
-Summary:        Osmocom GPRS Gb Interface Proxy
-Group:          Productivity/Telephony/Servers
-
-%description -n osmo-gbproxy
-The purpose of the Gb proxy is to aggregate the Gb links of multiple
-BSS's and present them in one Gb link to the SGSN.
-
 %prep
 %setup -q
 
@@ -95,10 +87,6 @@ make %{?_smp_mflags}
 %postun -n osmo-gtphub %service_del_postun  osmo-gtphub.service
 %pre    -n osmo-gtphub %service_add_pre     osmo-gtphub.service
 %post   -n osmo-gtphub %service_add_post    osmo-gtphub.service
-%preun  -n osmo-gbproxy %service_del_preun  osmo-gbproxy.service
-%postun -n osmo-gbproxy %service_del_postun osmo-gbproxy.service
-%pre    -n osmo-gbproxy %service_add_pre    osmo-gbproxy.service
-%post   -n osmo-gbproxy %service_add_post   osmo-gbproxy.service
 %endif
 
 %check
@@ -109,7 +97,6 @@ make %{?_smp_mflags} check || (find . -name testsuite.log -exec cat {} +)
 %dir %{_docdir}/%{name}/examples
 %dir %{_docdir}/%{name}/examples/osmo-sgsn
 %exclude %{_docdir}/%{name}/examples/osmo-gtphub
-%exclude %{_docdir}/%{name}/examples/osmo-gbproxy
 %{_docdir}/%{name}/examples/osmo-sgsn/osmo-sgsn-accept-all.cfg
 %{_docdir}/%{name}/examples/osmo-sgsn/osmo-sgsn.cfg
 %{_docdir}/%{name}/examples/osmo-sgsn/osmo-sgsn_custom-sccp.cfg
@@ -127,14 +114,5 @@ make %{?_smp_mflags} check || (find . -name testsuite.log -exec cat {} +)
 %dir %{_sysconfdir}/osmocom
 %config(noreplace) %{_sysconfdir}/osmocom/osmo-gtphub.cfg
 %{_unitdir}/osmo-gtphub.service
-
-%files -n osmo-gbproxy
-%dir %{_docdir}/%{name}/examples
-%dir %{_docdir}/%{name}/examples/osmo-gbproxy
-%{_docdir}/%{name}/examples/osmo-gbproxy/osmo-gbproxy.cfg
-%{_bindir}/osmo-gbproxy
-%dir %{_sysconfdir}/osmocom
-%config(noreplace) %{_sysconfdir}/osmocom/osmo-gbproxy.cfg
-%{_unitdir}/osmo-gbproxy.service
 
 %changelog

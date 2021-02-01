@@ -53,22 +53,6 @@ Priority: extra
 Depends: osmo-gtphub (= ${binary:Version}), ${misc:Depends}
 Description: Debug symbols for Osmocom GTP Hub
 
-Package: osmo-gbproxy
-Architecture: any
-Depends: ${shlibs:Depends},
-         ${misc:Depends}
-Recommends: osmo-sgsn
-Description: Osmocom GPRS Gb Interface Proxy
- The purpose of the Gb proxy is to aggregate the Gb links of multiple
- BSS's and present them in one Gb link to the SGSN.
-
-Package: osmo-gbproxy-dbg
-Architecture: any
-Section: debug
-Priority: extra
-Depends: osmo-gbproxy (= ${binary:Version}), ${misc:Depends}
-Description: Debug symbols for Osmocom GPRS Gb Interface Proxy
-
 Package: osmo-sgsn-doc
 Architecture: all
 Section: doc

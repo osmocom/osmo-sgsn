@@ -62,12 +62,6 @@ interact_vty \
 	osmo-sgsn -c "../examples/osmo-sgsn/osmo-sgsn.cfg"
 
 interact_vty \
-	"update_vty_reference" \
-	"vty-osmogbproxy/gbproxy_vty_reference.xml" \
-	4246 \
-	osmo-gbproxy -c "../examples/osmo-gbproxy/osmo-gbproxy.cfg"
-
-interact_vty \
 	"update_counters" \
 	"chapters/counters_generated.adoc" \
 	4245 \

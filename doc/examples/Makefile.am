@@ -1,7 +1,7 @@
 OSMOCONF_FILES = \
 	osmo-gtphub/osmo-gtphub.cfg \
 	osmo-sgsn/osmo-sgsn.cfg \
-	osmo-gbproxy/osmo-gbproxy.cfg
+	$(NULL)
 
 osmoconfdir = $(sysconfdir)/osmocom
 osmoconf_DATA = $(OSMOCONF_FILES)
