@@ -28,6 +28,7 @@
 #include <osmocom/core/linuxlist.h>
 #include <osmocom/core/timer.h>
 #include <osmocom/core/talloc.h>
+#include <osmocom/core/endian.h>
 #include <osmocom/gprs/gprs_bssgp.h>
 
 #include <osmocom/sgsn/debug.h>
@@ -164,27 +165,43 @@ static void debug_ip_packet(uint8_t *data, int len, int dir, char *info)
 
 /* Chapter 7.2: SN-PDU Formats */
 struct sndcp_common_hdr {
+#if OSMO_IS_LITTLE_ENDIAN
 	/* octet 1 */
 	uint8_t nsapi:4;
 	uint8_t more:1;
 	uint8_t type:1;
 	uint8_t first:1;
 	uint8_t spare:1;
+#elif OSMO_IS_BIG_ENDIAN
+/* auto-generated from the little endian part above (libosmocore/contrib/struct_endianess.py) */
+	uint8_t spare:1, first:1, type:1, more:1, nsapi:4;
+#endif
 } __attribute__((packed));
 
 /* PCOMP / DCOMP only exist in first fragment */
 struct sndcp_comp_hdr {
+#if OSMO_IS_LITTLE_ENDIAN
 	/* octet 2 */
 	uint8_t pcomp:4;
 	uint8_t dcomp:4;
+#elif OSMO_IS_BIG_ENDIAN
+/* auto-generated from the little endian part above (libosmocore/contrib/struct_endianess.py) */
+	uint8_t dcomp:4, pcomp:4;
+#endif
 } __attribute__((packed));
 
 struct sndcp_udata_hdr {
+#if OSMO_IS_LITTLE_ENDIAN
 	/* octet 3 */
 	uint8_t npdu_high:4;
 	uint8_t seg_nr:4;
 	/* octet 4 */
 	uint8_t npdu_low;
+#elif OSMO_IS_BIG_ENDIAN
+/* auto-generated from the little endian part above (libosmocore/contrib/struct_endianess.py) */
+	uint8_t seg_nr:4, npdu_high:4;
+	uint8_t npdu_low;
+#endif
 } __attribute__((packed));
 
 
