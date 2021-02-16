@@ -808,7 +808,7 @@ int sndcp_llunitdata_ind(struct msgb *msg, struct gprs_llc_lle *lle,
 				lle, lle->llme->tlli, lle->sapi, sch->nsapi);
 		return -EIO;
 	}
-	gprs_gb_recv_pdu(mmctx);
+	gprs_gb_recv_pdu(mmctx, msg);
 
 	if (scomph) {
 		sne->defrag.pcomp = scomph->pcomp;
