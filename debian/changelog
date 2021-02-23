@@ -1,3 +1,184 @@
+osmo-sgsn (1.7.0) unstable; urgency=medium
+
+  [ Daniel Willmann ]
+  * gprs_gmm: Check for RAT change and ensure this only happens for RAU/ATT
+  * gbproxy-usermanual: Explain BSSGP/BVC handling
+  * gbproxy: Whitespace fixes
+  * gbproxy: Add todo for BVC RESET logic
+  * gbproxy: Get the peer if paging by BVCI on SIG_BVC
+  * Let libosmocore handle VTY parent node tracking
+  * osmo-gbproxy: Free msgb in ns2 prim callback
+  * configure.ac: Require python3 for ext_tests
+  * osmo-gbproxy: Implement nsvc-state ctrl command
+  * gbproxy: Remove test testing NSVCI change
+  * gbproxy: Add NSE peer that can have multiple gbproxy_peers
+  * gbproxy: Ensure BVC0 is reset before handling PtP BVCs
+  * gbproxy: Only send paging to each matching NSE once
+  * gbproxy: Separate function to move gbproxy_peer to different nse
+  * gbproxy: Add logging macros for NSE and BVC
+  * gbproxy: Use LOG macros for NSE/BVC
+  * gbproxy: Change generic LOG messages so BVCI/NSEI fmt is consistent
+  * gbproxy: Add todos encountered while going through the code
+  * gbproxy: Add BVC log filters
+  * gbproxy: Add newline to log message
+  * gbproxy: Allow gbproxy_nse_free(NULL)
+  * gbproxy: Delete gbproxy_nse in delete-gbproxy-peer VTY command
+  * mm_state_gb_fsm: Handle implicit detach from mm_standby
+  * gbproxy: Fix bvci check in gbprox_rx_ptp_from_*
+  * osmo-gbproxy: Initialize all hash_maps
+  * gbproxy: Fix confusing log message in gbprox_relay2nse
+  * gbproxy: Add SGSN NRI configuration
+  * gbproxy: Add SGSN pooling support
+  * gbproxy: Add comments to sgsn functions
+  * gbproxy: Add config option to name an SGSN
+  * gbproxy: Add VTY command to override the node selection function
+  * Fix gbproxy_sgsn_by_tlli wraparound
+  * gbproxy: Implement TLLI cache and use it for SUSPEND/RESUME
+  * gbproxy: Increase TLLI cache timeout to 10s
+  * gbproxy: Implement IMSI cache
+  * gbproxy: Use IMSI cache to handle PAGING_PS_REJECT
+  * gbproxy: Use C-style comments
+  * gbproxy: Move helper function to a more logical place
+  * gbproxy: Remove unused variable assignment
+  * gbproxy: Fix VTY cmd name
+  * gbproxy: Define and use help string for gbproxy
+  * gbproxy: Add VTY commands to query the TLLI/IMSI cache
+  * gbproxy: Use IMSI cache for PTP paging and implement DUMMY_PAGING_PS
+  * gbproxy: Print the correct message type for dummy paging/paging reject
+  * gbproxy: Improve log messages in gbproxy_select_sgsn
+  * gbproxy: Fix radio status routing by TMSI
+  * manual/gbproxy: Update overview chapter
+  * Rename OsmoGbPROXY -> *Proxy
+  * manuals/gbproxy: Update configuration chapter
+  * manuals/gbproxy: Add osmo-bsc MSC pooling chapter from Neels as a base
+  * manuals/gbproxy: MSC -> SGSN for pooling chapter
+  * manuals/gbproxy: Move pooling to separate chapter
+
+  [ Alexander Couzens ]
+  * gprs_gmm_fsm.c: Implement RAT change between 2g and 3g
+  * gtphub: rename sgsn's oww osmo_sockaddr into sgsn_sockaddr
+  * gprs_llc: _bssgp_tx_dl_ud: ensure the LLME is valid before using it
+  * gmm: on invalid RA id reject the MS with an implicit detach
+  * gtphub_test: fix compilation error on gcc 10.2.0
+  * gtphub: fix compilation with gcc 10.2.0
+  * Port gbproxy to NS2
+  * sgsn: check for NULL of gprs_subscr_get_or_create()
+  * sgsn: Use the new NS2 api
+  * gbproxy: use ns2 vty2
+  * configure.ac: define a c standard instead of using the compilers default
+  * follow libosmocore/gprs_ns2 API changes of GPRS enums
+  * gbproxy: follow gprs_ns2 API vty changes
+  * sgsn: migrate to the new gprs_ns2_vty configuration
+  * follow libosmocore/gprs_ns2 API changes (gprs_ns2_dynamic_create_nse)
+
+  [ Neels Hofmeyr ]
+  * manual: explain IuPS, add SCCP/M3UA section from common chapters
+  * fix nullpointer: in gsm48_rx_gmm_ra_upd_req()
+  * gsup: send RAT type on LU
+  * gbproxy_test.c: fix mobile identity test data
+  * use new osmo_mobile_identity API everywhere
+
+  [ Eric ]
+  * tests: dlopen does not imply availability of dlsym..
+  * configure.ac: fix libtool issue with clang and sanitizer
+
+  [ Harald Welte ]
+  * gtphub_test: Fix compilation with gcc-10
+  * Fix memory leak when SNDCP de-fragmentation is used
+  * Treat RAU as implicit RESUME if GMM is suspended
+  * *.spec.in: Use %config(noreplace) to retain current config file
+  * Send a BVC-RESET to all persistent Gb interfaces at start-up
+  * Use osmo_fd_setup() whenever applicable
+  * Use osmo_fd_*_{disable,enable}
+  * gbproxy: Properly implement paging to LAC/RAC
+  * gbproxy: Implement paging to entire BSS area
+  * gprs_gb_parse: Add function to determine TLLI from encoded BSSGP
+  * gbproxy: Pass TLLI as LSP towards NS to facilitate load sharing
+  * gb_proxy_peer: Add some FIXMEs regarding invalid assumptions
+  * gb_proxy: More precise + readable log messages
+  * gb_proxy: Broadcast SGSN-INVOKE-TRACE and OVERLOAD
+  * gbproxy: Move BSS-side BVC-RESET processing to its own function
+  * gb_proxy: Slightly restructure processing of BSS-originated BVC-RESET
+  * gbproxy: Cosmetics: use longer lines
+  * gbproxy: Send BVC-STATUS if BSS sends us BVC-RESET without mandatory IEs
+  * gb_proxy: Use TLVP_PRES_LEN instead of TLVP_PRESENT
+  * gb_proxy: Rename gbproxy_peer to gbproxy_bvc
+  * gbproxy: Rename gbproxy_cfg.nses to gbproxy_cfg.bss_nses
+  * gbproxy: convert bss_nses from llist_head to hashtable
+  * gbproxy: convert nse->bvcs from llist_head to hashtable
+  * gbproxy: Remove patching, TLLI-tracking and SGSN2 support
+  * gb_proxy: cosmetic: Use function rather than open-coding is_sgsn
+  * gbproxy: Delete gbproxy_test
+  * gb_proxy: Introduce more validation / constraint checks
+  * gbproxy: use gbprox_relay2peer() whenever possible
+  * gb_proxy: Use osmo_tlv_prot_parse() to validate mandatory IEs
+  * gbproxy: Log FSM timeouts
+  * migrate to DLBSSGP as log sub-system for BSSGP
+  * gbproxy major rewrite for SGSN pool support
+  * gbproxy: Use "(nsei << 16) | bvci" as rate_ctr_group index
+  * gbproxy: Introduce new DOBJ log category; log object allocation/release
+  * gbproxy: Don't create an extra msgb copy for SGSN DL SIG
+  * gbproxy: Implement handling of BVC Flow Control
+  * gbproxy: Copy RA-ID from BSS side BVC to CELL and SGSN-side BVC
+  * gbproxy: (Re)allocate SGSN-side PTP BVC even if CELL already exists
+  * gbproxy: Fix segfault when receiving PAGING for unknown destination
+  * gbproxy: Add FSM related VTY commands
+  * gbproxy: Implement scaling of BVC flow control in SGSN pool
+  * gbproxy: Improve VTY state introspection
+  * gbproxy: rename vty command "show gbproxy ..." to "show gbproxy bvc ..."
+  * gbproxy: Add "show gbproxy cell ..." VTY command
+  * gbproxy: Fix build on Deiban 8
+  * gb_proxy: Don't use orphan log subsystem DPCU
+  * gbproxy: Avoid depending on any of the SGSN code
+  * main: add --vty-ref-mode, use vty_dump_xml_ref_mode()
+  * manuals: generate vty reference xml at build time
+
+  [ Pau Espin Pedrol ]
+  * Use OSMO_FD_* instead of deprecated BSC_FD_*
+  * sgsn_libgtp: Improve ps-paging logging
+  * gprs_gmm_fsm.c: Add missing license header
+  * sgsn_libgtp: Avoid ps-paging MS on GMM Suspended state
+  * configure.ac: Fix trailing whitespace
+  * doc: Update VTY reference xml file
+  * Support setting rt-prio and cpu-affinity mask through VTY
+  * Change default SCTP conn NULL->127.0.0.1 to localhost->localhost
+  * contrib/jenkins: Enable parallel make in make distcheck
+  * Log error if pdp ctx is freed while holding an active timer
+  * Fix crash rx DeactPdpReq while waiting for DeactPdpAck after gtp side is freed
+  * sgsn_delete_pdp_ctx: Add documentation and assert assumptions
+  * process_ms_ctx_status: refactor to avoid code duplication
+  * process_ms_ctx_status: Fix crash deleting PDP Ctx if GTP side was already released
+  * gbproxy: generate coredump and exit upon SIGABRT received
+  * gtphub: generate coredump and exit upon SIGABRT received
+  * sgsn: generate coredump and exit upon SIGABRT received
+  * gmm: fix build without define PTMSI_ALLOC
+  * gmm: Introduce comment to ease addition of Network feature support IE later
+  * .gitignore: Ignore new autofoo tmp files
+  * sndcp: Fix struct bit fields on big endian
+  * Fix nsei+bvci not updated on rx UL SNDCP data
+
+  [ Oliver Smith ]
+  * contrib: import RPM spec
+  * contrib: integrate RPM spec
+  * Makefile.am: EXTRA_DIST: debian, contrib/*.spec.in
+  * contrib/jenkins: don't build osmo-gsm-manuals
+  * gbproxy: remove (moved to own repository)
+
+  [ Vadim Yanitskiy ]
+  * debian/control: change maintainer to the Osmocom team / mailing list
+  * gb_proxy_peer: sgsn can never be NULL in gbproxy_sgsn_by_nri()
+  * gb_proxy_peer: fix NULL pointer dereference in gbproxy_sgsn_alloc()
+
+  [ Keith ]
+  * Fix Radio Priority in MM Attach and PDP Context Activation
+  * VTY: Add gtp state-dir command
+
+  [ Philipp Maier ]
+  * gprs_sndcp: fix use after free
+  * sgsn_rim: Add routing for (GERAN) BSSGP RIM messages
+
+ -- Pau Espin Pedrol <pespin@sysmocom.de>  Tue, 23 Feb 2021 20:29:33 +0100
+
 osmo-sgsn (1.6.0) unstable; urgency=medium
 
   [ Pau Espin Pedrol ]
