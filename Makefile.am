@@ -9,11 +9,11 @@ AM_CPPFLAGS = \
 	$(NULL)
 
 SUBDIRS = \
-	doc \
 	include \
 	src \
 	contrib \
 	tests \
+	doc \
 	$(NULL)
 
 BUILT_SOURCES = $(top_srcdir)/.version
