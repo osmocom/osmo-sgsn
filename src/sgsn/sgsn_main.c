@@ -407,23 +407,6 @@ int main(int argc, char **argv)
 	osmo_sccp_vty_init();
 #endif
 
-	handle_options(argc, argv);
-
-	/* Backwards compatibility: for years, the default config file name was
-	 * osmo_sgsn.cfg. All other Osmocom programs use osmo-*.cfg with a
-	 * dash. To be able to use the new config file name without breaking
-	 * previous setups that might rely on the legacy default config file
-	 * name, we need to look for the old config file if no -c option was
-	 * passed AND no file exists with the new default file name. */
-	if (!sgsn->config_file) {
-		/* No -c option was passed */
-		if (file_exists(CONFIG_FILE_LEGACY)
-		    && !file_exists(CONFIG_FILE_DEFAULT))
-			osmo_talloc_replace_string(sgsn, &sgsn->config_file, CONFIG_FILE_LEGACY);
-		else
-			osmo_talloc_replace_string(sgsn, &sgsn->config_file, CONFIG_FILE_DEFAULT);
-	}
-
 	rate_ctr_init(tall_sgsn_ctx);
 
 	logging_vty_add_deprecated_subsys(tall_sgsn_ctx, "bssgp");
@@ -447,6 +430,23 @@ int main(int argc, char **argv)
 	gprs_sndcp_vty_init();
 	sgsn_auth_init(sgsn);
 	sgsn_cdr_init(sgsn);
+
+	handle_options(argc, argv);
+
+	/* Backwards compatibility: for years, the default config file name was
+	 * osmo_sgsn.cfg. All other Osmocom programs use osmo-*.cfg with a
+	 * dash. To be able to use the new config file name without breaking
+	 * previous setups that might rely on the legacy default config file
+	 * name, we need to look for the old config file if no -c option was
+	 * passed AND no file exists with the new default file name. */
+	if (!sgsn->config_file) {
+		/* No -c option was passed */
+		if (file_exists(CONFIG_FILE_LEGACY)
+		    && !file_exists(CONFIG_FILE_DEFAULT))
+			osmo_talloc_replace_string(sgsn, &sgsn->config_file, CONFIG_FILE_LEGACY);
+		else
+			osmo_talloc_replace_string(sgsn, &sgsn->config_file, CONFIG_FILE_DEFAULT);
+	}
 
 	rc = sgsn_parse_config(sgsn->config_file);
 	if (rc < 0) {
