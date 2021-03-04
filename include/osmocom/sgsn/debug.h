@@ -13,7 +13,6 @@ enum {
 	DMEAS,
 	DREF,
 	DGPRS,
-	DNS,
 	DLLC,
 	DSNDCP,
 	DSLHC,
