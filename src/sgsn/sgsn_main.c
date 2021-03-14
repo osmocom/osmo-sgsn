@@ -405,6 +405,7 @@ int main(int argc, char **argv)
 	rate_ctr_init(tall_sgsn_ctx);
 
 	logging_vty_add_deprecated_subsys(tall_sgsn_ctx, "bssgp");
+	logging_vty_add_deprecated_subsys(tall_sgsn_ctx, "ns");
 
 	sgsn_nsi = gprs_ns2_instantiate(tall_sgsn_ctx, &gprs_ns_prim_cb, NULL);
 	if (!sgsn_nsi) {
