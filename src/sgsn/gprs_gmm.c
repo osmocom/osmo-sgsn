@@ -936,7 +936,7 @@ int gsm48_gmm_authorize(struct sgsn_mm_ctx *ctx)
 #ifdef BUILD_IU
 	case GSM48_MT_GMM_SERVICE_REQ:
 		ctx->pending_req = 0;
-		osmo_fsm_inst_dispatch(ctx->iu.mm_state_fsm, E_PMM_PS_ATTACH, NULL);
+		osmo_fsm_inst_dispatch(ctx->iu.mm_state_fsm, E_PMM_PS_CONN_ESTABLISH, NULL);
 		rc = gsm48_tx_gmm_service_ack(ctx);
 
 		if (ctx->iu.service.type != GPRS_SERVICE_T_SIGNALLING)
