@@ -120,7 +120,8 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 
 	mm = sgsn_mm_ctx_by_ue_ctx(ctx);
 	if (!mm) {
-		LOGIUP(ctx, LOGL_NOTICE, "Cannot find mm ctx for IU event %d\n", type);
+		LOGIUP(ctx, LOGL_NOTICE, "Cannot find mm ctx for IU event %s\n",
+		       ranap_iu_event_type_str(type));
 		ranap_iu_free_ue(ctx);
 		return rc;
 	}
