@@ -272,6 +272,13 @@ static void st_iu_security_cmd_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_
 static void st_iu_security_cmd(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	switch(event) {
+	case E_VLR_ANSWERED:
+		/* We may receive an event due to rx
+		 * OSMO_GSUP_MSGT_INSERT_DATA_REQUEST here. Do nothing, update of
+		 * subscriber is done by lower layers before event is signalled.
+		 * In this state we simply wait for E_IU_SECURITY_CMD_COMPLETE
+		 */
+		break;
 	case E_IU_SECURITY_CMD_COMPLETE:
 		gmm_attach_fsm_state_chg(fi, ST_ACCEPT);
 		break;
@@ -308,7 +315,7 @@ static struct osmo_fsm_state gmm_attach_req_fsm_states[] = {
 		.action = st_auth,
 	},
 	[ST_IU_SECURITY_CMD] = {
-		.in_event_mask = X(E_IU_SECURITY_CMD_COMPLETE),
+		.in_event_mask = X(E_IU_SECURITY_CMD_COMPLETE) | X(E_VLR_ANSWERED),
 		.out_state_mask = X(ST_INIT) | X(ST_AUTH) | X(ST_ACCEPT) | X(ST_REJECT),
 		.name = "IuSecurityCommand",
 		.onenter = st_iu_security_cmd_on_enter,
