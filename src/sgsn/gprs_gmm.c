@@ -2111,9 +2111,9 @@ int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 
 null_mmctx:
 	LOGGBIUP(llme, msg, LOGL_ERROR,
-	     "Received GSM 04.08 message type 0x%02x,"
+	     "Received GSM 04.08 message type %s,"
 	     " but no MM context available\n",
-	     gh->msg_type);
+	     get_value_string(gprs_msgt_gmm_names, gh->msg_type));
 	return -EINVAL;
 }
 
