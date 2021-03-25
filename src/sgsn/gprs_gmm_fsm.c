@@ -57,6 +57,10 @@ static void st_gmm_deregistered(struct osmo_fsm_inst *fi, uint32_t event, void *
 static void st_gmm_common_proc_init(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	switch(event) {
+	case E_GMM_COMMON_PROC_INIT_REQ:
+		/* MS may retransmit GPRS Attach Request if for some reason
+		 * CommonProcedure didn't go forward correctly */
+		break;
 	/* TODO: events not used
 	case E_GMM_LOWER_LAYER_FAILED:
 	case E_GMM_COMMON_PROC_FAILED:
@@ -126,7 +130,8 @@ static struct osmo_fsm_state gmm_fsm_states[] = {
 			/* X(E_GMM_LOWER_LAYER_FAILED) | */
 			/* X(E_GMM_COMMON_PROC_FAILED) | */
 			X(E_GMM_COMMON_PROC_SUCCESS) |
-			X(E_GMM_ATTACH_SUCCESS),
+			X(E_GMM_ATTACH_SUCCESS) |
+			X(E_GMM_COMMON_PROC_INIT_REQ),
 		.out_state_mask =
 			X(ST_GMM_DEREGISTERED) |
 			X(ST_GMM_REGISTERED_NORMAL),
