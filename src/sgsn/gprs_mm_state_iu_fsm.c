@@ -81,6 +81,7 @@ static void st_pmm_idle_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state)
 static void st_pmm_idle(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	switch(event) {
+	case E_PMM_PS_ATTACH:
 	case E_PMM_PS_CONN_ESTABLISH:
 		mm_state_iu_fsm_state_chg(fi, ST_PMM_CONNECTED);
 		break;
@@ -117,7 +118,10 @@ static struct osmo_fsm_state mm_state_iu_fsm_states[] = {
 		.action = st_pmm_connected,
 	},
 	[ST_PMM_IDLE] = {
-		.in_event_mask = X(E_PMM_IMPLICIT_DETACH) | X(E_PMM_PS_CONN_ESTABLISH),
+		.in_event_mask =
+			X(E_PMM_IMPLICIT_DETACH) |
+			X(E_PMM_PS_CONN_ESTABLISH) |
+			X(E_PMM_PS_ATTACH),
 		.out_state_mask = X(ST_PMM_DETACHED) | X(ST_PMM_CONNECTED),
 		.name = "Idle",
 		.onenter = st_pmm_idle_on_enter,
