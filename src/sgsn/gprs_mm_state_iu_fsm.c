@@ -64,7 +64,6 @@ static void st_pmm_connected(struct osmo_fsm_inst *fi, uint32_t event, void *dat
 		break;
 	case E_PMM_USER_INACTIVITY:
 		sgsn_ranap_iu_release_free(ctx, &user_inactive_cause);
-		mm_state_iu_fsm_state_chg(fi, ST_PMM_DETACHED);
 		break;
 	case E_PMM_RA_UPDATE:
 		break;
