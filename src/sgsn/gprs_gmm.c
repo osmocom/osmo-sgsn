@@ -215,7 +215,7 @@ static int _tx_status(struct msgb *msg, uint8_t cause,
 
 	/* MMCTX might be NULL! */
 
-	DEBUGP(DMM, "<- GPRS MM STATUS (cause: %s)\n",
+	DEBUGP(DMM, "<- GMM STATUS (cause: %s)\n",
 		get_value_string(gsm48_gmm_cause_names, cause));
 
 	gh = (struct gsm48_hdr *) msgb_put(msg, sizeof(*gh) + 1);
@@ -241,7 +241,7 @@ static int _tx_detach_req(struct msgb *msg, uint8_t detach_type, uint8_t cause,
 
 	/* MMCTX might be NULL! */
 
-	DEBUGP(DMM, "<- GPRS MM DETACH REQ (type: %s, cause: %s)\n",
+	DEBUGP(DMM, "<- GMM DETACH REQ (type: %s, cause: %s)\n",
 		get_value_string(gprs_det_t_mt_strs, detach_type),
 		get_value_string(gsm48_gmm_cause_names, cause));
 
@@ -290,7 +290,7 @@ int gsm48_tx_gmm_att_ack(struct sgsn_mm_ctx *mm)
 	uint8_t *ptsig;
 #endif
 
-	LOGMMCTXP(LOGL_INFO, mm, "<- GPRS ATTACH ACCEPT (new P-TMSI=0x%08x)\n", mm->p_tmsi);
+	LOGMMCTXP(LOGL_INFO, mm, "<- GMM ATTACH ACCEPT (new P-TMSI=0x%08x)\n", mm->p_tmsi);
 	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_GPRS_ATTACH_ACKED]);
 
 	mmctx2msgid(msg, mm);
@@ -354,7 +354,7 @@ static int _tx_gmm_att_rej(struct msgb *msg, uint8_t gmm_cause,
 {
 	struct gsm48_hdr *gh;
 
-	LOGMMCTXP(LOGL_NOTICE, mm, "<- GPRS ATTACH REJECT: %s\n",
+	LOGMMCTXP(LOGL_NOTICE, mm, "<- GMM ATTACH REJECT: %s\n",
 		  get_value_string(gsm48_gmm_cause_names, gmm_cause));
 	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_GPRS_ATTACH_REJECTED]);
 
@@ -388,7 +388,7 @@ static int _tx_detach_ack(struct msgb *msg, uint8_t force_stby,
 
 	/* MMCTX might be NULL! */
 
-	DEBUGP(DMM, "<- GPRS MM DETACH ACC (force-standby: %d)\n", force_stby);
+	DEBUGP(DMM, "<- GMM DETACH ACC (force-standby: %d)\n", force_stby);
 	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_GPRS_DETACH_ACKED]);
 
 	gh = (struct gsm48_hdr *) msgb_put(msg, sizeof(*gh) + 1);
@@ -421,7 +421,7 @@ int gsm48_tx_gmm_id_req(struct sgsn_mm_ctx *mm, uint8_t id_type)
 	struct msgb *msg = gsm48_msgb_alloc_name("GSM 04.08 ID REQ");
 	struct gsm48_hdr *gh;
 
-	LOGMMCTXP(LOGL_DEBUG, mm, "<- GPRS IDENTITY REQUEST: mi_type=%s\n",
+	LOGMMCTXP(LOGL_DEBUG, mm, "<- GMM IDENTITY REQUEST: mi_type=%s\n",
 		  gsm48_mi_type_name(id_type));
 
 	mmctx2msgid(msg, mm);
@@ -456,7 +456,7 @@ int gsm48_tx_gmm_auth_ciph_req(struct sgsn_mm_ctx *mm,
 	uint8_t *m_rand, *m_cksn, rbyte;
 	int rc;
 
-	LOGMMCTXP(LOGL_INFO, mm, "<- GPRS AUTH AND CIPHERING REQ (rand = %s,"
+	LOGMMCTXP(LOGL_INFO, mm, "<- GMM AUTH AND CIPHERING REQ (rand = %s,"
 		  " mmctx_is_r99=%d, vec->auth_types=0x%x",
 		  osmo_hexdump(vec->rand, sizeof(vec->rand)),
 		  mmctx_is_r99(mm), vec->auth_types);
@@ -519,7 +519,7 @@ static int gsm48_tx_gmm_auth_ciph_rej(struct sgsn_mm_ctx *mm)
 	struct msgb *msg = gsm48_msgb_alloc_name("GSM 04.08 AUTH CIPH REJ");
 	struct gsm48_hdr *gh;
 
-	LOGMMCTXP(LOGL_NOTICE, mm, "<- GPRS AUTH AND CIPH REJECT\n");
+	LOGMMCTXP(LOGL_NOTICE, mm, "<- GMM AUTH AND CIPH REJECT\n");
 
 	mmctx2msgid(msg, mm);
 
@@ -599,7 +599,7 @@ static int gsm48_rx_gmm_auth_ciph_resp(struct sgsn_mm_ctx *ctx,
 	uint8_t res_len;
 	int rc;
 
-	LOGMMCTXP(LOGL_INFO, ctx, "-> GPRS AUTH AND CIPH RESPONSE\n");
+	LOGMMCTXP(LOGL_INFO, ctx, "-> GMM AUTH AND CIPH RESPONSE\n");
 
 	if (ctx->auth_triplet.key_seq == GSM_KEY_SEQ_INVAL) {
 		LOGMMCTXP(LOGL_NOTICE, ctx,
@@ -650,7 +650,7 @@ static int gsm48_rx_gmm_auth_ciph_resp(struct sgsn_mm_ctx *ctx,
 	ctx->sec_ctx = check_auth_resp(ctx, false, &at->vec, res, res_len);
 	if (!sgsn_mm_ctx_is_authenticated(ctx)) {
 		rc = gsm48_tx_gmm_auth_ciph_rej(ctx);
-		mm_ctx_cleanup_free(ctx, "GPRS AUTH AND CIPH REJECT");
+		mm_ctx_cleanup_free(ctx, "GMM AUTH AND CIPH REJECT");
 		return rc;
 	}
 
@@ -673,7 +673,7 @@ static int gsm48_rx_gmm_auth_ciph_fail(struct sgsn_mm_ctx *ctx,
 	const uint8_t *auts;
 	int rc;
 
-	LOGMMCTXP(LOGL_INFO, ctx, "-> GPRS AUTH AND CIPH FAILURE (cause = %s)\n",
+	LOGMMCTXP(LOGL_INFO, ctx, "-> GMM AUTH AND CIPH FAILURE (cause = %s)\n",
 		  get_value_string(gsm48_gmm_cause_names, gmm_cause));
 
 	tlv_parse(&tp, &gsm48_gmm_att_tlvdef, gh->data+1, msg->len - 1, 0, 0);
@@ -713,7 +713,7 @@ static int gsm48_rx_gmm_auth_ciph_fail(struct sgsn_mm_ctx *ctx,
 
 	LOGMMCTXP(LOGL_NOTICE, ctx, "Authentication failed\n");
 	rc = gsm48_tx_gmm_auth_ciph_rej(ctx);
-	mm_ctx_cleanup_free(ctx, "GPRS AUTH FAILURE");
+	mm_ctx_cleanup_free(ctx, "GMM AUTH FAILURE");
 	return rc;
 }
 
@@ -792,7 +792,7 @@ static int gsm48_tx_gmm_service_ack(struct sgsn_mm_ctx *mm)
 	struct msgb *msg = gsm48_msgb_alloc_name("GSM 04.08 SERVICE ACK");
 	struct gsm48_hdr *gh;
 
-	LOGMMCTXP(LOGL_INFO, mm, "<- GPRS SERVICE ACCEPT (P-TMSI=0x%08x)\n", mm->p_tmsi);
+	LOGMMCTXP(LOGL_INFO, mm, "<- GMM SERVICE ACCEPT (P-TMSI=0x%08x)\n", mm->p_tmsi);
 
 	mmctx2msgid(msg, mm);
 
@@ -813,7 +813,7 @@ static int _tx_gmm_service_rej(struct msgb *msg, uint8_t gmm_cause,
 {
 	struct gsm48_hdr *gh;
 
-	LOGMMCTXP(LOGL_NOTICE, mm, "<- GPRS SERVICE REJECT: %s\n",
+	LOGMMCTXP(LOGL_NOTICE, mm, "<- GMM SERVICE REJECT: %s\n",
 		  get_value_string(gsm48_gmm_cause_names, gmm_cause));
 
 	gh = (struct gsm48_hdr *) msgb_put(msg, sizeof(*gh) + 1);
@@ -1087,7 +1087,7 @@ static int gsm48_rx_gmm_id_resp(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 				       "p_tmsi_old=0x%08x\n",
 					ictx->p_tmsi);
 
-				mm_ctx_cleanup_free(ictx, "GPRS IMSI re-use");
+				mm_ctx_cleanup_free(ictx, "GMM IMSI re-use");
 			}
 		}
 		OSMO_STRLCPY_ARRAY(ctx->imsi, mi.imsi);
@@ -1330,7 +1330,7 @@ rejected:
 		  get_value_string(gsm48_gmm_cause_names, reject_cause), reject_cause);
 	rc = gsm48_tx_gmm_att_rej_oldmsg(msg, reject_cause);
 	if (ctx)
-		mm_ctx_cleanup_free(ctx, "GPRS ATTACH REJ");
+		mm_ctx_cleanup_free(ctx, "GMM ATTACH REJ");
 	else if (llme)
 		gprs_llgmm_unassign(llme);
 
@@ -1343,7 +1343,7 @@ static int gsm48_rx_gmm_att_compl(struct sgsn_mm_ctx *mmctx)
 {
 	struct sgsn_signal_data sig_data;
 	/* only in case SGSN offered new P-TMSI */
-	LOGMMCTXP(LOGL_INFO, mmctx, "-> ATTACH COMPLETE\n");
+	LOGMMCTXP(LOGL_INFO, mmctx, "-> GMM ATTACH COMPLETE\n");
 
 	#ifdef BUILD_IU
 	if (mmctx->iu.ue_ctx) {
@@ -1430,7 +1430,7 @@ static int gsm48_rx_gmm_det_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 		memset(&sig_data, 0, sizeof(sig_data));
 		sig_data.mm = ctx;
 		osmo_signal_dispatch(SS_SGSN, S_SGSN_DETACH, &sig_data);
-		mm_ctx_cleanup_free(ctx, "GPRS DETACH REQUEST");
+		mm_ctx_cleanup_free(ctx, "GMM DETACH REQUEST");
 	}
 
 	return rc;
@@ -1450,7 +1450,7 @@ static int gsm48_tx_gmm_ra_upd_ack(struct sgsn_mm_ctx *mm)
 #endif
 
 	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_GPRS_ROUTING_AREA_ACKED]);
-	LOGMMCTXP(LOGL_INFO, mm, "<- ROUTING AREA UPDATE ACCEPT\n");
+	LOGMMCTXP(LOGL_INFO, mm, "<- GMM ROUTING AREA UPDATE ACCEPT\n");
 
 	mmctx2msgid(msg, mm);
 
@@ -1770,7 +1770,7 @@ rejected:
 		  get_value_string(gsm48_gmm_cause_names, reject_cause), reject_cause);
 	rc = gsm48_tx_gmm_ra_upd_rej(msg, reject_cause);
 	if (mmctx)
-		mm_ctx_cleanup_free(mmctx, "GPRS RA UPDATE REJ");
+		mm_ctx_cleanup_free(mmctx, "GMM RA UPDATE REJ");
 	else if (llme)
 		gprs_llgmm_unassign(llme);
 #ifdef BUILD_IU
@@ -1952,7 +1952,7 @@ static int gsm48_rx_gmm_status(struct sgsn_mm_ctx *mmctx, struct msgb *msg)
 {
 	struct gsm48_hdr *gh = msgb_l3(msg);
 
-	LOGMMCTXP(LOGL_INFO, mmctx, "-> GPRS MM STATUS (cause: %s)\n",
+	LOGMMCTXP(LOGL_INFO, mmctx, "-> GMM STATUS (cause: %s)\n",
 		get_value_string(gsm48_gmm_cause_names, gh->data[0]));
 
 	return 0;
@@ -2071,7 +2071,7 @@ int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		if (!mmctx)
 			goto null_mmctx;
 		LOGMMCTXP(LOGL_INFO, mmctx, "-> DETACH ACK\n");
-		mm_ctx_cleanup_free(mmctx, "GPRS DETACH ACK");
+		mm_ctx_cleanup_free(mmctx, "GMM DETACH ACK");
 		rc = 0;
 		break;
 	case GSM48_MT_GMM_ATTACH_COMPL:
@@ -2180,7 +2180,7 @@ static void mmctx_timer_cb(void *_mm)
 		if (mm->num_T_exp >= 5) {
 			LOGMMCTXP(LOGL_NOTICE, mm, "T3370 expired >= 5 times\n");
 			gsm48_tx_gmm_att_rej(mm, GMM_CAUSE_MS_ID_NOT_DERIVED);
-			mm_ctx_cleanup_free(mm, "GPRS ATTACH REJECT (T3370)");
+			mm_ctx_cleanup_free(mm, "GMM ATTACH REJECT (T3370)");
 			break;
 		}
 		/* re-tranmit IDENTITY REQUEST and re-start timer */
