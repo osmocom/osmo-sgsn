@@ -19,7 +19,6 @@ enum mm_state_iu_fsm_events {
 	E_PMM_PS_CONN_ESTABLISH,
 	E_PMM_IMPLICIT_DETACH, /* = E_PS_ATTACH_REJECT, E_RAU_REJECT */
 	E_PMM_RA_UPDATE, /* = Serving RNC relocation */
-	E_PMM_USER_INACTIVITY, /* when the inactivity timer runs out */
 };
 
 extern struct osmo_fsm mm_state_iu_fsm;

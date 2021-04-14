@@ -110,7 +110,6 @@ static struct osmo_tdef sgsn_T_defs[] = {
 	/* non spec timers */
 	{ .T=-1001, .default_val=NONSPEC_X1001_SECS, .desc="RANAP Release timeout. Wait for RANAP Release Complete."
 							   "On expiry release Iu connection (s)" },
-	{ .T=-3314, .default_val=GSM0408_T3314_SECS, .desc="Iu User inactivity timer. On expiry release Iu connection (s)" },
 	{}
 };
 
