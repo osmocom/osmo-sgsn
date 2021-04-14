@@ -199,9 +199,9 @@ void gmm_fsm_allstate_action(struct osmo_fsm_inst *fi, uint32_t event, void *dat
 			gmm_fsm_state_chg(fi, ST_GMM_DEREGISTERED);
 		default:
 			if (mmctx->ran_type == MM_CTX_T_GERAN_Gb)
-				osmo_fsm_inst_dispatch(mmctx->gb.mm_state_fsm, E_MM_IMPLICIT_DETACH, NULL);
+				osmo_fsm_inst_dispatch(mmctx->gb.mm_state_fsm, E_MM_GPRS_DETACH, NULL);
 			else if (mmctx->ran_type == MM_CTX_T_UTRAN_Iu) {
-				osmo_fsm_inst_dispatch(mmctx->iu.mm_state_fsm, E_PMM_IMPLICIT_DETACH, NULL);
+				osmo_fsm_inst_dispatch(mmctx->iu.mm_state_fsm, E_PMM_PS_DETACH, NULL);
 				mmctx->gb.llme = rat_chg->llme;
 			}
 

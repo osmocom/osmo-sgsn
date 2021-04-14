@@ -13,10 +13,9 @@ enum mm_state_iu_fsm_states {
 
 enum mm_state_iu_fsm_events {
 	E_PMM_PS_ATTACH,
-	/* E_PS_DETACH, TODO: not used */
+	E_PMM_PS_DETACH, /* UE becomes detached: due to Detach Req, RAU reject, implicit detach, etc. */
 	E_PMM_PS_CONN_RELEASE,
 	E_PMM_PS_CONN_ESTABLISH,
-	E_PMM_IMPLICIT_DETACH, /* = E_PS_ATTACH_REJECT, E_RAU_REJECT */
 	E_PMM_RA_UPDATE, /* = Serving RNC relocation */
 };
 

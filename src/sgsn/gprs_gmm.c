@@ -197,10 +197,10 @@ static void mm_ctx_cleanup_free(struct sgsn_mm_ctx *ctx, const char *log_text)
 
 	switch(ctx->ran_type) {
 	case MM_CTX_T_UTRAN_Iu:
-		osmo_fsm_inst_dispatch(ctx->iu.mm_state_fsm, E_PMM_IMPLICIT_DETACH, NULL);
+		osmo_fsm_inst_dispatch(ctx->iu.mm_state_fsm, E_PMM_PS_DETACH, NULL);
 		break;
 	case MM_CTX_T_GERAN_Gb:
-		osmo_fsm_inst_dispatch(ctx->gb.mm_state_fsm, E_MM_IMPLICIT_DETACH, NULL);
+		osmo_fsm_inst_dispatch(ctx->gb.mm_state_fsm, E_MM_GPRS_DETACH, NULL);
 		break;
 	}
 

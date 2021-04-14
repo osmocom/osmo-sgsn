@@ -14,9 +14,8 @@ enum mm_state_gb_fsm_states {
 
 enum mm_state_gb_fsm_events {
 	E_MM_GPRS_ATTACH,
-	/* E_GPRS_DETACH, TODO: not used */
+	E_MM_GPRS_DETACH,  /* MS becomes detached: due to Detach Req, RAU reject, implicit detach, etc. */
 	E_MM_PDU_RECEPTION,
-	E_MM_IMPLICIT_DETACH, /* = E_MM_CANCEL_LOCATION */
 	E_MM_READY_TIMER_EXPIRY,
 	/* E_FORCE_TO_STANDBY, TODO: not used */
 	/* E_ABNSORMAL_RLC_CONDITION, TODO: not used */

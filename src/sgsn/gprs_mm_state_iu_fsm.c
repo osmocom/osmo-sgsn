@@ -61,7 +61,7 @@ static void st_pmm_detached(struct osmo_fsm_inst *fi, uint32_t event, void *data
 	case E_PMM_PS_ATTACH:
 		mm_state_iu_fsm_state_chg(fi, ST_PMM_CONNECTED);
 		break;
-	case E_PMM_IMPLICIT_DETACH:
+	case E_PMM_PS_DETACH:
 		break;
 	}
 }
@@ -75,7 +75,7 @@ static void st_pmm_connected(struct osmo_fsm_inst *fi, uint32_t event, void *dat
 		sgsn_ranap_iu_free(ctx);
 		mm_state_iu_fsm_state_chg(fi, ST_PMM_IDLE);
 		break;
-	case E_PMM_IMPLICIT_DETACH:
+	case E_PMM_PS_DETACH:
 		sgsn_ranap_iu_release_free(ctx, NULL);
 		mm_state_iu_fsm_state_chg(fi, ST_PMM_DETACHED);
 		break;
@@ -98,7 +98,7 @@ static void st_pmm_idle(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 	case E_PMM_PS_CONN_ESTABLISH:
 		mm_state_iu_fsm_state_chg(fi, ST_PMM_CONNECTED);
 		break;
-	case E_PMM_IMPLICIT_DETACH:
+	case E_PMM_PS_DETACH:
 		mm_state_iu_fsm_state_chg(fi, ST_PMM_DETACHED);
 		break;
 	}
@@ -106,7 +106,7 @@ static void st_pmm_idle(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 
 static struct osmo_fsm_state mm_state_iu_fsm_states[] = {
 	[ST_PMM_DETACHED] = {
-		.in_event_mask = X(E_PMM_PS_ATTACH) | X(E_PMM_IMPLICIT_DETACH),
+		.in_event_mask = X(E_PMM_PS_ATTACH) | X(E_PMM_PS_DETACH),
 		.out_state_mask = X(ST_PMM_CONNECTED),
 		.name = "Detached",
 		.action = st_pmm_detached,
@@ -115,14 +115,14 @@ static struct osmo_fsm_state mm_state_iu_fsm_states[] = {
 		.in_event_mask =
 			X(E_PMM_PS_CONN_RELEASE) |
 			X(E_PMM_RA_UPDATE) |
-			X(E_PMM_IMPLICIT_DETACH),
+			X(E_PMM_PS_DETACH),
 		.out_state_mask = X(ST_PMM_DETACHED) | X(ST_PMM_IDLE),
 		.name = "Connected",
 		.action = st_pmm_connected,
 	},
 	[ST_PMM_IDLE] = {
 		.in_event_mask =
-			X(E_PMM_IMPLICIT_DETACH) |
+			X(E_PMM_PS_DETACH) |
 			X(E_PMM_PS_CONN_ESTABLISH) |
 			X(E_PMM_PS_ATTACH),
 		.out_state_mask = X(ST_PMM_DETACHED) | X(ST_PMM_CONNECTED),
@@ -136,7 +136,7 @@ const struct value_string mm_state_iu_fsm_event_names[] = {
 	OSMO_VALUE_STRING(E_PMM_PS_ATTACH),
 	OSMO_VALUE_STRING(E_PMM_PS_CONN_RELEASE),
 	OSMO_VALUE_STRING(E_PMM_PS_CONN_ESTABLISH),
-	OSMO_VALUE_STRING(E_PMM_IMPLICIT_DETACH),
+	OSMO_VALUE_STRING(E_PMM_PS_DETACH),
 	OSMO_VALUE_STRING(E_PMM_RA_UPDATE),
 	{ 0, NULL }
 };

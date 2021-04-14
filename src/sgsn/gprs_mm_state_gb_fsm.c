@@ -71,7 +71,7 @@ static void st_mm_ready(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 	case E_MM_READY_TIMER_EXPIRY:
 		mm_state_gb_fsm_state_chg(fi, ST_MM_STANDBY);
 		break;
-	case E_MM_IMPLICIT_DETACH:
+	case E_MM_GPRS_DETACH:
 		mm_state_gb_fsm_state_chg(fi, ST_MM_IDLE);
 		break;
 	case E_MM_PDU_RECEPTION:
@@ -90,7 +90,7 @@ static void st_mm_standby(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 	case E_MM_PDU_RECEPTION:
 		mm_state_gb_fsm_state_chg(fi, ST_MM_READY);
 		break;
-	case E_MM_IMPLICIT_DETACH:
+	case E_MM_GPRS_DETACH:
 		mm_state_gb_fsm_state_chg(fi, ST_MM_IDLE);
 		break;
 	}
@@ -105,13 +105,13 @@ static struct osmo_fsm_state mm_state_gb_fsm_states[] = {
 		.action = st_mm_idle,
 	},
 	[ST_MM_READY] = {
-		.in_event_mask = X(E_MM_READY_TIMER_EXPIRY) | X(E_MM_RA_UPDATE) | X(E_MM_IMPLICIT_DETACH) | X(E_MM_PDU_RECEPTION),
+		.in_event_mask = X(E_MM_READY_TIMER_EXPIRY) | X(E_MM_RA_UPDATE) | X(E_MM_GPRS_DETACH) | X(E_MM_PDU_RECEPTION),
 		.out_state_mask = X(ST_MM_IDLE) | X(ST_MM_STANDBY),
 		.name = "Ready",
 		.action = st_mm_ready,
 	},
 	[ST_MM_STANDBY] = {
-		.in_event_mask = X(E_MM_PDU_RECEPTION) | X(E_MM_IMPLICIT_DETACH),
+		.in_event_mask = X(E_MM_PDU_RECEPTION) | X(E_MM_GPRS_DETACH),
 		.out_state_mask = X(ST_MM_IDLE) | X(ST_MM_READY),
 		.name = "Standby",
 		.action = st_mm_standby,
@@ -121,7 +121,7 @@ static struct osmo_fsm_state mm_state_gb_fsm_states[] = {
 const struct value_string mm_state_gb_fsm_event_names[] = {
 	OSMO_VALUE_STRING(E_MM_GPRS_ATTACH),
 	OSMO_VALUE_STRING(E_MM_PDU_RECEPTION),
-	OSMO_VALUE_STRING(E_MM_IMPLICIT_DETACH),
+	OSMO_VALUE_STRING(E_MM_GPRS_DETACH),
 	OSMO_VALUE_STRING(E_MM_READY_TIMER_EXPIRY),
 	OSMO_VALUE_STRING(E_MM_RA_UPDATE),
 	{ 0, NULL }
