@@ -134,10 +134,9 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 		/* fall thru */
 	case RANAP_IU_EVENT_LINK_INVALIDATED:
 		/* Clean up ranap_ue_conn_ctx here */
-		LOGMMCTXP(LOGL_INFO, mm, "IU release for imsi %s\n", mm->imsi);
-		if (mm->iu.mm_state_fsm->state == ST_PMM_CONNECTED)
-			osmo_fsm_inst_dispatch(mm->iu.mm_state_fsm, E_PMM_PS_CONN_RELEASE, NULL);
-		else
+		LOGMMCTXP(LOGL_INFO, mm, "IU release (cause=%s)\n", ranap_iu_event_type_str(type));
+		rc = osmo_fsm_inst_dispatch(mm->iu.mm_state_fsm, E_PMM_PS_CONN_RELEASE, NULL);
+		if (rc < 0)
 			sgsn_ranap_iu_free(mm);
 
 		/* TODO: move this into FSM */
