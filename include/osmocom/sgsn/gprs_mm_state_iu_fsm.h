@@ -4,8 +4,7 @@
 
 struct sgsn_mm_ctx;
 
-
-/* TS 23.060 6.1.1 Mobility Management States (A/Gb mode) */
+/* TS 23.060 § 6.1.2 Mobility Management States (Iu mode) */
 enum mm_state_iu_fsm_states {
 	ST_PMM_DETACHED,
 	ST_PMM_CONNECTED,

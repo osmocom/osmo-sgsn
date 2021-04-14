@@ -5,7 +5,7 @@
 struct sgsn_mm_ctx;
 
 
-/* TS 23.060 6.1.1 Mobility Management States (A/Gb mode) */
+/* TS 23.060 § 6.1.1 Mobility Management States (A/Gb mode) */
 enum mm_state_gb_fsm_states {
 	ST_MM_IDLE,
 	ST_MM_READY,
