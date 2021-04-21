@@ -479,6 +479,33 @@ void sgsn_ggsn_echo_req(struct sgsn_ggsn_ctx *ggc)
 	gtp_echo_req(ggc->gsn, ggc->gtp_version, ggc, &ggc->remote_addr);
 }
 
+/* Confirmation of a PDP Context Update */
+static int update_pdp_conf(struct pdp_t *pdp, void *cbp, int cause)
+{
+	struct sgsn_pdp_ctx *pctx = cbp;
+	int rc;
+
+	LOGPDPCTXP(LOGL_INFO, pctx, "Received Update PDP CTX CONF, cause=%d(%s)\n",
+		cause, get_value_string(gtp_cause_strs, cause));
+
+	/* 3GPP TS 29.060 "7.3.4":
+	 * "If the SGSN receives an Update PDP Context Response with a Cause
+	 * value other than "Request accepted", it shall abort the update of the
+	 * PDP context.""
+	 * "If the SGSN receives an Update PDP Context Response with
+	 * a Cause value "Non-existent", it shall delete the PDP Context."
+	 */
+	if (cause != GTPCAUSE_NON_EXIST)
+		 return 0; /* Nothing to do */
+
+	LOGPDPCTXP(LOGL_INFO, pctx, "PDP CTX we tried to update doesn't exist in "
+		   "the GGSN anymore, deleting it locally.\n");
+
+	rc = gtp_freepdp(pctx->ggsn->gsn, pctx->lib);
+	/* related mmctx is torn down in cb_delete_context called by gtp_freepdp() */
+	return rc;
+}
+
 /* Confirmation of a PDP Context Delete */
 static int delete_pdp_conf(struct pdp_t *pdp, void *cbp, int cause)
 {
@@ -577,6 +604,8 @@ static int cb_conf(int type, int cause, struct pdp_t *pdp, void *cbp)
 		return echo_conf(cbp, cause == EOF);
 	case GTP_CREATE_PDP_REQ:
 		return create_pdp_conf(pdp, cbp, cause);
+	case GTP_UPDATE_PDP_REQ:
+		return update_pdp_conf(pdp, cbp, cause);
 	case GTP_DELETE_PDP_REQ:
 		return delete_pdp_conf(pdp, cbp, cause);
 	default:
