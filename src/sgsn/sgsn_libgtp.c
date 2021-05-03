@@ -55,6 +55,8 @@
 #include <osmocom/sgsn/gprs_ranap.h>
 #include <osmocom/sgsn/gprs_gmm_fsm.h>
 #include <osmocom/sgsn/gprs_mm_state_gb_fsm.h>
+#include <osmocom/sgsn/gtp_mme.h>
+#include <osmocom/sgsn/sgsn_rim.h>
 
 #include <gtp.h>
 #include <pdp.h>
@@ -479,6 +481,43 @@ void sgsn_ggsn_echo_req(struct sgsn_ggsn_ctx *ggc)
 	gtp_echo_req(ggc->gsn, ggc->gtp_version, ggc, &ggc->remote_addr);
 }
 
+int sgsn_mme_ran_info_req(struct sgsn_mme_ctx *mme, const struct bssgp_ran_information_pdu *pdu)
+{
+	char ri_src_str[64], ri_dest_str[64];
+	int ri_len;
+	struct msgb *msg;
+	struct bssgp_normal_hdr *bgph;
+	int rc;
+	uint8_t ri_buf[64];
+	uint8_t *ri_ptr = &ri_buf[0];
+	struct sockaddr_in sk_in = {
+		.sin_family = AF_INET,
+		.sin_port = htons(GTP1C_PORT),
+		.sin_addr = mme->remote_addr,
+	};
+
+	msg = bssgp_encode_rim_pdu(pdu);
+	if (!msg) {
+		LOGMME(mme, DRIM, LOGL_ERROR, "Tx GTP RAN Information Relay: failed to encode pdu\n");
+		return -EINVAL;
+	}
+	bgph = (struct bssgp_normal_hdr *)msgb_bssgph(msg);
+	DEBUGP(DLBSSGP, "Tx GTP RAN Information Relay: RIM-PDU:%s, src=%s, dest=%s\n",
+	       bssgp_pdu_str(bgph->pdu_type),
+	       bssgp_rim_ri_name_buf(ri_src_str, sizeof(ri_src_str), &pdu->routing_info_src),
+	       bssgp_rim_ri_name_buf(ri_dest_str, sizeof(ri_dest_str), &pdu->routing_info_dest));
+
+	if ((ri_len = bssgp_create_rim_ri(ri_ptr, &pdu->routing_info_dest)) < 0) {
+		ri_ptr = NULL;
+		ri_len = 0;
+	}
+
+	rc = gtp_ran_info_relay_req(mme->sgsn->gsn,  &sk_in, msgb_data(msg), msgb_length(msg),
+				    ri_ptr, ri_len, pdu->routing_info_dest.discr);
+	msgb_free(msg);
+	return rc;
+}
+
 /* Confirmation of a PDP Context Update */
 static int update_pdp_conf(struct pdp_t *pdp, void *cbp, int cause)
 {
@@ -646,6 +685,42 @@ static int cb_extheader_ind(struct sockaddr_in *peer)
 		"from %s:%u\n", inet_ntoa(peer->sin_addr),
 		ntohs(peer->sin_port));
 	return 0;
+}
+
+static int cb_gtp_ran_info_relay_ind(struct sockaddr_in *peer, union gtpie_member **ie)
+{
+	char addrbuf[INET_ADDRSTRLEN];
+	struct sgsn_mme_ctx *mme = sgsn_mme_ctx_by_addr(sgsn, &peer->sin_addr);
+	if (!mme) {
+		LOGP(DGTP, LOGL_NOTICE, "Rx GTP RAN Information Relay from unknown MME %s\n",
+		     inet_ntop(AF_INET, &peer->sin_addr, addrbuf, sizeof(addrbuf)));
+		return -ECONNREFUSED;
+	}
+
+	LOGMME(mme, DGTP, LOGL_INFO, "Rx GTP RAN Information Relay\n");
+
+	unsigned int len = 0;
+	struct msgb *msg = msgb_alloc(4096, "gtpcv1_ran_info");
+	struct bssgp_ran_information_pdu pdu;
+
+	if (gtpie_gettlv(ie, GTPIE_RAN_T_CONTAIN, 0, &len, msgb_data(msg), 4096) || len <= 0) {
+		LOGMME(mme, DGTP, LOGL_ERROR, "Rx GTP RAN Information Relay: No Transparent Container IE found!\n");
+		goto ret_error;
+	}
+	msgb_put(msg, len);
+	msgb_bssgph(msg) = msg->data;
+	msgb_nsei(msg) = 0;
+	if (bssgp_parse_rim_pdu(&pdu, msg) < 0) {
+		LOGMME(mme, DGTP, LOGL_ERROR, "Rx GTP RAN Information Relay: Failed parsing Transparent Container IE!\n");
+		goto ret_error;
+	}
+
+	msgb_free(msg);
+	return sgsn_rim_rx_from_gtp(&pdu, mme);
+
+ret_error:
+	msgb_free(msg);
+	return -EINVAL;
 }
 
 /* Called whenever we receive a DATA packet */
@@ -837,6 +912,7 @@ int sgsn_gtp_init(struct sgsn_instance *sgi)
 	gtp_set_cb_data_ind(gsn, cb_data_ind);
 	gtp_set_cb_unsup_ind(gsn, cb_unsup_ind);
 	gtp_set_cb_extheader_ind(gsn, cb_extheader_ind);
+	gtp_set_cb_ran_info_relay_ind(gsn, cb_gtp_ran_info_relay_ind);
 
 	return 0;
 }

@@ -6,7 +6,10 @@
 #include <osmocom/core/select.h>
 #include <osmocom/crypt/gprs_cipher.h>
 #include <osmocom/gprs/gprs_ns2.h>
+#include <osmocom/gprs/gprs_bssgp.h>
+
 #include <osmocom/sgsn/gprs_sgsn.h>
+#include <osmocom/sgsn/gtp_mme.h>
 #include <osmocom/gsm/oap_client.h>
 #include <osmocom/gsupclient/gsup_client.h>
 #include <osmocom/sgsn/common.h>
@@ -145,6 +148,8 @@ struct sgsn_instance {
 	struct ares_addr_node *ares_servers;
 
 	struct rate_ctr_group *rate_ctrs;
+
+	struct llist_head mme_list; /* list of struct sgsn_mme_ctx */
 };
 
 extern struct sgsn_instance *sgsn;
@@ -169,6 +174,7 @@ int sgsn_delete_pdp_ctx(struct sgsn_pdp_ctx *pctx);
 void sgsn_pdp_upd_gtp_u(struct sgsn_pdp_ctx *pdp, void *addr, size_t alen);
 void sgsn_ggsn_echo_req(struct sgsn_ggsn_ctx *ggc);
 int send_act_pdp_cont_acc(struct sgsn_pdp_ctx *pctx);
+int sgsn_mme_ran_info_req(struct sgsn_mme_ctx *mme, const struct bssgp_ran_information_pdu *pdu);
 
 /* gprs_sndcp.c */
 

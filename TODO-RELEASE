@@ -1,1 +1,3 @@
 #component	what		description / commit summary line
+libosmogb > 1.5.1       bssgp_encode_rim_pdu    symbol was not exported previously
+libgtp > 1.7.1          use gtp_ran_info_relay_req(), gtp_set_cb_ran_info_relay_ind()

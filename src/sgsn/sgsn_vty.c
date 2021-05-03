@@ -37,6 +37,7 @@
 #include <osmocom/gprs/gprs_ns2.h>
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/gprs_sgsn.h>
+#include <osmocom/sgsn/gtp_mme.h>
 #include <osmocom/sgsn/vty.h>
 #include <osmocom/gsupclient/gsup_client.h>
 
@@ -176,12 +177,35 @@ static struct cmd_node sgsn_node = {
 	1,
 };
 
+static struct cmd_node mme_node = {
+	MME_NODE,
+	"%s(config-sgsn-mme)# ",
+	1,
+};
+
+static void config_write_mme(struct vty *vty, const struct sgsn_mme_ctx *mme, const char *prefix)
+{
+	struct mme_rim_route *rt;
+
+	vty_out(vty, "%smme %s%s", prefix, mme->name, VTY_NEWLINE);
+
+	vty_out(vty, "%s gtp remote-ip %s%s", prefix, inet_ntoa(mme->remote_addr), VTY_NEWLINE);
+	if (mme->default_route)
+		vty_out(vty, "%s gtp ran-info-relay default%s", prefix, VTY_NEWLINE);
+	llist_for_each_entry(rt, &mme->routes, list) {
+		vty_out(vty, "%s gtp ran-info-relay %s %s %u%s", prefix,
+			osmo_mcc_name(rt->tai.mcc), osmo_mnc_name(rt->tai.mnc, rt->tai.mnc_3_digits),
+			rt->tai.tac, VTY_NEWLINE);
+	}
+}
+
 static int config_write_sgsn(struct vty *vty)
 {
 	struct sgsn_ggsn_ctx *gctx;
 	struct imsi_acl_entry *acl;
 	struct apn_ctx *actx;
 	struct ares_addr_node *server;
+	struct sgsn_mme_ctx *mme;
 
 	vty_out(vty, "sgsn%s", VTY_NEWLINE);
 
@@ -295,6 +319,10 @@ static int config_write_sgsn(struct vty *vty)
 		vty_out(vty, " compression v42bis passive%s", VTY_NEWLINE);
 	} else
 		vty_out(vty, " no compression v42bis%s", VTY_NEWLINE);
+
+	llist_for_each_entry(mme, &sgsn->mme_list, list) {
+		config_write_mme(vty, mme, " ");
+	}
 
 #ifdef BUILD_IU
 	vty_out(vty, " cs7-instance-iu %u%s", g_cfg->iu.cs7_instance,
@@ -1423,6 +1451,161 @@ DEFUN(cfg_sgsn_cs7_instance_iu,
 }
 #endif
 
+DEFUN(cfg_sgsn_mme, cfg_sgsn_mme_cmd,
+	"mme NAME",
+	"Configure an MME peer\n"
+	"Name identifying the MME peer\n")
+{
+	struct sgsn_mme_ctx *mme;
+
+	mme = sgsn_mme_ctx_find_alloc(sgsn, argv[0]);
+	if (!mme)
+		return CMD_WARNING;
+
+	vty->node = MME_NODE;
+	vty->index = mme;
+
+	return CMD_SUCCESS;
+}
+
+DEFUN(cfg_sgsn_no_mme, cfg_sgsn_no_mme_cmd,
+	"no mme NAME",
+	NO_STR "Delete an MME peer configuration\n"
+	"Name identifying the MME peer\n")
+{
+	struct sgsn_mme_ctx *mme;
+
+	mme = sgsn_mme_ctx_by_name(sgsn, argv[0]);
+	if (!mme) {
+		vty_out(vty, "%% MME %s doesn't exist.%s",
+			argv[0], VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+
+	sgsn_mme_ctx_free(mme);
+
+	return CMD_SUCCESS;
+}
+
+#define GTP_STR "Configure GTP connection\n"
+
+DEFUN(cfg_mme_remote_ip, cfg_mme_remote_ip_cmd,
+	"gtp remote-ip A.B.C.D",
+	GTP_STR "Set Remote GTP IP address\n" IP_STR)
+{
+	struct sgsn_mme_ctx *mme = (struct sgsn_mme_ctx *) vty->index;
+
+	inet_aton(argv[0], &mme->remote_addr);
+
+	return CMD_SUCCESS;
+}
+
+#define RAN_INFO_STR "Configure RAN Information Relay routing\n"
+#define TAI_DOC "MCC\n" "MNC\n" "TAC\n"
+
+DEFUN(cfg_mme_ran_info_relay_tai, cfg_mme_ran_info_relay_tai_cmd,
+	"gtp ran-info-relay <0-999> <0-999> <0-65535>",
+	GTP_STR RAN_INFO_STR TAI_DOC)
+{
+	struct sgsn_mme_ctx *mme = (struct sgsn_mme_ctx *) vty->index;
+	struct sgsn_mme_ctx *mme_tmp;
+	struct osmo_eutran_tai tai;
+
+	const char *mcc = argv[0];
+	const char *mnc = argv[1];
+	const char *tac = argv[2];
+
+	if (osmo_mcc_from_str(mcc, &tai.mcc)) {
+		vty_out(vty, "%% Error decoding MCC: %s%s", mcc, VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if (osmo_mnc_from_str(mnc, &tai.mnc, &tai.mnc_3_digits)) {
+		vty_out(vty, "%% Error decoding MNC: %s%s", mnc, VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	tai.tac = atoi(tac);
+
+	if ((mme_tmp = sgsn_mme_ctx_by_route(sgsn, &tai))) {
+		if (mme_tmp != mme) {
+			vty_out(vty, "%% Another MME %s already contains this route%s",
+				mme_tmp->name, VTY_NEWLINE);
+			return CMD_WARNING;
+		}
+		/* else: NO-OP, return */
+		return CMD_SUCCESS;
+	}
+
+	sgsn_mme_ctx_route_add(mme, &tai);
+	return CMD_SUCCESS;
+}
+
+DEFUN(cfg_mme_no_ran_info_relay_tai, cfg_mme_no_ran_info_relay_tai_cmd,
+	"no gtp ran-info-relay <0-999> <0-999> <0-65535>",
+	NO_STR GTP_STR RAN_INFO_STR TAI_DOC)
+{
+	struct sgsn_mme_ctx *mme = (struct sgsn_mme_ctx *) vty->index;
+	struct sgsn_mme_ctx *mme_tmp;
+	struct osmo_eutran_tai tai;
+
+	const char *mcc = argv[0];
+	const char *mnc = argv[1];
+	const char *tac = argv[2];
+
+	if (osmo_mcc_from_str(mcc, &tai.mcc)) {
+		vty_out(vty, "%% Error decoding MCC: %s%s", mcc, VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	if (osmo_mnc_from_str(mnc, &tai.mnc, &tai.mnc_3_digits)) {
+		vty_out(vty, "%% Error decoding MNC: %s%s", mnc, VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+	tai.tac = atoi(tac);
+
+	if ((mme_tmp = sgsn_mme_ctx_by_route(sgsn, &tai))) {
+		if (mme_tmp != mme) {
+			vty_out(vty, "%% Another MME %s contains this route%s",
+				mme_tmp->name, VTY_NEWLINE);
+			return CMD_WARNING;
+		}
+		sgsn_mme_ctx_route_del(mme, &tai);
+		return CMD_SUCCESS;
+	} else {
+		vty_out(vty, "%% This route doesn't exist in current MME %s%s",
+			mme->name, VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+}
+
+DEFUN(cfg_mme_ran_info_relay_default, cfg_mme_ran_info_relay_default_cmd,
+	"gtp ran-info-relay default",
+	GTP_STR RAN_INFO_STR "Set as default route")
+{
+	struct sgsn_mme_ctx *mme = (struct sgsn_mme_ctx *) vty->index;
+	struct sgsn_mme_ctx *default_mme;
+
+	if (mme->default_route)
+		return CMD_SUCCESS; /* NO-OP */
+
+	if ((default_mme = sgsn_mme_ctx_by_default_route(sgsn))) {
+		vty_out(vty, "%% Another MME %s is already set as default route, "
+			     "remove it before setting it here.%s",
+			     default_mme->name, VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+
+	mme->default_route = true;
+	return CMD_SUCCESS;
+}
+
+DEFUN(cfg_mme_no_ran_info_relay_default, cfg_mme_no_ran_info_relay_default_cmd,
+	"no gtp ran-info-relay default",
+	NO_STR GTP_STR RAN_INFO_STR "Set as default route")
+{
+	struct sgsn_mme_ctx *mme = (struct sgsn_mme_ctx *) vty->index;
+	mme->default_route = false;
+	return CMD_SUCCESS;
+}
+
 int sgsn_vty_init(struct sgsn_config *cfg)
 {
 	g_cfg = cfg;
@@ -1485,6 +1668,15 @@ int sgsn_vty_init(struct sgsn_config *cfg)
 	install_element(SGSN_NODE, &cfg_no_comp_v42bis_cmd);
 	install_element(SGSN_NODE, &cfg_comp_v42bis_cmd);
 	install_element(SGSN_NODE, &cfg_comp_v42bisp_cmd);
+
+	install_element(SGSN_NODE, &cfg_sgsn_mme_cmd);
+	install_element(SGSN_NODE, &cfg_sgsn_no_mme_cmd);
+	install_node(&mme_node, NULL);
+	install_element(MME_NODE, &cfg_mme_remote_ip_cmd);
+	install_element(MME_NODE, &cfg_mme_ran_info_relay_default_cmd);
+	install_element(MME_NODE, &cfg_mme_no_ran_info_relay_default_cmd);
+	install_element(MME_NODE, &cfg_mme_ran_info_relay_tai_cmd);
+	install_element(MME_NODE, &cfg_mme_no_ran_info_relay_tai_cmd);
 
 #ifdef BUILD_IU
 	install_element(SGSN_NODE, &cfg_sgsn_cs7_instance_iu_cmd);

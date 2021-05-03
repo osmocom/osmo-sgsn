@@ -122,7 +122,7 @@ int bssgp_prim_cb(struct osmo_prim_hdr *oph, void *ctx)
 	case SAP_BSSGP_NM:
 		break;
 	case SAP_BSSGP_RIM:
-		return sgsn_rim_rx(bp, oph->msg);
+		return sgsn_rim_rx_from_gb(bp, oph->msg);
 	}
 	return 0;
 }
@@ -162,15 +162,36 @@ static void signal_handler(int signum)
 	}
 }
 
+static int sgsn_vty_go_parent(struct vty *vty)
+{
+	switch (vty->node) {
+	case SGSN_NODE:
+		vty->node = CONFIG_NODE;
+		break;
+	case MME_NODE:
+		vty->node = SGSN_NODE;
+		vty->index = NULL;
+		break;
+	default:
+#if BUILD_IU
+		osmo_ss7_vty_go_parent(vty);
+#else
+		vty->node = CONFIG_NODE;
+		vty->index = NULL;
+#endif
+		break;
+	}
+
+	return vty->node;
+}
+
 /* NSI that BSSGP uses when transmitting on NS */
 extern struct gprs_ns_inst *bssgp_nsi;
 
 static struct vty_app_info vty_info = {
 	.name 		= "OsmoSGSN",
 	.version	= PACKAGE_VERSION,
-#if BUILD_IU
-	.go_parent_cb	= osmo_ss7_vty_go_parent,
-#endif
+	.go_parent_cb	= sgsn_vty_go_parent,
 };
 
 static void print_help(void)

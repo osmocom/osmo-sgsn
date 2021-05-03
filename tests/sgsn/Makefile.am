@@ -50,6 +50,7 @@ sgsn_test_LDADD = \
 	$(top_builddir)/src/sgsn/gprs_gmm_fsm.o \
 	$(top_builddir)/src/sgsn/gprs_mm_state_gb_fsm.o \
 	$(top_builddir)/src/sgsn/gprs_sgsn.o \
+	$(top_builddir)/src/sgsn/gtp_mme.o \
 	$(top_builddir)/src/sgsn/sgsn_vty.o \
 	$(top_builddir)/src/sgsn/sgsn_libgtp.o \
 	$(top_builddir)/src/sgsn/sgsn_auth.o \
@@ -62,6 +63,7 @@ sgsn_test_LDADD = \
         $(top_builddir)/src/sgsn/gprs_sndcp_pcomp.o \
         $(top_builddir)/src/sgsn/v42bis.o \
         $(top_builddir)/src/sgsn/gprs_sndcp_dcomp.o \
+	$(top_builddir)/src/sgsn/sgsn_rim.o \
 	$(top_builddir)/src/gprs/gprs_utils.o \
 	$(top_builddir)/src/gprs/gprs_llc_parse.o \
 	$(top_builddir)/src/gprs/gprs_gb_parse.o \

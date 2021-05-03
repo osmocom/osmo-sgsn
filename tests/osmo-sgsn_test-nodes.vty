@@ -61,3 +61,58 @@ OsmoSGSN(config-sgsn)# list
   compression v42bis active direction (ms|sgsn|both) codewords <512-65535> strlen <6-250>
   compression v42bis passive
 ...
+
+OsmoSGSN(config-sgsn)# mme test0
+OsmoSGSN(config-sgsn-mme)# gtp remote-ip 1.2.3.4
+OsmoSGSN(config-sgsn-mme)# gtp ran-info-relay 907 10 567
+OsmoSGSN(config-sgsn-mme)# gtp ran-info-relay 202 12 51
+OsmoSGSN(config-sgsn-mme)# gtp ran-info-relay 907 10 567
+OsmoSGSN(config-sgsn-mme)# exit
+OsmoSGSN(config-sgsn)# mme test1
+OsmoSGSN(config-sgsn-mme)# gtp remote-ip 5.6.7.8
+OsmoSGSN(config-sgsn-mme)# gtp ran-info-relay default
+OsmoSGSN(config-sgsn-mme)# exit
+OsmoSGSN(config-sgsn)# show running-config
+...
+sgsn
+...
+ mme test0
+  gtp remote-ip 1.2.3.4
+  gtp ran-info-relay 907 10 567
+  gtp ran-info-relay 202 12 51
+ mme test1
+  gtp remote-ip 5.6.7.8
+  gtp ran-info-relay default
+...
+OsmoSGSN(config-sgsn)# mme test0
+OsmoSGSN(config-sgsn-mme)# gtp ran-info-relay default
+% Another MME test1 is already set as default route, remove it before setting it here.
+OsmoSGSN(config-sgsn-mme)# exit
+OsmoSGSN(config-sgsn)# mme test1
+OsmoSGSN(config-sgsn-mme)# no gtp ran-info-relay default
+OsmoSGSN(config-sgsn-mme)# exit
+OsmoSGSN(config-sgsn)# mme test0
+OsmoSGSN(config-sgsn-mme)# gtp ran-info-relay default
+OsmoSGSN(config-sgsn-mme)# exit
+OsmoSGSN(config-sgsn)# show running-config
+...
+sgsn
+...
+ mme test0
+  gtp remote-ip 1.2.3.4
+  gtp ran-info-relay default
+  gtp ran-info-relay 907 10 567
+  gtp ran-info-relay 202 12 51
+ mme test1
+  gtp remote-ip 5.6.7.8
+...
+OsmoSGSN(config-sgsn)# no mme test0
+OsmoSGSN(config-sgsn)# show running-config
+...
+sgsn
+...
+ no compression v42bis
+ mme test1
+  gtp remote-ip 5.6.7.8
+...
+OsmoSGSN(config-sgsn)# no mme test1

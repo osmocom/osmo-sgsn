@@ -1042,6 +1042,8 @@ struct sgsn_instance *sgsn_instance_alloc(void *talloc_ctx)
 	inst->cfg.auth_policy = SGSN_AUTH_POLICY_CLOSED;
 	inst->cfg.require_authentication = true; /* only applies if auth_policy is REMOTE */
 	inst->cfg.gsup_server_port = OSMO_GSUP_PORT;
+
+	INIT_LLIST_HEAD(&inst->mme_list);
 	return inst;
 }
 

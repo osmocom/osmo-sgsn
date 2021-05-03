@@ -11,7 +11,8 @@ explicit configuration of each PCU connecting to the SGSN. The
 administrator only has to ensure that the NS and BSSGP layer identities
 (NSEI, NSVCI, BVCI) are unique for each PCU connecting to the SGSN.
 
-=== Configuring the Gp interface
+[[gp-if-ggsn]]
+=== Configuring the Gp interface (towards GGSN)
 
 The Gp interface is the GTP-C and GTP-U based interface between the SGSN
 and the GGSNs.  It is implemented via UDP on well-known source and
@@ -66,6 +67,58 @@ OsmoSGSN(config-sgsn)# grx-dns-add 1.2.3.4 <3>
 <1> Configure the local IP address at the SGSN used for Gp/GTP
 <2> Enable the dynamic GGSN resolving mode
 <3> Specify the IP address of a DNS server for APN resolution
+
+[[gp-if-mme]]
+=== Configuring the Gp interface (towards MME)
+
+The Gp interface also contains the GTP-C v1 based interface between the SGSN
+and the MMEs. This interface between SGSN and MMEs is used to transfer _RAN
+Information Relay_ GTP-C messages between them, which are used as containers to
+allow PCUs under the SGSN and eNodeBs under MMEs to  exchange cell information
+(RIM).
+
+In the SGSN, this interface re-uses the same socket local configuration as per
+the GGSN connections (see _gtp local-ip_ VTY command in <<gp-if-ggsn>>).
+
+Similarly as with GGSNs, (again see <<gp-if-ggsn>>), selection of destination
+peers for the _RAN Information Relay_ message can be configured statically or
+dynamically over GRX.
+
+
+==== Static MME/TAI configuration
+
+In this mode, there is a static list of MMEs and TAIs configured in
+OsmoSGSN via the VTY / config file. One MME in the list can be configured as the
+_default route_, where all unspecified TAIs are routed too.
+
+This is a non-standard method outside of the 3GPP specifications for the
+SGSN, and is typically only used in private/small GPRS networks without
+any access to a GRX.
+
+.Example: Static MME/TAI configuration (single catch-all GGSN)
+----
+sgsn
+...
+ gtp local-ip 192.168.0.10 <1>
+ mme test-mme0 <2>
+  gtp remote-ip 192.168.0.20 <3>
+  gtp ran-info-relay 262 42 3 <4>
+  gtp ran-info-relay 262 42 4
+ mme test-mme1 <5>
+  gtp remote-ip 192.168.0.30
+  gtp ran-info-relay default  <6>
+----
+<1> Configure the local IP address at the SGSN used for Gp/GTP
+<2> Configure an MME named "test-mme0"
+<3> Specify the remote IP address of the MME (for MME "test-mme0")
+<4> Route specified TAIs towards this MME
+<5> Configure an MME named "test-mme1"
+<6> Route all TAIs with an unspecified MME towards MM "test-mme1"
+
+==== Dynamic MME/TAI configuration
+
+Dynamic MME/TAI peer look up over GRX is not yet supported by OsmoSGSN.
+
 
 [[auth-pol]]
 === Authorization Policy
