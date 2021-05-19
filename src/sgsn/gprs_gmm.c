@@ -445,6 +445,17 @@ static bool mmctx_is_r99(const struct sgsn_mm_ctx *mm)
 	return false;
 }
 
+static enum gprs_ciph_algo gprs_ms_net_select_best_gea(uint8_t net_mask, uint8_t ms_mask) {
+	uint8_t common_mask = net_mask & ms_mask;
+	uint8_t r = 0;
+
+	while (common_mask >>= 1) {
+		r++;
+	}
+
+	return r;
+}
+
 /* 3GPP TS 24.008 § 9.4.9: Authentication and Ciphering Request */
 int gsm48_tx_gmm_auth_ciph_req(struct sgsn_mm_ctx *mm,
 				      const struct osmo_auth_vector *vec,
@@ -1147,6 +1158,21 @@ static void mmctx_handle_rat_change(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 
 }
 
+static uint8_t gprs_ms_net_cap_gea_mask(const uint8_t *ms_net_cap, uint8_t cap_len)
+{
+	uint8_t mask = (1 << GPRS_ALGO_GEA0);
+	mask |= (0x80 & ms_net_cap[0]) ? (1 << GPRS_ALGO_GEA1) : 0;
+
+	if (cap_len < 2)
+		return mask;
+
+	/* extended GEA bits start from 2nd bit of the next byte */
+	mask |= (0x40 & ms_net_cap[1]) ? (1 << GPRS_ALGO_GEA2) : 0;
+	mask |= (0x20 & ms_net_cap[1]) ? (1 << GPRS_ALGO_GEA3) : 0;
+	mask |= (0x10 & ms_net_cap[1]) ? (1 << GPRS_ALGO_GEA4) : 0;
+	return mask;
+}
+
 /* 3GPP TS 24.008 § 9.4.1 Attach request */
 static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 				struct gprs_llc_llme *llme)
@@ -1290,15 +1316,27 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 		ctx->ms_radio_access_capa.len);
 	ctx->ms_network_capa.len = msnc_len;
 	memcpy(ctx->ms_network_capa.buf, msnc, msnc_len);
-	if (!gprs_ms_net_cap_gea_supported(ctx->ms_network_capa.buf, msnc_len,
-					   ctx->ciph_algo)) {
+
+	ctx->ue_cipher_mask = gprs_ms_net_cap_gea_mask(ctx->ms_network_capa.buf, msnc_len);
+
+	if (!(ctx->ue_cipher_mask & sgsn->cfg.cipher_support_mask)) {
 		reject_cause = GMM_CAUSE_PROTO_ERR_UNSPEC;
 		LOGMMCTXP(LOGL_NOTICE, ctx, "Rejecting ATTACH REQUEST with MI "
-			  "%s because MS do not support required %s "
-			  "encryption\n", mi_log_string,
-			  get_value_string(gprs_cipher_names,ctx->ciph_algo));
+			  "%s because MS do not support required encryption, mask UE:0x%02x NW:0x%02x \n",
+				  mi_log_string, ctx->ue_cipher_mask, sgsn->cfg.cipher_support_mask);
 		goto rejected;
 	}
+
+	/* just assume that everythig is fine if the phone offers a5/4:
+	 * it requires a valid umts security context which we can only have after
+	 * 1) IDENTITY REQUEST to know what to ask the HLR for
+	 * 2) and AUTHENTICATION AND CIPHERING REQUEST
+	 * ... but 2) already requires selecting a cipher mode.
+	 * So let's just assume we will have the auth data required to make it work.
+	 */
+
+	ctx->ciph_algo = gprs_ms_net_select_best_gea(ctx->ue_cipher_mask, sgsn->cfg.cipher_support_mask);
+
 #ifdef PTMSI_ALLOC
 	/* Allocate a new P-TMSI (+ P-TMSI signature) and update TLLI */
 	ptmsi_update(ctx);

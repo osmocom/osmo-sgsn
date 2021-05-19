@@ -42,6 +42,8 @@
 #include <osmocom/sgsn/gprs_sndcp_comp.h>
 #include <osmocom/sgsn/gprs_sndcp.h>
 
+#include <osmocom/crypt/kdf.h>
+
 const struct value_string gprs_llc_llme_state_names[] = {
 	{ GPRS_LLMS_UNASSIGNED,	"UNASSIGNED" },
 	{ GPRS_LLMS_ASSIGNED,	"ASSIGNED" },
@@ -1042,8 +1044,13 @@ void gprs_llme_copy_key(struct sgsn_mm_ctx *mm, struct gprs_llc_llme *llme)
 		llme->algo = mm->ciph_algo;
 		if (llme->cksn != mm->auth_triplet.key_seq &&
 		    mm->auth_triplet.key_seq != GSM_KEY_SEQ_INVAL) {
-			memcpy(llme->kc, mm->auth_triplet.vec.kc,
-			       gprs_cipher_key_length(mm->ciph_algo));
+
+			/* gea4 needs kc128 */
+			if (mm->ciph_algo == GPRS_ALGO_GEA4)
+				osmo_kdf_kc128(mm->auth_triplet.vec.ck, mm->auth_triplet.vec.ik, llme->kc);
+			else
+				memcpy(llme->kc, mm->auth_triplet.vec.kc, gprs_cipher_key_length(mm->ciph_algo));
+
 			llme->cksn = mm->auth_triplet.key_seq;
 		}
 	} else

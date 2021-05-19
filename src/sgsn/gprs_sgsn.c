@@ -293,11 +293,8 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_gb(uint32_t tlli,
 	memcpy(&ctx->ra, raid, sizeof(ctx->ra));
 	ctx->ran_type = MM_CTX_T_GERAN_Gb;
 	ctx->gb.tlli = tlli;
-	ctx->ciph_algo = sgsn->cfg.cipher;
 	osmo_fsm_inst_update_id_f(ctx->gb.mm_state_fsm, "%" PRIu32, tlli);
 
-	LOGMMCTXP(LOGL_DEBUG, ctx, "Allocated with %s cipher.\n",
-		  get_value_string(gprs_cipher_names, ctx->ciph_algo));
 	return ctx;
 }
 

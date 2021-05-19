@@ -76,7 +76,7 @@ struct sgsn_config {
 	struct gprs_ns2_inst *nsi;
 
 	enum sgsn_auth_policy auth_policy;
-	enum gprs_ciph_algo cipher;
+	uint8_t cipher_support_mask;
 	struct llist_head imsi_acl;
 
 	struct sockaddr_in gsup_server_addr;

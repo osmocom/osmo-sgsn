@@ -35,7 +35,7 @@ OsmoSGSN(config-sgsn)# list
   imsi-acl (add|del) IMSI
   auth-policy (accept-all|closed|acl-only|remote)
   authentication (optional|required)
-  encryption (GEA0|GEA1|GEA2|GEA3|GEA4)
+  encryption gea <0-4> [<0-4>] [<0-4>] [<0-4>] [<0-4>]
   gsup ipa-name NAME
   gsup remote-ip A.B.C.D
   gsup remote-port <0-65535>

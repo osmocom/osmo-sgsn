@@ -206,6 +206,7 @@ static int config_write_sgsn(struct vty *vty)
 	struct apn_ctx *actx;
 	struct ares_addr_node *server;
 	struct sgsn_mme_ctx *mme;
+	int i;
 
 	vty_out(vty, "sgsn%s", VTY_NEWLINE);
 
@@ -236,10 +237,15 @@ static int config_write_sgsn(struct vty *vty)
 	for (server = sgsn->ares_servers; server; server = server->next)
 		vty_out(vty, " grx-dns-add %s%s", inet_ntoa(server->addr.addr4), VTY_NEWLINE);
 
-	if (g_cfg->cipher != GPRS_ALGO_GEA0)
-		vty_out(vty, " encryption %s%s",
-			get_value_string(gprs_cipher_names, g_cfg->cipher),
-			VTY_NEWLINE);
+	if (g_cfg->cipher_support_mask != 0) {
+		vty_out(vty, " encryption gea");
+
+		for (i = 0; i < _GPRS_ALGO_NUM; i++)
+			if (g_cfg->cipher_support_mask >> i & 1)
+				vty_out(vty, " %u", i);
+
+		vty_out(vty, "%s", VTY_NEWLINE);
+	}
 	if (g_cfg->sgsn_ipa_name)
 		vty_out(vty, " gsup ipa-name %s%s", g_cfg->sgsn_ipa_name, VTY_NEWLINE);
 	if (g_cfg->gsup_server_addr.sin_addr.s_addr)
@@ -721,15 +727,19 @@ DEFUN(imsi_acl, cfg_imsi_acl_cmd,
 	return CMD_SUCCESS;
 }
 
-DEFUN(cfg_encrypt, cfg_encrypt_cmd,
+DEFUN_DEPRECATED(cfg_encrypt, cfg_encrypt_cmd,
       "encryption (GEA0|GEA1|GEA2|GEA3|GEA4)",
       "Set encryption algorithm for SGSN\n"
       "Use GEA0 (no encryption)\n"
       "Use GEA1\nUse GEA2\nUse GEA3\nUse GEA4\n")
 {
 	enum gprs_ciph_algo c = get_string_value(gprs_cipher_names, argv[0]);
+
+	if (strcmp(argv[0], "gea") == 0)
+		return CMD_SUCCESS;
+
 	if (c != GPRS_ALGO_GEA0) {
-		if (!gprs_cipher_supported(c)) {
+		if (gprs_cipher_supported(c) <= 0) {
 			vty_out(vty, "%% cipher %s is unsupported in current version%s", argv[0], VTY_NEWLINE);
 			return CMD_WARNING;
 		}
@@ -741,7 +751,46 @@ DEFUN(cfg_encrypt, cfg_encrypt_cmd,
 		}
 	}
 
-	g_cfg->cipher = c;
+	g_cfg->cipher_support_mask |= (1 << c);
+
+	return CMD_SUCCESS;
+}
+
+DEFUN(cfg_encrypt2, cfg_encrypt2_cmd,
+	"encryption gea <0-4> [<0-4>] [<0-4>] [<0-4>] [<0-4>]",
+	"Set encryption algorithms for SGSN\n"
+	"GPRS Encryption Algorithm\n"
+	"GEAn Algorithm Number\n"
+	"GEAn Algorithm Number\n"
+	"GEAn Algorithm Number\n"
+	"GEAn Algorithm Number\n"
+	"GEAn Algorithm Number\n")
+{
+	int i = 0;
+
+	g_cfg->cipher_support_mask = 0;
+	for (i = 0; i < argc; i++)
+		g_cfg->cipher_support_mask |= (1 << atoi(argv[i]));
+
+	for (i = 0; i < _GPRS_ALGO_NUM; i++) {
+		if (g_cfg->cipher_support_mask >> i & 1) {
+
+			if (i == GPRS_ALGO_GEA0)
+				continue;
+
+			if (gprs_cipher_supported(i) <= 0) {
+				vty_out(vty, "%% cipher %d is unsupported in current version%s", i, VTY_NEWLINE);
+				return CMD_ERR_INCOMPLETE;
+			}
+
+			if (!g_cfg->require_authentication) {
+				vty_out(vty, "%% unable to use encryption %s without authentication: please adjust auth-policy%s",
+					argv[i], VTY_NEWLINE);
+				return CMD_ERR_INCOMPLETE;
+			}
+
+		}
+	}
 
 	return CMD_SUCCESS;
 }
@@ -1640,7 +1689,11 @@ int sgsn_vty_init(struct sgsn_config *cfg)
 	install_element(SGSN_NODE, &cfg_imsi_acl_cmd);
 	install_element(SGSN_NODE, &cfg_auth_policy_cmd);
 	install_element(SGSN_NODE, &cfg_authentication_cmd);
+
+	/* order matters here: ensure we attempt to parse our new command first! */
+	install_element(SGSN_NODE, &cfg_encrypt2_cmd);
 	install_element(SGSN_NODE, &cfg_encrypt_cmd);
+
 	install_element(SGSN_NODE, &cfg_gsup_ipa_name_cmd);
 	install_element(SGSN_NODE, &cfg_gsup_remote_ip_cmd);
 	install_element(SGSN_NODE, &cfg_gsup_remote_port_cmd);
@@ -1690,6 +1743,8 @@ int sgsn_parse_config(const char *config_file)
 
 	/* make sure sgsn_vty_init() was called before this */
 	OSMO_ASSERT(g_cfg);
+
+	g_cfg->cipher_support_mask = 0x1; /* support GEA0 by default unless specific encryption config exists */
 
 	rc = vty_read_config_file(config_file, NULL);
 	if (rc < 0) {
