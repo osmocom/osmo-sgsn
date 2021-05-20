@@ -654,7 +654,7 @@ DEFUN(swow_mmctx_imsi, show_mmctx_imsi_cmd,
 			argv[0], VTY_NEWLINE);
 		return CMD_WARNING;
 	}
-	vty_dump_mmctx(vty, "", mm, argv[1] ? 1 : 0);
+	vty_dump_mmctx(vty, "", mm, (argc > 1) ? 1 : 0);
 	return CMD_SUCCESS;
 }
 
@@ -663,9 +663,8 @@ DEFUN(swow_mmctx_all, show_mmctx_all_cmd,
 	SHOW_STR MMCTX_STR "All MM Contexts\n" INCLUDE_PDP_STR)
 {
 	struct sgsn_mm_ctx *mm;
-
 	llist_for_each_entry(mm, &sgsn_mm_ctxts, list)
-		vty_dump_mmctx(vty, "", mm, argv[0] ? 1 : 0);
+		vty_dump_mmctx(vty, "", mm, (argc > 0) ? 1 : 0);
 
 	return CMD_SUCCESS;
 }
