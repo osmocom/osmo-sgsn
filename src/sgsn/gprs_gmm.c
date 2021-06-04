@@ -131,7 +131,7 @@ int gsm48_gmm_sendmsg(struct msgb *msg, int command,
 			     struct sgsn_mm_ctx *mm, bool encryptable)
 {
 	if (mm) {
-		rate_ctr_inc(&mm->ctrg->ctr[GMM_CTR_PKTS_SIG_OUT]);
+		rate_ctr_inc(rate_ctr_group_get_ctr(mm->ctrg, GMM_CTR_PKTS_SIG_OUT));
 #ifdef BUILD_IU
 		if (mm->ran_type == MM_CTX_T_UTRAN_Iu)
 			return ranap_iu_tx(msg, GPRS_SAPI_GMM);
@@ -291,7 +291,7 @@ int gsm48_tx_gmm_att_ack(struct sgsn_mm_ctx *mm)
 #endif
 
 	LOGMMCTXP(LOGL_INFO, mm, "<- GMM ATTACH ACCEPT (new P-TMSI=0x%08x)\n", mm->p_tmsi);
-	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_GPRS_ATTACH_ACKED]);
+	rate_ctr_inc(rate_ctr_group_get_ctr(sgsn->rate_ctrs, CTR_GPRS_ATTACH_ACKED));
 
 	mmctx2msgid(msg, mm);
 
@@ -356,7 +356,7 @@ static int _tx_gmm_att_rej(struct msgb *msg, uint8_t gmm_cause,
 
 	LOGMMCTXP(LOGL_NOTICE, mm, "<- GMM ATTACH REJECT: %s\n",
 		  get_value_string(gsm48_gmm_cause_names, gmm_cause));
-	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_GPRS_ATTACH_REJECTED]);
+	rate_ctr_inc(rate_ctr_group_get_ctr(sgsn->rate_ctrs, CTR_GPRS_ATTACH_REJECTED));
 
 	gh = (struct gsm48_hdr *) msgb_put(msg, sizeof(*gh) + 1);
 	gh->proto_discr = GSM48_PDISC_MM_GPRS;
@@ -389,7 +389,7 @@ static int _tx_detach_ack(struct msgb *msg, uint8_t force_stby,
 	/* MMCTX might be NULL! */
 
 	DEBUGP(DMM, "<- GMM DETACH ACC (force-standby: %d)\n", force_stby);
-	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_GPRS_DETACH_ACKED]);
+	rate_ctr_inc(rate_ctr_group_get_ctr(sgsn->rate_ctrs, CTR_GPRS_DETACH_ACKED));
 
 	gh = (struct gsm48_hdr *) msgb_put(msg, sizeof(*gh) + 1);
 	gh->proto_discr = GSM48_PDISC_MM_GPRS;
@@ -1163,7 +1163,7 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 	int rc;
 
 	LOGMMCTXP(LOGL_INFO, ctx, "-> GMM ATTACH REQUEST ");
-	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_GPRS_ATTACH_REQUEST]);
+	rate_ctr_inc(rate_ctr_group_get_ctr(sgsn->rate_ctrs, CTR_GPRS_ATTACH_REQUEST));
 
 	/* As per TS 04.08 Chapter 4.7.1.4, the attach request arrives either
 	 * with a foreign TLLI (P-TMSI that was allocated to the MS before),
@@ -1410,7 +1410,7 @@ static int gsm48_rx_gmm_det_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 	power_off = gh->data[0] & 0x8;
 
 	/* FIXME: In 24.008 there is an optional P-TMSI and P-TMSI signature IE */
-	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_GPRS_DETACH_REQUEST]);
+	rate_ctr_inc(rate_ctr_group_get_ctr(sgsn->rate_ctrs, CTR_GPRS_DETACH_REQUEST));
 	LOGMMCTXP(LOGL_INFO, ctx, "-> GMM DETACH REQUEST TLLI=0x%08x type=%s %s\n",
 		msgb_tlli(msg), get_value_string(gprs_det_t_mo_strs, detach_type),
 		power_off ? "Power-off" : "");
@@ -1449,7 +1449,7 @@ static int gsm48_tx_gmm_ra_upd_ack(struct sgsn_mm_ctx *mm)
 	struct osmo_mobile_identity mi;
 #endif
 
-	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_GPRS_ROUTING_AREA_ACKED]);
+	rate_ctr_inc(rate_ctr_group_get_ctr(sgsn->rate_ctrs, CTR_GPRS_ROUTING_AREA_ACKED));
 	LOGMMCTXP(LOGL_INFO, mm, "<- GMM ROUTING AREA UPDATE ACCEPT\n");
 
 	mmctx2msgid(msg, mm);
@@ -1505,7 +1505,7 @@ int gsm48_tx_gmm_ra_upd_rej(struct msgb *old_msg, uint8_t cause)
 	struct gsm48_hdr *gh;
 
 	LOGP(DMM, LOGL_NOTICE, "<- ROUTING AREA UPDATE REJECT\n");
-	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_GPRS_ROUTING_AREA_REJECT]);
+	rate_ctr_inc(rate_ctr_group_get_ctr(sgsn->rate_ctrs, CTR_GPRS_ROUTING_AREA_REJECT));
 
 	gmm_copy_id(msg, old_msg);
 
@@ -1585,7 +1585,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	/* Update Type 10.5.5.18 */
 	upd_type = *cur++ & 0x07;
 
-	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_GPRS_ROUTING_AREA_REQUEST]);
+	rate_ctr_inc(rate_ctr_group_get_ctr(sgsn->rate_ctrs, CTR_GPRS_ROUTING_AREA_REQUEST));
 	LOGMMCTXP(LOGL_INFO, mmctx, "-> GMM RA UPDATE REQUEST type=\"%s\"\n",
 		get_value_string(gprs_upd_t_strs, upd_type));
 
@@ -1713,7 +1713,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	/* Store new BVCI/NSEI in MM context (FIXME: delay until we ack?) */
 	msgid2mmctx(mmctx, msg);
 	/* Bump the statistics of received signalling msgs for this MM context */
-	rate_ctr_inc(&mmctx->ctrg->ctr[GMM_CTR_PKTS_SIG_IN]);
+	rate_ctr_inc(rate_ctr_group_get_ctr(mmctx->ctrg, GMM_CTR_PKTS_SIG_IN));
 
 	/* Update the MM context with the new RA-ID */
 	if (mmctx->ran_type == MM_CTX_T_GERAN_Gb && msgb_bcid(msg)) {
@@ -1724,7 +1724,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	/* FIXME: Update the MM context with the MS radio acc capabilities */
 	/* FIXME: Update the MM context with the MS network capabilities */
 
-	rate_ctr_inc(&mmctx->ctrg->ctr[GMM_CTR_RA_UPDATE]);
+	rate_ctr_inc(rate_ctr_group_get_ctr(mmctx->ctrg, GMM_CTR_RA_UPDATE));
 
 #ifdef PTMSI_ALLOC
 	ptmsi_update(mmctx);

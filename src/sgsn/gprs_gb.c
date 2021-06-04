@@ -57,7 +57,7 @@ int gsm0408_gprs_rcvmsg_gb(struct msgb *msg, struct gprs_llc_llme *llme,
 	bssgp_parse_cell_id(&ra_id, msgb_bcid(msg));
 	mmctx = sgsn_mm_ctx_by_tlli(msgb_tlli(msg), &ra_id);
 	if (mmctx) {
-		rate_ctr_inc(&mmctx->ctrg->ctr[GMM_CTR_PKTS_SIG_IN]);
+		rate_ctr_inc(rate_ctr_group_get_ctr(mmctx->ctrg, GMM_CTR_PKTS_SIG_IN));
 		mmctx->gb.llme = llme;
 		gprs_gb_recv_pdu(mmctx, msg);
 	}
@@ -102,7 +102,7 @@ int gprs_gb_page_ps_ra(struct sgsn_mm_ctx *mmctx)
 	pinfo.drx_params = mmctx->drx_parms;
 	pinfo.qos[0] = 0; // FIXME
 	rc = bssgp_tx_paging(mmctx->gb.nsei, 0, &pinfo);
-	rate_ctr_inc(&mmctx->ctrg->ctr[GMM_CTR_PAGING_PS]);
+	rate_ctr_inc(rate_ctr_group_get_ctr(mmctx->ctrg, GMM_CTR_PAGING_PS));
 
 	return rc;
 }

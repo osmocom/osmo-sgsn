@@ -2125,7 +2125,7 @@ int gtphub_handle_buf(struct gtphub *hub,
 	struct gtphub_bind *from_bind = &hub->to_gsns[side_idx][plane_idx];
 	struct gtphub_bind *to_bind = &hub->to_gsns[other_side_idx(side_idx)][plane_idx];
 
-	rate_ctr_add(&from_bind->counters_io->ctr[GTPH_CTR_BYTES_IN],
+	rate_ctr_add(rate_ctr_group_get_ctr(from_bind->counters_io, GTPH_CTR_BYTES_IN),
 		     received);
 
 	struct gtp_packet_desc p;
@@ -2147,7 +2147,7 @@ int gtphub_handle_buf(struct gtphub *hub,
 		return -1;
 	}
 
-	rate_ctr_inc(&from_bind->counters_io->ctr[GTPH_CTR_PKTS_IN]);
+	rate_ctr_inc(rate_ctr_group_get_ctr(from_bind->counters_io, GTPH_CTR_PKTS_IN));
 
 	int reply_len;
 	reply_len = gtphub_handle_echo_req(hub, &p, reply_buf);
@@ -2156,8 +2156,8 @@ int gtphub_handle_buf(struct gtphub *hub,
 		sgsn_sockaddr_copy(to_addr, from_addr);
 		*to_ofd = &from_bind->ofd;
 
-		rate_ctr_inc(&from_bind->counters_io->ctr[GTPH_CTR_PKTS_OUT]);
-		rate_ctr_add(&from_bind->counters_io->ctr[GTPH_CTR_BYTES_OUT],
+		rate_ctr_inc(rate_ctr_group_get_ctr(from_bind->counters_io, GTPH_CTR_PKTS_OUT));
+		rate_ctr_add(rate_ctr_group_get_ctr(from_bind->counters_io, GTPH_CTR_BYTES_OUT),
 			     reply_len);
 		LOG(LOGL_DEBUG, "%s Echo response to %s: %d bytes to %s\n",
 		    (side_idx == GTPH_SIDE_GGSN)? "-->" : "<--",
@@ -2236,9 +2236,9 @@ int gtphub_handle_buf(struct gtphub *hub,
 		return -1;
 	}
 
-	rate_ctr_add(&from_peer->counters_io->ctr[GTPH_CTR_BYTES_IN],
+	rate_ctr_add(rate_ctr_group_get_ctr(from_peer->counters_io, GTPH_CTR_BYTES_IN),
 		     received);
-	rate_ctr_inc(&from_peer->counters_io->ctr[GTPH_CTR_PKTS_IN]);
+	rate_ctr_inc(rate_ctr_group_get_ctr(from_peer->counters_io, GTPH_CTR_PKTS_IN));
 
 	LOG(LOGL_DEBUG, "from %s peer: %s\n", gtphub_side_idx_names[side_idx],
 	    gtphub_port_str(from_peer));
@@ -2257,9 +2257,9 @@ int gtphub_handle_buf(struct gtphub *hub,
 
 	if (p.tun) {
 		struct gtphub_tunnel_endpoint *te = &p.tun->endpoint[p.side_idx][p.plane_idx];
-		rate_ctr_add(&te->counters_io->ctr[GTPH_CTR_BYTES_IN],
+		rate_ctr_add(rate_ctr_group_get_ctr(te->counters_io, GTPH_CTR_BYTES_IN),
 			     received);
-		rate_ctr_inc(&te->counters_io->ctr[GTPH_CTR_PKTS_IN]);
+		rate_ctr_inc(rate_ctr_group_get_ctr(te->counters_io, GTPH_CTR_PKTS_IN));
 	}
 
 	if ((!to_peer) && (side_idx == GTPH_SIDE_SGSN)) {
@@ -2311,19 +2311,19 @@ int gtphub_handle_buf(struct gtphub *hub,
 	*reply_buf = (uint8_t*)p.data;
 
 	if (received) {
-		rate_ctr_inc(&to_bind->counters_io->ctr[GTPH_CTR_PKTS_OUT]);
-		rate_ctr_add(&to_bind->counters_io->ctr[GTPH_CTR_BYTES_OUT],
+		rate_ctr_inc(rate_ctr_group_get_ctr(to_bind->counters_io, GTPH_CTR_PKTS_OUT));
+		rate_ctr_add(rate_ctr_group_get_ctr(to_bind->counters_io, GTPH_CTR_BYTES_OUT),
 			     received);
 
-		rate_ctr_inc(&to_peer->counters_io->ctr[GTPH_CTR_PKTS_OUT]);
-		rate_ctr_add(&to_peer->counters_io->ctr[GTPH_CTR_BYTES_OUT],
+		rate_ctr_inc(rate_ctr_group_get_ctr(to_peer->counters_io, GTPH_CTR_PKTS_OUT));
+		rate_ctr_add(rate_ctr_group_get_ctr(to_peer->counters_io, GTPH_CTR_BYTES_OUT),
 			     received);
 	}
 
 	if (p.tun) {
 		struct gtphub_tunnel_endpoint *te = &p.tun->endpoint[other_side_idx(p.side_idx)][p.plane_idx];
-		rate_ctr_inc(&te->counters_io->ctr[GTPH_CTR_PKTS_OUT]);
-		rate_ctr_add(&te->counters_io->ctr[GTPH_CTR_BYTES_OUT],
+		rate_ctr_inc(rate_ctr_group_get_ctr(te->counters_io, GTPH_CTR_PKTS_OUT));
+		rate_ctr_add(rate_ctr_group_get_ctr(te->counters_io, GTPH_CTR_BYTES_OUT),
 			     received);
 	}
 

@@ -670,8 +670,8 @@ int gprs_llc_tx_u(struct msgb *msg, uint8_t sapi, int command,
 
 	/* Identifiers passed down: (BVCI, NSEI) */
 
-	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_LLC_DL_PACKETS]);
-	rate_ctr_add(&sgsn->rate_ctrs->ctr[CTR_LLC_DL_BYTES], msg->len);
+	rate_ctr_inc(rate_ctr_group_get_ctr(sgsn->rate_ctrs, CTR_LLC_DL_PACKETS));
+	rate_ctr_add(rate_ctr_group_get_ctr(sgsn->rate_ctrs, CTR_LLC_DL_BYTES), msg->len);
 
 	/* Send BSSGP-DL-UNITDATA.req */
 	return _bssgp_tx_dl_ud(msg, NULL);
@@ -814,8 +814,8 @@ int gprs_llc_tx_ui(struct msgb *msg, uint8_t sapi, int command,
 		}
 	}
 
-	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_LLC_DL_PACKETS]);
-	rate_ctr_add(&sgsn->rate_ctrs->ctr[CTR_LLC_DL_BYTES], msg->len);
+	rate_ctr_inc(rate_ctr_group_get_ctr(sgsn->rate_ctrs, CTR_LLC_DL_PACKETS));
+	rate_ctr_add(rate_ctr_group_get_ctr(sgsn->rate_ctrs, CTR_LLC_DL_BYTES), msg->len);
 
 	/* Identifiers passed down: (BVCI, NSEI) */
 
@@ -1000,8 +1000,8 @@ int gprs_llc_rcvmsg(struct msgb *msg, struct tlv_parsed *tv)
 		msgb_l3trim(msg, llhp.data_len);
 	}
 
-	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_LLC_UL_PACKETS]);
-	rate_ctr_add(&sgsn->rate_ctrs->ctr[CTR_LLC_UL_BYTES], msg->len);
+	rate_ctr_inc(rate_ctr_group_get_ctr(sgsn->rate_ctrs, CTR_LLC_UL_PACKETS));
+	rate_ctr_add(rate_ctr_group_get_ctr(sgsn->rate_ctrs, CTR_LLC_UL_BYTES), msg->len);
 
 	/* llhp.data is only set when we need to send LL_[UNIT]DATA_IND up */
 	if (llhp.cmd == GPRS_LLC_UI && llhp.data && llhp.data_len) {

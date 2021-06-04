@@ -792,10 +792,10 @@ static int cb_data_ind(struct pdp_t *lib, void *packet, unsigned int len)
 		return -1;
 	}
 
-	rate_ctr_inc(&pdp->ctrg->ctr[PDP_CTR_PKTS_UDATA_OUT]);
-	rate_ctr_add(&pdp->ctrg->ctr[PDP_CTR_BYTES_UDATA_OUT], len);
-	rate_ctr_inc(&mm->ctrg->ctr[GMM_CTR_PKTS_UDATA_OUT]);
-	rate_ctr_add(&mm->ctrg->ctr[GMM_CTR_BYTES_UDATA_OUT], len);
+	rate_ctr_inc(rate_ctr_group_get_ctr(pdp->ctrg, PDP_CTR_PKTS_UDATA_OUT));
+	rate_ctr_add(rate_ctr_group_get_ctr(pdp->ctrg, PDP_CTR_BYTES_UDATA_OUT), len);
+	rate_ctr_inc(rate_ctr_group_get_ctr(mm->ctrg, GMM_CTR_PKTS_UDATA_OUT));
+	rate_ctr_add(rate_ctr_group_get_ctr(mm->ctrg, GMM_CTR_BYTES_UDATA_OUT), len);
 
 	/* It is easier to have a global count */
 	pdp->cdr_bytes_out += len;
@@ -830,10 +830,10 @@ int sgsn_rx_sndcp_ud_ind(struct gprs_ra_id *ra_id, int32_t tlli, uint8_t nsapi,
 		return -EIO;
 	}
 
-	rate_ctr_inc(&pdp->ctrg->ctr[PDP_CTR_PKTS_UDATA_IN]);
-	rate_ctr_add(&pdp->ctrg->ctr[PDP_CTR_BYTES_UDATA_IN], npdu_len);
-	rate_ctr_inc(&mmctx->ctrg->ctr[GMM_CTR_PKTS_UDATA_IN]);
-	rate_ctr_add(&mmctx->ctrg->ctr[GMM_CTR_BYTES_UDATA_IN], npdu_len);
+	rate_ctr_inc(rate_ctr_group_get_ctr(pdp->ctrg, PDP_CTR_PKTS_UDATA_IN));
+	rate_ctr_add(rate_ctr_group_get_ctr(pdp->ctrg, PDP_CTR_BYTES_UDATA_IN), npdu_len);
+	rate_ctr_inc(rate_ctr_group_get_ctr(mmctx->ctrg, GMM_CTR_PKTS_UDATA_IN));
+	rate_ctr_add(rate_ctr_group_get_ctr(mmctx->ctrg, GMM_CTR_BYTES_UDATA_IN), npdu_len);
 
 	/* It is easier to have a global count */
 	pdp->cdr_bytes_in += npdu_len;

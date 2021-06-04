@@ -186,7 +186,7 @@ int gsm48_tx_gsm_act_pdp_acc(struct sgsn_pdp_ctx *pdp)
 	uint8_t transaction_id = pdp->ti ^ 0x8; /* flip */
 
 	LOGPDPCTXP(LOGL_INFO, pdp, "<- ACTIVATE PDP CONTEXT ACK\n");
-	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_PDP_ACTIVATE_ACCEPT]);
+	rate_ctr_inc(rate_ctr_group_get_ctr(sgsn->rate_ctrs, CTR_PDP_ACTIVATE_ACCEPT));
 
 	mmctx2msgid(msg, pdp->mm);
 
@@ -232,7 +232,7 @@ int gsm48_tx_gsm_act_pdp_rej(struct sgsn_mm_ctx *mm, uint8_t tid,
 
 	LOGMMCTXP(LOGL_NOTICE, mm, "<- ACTIVATE PDP CONTEXT REJ: %s\n",
 		  get_value_string(gsm48_gsm_cause_names, cause));
-	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_PDP_ACTIVATE_REJECT]);
+	rate_ctr_inc(rate_ctr_group_get_ctr(sgsn->rate_ctrs, CTR_PDP_ACTIVATE_REJECT));
 
 	mmctx2msgid(msg, mm);
 
@@ -257,7 +257,7 @@ static int _gsm48_tx_gsm_deact_pdp_req(struct sgsn_mm_ctx *mm, uint8_t tid,
 	uint8_t tear_down_ind = (0x9 << 4) | (!!teardown);
 
 	LOGMMCTXP(LOGL_INFO, mm, "<- DEACTIVATE PDP CONTEXT REQ\n");
-	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_PDP_DL_DEACTIVATE_REQUEST]);
+	rate_ctr_inc(rate_ctr_group_get_ctr(sgsn->rate_ctrs, CTR_PDP_DL_DEACTIVATE_REQUEST));
 
 	mmctx2msgid(msg, mm);
 
@@ -285,7 +285,7 @@ static int _gsm48_tx_gsm_deact_pdp_acc(struct sgsn_mm_ctx *mm, uint8_t tid)
 	uint8_t transaction_id = tid ^ 0x8; /* flip */
 
 	LOGMMCTXP(LOGL_INFO, mm, "<- DEACTIVATE PDP CONTEXT ACK\n");
-	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_PDP_DL_DEACTIVATE_ACCEPT]);
+	rate_ctr_inc(rate_ctr_group_get_ctr(sgsn->rate_ctrs, CTR_PDP_DL_DEACTIVATE_ACCEPT));
 
 	mmctx2msgid(msg, mm);
 
@@ -533,7 +533,7 @@ static int do_act_pdp_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg, bool *del
 
 	/* Only increment counter for a real activation, after we checked
 	 * for re-transmissions */
-	rate_ctr_inc(&mmctx->ctrg->ctr[GMM_CTR_PDP_CTX_ACT]);
+	rate_ctr_inc(rate_ctr_group_get_ctr(mmctx->ctrg, GMM_CTR_PDP_CTX_ACT));
 
 	/* Determine GGSN based on APN and subscription options */
 	ggsn = sgsn_mm_ctx_find_ggsn_ctx(mmctx, &tp, &gsm_cause, apn_str);
@@ -591,7 +591,7 @@ static int gsm48_rx_gsm_act_pdp_req(struct sgsn_mm_ctx *mmctx,
 	struct msgb *msg;
 	int rc;
 
-	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_PDP_ACTIVATE_REQUEST]);
+	rate_ctr_inc(rate_ctr_group_get_ctr(sgsn->rate_ctrs, CTR_PDP_ACTIVATE_REQUEST));
 
 	/*
 	 * This is painful. We might not have a static GGSN
@@ -629,7 +629,7 @@ static int gsm48_rx_gsm_deact_pdp_req(struct sgsn_mm_ctx *mm, struct msgb *msg)
 
 	LOGMMCTXP(LOGL_INFO, mm, "-> DEACTIVATE PDP CONTEXT REQ (cause: %s)\n",
 		get_value_string(gsm48_gsm_cause_names, gh->data[0]));
-	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_PDP_UL_DEACTIVATE_REQUEST]);
+	rate_ctr_inc(rate_ctr_group_get_ctr(sgsn->rate_ctrs, CTR_PDP_UL_DEACTIVATE_REQUEST));
 
 	pdp = sgsn_pdp_ctx_by_tid(mm, transaction_id);
 	if (!pdp) {
@@ -654,7 +654,7 @@ static int gsm48_rx_gsm_deact_pdp_ack(struct sgsn_mm_ctx *mm, struct msgb *msg)
 	struct sgsn_pdp_ctx *pdp;
 
 	LOGMMCTXP(LOGL_INFO, mm, "-> DEACTIVATE PDP CONTEXT ACK\n");
-	rate_ctr_inc(&sgsn->rate_ctrs->ctr[CTR_PDP_UL_DEACTIVATE_ACCEPT]);
+	rate_ctr_inc(rate_ctr_group_get_ctr(sgsn->rate_ctrs, CTR_PDP_UL_DEACTIVATE_ACCEPT));
 
 	pdp = sgsn_pdp_ctx_by_tid(mm, transaction_id);
 	if (!pdp) {

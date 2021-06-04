@@ -232,7 +232,7 @@ int gsm0408_gprs_rcvmsg_iu(struct msgb *msg, struct gprs_ra_id *ra_id,
 
 	mmctx = sgsn_mm_ctx_by_ue_ctx(MSG_IU_UE_CTX(msg));
 	if (mmctx) {
-		rate_ctr_inc(&mmctx->ctrg->ctr[GMM_CTR_PKTS_SIG_IN]);
+		rate_ctr_inc(rate_ctr_group_get_ctr(mmctx->ctrg, GMM_CTR_PKTS_SIG_IN));
 		if (ra_id)
 			memcpy(&mmctx->ra, ra_id, sizeof(mmctx->ra));
 	}
