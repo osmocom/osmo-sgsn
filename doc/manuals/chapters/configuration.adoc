@@ -398,16 +398,16 @@ Encryption can be enabled if the auth-policy is set to remote and the
 HLR subscriber entries contain the keys of the SIM card. See
 <<sgsn-ex-gsup>> on how to connect to an external HLR.
 
-.Example: Turn on encryption (GEA3)
+.Example: Turn on encryption (GEA3 and GEA4)
 ----
 sgsn
- encryption GEA3
+ encryption gea 3 4
 ----
 
 .Example: Turn off encryption (GEA0)
 ----
 sgsn
- encryption GEA0
+ encryption gea 0
 ----
 
 === Configure SCCP/M3UA to accept _IuPS_ links
