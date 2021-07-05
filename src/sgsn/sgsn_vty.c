@@ -35,6 +35,7 @@
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/sgsn.h>
 #include <osmocom/gprs/gprs_ns2.h>
+#include <osmocom/sgsn/gprs_gb.h>
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/gprs_sgsn.h>
 #include <osmocom/sgsn/gtp_mme.h>
@@ -1209,6 +1210,25 @@ DEFUN(update_subscr_update_auth_info, update_subscr_update_auth_info_cmd,
 	return CMD_SUCCESS;
 }
 
+DEFUN(page_subscr, page_subscr_info_cmd,
+	"page imsi IMSI",
+	"Send a PS paging request to subscriber\n"
+	"Use the IMSI to select the subscriber\n"
+	"The IMSI\n")
+{
+	const char *imsi = argv[0];
+	struct sgsn_mm_ctx *mm;
+
+	mm = sgsn_mm_ctx_by_imsi(imsi);
+	if (!mm) {
+		vty_out(vty, "No MM context for IMSI %s%s", imsi, VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+
+	gprs_gb_page_ps_ra(mm);
+	return CMD_SUCCESS;
+}
+
 DEFUN(cfg_gsup_ipa_name,
 	cfg_gsup_ipa_name_cmd,
 	"gsup ipa-name NAME",
@@ -1675,6 +1695,7 @@ int sgsn_vty_init(struct sgsn_config *cfg)
 	install_element(ENABLE_NODE, &update_subscr_cancel_cmd);
 	install_element(ENABLE_NODE, &update_subscr_update_location_result_cmd);
 	install_element(ENABLE_NODE, &update_subscr_update_auth_info_cmd);
+	install_element(ENABLE_NODE, &page_subscr_info_cmd);
 	install_element(ENABLE_NODE, &reset_sgsn_state_cmd);
 
 	install_element(CONFIG_NODE, &cfg_sgsn_cmd);
