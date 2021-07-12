@@ -59,15 +59,6 @@ void *osmo_gtphub_ctx;
 /* TODO move this to osmocom/core/select.h ? */
 typedef int (*osmo_fd_cb_t)(struct osmo_fd *fd, unsigned int what);
 
-/* TODO move this to osmocom/core/linuxlist.h ? */
-#define __llist_first(head) (((head)->next == (head)) ? NULL : (head)->next)
-#define llist_first(head, type, entry) \
-	llist_entry(__llist_first(head), type, entry)
-
-#define __llist_last(head) (((head)->next == (head)) ? NULL : (head)->prev)
-#define llist_last(head, type, entry) \
-	llist_entry(__llist_last(head), type, entry)
-
 /* TODO move GTP header stuff to openggsn/gtp/ ? See gtp_decaps*() */
 
 enum gtp_rc {
@@ -613,7 +604,7 @@ void expiry_add(struct expiry *exq, struct expiring_item *item, time_t now)
 
 	OSMO_ASSERT(llist_empty(&exq->items)
 		    || (item->expiry
-			>= llist_last(&exq->items, struct expiring_item, entry)->expiry));
+			>= llist_last_entry(&exq->items, struct expiring_item, entry)->expiry));
 
 	/* Add/move to the tail to always sort by expiry, ascending. */
 	llist_del(&item->entry);
@@ -1142,9 +1133,7 @@ static const char *gtphub_peer_strb(struct gtphub_peer *peer, char *buf,
 	if (llist_empty(&peer->addresses))
 		return "(addressless)";
 
-	struct gtphub_peer_addr *a = llist_first(&peer->addresses,
-						 struct gtphub_peer_addr,
-						 entry);
+	struct gtphub_peer_addr *a = llist_first_entry_or_null(&peer->addresses, struct gtphub_peer_addr, entry);
 	return gsn_addr_to_strb(&a->addr, buf, buflen);
 }
 
