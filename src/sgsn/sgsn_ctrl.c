@@ -43,7 +43,7 @@ static int get_subscriber_list(struct ctrl_cmd *cmd, void *d)
 
 		llist_for_each_entry(pdp, &mm->pdp_list, list)
 			addr = gprs_pdpaddr2str(pdp->lib->eua.v,
-						pdp->lib->eua.l);
+						pdp->lib->eua.l, false);
 
 		cmd->reply = talloc_asprintf_append(
 					cmd->reply,

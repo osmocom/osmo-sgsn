@@ -135,7 +135,7 @@ DEFUN(cfg_sgsn_timer, cfg_sgsn_timer_cmd,
 	return osmo_tdef_vty_set_cmd(vty, g_cfg->T_defs, argv);
 }
 
-char *gprs_pdpaddr2str(uint8_t *pdpa, uint8_t len)
+char *gprs_pdpaddr2str(uint8_t *pdpa, uint8_t len, bool return_ipv6)
 {
 	static char str[INET6_ADDRSTRLEN + 10];
 
@@ -148,14 +148,27 @@ char *gprs_pdpaddr2str(uint8_t *pdpa, uint8_t len)
 		case PDP_TYPE_N_IETF_IPv4:
 			if (len < 2 + 4)
 				break;
-			strcpy(str, "IPv4 ");
+			osmo_strlcpy(str, "IPv4 ", sizeof(str));
 			inet_ntop(AF_INET, pdpa+2, str+5, sizeof(str)-5);
 			return str;
 		case PDP_TYPE_N_IETF_IPv6:
 			if (len < 2 + 8)
 				break;
-			strcpy(str, "IPv6 ");
+			osmo_strlcpy(str, "IPv6 ", sizeof(str));
 			inet_ntop(AF_INET6, pdpa+2, str+5, sizeof(str)-5);
+			return str;
+		case PDP_TYPE_N_IETF_IPv4v6:
+			if (len < 2 + 20)
+				break;
+			if (return_ipv6) {
+				/* The IPv6 token, (rightmost four fields) is a duplicate of
+				 * the site prefix + subnetID (leftmost fields) in pdpa here */
+				osmo_strlcpy(str, "IPv6 ", sizeof(str));
+				inet_ntop(AF_INET6, pdpa+6, str+5, sizeof(str)-5);
+				return str;
+			}
+			osmo_strlcpy(str, "IPv4 ", sizeof(str));
+			inet_ntop(AF_INET, pdpa+2, str+5, sizeof(str)-5);
 			return str;
 		default:
 			break;
@@ -552,8 +565,13 @@ static void vty_dump_pdp(struct vty *vty, const char *pfx,
 			osmo_apn_to_str(apnbuf, pdp->lib->apn_use.v, pdp->lib->apn_use.l),
 			VTY_NEWLINE);
 		vty_out(vty, "%s  PDP Address: %s%s", pfx,
-			gprs_pdpaddr2str(pdp->lib->eua.v, pdp->lib->eua.l),
+			gprs_pdpaddr2str(pdp->lib->eua.v, pdp->lib->eua.l, false),
 			VTY_NEWLINE);
+		if (pdp->lib->eua.v[1] == PDP_TYPE_N_IETF_IPv4v6) {
+			vty_out(vty, "%s  PDP Address: %s%s", pfx,
+				gprs_pdpaddr2str(pdp->lib->eua.v, pdp->lib->eua.l, true),
+				VTY_NEWLINE);
+		}
 		vty_out(vty, "%s  GTPv%d Local Control(%s / TEIC: 0x%08x) ", pfx, pdp->lib->version,
 			sgsn_gtp_ntoa(&pdp->lib->gsnlc), pdp->lib->teic_own);
 		vty_out(vty, "Data(%s / TEID: 0x%08x)%s",
