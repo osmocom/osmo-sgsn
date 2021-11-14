@@ -54,7 +54,7 @@ vty-python-test: $(BUILT_SOURCES)
 	osmotestvty.py -p $(abs_top_srcdir) -w $(abs_top_builddir) -v
 	osmotestconfig.py -p $(abs_top_srcdir) -w $(abs_top_builddir) -v
 	$(srcdir)/vty_test_runner.py -w $(abs_top_builddir) -v
-	rm -f $(top_builddir)/sms.db $(top_builddir)/gsn_restart $(top_builddir)/gtphub_restart_count
+	rm -f $(top_builddir)/gsn_restart $(top_builddir)/gtphub_restart_count
 
 # To update the VTY script from current application behavior,
 # pass -u to vty_script_runner.py by doing:
@@ -64,7 +64,7 @@ vty-transcript-test:
 		-n OsmoSGSN -p 4245 \
 		-r "$(top_builddir)/src/sgsn/osmo-sgsn -c $(top_srcdir)/doc/examples/osmo-sgsn/osmo-sgsn.cfg" \
 		$(U) $${T:-$(srcdir)/osmo-sgsn*.vty}
-	rm -f $(builddir)/sms.db $(builddir)/gsn_restart
+	rm -f $(builddir)/gsn_restart
 
 # don't run multiple tests concurrently so that the ports don't conflict
 vty-test:
@@ -73,7 +73,7 @@ vty-test:
 
 ctrl-python-test: $(BUILT_SOURCES)
 	$(srcdir)/ctrl_test_runner.py -w $(abs_top_builddir) -v
-	rm -f $(top_builddir)/sms.db $(top_builddir)/gsn_restart $(top_builddir)/gtphub_restart_count
+	rm -f $(top_builddir)/gsn_restart $(top_builddir)/gtphub_restart_count
 
 check-local: atconfig $(TESTSUITE)
 	$(SHELL) '$(TESTSUITE)' $(TESTSUITEFLAGS)
