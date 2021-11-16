@@ -1,3 +1,49 @@
+osmo-sgsn (1.8.0) unstable; urgency=medium
+
+  [ Harald Welte ]
+  * Remove bogus DNS log category
+
+  [ Daniel Willmann ]
+  * manuals: Regenerate counters/VTY through docker
+
+  [ Vadim Yanitskiy ]
+  * main: resurrect removed 'ns' logging category as deprecated
+  * doc/manuals: update configuration.adoc to use new command syntax
+  * tests/Makefile.am: do not try removing non-existing files
+
+  [ Pau Espin Pedrol ]
+  * ranap: log ranap iu event type name instead of number
+  * gmm: log GMM msg type name instead of number
+  * gmm: Expect E_VLR_ANSWERED when in ST_IU_SECURITY_CMD
+  * gmm_fsm: Expect E_GMM_COMMON_PROC_INIT_REQ when in ST_GMM_COMMON_PROC_INIT
+  * mm_iu: Send event E_PMM_PS_CONN_ESTABLISH upon rx GMM SERVICE REQUEST
+  * mm_iu: Expect E_PMM_PS_ATTACH when in ST_PMM_IDLE
+  * gprs_gmm.c: State proper GMM prefix logging rx/tx of GMM messages
+  * mm_state_iu_fsm: T3314 expiry must lead to PMM IDLE, not PMM DETACHED
+  * Iu: Drop timer X3314
+  * gprs_ranap.c: Clean up code path releasing IU conn
+  * mm_state_{gb,iu}_fsm: Add missing license block, improve spec references
+  * mm_state_{gb,iu}_fsm: Improve naming for detach event
+  * Drop unused GBRPOXY enum field
+  * gtp: Delete ctx upon receive UpdateCtxResp with cause Non-existent
+  * Support forwarding RIM messages over GTPCv1 EUTRAN<->GERAN
+  * Use new stat item/ctr getter APIs
+
+  [ Keith ]
+  * vty: Fix optional display of pdp with mm-context
+  * VTY: Don't display 'PDP Address: invalid' for IPv4v6
+
+  [ Eric ]
+  * add support for multiple encryption algorithms and a5/4
+
+  [ Oliver Smith ]
+  * gtphub: remove llist_first, llist_last macros
+  * vty: add "page imsi"
+  * debian/control: remove dh-systemd build-depend
+  * Revert "Turn some compiler warnings into errors"
+
+ -- Pau Espin Pedrol <pespin@sysmocom.de>  Tue, 16 Nov 2021 17:57:50 +0100
+
 osmo-sgsn (1.7.0) unstable; urgency=medium
 
   [ Daniel Willmann ]
