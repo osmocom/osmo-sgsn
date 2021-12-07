@@ -590,6 +590,7 @@ static struct gprs_llc_llme *llme_alloc(uint32_t tlli)
 
 static void llme_free(struct gprs_llc_llme *llme)
 {
+	gprs_sndcp_sm_deactivate_ind_by_llme(llme);
 	gprs_sndcp_comp_free(llme->comp.proto);
 	gprs_sndcp_comp_free(llme->comp.data);
 	llist_del(&llme->list);

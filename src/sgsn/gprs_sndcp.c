@@ -544,6 +544,20 @@ int sndcp_sm_deactivate_ind(struct gprs_llc_lle *lle, uint8_t nsapi)
 	return 0;
 }
 
+/* Clean up all gprs_sndcp_entities related to llme (OS#4824) */
+void gprs_sndcp_sm_deactivate_ind_by_llme(struct gprs_llc_llme *llme)
+{
+	struct gprs_sndcp_entity *sne, *sne2;
+
+	llist_for_each_entry_safe(sne, sne2, &gprs_sndcp_entities, list) {
+		if (sne->lle->llme == llme) {
+			LOGP(DSNDCP, LOGL_INFO, "SNSM-DEACTIVATE.ind for SNDCP attached to llme=%p\n", llme);
+			/* Free and remove from list */
+			sndcp_sm_deactivate_ind(sne->lle, sne->nsapi);
+		}
+	}
+}
+
 /* Fragmenter state */
 struct sndcp_frag_state {
 	uint8_t frag_nr;

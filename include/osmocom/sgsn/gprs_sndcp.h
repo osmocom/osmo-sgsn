@@ -76,4 +76,7 @@ int sndcp_sn_xid_conf(struct gprs_llc_xid_field *xid_field_conf,
 		      struct gprs_llc_xid_field *xid_field_request,
 		      struct gprs_llc_lle *lle);
 
+/* Clean up all gprs_sndcp_entities related to llme (OS#4824) */
+void gprs_sndcp_sm_deactivate_ind_by_llme(struct gprs_llc_llme *llme);
+
 #endif	/* INT_SNDCP_H */
