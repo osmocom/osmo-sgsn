@@ -48,7 +48,7 @@ static struct sgsn_instance sgsn_inst = {
 	.cfg = {
 		.gtp_statedir = "./",
 		.auth_policy = SGSN_AUTH_POLICY_CLOSED,
-		.cipher_support_mask = 0x1,
+		.gea_encryption_mask = 0x1,
 	},
 };
 struct sgsn_instance *sgsn = &sgsn_inst;

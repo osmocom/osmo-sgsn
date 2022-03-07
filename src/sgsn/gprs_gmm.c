@@ -1319,11 +1319,11 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 
 	ctx->ue_cipher_mask = gprs_ms_net_cap_gea_mask(ctx->ms_network_capa.buf, msnc_len);
 
-	if (!(ctx->ue_cipher_mask & sgsn->cfg.cipher_support_mask)) {
+	if (!(ctx->ue_cipher_mask & sgsn->cfg.gea_encryption_mask)) {
 		reject_cause = GMM_CAUSE_PROTO_ERR_UNSPEC;
 		LOGMMCTXP(LOGL_NOTICE, ctx, "Rejecting ATTACH REQUEST with MI "
 			  "%s because MS do not support required encryption, mask UE:0x%02x NW:0x%02x \n",
-				  mi_log_string, ctx->ue_cipher_mask, sgsn->cfg.cipher_support_mask);
+				  mi_log_string, ctx->ue_cipher_mask, sgsn->cfg.gea_encryption_mask);
 		goto rejected;
 	}
 
@@ -1335,7 +1335,7 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 	 * So let's just assume we will have the auth data required to make it work.
 	 */
 
-	ctx->ciph_algo = gprs_ms_net_select_best_gea(ctx->ue_cipher_mask, sgsn->cfg.cipher_support_mask);
+	ctx->ciph_algo = gprs_ms_net_select_best_gea(ctx->ue_cipher_mask, sgsn->cfg.gea_encryption_mask);
 
 #ifdef PTMSI_ALLOC
 	/* Allocate a new P-TMSI (+ P-TMSI signature) and update TLLI */

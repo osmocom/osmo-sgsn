@@ -251,11 +251,11 @@ static int config_write_sgsn(struct vty *vty)
 	for (server = sgsn->ares_servers; server; server = server->next)
 		vty_out(vty, " grx-dns-add %s%s", inet_ntoa(server->addr.addr4), VTY_NEWLINE);
 
-	if (g_cfg->cipher_support_mask != 0) {
+	if (g_cfg->gea_encryption_mask != 0) {
 		vty_out(vty, " encryption gea");
 
 		for (i = 0; i < _GPRS_ALGO_NUM; i++)
-			if (g_cfg->cipher_support_mask >> i & 1)
+			if (g_cfg->gea_encryption_mask >> i & 1)
 				vty_out(vty, " %u", i);
 
 		vty_out(vty, "%s", VTY_NEWLINE);
@@ -770,7 +770,7 @@ DEFUN_DEPRECATED(cfg_encrypt, cfg_encrypt_cmd,
 		}
 	}
 
-	g_cfg->cipher_support_mask |= (1 << c);
+	g_cfg->gea_encryption_mask |= (1 << c);
 
 	return CMD_SUCCESS;
 }
@@ -787,12 +787,12 @@ DEFUN(cfg_encrypt2, cfg_encrypt2_cmd,
 {
 	int i = 0;
 
-	g_cfg->cipher_support_mask = 0;
+	g_cfg->gea_encryption_mask = 0;
 	for (i = 0; i < argc; i++)
-		g_cfg->cipher_support_mask |= (1 << atoi(argv[i]));
+		g_cfg->gea_encryption_mask |= (1 << atoi(argv[i]));
 
 	for (i = 0; i < _GPRS_ALGO_NUM; i++) {
-		if (g_cfg->cipher_support_mask >> i & 1) {
+		if (g_cfg->gea_encryption_mask >> i & 1) {
 
 			if (i == GPRS_ALGO_GEA0)
 				continue;
@@ -1783,7 +1783,7 @@ int sgsn_parse_config(const char *config_file)
 	/* make sure sgsn_vty_init() was called before this */
 	OSMO_ASSERT(g_cfg);
 
-	g_cfg->cipher_support_mask = 0x1; /* support GEA0 by default unless specific encryption config exists */
+	g_cfg->gea_encryption_mask = 0x1; /* support GEA0 by default unless specific encryption config exists */
 
 	rc = vty_read_config_file(config_file, NULL);
 	if (rc < 0) {
