@@ -77,6 +77,7 @@ struct sgsn_config {
 
 	enum sgsn_auth_policy auth_policy;
 	uint8_t gea_encryption_mask;
+	uint8_t uea_encryption_mask;
 	struct llist_head imsi_acl;
 
 	struct sockaddr_in gsup_server_addr;

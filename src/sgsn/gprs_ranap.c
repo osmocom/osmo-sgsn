@@ -145,6 +145,11 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 		rc = 0;
 		break;
 	case RANAP_IU_EVENT_SECURITY_MODE_COMPLETE:
+		/* FIXME: verify that a permitted UEA level was chosen. Compare how osmo-msc does it in
+		 * msc_a_ran_dec_from_msc_i(), case RAN_MSG_CIPHER_MODE_COMPLETE.
+		 * We should dissolve iu_client.c, it was a design mistake when first implementing Iu support. osmo-msc
+		 * has moved away from it a long time ago.
+		 */
 		/* Continue authentication here */
 		mm->iu.ue_ctx->integrity_active = 1;
 		ranap_iu_tx_common_id(mm->iu.ue_ctx, mm->imsi);

@@ -36,6 +36,7 @@ OsmoSGSN(config-sgsn)# list
   auth-policy (accept-all|closed|acl-only|remote)
   authentication (optional|required)
   encryption gea <0-4> [<0-4>] [<0-4>] [<0-4>] [<0-4>]
+  encryption uea <0-2> [<0-2>] [<0-2>]
   gsup ipa-name NAME
   gsup remote-ip A.B.C.D
   gsup remote-port <0-65535>

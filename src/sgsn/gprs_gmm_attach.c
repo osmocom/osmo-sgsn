@@ -1,4 +1,5 @@
 #include <osmocom/core/tdef.h>
+#include <osmocom/crypt/utran_cipher.h>
 
 #include <osmocom/sgsn/gprs_gmm_attach.h>
 
@@ -257,6 +258,7 @@ static void st_iu_security_cmd_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_
 {
 #ifdef BUILD_IU
 	struct sgsn_mm_ctx *ctx = fi->priv;
+	bool send_ck;
 
 	/* TODO: shouldn't this set always? not only when the integrity_active? */
 	if (ctx->iu.ue_ctx->integrity_active) {
@@ -264,7 +266,14 @@ static void st_iu_security_cmd_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_
 		return;
 	}
 
-	ranap_iu_tx_sec_mode_cmd(ctx->iu.ue_ctx, &ctx->auth_triplet.vec, 0, ctx->iu.new_key);
+	/* Is any encryption above UEA0 enabled? */
+	send_ck = sgsn->cfg.uea_encryption_mask > (1 << OSMO_UTRAN_UEA0);
+	LOGMMCTXP(LOGL_DEBUG, ctx, "Iu Security Mode Command: %s encryption key (UEA encryption mask = 0x%x)\n",
+		  send_ck ? "sending" : "not sending", sgsn->cfg.uea_encryption_mask);
+
+	/* FIXME: we should send the set of allowed UEA, as in ranap_new_msg_sec_mod_cmd2(). However, this
+	 * is not possible in the iu_client API. See OS#5487. */
+	ranap_iu_tx_sec_mode_cmd(ctx->iu.ue_ctx, &ctx->auth_triplet.vec, send_ck, ctx->iu.new_key);
 	ctx->iu.new_key = 0;
 #endif
 }

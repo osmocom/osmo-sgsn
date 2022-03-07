@@ -47,6 +47,7 @@
 #include <osmocom/vty/vty.h>
 #include <osmocom/vty/misc.h>
 #include <osmocom/crypt/gprs_cipher.h>
+#include <osmocom/crypt/utran_cipher.h>
 #include <osmocom/abis/ipa.h>
 
 #include <osmocom/gprs/gprs_bssgp.h>
@@ -775,9 +776,11 @@ DEFUN_DEPRECATED(cfg_encrypt, cfg_encrypt_cmd,
 	return CMD_SUCCESS;
 }
 
+#define ENCRYPTION_STR "Set encryption algorithms for SGSN\n"
+
 DEFUN(cfg_encrypt2, cfg_encrypt2_cmd,
 	"encryption gea <0-4> [<0-4>] [<0-4>] [<0-4>] [<0-4>]",
-	"Set encryption algorithms for SGSN\n"
+	ENCRYPTION_STR
 	"GPRS Encryption Algorithm\n"
 	"GEAn Algorithm Number\n"
 	"GEAn Algorithm Number\n"
@@ -832,6 +835,23 @@ DEFUN(cfg_authentication, cfg_authentication_cmd,
 	}
 
 	g_cfg->require_authentication = required;
+	return CMD_SUCCESS;
+}
+
+DEFUN(cfg_encryption_uea, cfg_encryption_uea_cmd,
+      "encryption uea <0-2> [<0-2>] [<0-2>]",
+      ENCRYPTION_STR
+      "UTRAN (3G) encryption algorithms to allow: 0 = UEA0 (no encryption), 1 = UEA1, 2 = UEA2.\n"
+      "UEAn Algorithm Number\n"
+      "UEAn Algorithm Number\n"
+      "UEAn Algorithm Number\n")
+{
+	unsigned int i;
+
+	g_cfg->uea_encryption_mask = 0;
+	for (i = 0; i < argc; i++)
+		g_cfg->uea_encryption_mask |= (1 << atoi(argv[i]));
+
 	return CMD_SUCCESS;
 }
 
@@ -1732,6 +1752,7 @@ int sgsn_vty_init(struct sgsn_config *cfg)
 	/* order matters here: ensure we attempt to parse our new command first! */
 	install_element(SGSN_NODE, &cfg_encrypt2_cmd);
 	install_element(SGSN_NODE, &cfg_encrypt_cmd);
+	install_element(SGSN_NODE, &cfg_encryption_uea_cmd);
 
 	install_element(SGSN_NODE, &cfg_gsup_ipa_name_cmd);
 	install_element(SGSN_NODE, &cfg_gsup_remote_ip_cmd);
@@ -1784,6 +1805,7 @@ int sgsn_parse_config(const char *config_file)
 	OSMO_ASSERT(g_cfg);
 
 	g_cfg->gea_encryption_mask = 0x1; /* support GEA0 by default unless specific encryption config exists */
+	g_cfg->uea_encryption_mask = (1 << OSMO_UTRAN_UEA0); /* support UEA0 by default unless specific encryption config exists */
 
 	rc = vty_read_config_file(config_file, NULL);
 	if (rc < 0) {
