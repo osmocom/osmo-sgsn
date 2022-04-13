@@ -3,7 +3,7 @@ AM_CFLAGS=-Wall -ggdb3 $(LIBOSMOCORE_CFLAGS) $(LIBOSMOGSM_CFLAGS) $(LIBOSMOABIS_
 
 EXTRA_DIST = gprs_test.ok
 
-noinst_PROGRAMS = gprs_test
+check_PROGRAMS = gprs_test
 
 gprs_test_SOURCES = gprs_test.c $(top_srcdir)/src/gprs/gprs_utils.c
 

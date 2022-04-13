@@ -3,7 +3,7 @@ AM_CFLAGS=-Wall -ggdb3 $(LIBOSMOCORE_CFLAGS) $(LIBOSMOGSM_CFLAGS) $(LIBCARES_CFL
 
 EXTRA_DIST = slhc_test.ok
 
-noinst_PROGRAMS = slhc_test
+check_PROGRAMS = slhc_test
 
 slhc_test_SOURCES = slhc_test.c
 

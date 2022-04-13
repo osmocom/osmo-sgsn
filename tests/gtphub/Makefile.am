@@ -16,7 +16,7 @@ EXTRA_DIST = \
 	gtphub_test.ok \
 	$(NULL)
 
-noinst_PROGRAMS = \
+check_PROGRAMS = \
 	gtphub_test \
 	$(NULL)
 

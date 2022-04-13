@@ -3,7 +3,7 @@ AM_CFLAGS=-Wall -ggdb3 $(LIBOSMOCORE_CFLAGS) $(LIBOSMOGSM_CFLAGS) $(LIBCARES_CFL
 
 EXTRA_DIST = sndcp_xid_test.ok
 
-noinst_PROGRAMS = sndcp_xid_test
+check_PROGRAMS = sndcp_xid_test
 
 sndcp_xid_test_SOURCES = sndcp_xid_test.c
 

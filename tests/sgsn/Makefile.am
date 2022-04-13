@@ -25,7 +25,7 @@ EXTRA_DIST = \
 	sgsn_test.ok \
 	$(NULL)
 
-noinst_PROGRAMS = \
+check_PROGRAMS = \
 	sgsn_test \
 	$(NULL)
 

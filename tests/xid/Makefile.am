@@ -15,7 +15,7 @@ EXTRA_DIST = \
 	xid_test.ok \
 	$(NULL)
 
-noinst_PROGRAMS = \
+check_PROGRAMS = \
 	xid_test \
 	$(NULL)
 

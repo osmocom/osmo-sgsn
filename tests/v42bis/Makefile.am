@@ -3,7 +3,7 @@ AM_CFLAGS=-Wall -ggdb3 $(LIBOSMOCORE_CFLAGS) $(LIBOSMOGSM_CFLAGS) $(LIBCARES_CFL
 
 EXTRA_DIST = v42bis_test.ok
 
-noinst_PROGRAMS = v42bis_test
+check_PROGRAMS = v42bis_test
 
 v42bis_test_SOURCES = v42bis_test.c
 
