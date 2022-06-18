@@ -22,8 +22,8 @@ Build-Depends: debhelper (>=9),
                libosmo-sccp-dev (>= 1.5.0),
                osmo-gsm-manuals-dev (>= 1.2.0)
 Standards-Version: 3.9.8
-Vcs-Git: git://git.osmocom.org/osmo-sgsn.git
-Vcs-Browser: https://git.osmocom.org/osmo-sgsn
+Vcs-Git: https://gitea.osmocom.org/cellular-infrastructure/osmo-sgsn
+Vcs-Browser: https://gitea.osmocom.org/cellular-infrastructure/osmo-sgsn
 Homepage: https://projects.osmocom.org/projects/osmo-sgsn
 
 
