@@ -1,3 +1,26 @@
+osmo-sgsn (1.9.0) unstable; urgency=medium
+
+  [ Oliver Smith ]
+  * llme_free: clean up related sndcp
+  * treewide: remove FSF address
+
+  [ Pau Espin Pedrol ]
+  * Drop unneeded ax_check_compile_flag.m4
+  * Revert "sgsn: Handle different levels of QoS"
+
+  [ Neels Hofmeyr ]
+  * s/cipher_support_mask/gea_encryption_mask
+  * Iu: add UEA encryption
+
+  [ Vadim Yanitskiy ]
+  * tests: use 'check_PROGRAMS' instead of 'noinst_PROGRAMS'
+
+  [ Harald Welte ]
+  * update git URLs (git -> https; gitea)
+  * README: Major update
+
+ -- Pau Espin Pedrol <pespin@sysmocom.de>  Wed, 29 Jun 2022 11:45:08 +0200
+
 osmo-sgsn (1.8.0) unstable; urgency=medium
 
   [ Harald Welte ]
