@@ -965,9 +965,9 @@ int gprs_llc_rcvmsg(struct msgb *msg, struct tlv_parsed *tv)
 				       llhp.data);
 			if (rc < 0)
 				return rc;
-		llhp.fcs = *(llhp.data + llhp.data_len);
-		llhp.fcs |= *(llhp.data + llhp.data_len + 1) << 8;
-		llhp.fcs |= *(llhp.data + llhp.data_len + 2) << 16;
+			llhp.fcs = *(llhp.data + llhp.data_len);
+			llhp.fcs |= *(llhp.data + llhp.data_len + 1) << 8;
+			llhp.fcs |= *(llhp.data + llhp.data_len + 2) << 16;
 		} else {
 			LOGP(DLLC, LOGL_NOTICE, "encrypted frame for LLC that "
 				"has no KC/Algo! Dropping.\n");
