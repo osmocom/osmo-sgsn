@@ -4,6 +4,8 @@ Description=Osmocom GTP Hub
 [Service]
 Type=simple
 ExecStart=/usr/bin/osmo-gtphub -c /etc/osmocom/osmo-gtphub.cfg
+StateDirectory=osmocom
+WorkingDirectory=%S/osmocom
 Restart=always
 RestartSec=2
 RestartPreventExitStatus=1
