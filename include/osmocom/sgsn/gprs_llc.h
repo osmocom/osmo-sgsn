@@ -1,5 +1,4 @@
-#ifndef _GPRS_LLC_H
-#define _GPRS_LLC_H
+#pragma once
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -284,6 +283,3 @@ int gprs_llc_fcs(uint8_t *data, unsigned int len);
 /* LLME handling routines */
 struct llist_head *gprs_llme_list(void);
 struct gprs_llc_lle *gprs_lle_get_or_create(const uint32_t tlli, uint8_t sapi);
-
-
-#endif
