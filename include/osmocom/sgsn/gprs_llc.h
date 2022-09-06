@@ -277,7 +277,7 @@ void gprs_llme_copy_key(struct sgsn_mm_ctx *mm, struct gprs_llc_llme *llme);
 int gprs_llc_hdr_parse(struct gprs_llc_hdr_parsed *ghp,
 		       uint8_t *llc_hdr, int len);
 void gprs_llc_hdr_dump(struct gprs_llc_hdr_parsed *gph, struct gprs_llc_lle *lle);
-int gprs_llc_fcs(uint8_t *data, unsigned int len);
+int gprs_llc_fcs(const uint8_t *data, unsigned int len);
 
 
 /* LLME handling routines */

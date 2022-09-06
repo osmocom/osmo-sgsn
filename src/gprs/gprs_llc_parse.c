@@ -55,7 +55,7 @@ static const struct value_string llc_cmd_strs[] = {
 #define N202		4
 #define CRC24_LENGTH	3
 
-int gprs_llc_fcs(uint8_t *data, unsigned int len)
+int gprs_llc_fcs(const uint8_t *data, unsigned int len)
 {
 	uint32_t fcs_calc;
 

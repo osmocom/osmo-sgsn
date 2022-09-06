@@ -59,7 +59,7 @@ static const uint32_t tbl_crc24[256] = {
 
 #define INIT_CRC24	0xffffff
 
-uint32_t crc24_calc(uint32_t fcs, uint8_t *cp, unsigned int len)
+uint32_t crc24_calc(uint32_t fcs, const uint8_t *cp, unsigned int len)
 {
 	while (len--)
 		fcs = (fcs >> 8) ^ tbl_crc24[(fcs ^ *cp++) & 0xff];

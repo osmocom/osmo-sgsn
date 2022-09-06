@@ -5,6 +5,6 @@
 
 #define INIT_CRC24	0xffffff
 
-uint32_t crc24_calc(uint32_t fcs, uint8_t *cp, unsigned int len);
+uint32_t crc24_calc(uint32_t fcs, const uint8_t *cp, unsigned int len);
 
 #endif
