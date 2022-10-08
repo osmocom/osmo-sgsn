@@ -723,13 +723,14 @@ int sndcp_unitdata_req(struct msgb *msg, struct gprs_llc_lle *lle, uint8_t nsapi
 
 	sne = gprs_sndcp_entity_by_lle(lle, nsapi);
 	if (!sne) {
-		LOGP(DSNDCP, LOGL_ERROR, "Cannot find SNDCP Entity\n");
+		LOGP(DSNDCP, LOGL_ERROR, "Cannot find SNDCP Entity (lle=%p, TLLI=%08x, SAPI=%u, NSAPI=%u)\n",
+			 lle, lle->llme->tlli, lle->sapi, nsapi);
 		msgb_free(msg);
 		return -EIO;
 	}
 
 	/* Check if we need to fragment this N-PDU into multiple SN-PDUs */
-	if (msg->len > lle->params.n201_u - 
+	if (msg->len > lle->params.n201_u -
 			(sizeof(*sch) + sizeof(*suh) + sizeof(*scomph))) {
 		/* initialize the fragmenter state */
 		fs.msg = msg;
