@@ -80,6 +80,11 @@ static void st_gmm_registered_normal(struct osmo_fsm_inst *fi, uint32_t event, v
 	case E_GMM_COMMON_PROC_INIT_REQ:
 		gmm_fsm_state_chg(fi, ST_GMM_COMMON_PROC_INIT);
 		break;
+	case E_GMM_COMMON_PROC_SUCCESS:
+		/* If we were moved from ST_GMM_COMMON_PROC_INIT here by
+		 *  E_GMM_ATTACH_SUCCESS instead of E_GMM_COMMON_PROC_SUCCESS then we'll receive the latter here:
+		 *  we should simply ignore it */
+		break;
 	/* case E_GMM_NET_INIT_DETACH_REQ:
 		gmm_fsm_state_chg(fi, ST_GMM_DEREGISTERED_INIT);
 		break; */
@@ -141,6 +146,7 @@ static struct osmo_fsm_state gmm_fsm_states[] = {
 	[ST_GMM_REGISTERED_NORMAL] = {
 		.in_event_mask =
 			X(E_GMM_COMMON_PROC_INIT_REQ) |
+			X(E_GMM_COMMON_PROC_SUCCESS) |
 			/* X(E_GMM_NET_INIT_DETACH_REQ) | */
 			/* X(E_GMM_MS_INIT_DETACH_REQ) | */
 			X(E_GMM_SUSPEND),
