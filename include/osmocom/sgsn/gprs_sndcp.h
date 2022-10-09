@@ -68,7 +68,7 @@ int sndcp_sn_xid_req(struct gprs_llc_lle *lle, uint8_t nsapi);
  * Section 6.8 XID parameter negotiation) */
 int sndcp_sn_xid_ind(struct gprs_llc_xid_field *xid_field_indication,
 		     struct gprs_llc_xid_field *xid_field_response,
-		     struct gprs_llc_lle *lle);
+		     const struct gprs_llc_lle *lle);
 
 /* Process SNDCP-XID indication
  * (See also: TS 144 065, Section 6.8 XID parameter negotiation) */
@@ -77,6 +77,6 @@ int sndcp_sn_xid_conf(struct gprs_llc_xid_field *xid_field_conf,
 		      struct gprs_llc_lle *lle);
 
 /* Clean up all gprs_sndcp_entities related to llme (OS#4824) */
-void gprs_sndcp_sm_deactivate_ind_by_llme(struct gprs_llc_llme *llme);
+void gprs_sndcp_sm_deactivate_ind_by_llme(const struct gprs_llc_llme *llme);
 
 #endif	/* INT_SNDCP_H */

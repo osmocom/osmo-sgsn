@@ -271,7 +271,7 @@ static inline int gprs_llc_is_retransmit(uint16_t nu, uint16_t vur)
 }
 
 /* LLC low level functions */
-void gprs_llme_copy_key(struct sgsn_mm_ctx *mm, struct gprs_llc_llme *llme);
+void gprs_llme_copy_key(const struct sgsn_mm_ctx *mm, struct gprs_llc_llme *llme);
 
 /* parse a GPRS LLC header, also check for invalid frames */
 int gprs_llc_hdr_parse(struct gprs_llc_hdr_parsed *ghp,

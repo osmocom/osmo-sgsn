@@ -66,7 +66,7 @@ static uint16_t calc_ip_csum(uint8_t *data, int len)
 }
 
 /* Calculate TCP/IP checksum */
-static uint16_t calc_tcpip_csum(const void *ctx, uint8_t *packet, int len)
+static uint16_t calc_tcpip_csum(const void *ctx, const uint8_t *packet, int len)
 {
 	uint8_t *buf;
 	uint16_t csum;
@@ -84,7 +84,7 @@ static uint16_t calc_tcpip_csum(const void *ctx, uint8_t *packet, int len)
 }
 
 /* Show some ip packet details */
-static void debug_ip_packet(uint8_t *data, int len, int dir, char *info)
+static void debug_ip_packet(const uint8_t *data, int len, int dir, const char *info)
 {
 	uint8_t tcp_flags;
 	char flags_debugmsg[256];
@@ -221,7 +221,8 @@ struct defrag_queue_entry {
 LLIST_HEAD(gprs_sndcp_entities);
 
 /* Check if any compression parameters are set in the sgsn configuration */
-static inline int any_pcomp_or_dcomp_active(struct sgsn_instance *sgsn) {
+static inline int any_pcomp_or_dcomp_active(const struct sgsn_instance *sgsn)
+{
 	if (sgsn->cfg.pcomp_rfc1144.active || sgsn->cfg.pcomp_rfc1144.passive ||
 	    sgsn->cfg.dcomp_v42bis.active || sgsn->cfg.dcomp_v42bis.passive)
 		return true;
@@ -260,7 +261,7 @@ static int defrag_enqueue(struct gprs_sndcp_entity *sne, uint8_t seg_nr,
 }
 
 /* return if we have all segments of this N-PDU */
-static int defrag_have_all_segments(struct gprs_sndcp_entity *sne)
+static int defrag_have_all_segments(const struct gprs_sndcp_entity *sne)
 {
 	uint32_t seg_needed = 0;
 	unsigned int i;
@@ -275,7 +276,7 @@ static int defrag_have_all_segments(struct gprs_sndcp_entity *sne)
 	return 0;
 }
 
-static struct defrag_queue_entry *defrag_get_seg(struct gprs_sndcp_entity *sne,
+static struct defrag_queue_entry *defrag_get_seg(const struct gprs_sndcp_entity *sne,
 						 uint32_t seg_nr)
 {
 	struct defrag_queue_entry *dqe;
@@ -522,7 +523,7 @@ int sndcp_sm_activate_ind(struct gprs_llc_lle *lle, uint8_t nsapi)
 }
 
 /* Entry point for the SNSM-DEACTIVATE.indication */
-int sndcp_sm_deactivate_ind(struct gprs_llc_lle *lle, uint8_t nsapi)
+int sndcp_sm_deactivate_ind(const struct gprs_llc_lle *lle, uint8_t nsapi)
 {
 	struct gprs_sndcp_entity *sne;
 
@@ -545,7 +546,7 @@ int sndcp_sm_deactivate_ind(struct gprs_llc_lle *lle, uint8_t nsapi)
 }
 
 /* Clean up all gprs_sndcp_entities related to llme (OS#4824) */
-void gprs_sndcp_sm_deactivate_ind_by_llme(struct gprs_llc_llme *llme)
+void gprs_sndcp_sm_deactivate_ind_by_llme(const struct gprs_llc_llme *llme)
 {
 	struct gprs_sndcp_entity *sne, *sne2;
 
@@ -1057,7 +1058,7 @@ int sndcp_sn_xid_req(struct gprs_llc_lle *lle, uint8_t nsapi)
 
 /* Handle header compression entites */
 static int handle_pcomp_entities(struct gprs_sndcp_comp_field *comp_field,
-				 struct gprs_llc_lle *lle)
+				 const struct gprs_llc_lle *lle)
 {
 	/* Note: This functions also transforms the comp_field into its
 	 * echo form (strips comp values, resets propose bit etc...)
@@ -1107,7 +1108,7 @@ static int handle_pcomp_entities(struct gprs_sndcp_comp_field *comp_field,
 
 /* Hanle data compression entites */
 static int handle_dcomp_entities(struct gprs_sndcp_comp_field *comp_field,
-				 struct gprs_llc_lle *lle)
+				 const struct gprs_llc_lle *lle)
 {
 	/* See note in handle_pcomp_entities() */
 
@@ -1149,7 +1150,7 @@ static int handle_dcomp_entities(struct gprs_sndcp_comp_field *comp_field,
  * (See also: TS 144 065, Section 6.8 XID parameter negotiation) */
 int sndcp_sn_xid_ind(struct gprs_llc_xid_field *xid_field_indication,
 		     struct gprs_llc_xid_field *xid_field_response,
-		     struct gprs_llc_lle *lle)
+		     const struct gprs_llc_lle *lle)
 {
 	/* Note: This function computes the SNDCP-XID response that is sent
 	 * back to the ms when a ms originated XID is received. The

@@ -51,9 +51,9 @@ const struct value_string gprs_llc_llme_state_names[] = {
 };
 
 static struct gprs_llc_llme *llme_alloc(uint32_t tlli);
-static int gprs_llc_tx_xid(struct gprs_llc_lle *lle, struct msgb *msg,
+static int gprs_llc_tx_xid(const struct gprs_llc_lle *lle, struct msgb *msg,
 			   int command);
-static int gprs_llc_tx_dm(struct gprs_llc_lle *lle);
+static int gprs_llc_tx_dm(const struct gprs_llc_lle *lle);
 static int gprs_llc_tx_u(struct msgb *msg, uint8_t sapi,
 			 int command, enum gprs_llc_u_cmd u_cmd, int pf_bit);
 
@@ -212,7 +212,7 @@ static int gprs_llc_process_xid_ind(uint8_t *bytes_request,
 				    int bytes_request_len,
 				    uint8_t *bytes_response,
 				    int bytes_response_maxlen,
-				    struct gprs_llc_lle *lle)
+				    const struct gprs_llc_lle *lle)
 {
 	/* Note: This function computes the response that is sent back to the
 	 * MS when a mobile originated XID is received. The function is
@@ -288,7 +288,7 @@ static int gprs_llc_process_xid_ind(uint8_t *bytes_request,
 
 /* Dispatch XID indications and responses comming from the MS */
 static void rx_llc_xid(struct gprs_llc_lle *lle,
-		       struct gprs_llc_hdr_parsed *gph)
+		       const struct gprs_llc_hdr_parsed *gph)
 {
 	uint8_t response[1024];
 	int response_len;
@@ -681,7 +681,7 @@ int gprs_llc_tx_u(struct msgb *msg, uint8_t sapi, int command,
 }
 
 /* Send XID response to LLE */
-static int gprs_llc_tx_xid(struct gprs_llc_lle *lle, struct msgb *msg,
+static int gprs_llc_tx_xid(const struct gprs_llc_lle *lle, struct msgb *msg,
 			   int command)
 {
 	/* copy identifiers from LLE to ensure lower layers can route */
@@ -692,7 +692,7 @@ static int gprs_llc_tx_xid(struct gprs_llc_lle *lle, struct msgb *msg,
 	return gprs_llc_tx_u(msg, lle->sapi, command, GPRS_LLC_U_XID, 1);
 }
 
-static int gprs_llc_tx_dm(struct gprs_llc_lle *lle)
+static int gprs_llc_tx_dm(const struct gprs_llc_lle *lle)
 {
 	struct msgb *msg = msgb_alloc_headroom(4096, 1024, "LLC_DM");
 
@@ -705,7 +705,7 @@ static int gprs_llc_tx_dm(struct gprs_llc_lle *lle)
 }
 
 /* encrypt information field + FCS, if needed! */
-static int apply_gea(struct gprs_llc_lle *lle, uint16_t crypt_len, uint16_t nu,
+static int apply_gea(const struct gprs_llc_lle *lle, uint16_t crypt_len, uint16_t nu,
 		     uint32_t oc, uint8_t sapi, uint8_t *fcs, uint8_t *data)
 {
 	uint8_t cipher_out[GSM0464_CIPH_MAX_BLOCK];
@@ -1037,7 +1037,7 @@ int gprs_llc_rcvmsg(struct msgb *msg, struct tlv_parsed *tv)
 }
 
 /* Propagate crypto parameters MM -> LLME */
-void gprs_llme_copy_key(struct sgsn_mm_ctx *mm, struct gprs_llc_llme *llme)
+void gprs_llme_copy_key(const struct sgsn_mm_ctx *mm, struct gprs_llc_llme *llme)
 {
 	if (!mm)
 		return;

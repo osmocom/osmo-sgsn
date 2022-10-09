@@ -182,7 +182,7 @@ int sgsn_mme_ran_info_req(struct sgsn_mme_ctx *mme, const struct bssgp_ran_infor
 /* Entry point for the SNSM-ACTIVATE.indication */
 int sndcp_sm_activate_ind(struct gprs_llc_lle *lle, uint8_t nsapi);
 /* Entry point for the SNSM-DEACTIVATE.indication */
-int sndcp_sm_deactivate_ind(struct gprs_llc_lle *lle, uint8_t nsapi);
+int sndcp_sm_deactivate_ind(const struct gprs_llc_lle *lle, uint8_t nsapi);
 /* Called by SNDCP when it has received/re-assembled a N-PDU */
 int sgsn_rx_sndcp_ud_ind(struct gprs_ra_id *ra_id, int32_t tlli, uint8_t nsapi,
 			 struct msgb *msg, uint32_t npdu_len, uint8_t *npdu);
