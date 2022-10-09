@@ -593,7 +593,7 @@ static int echo_conf(void *cbp, bool timeout)
 }
 
 /* Any message received by GGSN contains a recovery IE */
-static int cb_recovery2(struct sockaddr_in *peer, struct pdp_t *pdp, uint8_t recovery)
+static int cb_recovery3(struct gsn_t *gsn, struct sockaddr_in *peer, struct pdp_t *pdp, uint8_t recovery)
 {
 	struct sgsn_ggsn_ctx *ggsn;
 	struct sgsn_pdp_ctx *pctx = NULL;
@@ -901,7 +901,7 @@ int sgsn_gtp_init(struct sgsn_instance *sgi)
 	/* Register callbackcs with libgtp */
 	gtp_set_cb_delete_context(gsn, cb_delete_context);
 	gtp_set_cb_conf(gsn, cb_conf);
-	gtp_set_cb_recovery2(gsn, cb_recovery2);
+	gtp_set_cb_recovery3(gsn, cb_recovery3);
 	gtp_set_cb_data_ind(gsn, cb_data_ind);
 	gtp_set_cb_unsup_ind(gsn, cb_unsup_ind);
 	gtp_set_cb_extheader_ind(gsn, cb_extheader_ind);
