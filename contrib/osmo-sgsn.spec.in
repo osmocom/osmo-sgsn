@@ -81,13 +81,29 @@ make %{?_smp_mflags}
 %if 0%{?suse_version}
 %preun  %service_del_preun  %{name}.service
 %postun %service_del_postun %{name}.service
-%pre    %service_add_pre    %{name}.service
-%post   %service_add_post   %{name}.service
+%endif
+
+%pre
+getent group osmocom >/dev/null || groupadd --system osmocom
+getent passwd osmocom >/dev/null || useradd --system --gid osmocom --home-dir /var/lib/osmocom \
+                                            --shell /sbin/nologin --comment "Open Source Mobile Communications" osmocom
+%if 0%{?suse_version}
+%service_add_pre    %{name}.service
+%endif
+
+%post
+%if 0%{?suse_version}
+%service_add_post   %{name}.service
+%endif
+chown osmocom:osmocom /etc/osmocom/osmo-sgsn.cfg
+chmod 0660 /etc/osmocom/osmo-sgsn.cfg
+chown root:osmocom /etc/osmocom
+chmod 2775 /etc/osmocom
+
 %preun  -n osmo-gtphub %service_del_preun   osmo-gtphub.service
 %postun -n osmo-gtphub %service_del_postun  osmo-gtphub.service
 %pre    -n osmo-gtphub %service_add_pre     osmo-gtphub.service
 %post   -n osmo-gtphub %service_add_post    osmo-gtphub.service
-%endif
 
 %check
 make %{?_smp_mflags} check || (find . -name testsuite.log -exec cat {} +)

@@ -11,6 +11,8 @@ Type=simple
 StateDirectory=osmocom
 WorkingDirectory=%S/osmocom
 Restart=always
+User=osmocom
+Group=osmocom
 ExecStart=/usr/bin/osmo-sgsn -c /etc/osmocom/osmo-sgsn.cfg
 RestartSec=2
 

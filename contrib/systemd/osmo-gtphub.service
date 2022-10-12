@@ -5,6 +5,8 @@ Wants=network-online.target
 
 [Service]
 Type=simple
+User=osmocom
+Group=osmocom
 ExecStart=/usr/bin/osmo-gtphub -c /etc/osmocom/osmo-gtphub.cfg
 StateDirectory=osmocom
 WorkingDirectory=%S/osmocom
