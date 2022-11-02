@@ -136,6 +136,26 @@ DEFUN(cfg_sgsn_timer, cfg_sgsn_timer_cmd,
 	return osmo_tdef_vty_set_cmd(vty, g_cfg->T_defs, argv);
 }
 
+DEFUN(show_timer_gtp, show_timer_gtp_cmd,
+      "show timer gtp " OSMO_TDEF_VTY_ARG_T_OPTIONAL,
+      SHOW_STR "Show timers\n" "GTP (libgtp) timers\n"
+      OSMO_TDEF_VTY_DOC_T)
+{
+	const char *T_arg = argc > 0 ? argv[0] : NULL;
+	return osmo_tdef_vty_show_cmd(vty, g_cfg->T_defs_gtp, T_arg, NULL);
+}
+
+DEFUN(cfg_sgsn_timer_gtp, cfg_sgsn_timer_gtp_cmd,
+      "timer gtp " OSMO_TDEF_VTY_ARG_SET_OPTIONAL,
+      "Configure or show timers\n" "GTP (libgtp) timers\n"
+      OSMO_TDEF_VTY_DOC_SET)
+{
+	/* If any arguments are missing, redirect to 'show' */
+	if (argc < 2)
+		return show_timer(self, vty, argc, argv);
+	return osmo_tdef_vty_set_cmd(vty, g_cfg->T_defs_gtp, argv);
+}
+
 char *gprs_pdpaddr2str(uint8_t *pdpa, uint8_t len, bool return_ipv6)
 {
 	static char str[INET6_ADDRSTRLEN + 10];
@@ -312,6 +332,7 @@ static int config_write_sgsn(struct vty *vty)
 	vty_out(vty, " cdr interval %d%s", g_cfg->cdr.interval, VTY_NEWLINE);
 
 	osmo_tdef_vty_write(vty, g_cfg->T_defs, " timer ");
+	osmo_tdef_vty_write(vty, g_cfg->T_defs_gtp, " timer gtp ");
 
 	if (g_cfg->pcomp_rfc1144.active) {
 		vty_out(vty, " compression rfc1144 active slots %d%s",
@@ -1719,6 +1740,9 @@ int sgsn_vty_init(struct sgsn_config *cfg)
 	g_cfg->T_defs = sgsn_T_defs;
 	osmo_tdefs_reset(g_cfg->T_defs);
 
+	g_cfg->T_defs_gtp = gtp_T_defs;
+	osmo_tdefs_reset(g_cfg->T_defs_gtp);
+
 	install_element_ve(&show_sgsn_cmd);
 	//install_element_ve(&show_mmctx_tlli_cmd);
 	install_element_ve(&show_mmctx_imsi_cmd);
@@ -1726,6 +1750,7 @@ int sgsn_vty_init(struct sgsn_config *cfg)
 	install_element_ve(&show_pdpctx_all_cmd);
 	install_element_ve(&show_subscr_cache_cmd);
 	install_element_ve(&show_timer_cmd);
+	install_element_ve(&show_timer_gtp_cmd);
 
 	install_element(ENABLE_NODE, &update_subscr_insert_auth_triplet_cmd);
 	install_element(ENABLE_NODE, &update_subscr_create_cmd);
@@ -1773,6 +1798,7 @@ int sgsn_vty_init(struct sgsn_config *cfg)
 	install_element(SGSN_NODE, &cfg_grx_ggsn_cmd);
 
 	install_element(SGSN_NODE, &cfg_sgsn_timer_cmd);
+	install_element(SGSN_NODE, &cfg_sgsn_timer_gtp_cmd);
 
 	install_element(SGSN_NODE, &cfg_no_comp_rfc1144_cmd);
 	install_element(SGSN_NODE, &cfg_comp_rfc1144_cmd);

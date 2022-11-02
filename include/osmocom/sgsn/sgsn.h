@@ -93,6 +93,7 @@ struct sgsn_config {
 
 	/* Timer defintions */
 	struct osmo_tdef *T_defs;
+	struct osmo_tdef *T_defs_gtp;
 
 	int dynamic_lookup;
 

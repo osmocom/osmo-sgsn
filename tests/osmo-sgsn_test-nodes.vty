@@ -55,6 +55,7 @@ OsmoSGSN(config-sgsn)# list
   ggsn dynamic
   grx-dns-add A.B.C.D
   timer [TNNNN] [(<0-2147483647>|default)]
+  timer gtp [TNNNN] [(<0-2147483647>|default)]
   no compression rfc1144
   compression rfc1144 active slots <1-256>
   compression rfc1144 passive
