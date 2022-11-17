@@ -768,15 +768,24 @@ static int cb_data_ind(struct pdp_t *lib, void *packet, unsigned int len)
 		msgb_free(msg);
 		return -1;
 	case ST_GMM_REGISTERED_NORMAL:
-		OSMO_ASSERT(mm->gb.mm_state_fsm->state != ST_MM_IDLE);
-		if (mm->gb.mm_state_fsm->state == ST_MM_STANDBY) {
+		switch (mm->gb.mm_state_fsm->state) {
+		case ST_MM_IDLE:
+			LOGP(DGPRS, LOGL_ERROR, "Dropping DL packet for MS in MM state %s\n",
+			     osmo_fsm_inst_state_name(mm->gb.mm_state_fsm));
+			msgb_free(msg);
+			return -1;
+		case ST_MM_READY:
+			/* Go ahead */
+			break;
+		case ST_MM_STANDBY:
 			LOGMMCTXP(LOGL_INFO, mm, "Paging MS in GMM state %s, MM state %s\n",
 				  osmo_fsm_inst_state_name(mm->gmm_fsm),
 				  osmo_fsm_inst_state_name(mm->gb.mm_state_fsm));
 			gprs_gb_page_ps_ra(mm);
-		}
 
-		/* FIXME: queue the packet we received from GTP */
+			/* FIXME: queue the packet we received from GTP */
+			break;
+		}
 		break;
 	default:
 		LOGP(DGPRS, LOGL_ERROR, "GTP DATA IND for TLLI %08X in state "
