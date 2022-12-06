@@ -290,13 +290,62 @@ static struct defrag_queue_entry *defrag_get_seg(const struct gprs_sndcp_entity 
 	return NULL;
 }
 
+/* Returns talloced buffer containing decompressed data, NULL on error. */
+static uint8_t *decompress_segment(struct gprs_sndcp_entity *sne, void *ctx,
+				   const uint8_t *compressed_data, unsigned int compressed_data_len,
+				   unsigned int *decompressed_data_len)
+{
+	int rc;
+	uint8_t *expnd = NULL;
+	*decompressed_data_len = 0;
+
+#if DEBUG_IP_PACKETS == 1
+	DEBUGP(DSNDCP, "\n");
+	DEBUGP(DSNDCP, ":::::::::::::::::::::::::::::::::::::::::::::::::::\n");
+	DEBUGP(DSNDCP, "===================================================\n");
+#endif
+
+	expnd = talloc_zero_size(ctx, compressed_data_len * MAX_DATADECOMPR_FAC +
+					 MAX_HDRDECOMPR_INCR);
+	memcpy(expnd, compressed_data, compressed_data_len);
+
+	/* Apply data decompression */
+	rc = gprs_sndcp_dcomp_expand(expnd, compressed_data_len, sne->defrag.dcomp,
+				     sne->defrag.data);
+	if (rc < 0) {
+		LOGP(DSNDCP, LOGL_ERROR,
+			"Data decompression failed!\n");
+		talloc_free(expnd);
+		return NULL;
+	}
+
+	/* Apply header decompression */
+	rc = gprs_sndcp_pcomp_expand(expnd, rc, sne->defrag.pcomp, sne->defrag.proto);
+	if (rc < 0) {
+		LOGP(DSNDCP, LOGL_ERROR,
+			"TCP/IP Header decompression failed!\n");
+		talloc_free(expnd);
+		return NULL;
+	}
+
+	*decompressed_data_len = rc;
+
+#if DEBUG_IP_PACKETS == 1
+	debug_ip_packet(expnd, *decompressed_data_len, 1, "defrag_segments()");
+	DEBUGP(DSNDCP, "===================================================\n");
+	DEBUGP(DSNDCP, ":::::::::::::::::::::::::::::::::::::::::::::::::::\n");
+	DEBUGP(DSNDCP, "\n");
+#endif
+	return expnd;
+}
+
 /* Perform actual defragmentation and create an output packet */
 static int defrag_segments(struct gprs_sndcp_entity *sne)
 {
 	struct msgb *msg;
 	unsigned int seg_nr;
 	uint8_t *npdu;
-	int npdu_len;
+	unsigned int npdu_len;
 	int rc;
 	uint8_t *expnd = NULL;
 
@@ -337,53 +386,21 @@ static int defrag_segments(struct gprs_sndcp_entity *sne)
 	 * hands it off to the correct GTP tunnel + GGSN via gtp_data_req() */
 
 	/* Decompress packet */
-#if DEBUG_IP_PACKETS == 1
-	DEBUGP(DSNDCP, "                                                   \n");
-	DEBUGP(DSNDCP, ":::::::::::::::::::::::::::::::::::::::::::::::::::\n");
-	DEBUGP(DSNDCP, "===================================================\n");
-#endif
 	if (any_pcomp_or_dcomp_active(sgsn)) {
-
-		expnd = talloc_zero_size(msg, npdu_len * MAX_DATADECOMPR_FAC +
-					 MAX_HDRDECOMPR_INCR);
-		memcpy(expnd, npdu, npdu_len);
-
-		/* Apply data decompression */
-		rc = gprs_sndcp_dcomp_expand(expnd, npdu_len, sne->defrag.dcomp,
-					     sne->defrag.data);
-		if (rc < 0) {
-			LOGP(DSNDCP, LOGL_ERROR,
-			     "Data decompression failed!\n");
-			talloc_free(expnd);
-			return -EIO;
+		expnd = decompress_segment(sne, msg, npdu, npdu_len, &npdu_len);
+		if (!expnd) {
+			rc = -EIO;
+			goto ret_free;
 		}
-
-		/* Apply header decompression */
-		rc = gprs_sndcp_pcomp_expand(expnd, rc, sne->defrag.pcomp,
-					     sne->defrag.proto);
-		if (rc < 0) {
-			LOGP(DSNDCP, LOGL_ERROR,
-			     "TCP/IP Header decompression failed!\n");
-			talloc_free(expnd);
-			return -EIO;
-		}
-
-		/* Modify npu length, expnd is handed directly handed
-		 * over to gsn_rx_sndcp_ud_ind(), see below */
-		npdu_len = rc;
-	} else
+	} else {
 		expnd = npdu;
-#if DEBUG_IP_PACKETS == 1
-	debug_ip_packet(expnd, npdu_len, 1, "defrag_segments()");
-	DEBUGP(DSNDCP, "===================================================\n");
-	DEBUGP(DSNDCP, ":::::::::::::::::::::::::::::::::::::::::::::::::::\n");
-	DEBUGP(DSNDCP, "                                                   \n");
-#endif
+	}
 
 	/* Hand off packet to gtp */
 	rc = sgsn_rx_sndcp_ud_ind(&sne->ra_id, sne->lle->llme->tlli,
 				  sne->nsapi, msg, npdu_len, expnd);
 
+ret_free:
 	/* we must free the memory we allocated above; ownership is not transferred
 	 * downwards in the call above */
 	msgb_free(msg);
@@ -850,53 +867,21 @@ int sndcp_llunitdata_ind(struct msgb *msg, struct gprs_llc_lle *lle,
 	 * hands it off to the correct GTP tunnel + GGSN via gtp_data_req() */
 
 	/* Decompress packet */
-#if DEBUG_IP_PACKETS == 1
-	DEBUGP(DSNDCP, "                                                   \n");
-	DEBUGP(DSNDCP, ":::::::::::::::::::::::::::::::::::::::::::::::::::\n");
-	DEBUGP(DSNDCP, "===================================================\n");
-#endif
 	if (any_pcomp_or_dcomp_active(sgsn)) {
-
-		expnd = talloc_zero_size(msg, npdu_len * MAX_DATADECOMPR_FAC +
-					 MAX_HDRDECOMPR_INCR);
-		memcpy(expnd, npdu, npdu_len);
-
-		/* Apply data decompression */
-		rc = gprs_sndcp_dcomp_expand(expnd, npdu_len, sne->defrag.dcomp,
-					     sne->defrag.data);
-		if (rc < 0) {
-			LOGP(DSNDCP, LOGL_ERROR,
-			     "Data decompression failed!\n");
-			talloc_free(expnd);
-			return -EIO;
+		expnd = decompress_segment(sne, msg, npdu, npdu_len, (unsigned int *)&npdu_len);
+		if (!expnd) {
+			rc = -EIO;
+			goto ret_free;
 		}
-
-		/* Apply header decompression */
-		rc = gprs_sndcp_pcomp_expand(expnd, rc, sne->defrag.pcomp,
-					     sne->defrag.proto);
-		if (rc < 0) {
-			LOGP(DSNDCP, LOGL_ERROR,
-			     "TCP/IP Header decompression failed!\n");
-			talloc_free(expnd);
-			return -EIO;
-		}
-
-		/* Modify npu length, expnd is handed directly handed
-		 * over to gsn_rx_sndcp_ud_ind(), see below */
-		npdu_len = rc;
-	} else
+	} else {
 		expnd = npdu;
-#if DEBUG_IP_PACKETS == 1
-	debug_ip_packet(expnd, npdu_len, 1, "sndcp_llunitdata_ind()");
-	DEBUGP(DSNDCP, "===================================================\n");
-	DEBUGP(DSNDCP, ":::::::::::::::::::::::::::::::::::::::::::::::::::\n");
-	DEBUGP(DSNDCP, "                                                   \n");
-#endif
+	}
 
 	/* Hand off packet to gtp */
 	rc = sgsn_rx_sndcp_ud_ind(&sne->ra_id, lle->llme->tlli,
 				  sne->nsapi, msg, npdu_len, expnd);
 
+ret_free:
 	if (any_pcomp_or_dcomp_active(sgsn))
 		talloc_free(expnd);
 
