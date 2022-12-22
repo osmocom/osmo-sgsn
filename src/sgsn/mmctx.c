@@ -106,7 +106,20 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_by_ue_ctx(const void *uectx)
 }
 
 /* look-up a SGSN MM context based on TLLI + RAI */
-struct sgsn_mm_ctx *sgsn_mm_ctx_by_tlli(uint32_t tlli,
+struct sgsn_mm_ctx *sgsn_mm_ctx_by_tlli(uint32_t tlli)
+{
+	struct sgsn_mm_ctx *ctx;
+
+	llist_for_each_entry(ctx, &sgsn->mm_list, list) {
+		if ((tlli == ctx->gb.tlli || tlli == ctx->gb.tlli_new))
+			return ctx;
+	}
+
+	return NULL;
+}
+
+/* look-up a SGSN MM context based on TLLI + RAI */
+struct sgsn_mm_ctx *sgsn_mm_ctx_by_tlli_rai(uint32_t tlli,
 					const struct gprs_ra_id *raid)
 {
 	struct sgsn_mm_ctx *ctx;
@@ -287,14 +300,8 @@ static void sgsn_mm_ctx_free(struct sgsn_mm_ctx *mm)
 
 void sgsn_mm_ctx_cleanup_free(struct sgsn_mm_ctx *mm)
 {
-	struct gprs_llc_llme *llme = NULL;
 	struct sgsn_pdp_ctx *pdp, *pdp2;
 	struct sgsn_signal_data sig_data;
-
-	if (mm->ran_type == MM_CTX_T_GERAN_Gb)
-		llme = mm->gb.llme;
-	else
-		OSMO_ASSERT(mm->gb.llme == NULL);
 
 	/* Forget about ongoing look-ups */
 	if (mm->ggsn_lookup) {
@@ -337,14 +344,11 @@ void sgsn_mm_ctx_cleanup_free(struct sgsn_mm_ctx *mm)
 	if (mm->gmm_fsm)
 		osmo_fsm_inst_free(mm->gmm_fsm);
 
+	if (sgsn_llgmm_unassign_req_mmctx(mm) < 0)
+		LOGMMCTXP(LOGL_ERROR, mm, "sgsn_llgmm_unassign_req failed, llme not freed!\n");
+
 	sgsn_mm_ctx_free(mm);
 	mm = NULL;
-
-	if (llme) {
-		/* TLLI unassignment, must be called after sgsn_mm_ctx_free */
-		if (gprs_llgmm_unassign(llme) < 0)
-			LOGMMCTXP(LOGL_ERROR, mm, "gprs_llgmm_unassign failed, llme not freed!\n");
-	}
 }
 
 

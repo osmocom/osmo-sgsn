@@ -53,11 +53,7 @@ osmo_sgsn_SOURCES = \
 	gprs_ns.c \
 	gprs_sm.c \
 	gprs_sndcp.c \
-	gprs_sndcp_comp.c \
-	gprs_sndcp_dcomp.c \
-	gprs_sndcp_pcomp.c \
 	gprs_sndcp_vty.c \
-	gprs_sndcp_xid.c \
 	gtp_ggsn.c \
 	gtp_mme.c \
 	sgsn.c \
@@ -74,12 +70,9 @@ osmo_sgsn_SOURCES = \
 	sgsn_cdr.c \
 	sgsn_rim.c \
 	slhc.c \
-	gprs_llc_xid.c \
 	v42bis.c \
 	$(NULL)
 osmo_sgsn_LDADD = \
-	$(top_builddir)/src/gprs/gprs_llc_parse.o \
-	$(top_builddir)/src/gprs/crc24.o \
 	$(top_builddir)/src/gprs/gprs_utils.o \
 	$(top_builddir)/src/gprs/sgsn_ares.o \
 	$(OSMO_LIBS) \

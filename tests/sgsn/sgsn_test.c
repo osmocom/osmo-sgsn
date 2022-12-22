@@ -185,7 +185,7 @@ static struct sgsn_mm_ctx *alloc_mm_ctx(uint32_t tlli, struct gprs_ra_id *raid)
 {
 	struct sgsn_mm_ctx *ctx, *ictx;
 	struct gprs_llc_lle *lle;
-	int old_count = count(gprs_llme_list());
+	int old_count = count(&sgsn_mm_ctxts);
 
 	lle = gprs_lle_get_or_create(tlli, 3);
 	ctx = sgsn_mm_ctx_alloc_gb(tlli, raid);
@@ -194,12 +194,12 @@ static struct sgsn_mm_ctx *alloc_mm_ctx(uint32_t tlli, struct gprs_ra_id *raid)
 	ictx = sgsn_mm_ctx_by_tlli(tlli, raid);
 	OSMO_ASSERT(ictx == ctx);
 
-	OSMO_ASSERT(count(gprs_llme_list()) == old_count + 1);
+	OSMO_ASSERT(count(&sgsn_mm_ctxts) == old_count + 1);
 
 	return ctx;
 }
 
-static void send_0408_message(struct gprs_llc_llme *llme, uint32_t tlli,
+static void send_0408_message(struct sgsn_llme *llme, uint32_t tlli,
 			      const struct gprs_ra_id *bssgp_raid,
 			      const uint8_t *data, size_t data_len)
 {
@@ -224,23 +224,23 @@ static void test_llme(void)
 	local_tlli = gprs_tmsi2tlli(0x234, TLLI_LOCAL);
 
 	/* initial state */
-	OSMO_ASSERT(count(gprs_llme_list()) == 0);
+	OSMO_ASSERT(count(&sgsn_mm_ctxts) == 0);
 
 	/* Create a new entry */
 	lle = gprs_lle_get_or_create(local_tlli, 3);
 	OSMO_ASSERT(lle);
-	OSMO_ASSERT(count(gprs_llme_list()) == 1);
+	OSMO_ASSERT(count(&sgsn_mm_ctxts) == 1);
 
 	/* No new entry is created */
 	lle_copy = gprs_lle_get_or_create(local_tlli, 3);
 	OSMO_ASSERT(lle == lle_copy);
-	OSMO_ASSERT(count(gprs_llme_list()) == 1);
+	OSMO_ASSERT(count(&sgsn_mm_ctxts) == 1);
 
 	/* unassign which should delete it*/
 	gprs_llgmm_unassign(lle->llme);
 
 	/* Check that everything was cleaned up */
-	OSMO_ASSERT(count(gprs_llme_list()) == 0);
+	OSMO_ASSERT(count(&sgsn_mm_ctxts) == 0);
 
 	cleanup_test();
 }
@@ -392,7 +392,7 @@ static void test_auth_triplets(void)
 	gprs_subscr_put(s1found);
 
 	/* Create a context */
-	OSMO_ASSERT(count(gprs_llme_list()) == 0);
+	OSMO_ASSERT(count(&sgsn_mm_ctxts) == 0);
 	ctx = alloc_mm_ctx(local_tlli, &raid);
 
 	/* Attach s1 to ctx */
@@ -581,7 +581,7 @@ static void test_subscriber_gsup(void)
 	gprs_subscr_put(s1found);
 
 	/* Create a context */
-	OSMO_ASSERT(count(gprs_llme_list()) == 0);
+	OSMO_ASSERT(count(&sgsn_mm_ctxts) == 0);
 	ctx = alloc_mm_ctx(local_tlli, &raid);
 
 	/* Attach s1 to ctx */
@@ -757,7 +757,7 @@ static void test_gmm_detach(void)
 	local_tlli = gprs_tmsi2tlli(0x23, TLLI_LOCAL);
 
 	/* Create a context */
-	OSMO_ASSERT(count(gprs_llme_list()) == 0);
+	OSMO_ASSERT(count(&sgsn_mm_ctxts) == 0);
 	ctx = alloc_mm_ctx(local_tlli, &raid);
 
 	/* inject the detach */
@@ -769,7 +769,7 @@ static void test_gmm_detach(void)
 	OSMO_ASSERT(sgsn_tx_counter == 1);
 
 	/* verify that things are gone */
-	OSMO_ASSERT(count(gprs_llme_list()) == 0);
+	OSMO_ASSERT(count(&sgsn_mm_ctxts) == 0);
 	ictx = sgsn_mm_ctx_by_tlli(local_tlli, &raid);
 	OSMO_ASSERT(!ictx);
 
@@ -799,7 +799,7 @@ static void test_gmm_detach_power_off(void)
 	local_tlli = gprs_tmsi2tlli(0x23, TLLI_LOCAL);
 
 	/* Create a context */
-	OSMO_ASSERT(count(gprs_llme_list()) == 0);
+	OSMO_ASSERT(count(&sgsn_mm_ctxts) == 0);
 	ctx = alloc_mm_ctx(local_tlli, &raid);
 
 	/* inject the detach */
@@ -811,7 +811,7 @@ static void test_gmm_detach_power_off(void)
 	OSMO_ASSERT(sgsn_tx_counter == 0);
 
 	/* verify that things are gone */
-	OSMO_ASSERT(count(gprs_llme_list()) == 0);
+	OSMO_ASSERT(count(&sgsn_mm_ctxts) == 0);
 	ictx = sgsn_mm_ctx_by_tlli(local_tlli, &raid);
 	OSMO_ASSERT(!ictx);
 
@@ -838,18 +838,18 @@ static void test_gmm_detach_no_mmctx(void)
 	};
 
 	/* Create an LLME  */
-	OSMO_ASSERT(count(gprs_llme_list()) == 0);
+	OSMO_ASSERT(count(&sgsn_mm_ctxts) == 0);
 	local_tlli = gprs_tmsi2tlli(0x23, TLLI_LOCAL);
 	lle = gprs_lle_get_or_create(local_tlli, 3);
 
-	OSMO_ASSERT(count(gprs_llme_list()) == 1);
+	OSMO_ASSERT(count(&sgsn_mm_ctxts) == 1);
 
 	/* inject the detach */
 	send_0408_message(lle->llme, local_tlli, &raid,
 			  detach_req, ARRAY_SIZE(detach_req));
 
 	/* verify that the LLME is gone */
-	OSMO_ASSERT(count(gprs_llme_list()) == 0);
+	OSMO_ASSERT(count(&sgsn_mm_ctxts) == 0);
 
 	cleanup_test();
 }
@@ -874,7 +874,7 @@ static void test_gmm_detach_accept_unexpected(void)
 	};
 
 	/* Create an LLME  */
-	OSMO_ASSERT(count(gprs_llme_list()) == 0);
+	OSMO_ASSERT(count(&sgsn_mm_ctxts) == 0);
 	local_tlli = gprs_tmsi2tlli(0x23, TLLI_LOCAL);
 	lle = gprs_lle_get_or_create(local_tlli, 3);
 
@@ -887,7 +887,7 @@ static void test_gmm_detach_accept_unexpected(void)
 	OSMO_ASSERT(sgsn_tx_counter == 0);
 
 	/* verify that things are gone */
-	OSMO_ASSERT(count(gprs_llme_list()) == 0);
+	OSMO_ASSERT(count(&sgsn_mm_ctxts) == 0);
 
 	cleanup_test();
 }
@@ -910,11 +910,11 @@ static void test_gmm_status_no_mmctx(void)
 	};
 
 	/* Create an LLME  */
-	OSMO_ASSERT(count(gprs_llme_list()) == 0);
+	OSMO_ASSERT(count(&sgsn_mm_ctxts) == 0);
 	local_tlli = gprs_tmsi2tlli(0x23, TLLI_LOCAL);
 	lle = gprs_lle_get_or_create(local_tlli, 3);
 
-	OSMO_ASSERT(count(gprs_llme_list()) == 1);
+	OSMO_ASSERT(count(&sgsn_mm_ctxts) == 1);
 
 	/* inject the detach */
 	send_0408_message(lle->llme, local_tlli, &raid,
@@ -924,7 +924,7 @@ static void test_gmm_status_no_mmctx(void)
 	OSMO_ASSERT(sgsn_tx_counter == 0);
 
 	/* verify that the LLME is gone */
-	OSMO_ASSERT(count(gprs_llme_list()) == 0);
+	OSMO_ASSERT(count(&sgsn_mm_ctxts) == 0);
 
 	cleanup_test();
 }
@@ -1204,7 +1204,7 @@ static void test_gmm_reject(void)
 
 	foreign_tlli = gprs_tmsi2tlli(0xc0000023, TLLI_FOREIGN);
 
-	OSMO_ASSERT(count(gprs_llme_list()) == 0);
+	OSMO_ASSERT(count(&sgsn_mm_ctxts) == 0);
 
 	for (idx = 0; idx < ARRAY_SIZE(tests); idx++) {
 		const struct test *test = &tests[idx];
@@ -1212,7 +1212,7 @@ static void test_gmm_reject(void)
 
 		/* Create a LLE/LLME */
 		lle = gprs_lle_get_or_create(foreign_tlli, 3);
-		OSMO_ASSERT(count(gprs_llme_list()) == 1);
+		OSMO_ASSERT(count(&sgsn_mm_ctxts) == 1);
 
 		/* Inject the Request message */
 		send_0408_message(lle->llme, foreign_tlli, &raid,
@@ -1226,7 +1226,7 @@ static void test_gmm_reject(void)
 		/* verify that LLME/MM are removed */
 		ctx = sgsn_mm_ctx_by_tlli(foreign_tlli, &raid);
 		OSMO_ASSERT(ctx == NULL);
-		OSMO_ASSERT(count(gprs_llme_list()) == 0);
+		OSMO_ASSERT(count(&sgsn_mm_ctxts) == 0);
 	}
 
 	cleanup_test();
@@ -1282,9 +1282,9 @@ static void test_gmm_cancel(void)
 	foreign_tlli = gprs_tmsi2tlli(0xc0000023, TLLI_FOREIGN);
 
 	/* Create a LLE/LLME */
-	OSMO_ASSERT(count(gprs_llme_list()) == 0);
+	OSMO_ASSERT(count(&sgsn_mm_ctxts) == 0);
 	lle = gprs_lle_get_or_create(foreign_tlli, 3);
-	OSMO_ASSERT(count(gprs_llme_list()) == 1);
+	OSMO_ASSERT(count(&sgsn_mm_ctxts) == 1);
 
 	/* inject the attach request */
 	send_0408_message(lle->llme, foreign_tlli, &raid,
@@ -1335,7 +1335,7 @@ static void test_gmm_cancel(void)
 	gsm0408_gprs_access_cancelled(ctx, 0);
 
 	/* verify that things are gone */
-	OSMO_ASSERT(count(gprs_llme_list()) == 0);
+	OSMO_ASSERT(count(&sgsn_mm_ctxts) == 0);
 	ictx = sgsn_mm_ctx_by_tlli(local_tlli, &raid);
 	OSMO_ASSERT(!ictx);
 
@@ -1463,7 +1463,7 @@ static void test_ggsn_selection(void)
 	OSMO_ASSERT(gprs_subscr_get_by_imsi(imsi1) == NULL);
 
 	/* Create a context */
-	OSMO_ASSERT(count(gprs_llme_list()) == 0);
+	OSMO_ASSERT(count(&sgsn_mm_ctxts) == 0);
 	ctx = alloc_mm_ctx(local_tlli, &raid);
 	osmo_strlcpy(ctx->imsi, imsi1, sizeof(ctx->imsi));
 

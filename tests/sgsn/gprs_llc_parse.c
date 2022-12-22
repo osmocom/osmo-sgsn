@@ -31,8 +31,8 @@
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/mmctx.h>
 #include <osmocom/sgsn/gprs_gmm.h>
-#include <osmocom/sgsn/gprs_llc.h>
-#include <osmocom/sgsn/crc24.h>
+#include "gprs_llc_parse.h"
+#include "crc24.h"
 
 static const struct value_string llc_cmd_strs[] = {
 	{ GPRS_LLC_NULL,	"NULL" },

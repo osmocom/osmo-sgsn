@@ -39,6 +39,7 @@
 #include <osmocom/vty/vty.h>
 #include <osmocom/vty/command.h>
 
+#if 0
 static void vty_dump_sne(struct vty *vty, struct gprs_sndcp_entity *sne)
 {
 	vty_out(vty, " TLLI %08x SAPI=%u NSAPI=%u:%s",
@@ -47,22 +48,23 @@ static void vty_dump_sne(struct vty *vty, struct gprs_sndcp_entity *sne)
 		sne->defrag.npdu, sne->defrag.highest_seg, sne->defrag.seg_have,
 		sne->defrag.tot_len, VTY_NEWLINE);
 }
-
+#endif
 
 DEFUN(show_sndcp, show_sndcp_cmd,
 	"show sndcp",
 	SHOW_STR "Display information about the SNDCP protocol")
 {
-	struct gprs_sndcp_entity *sne;
 
 	vty_out(vty, "State of SNDCP Entities%s", VTY_NEWLINE);
+#if 0
+	struct gprs_sndcp_entity *sne;
 	llist_for_each_entry(sne, &gprs_sndcp_entities, list)
 		vty_dump_sne(vty, sne);
-
+#endif
 	return CMD_SUCCESS;
 }
 
-int gprs_sndcp_vty_init(void)
+int sgsn_sndcp_vty_init(void)
 {
 	install_element_ve(&show_sndcp_cmd);
 

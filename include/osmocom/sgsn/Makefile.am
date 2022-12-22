@@ -2,7 +2,6 @@ noinst_HEADERS = \
 	apn.h \
 	auth.h \
 	common.h \
-	crc24.h \
 	debug.h \
 	gprs_bssgp.h \
 	gprs_gmm.h \
@@ -12,14 +11,9 @@ noinst_HEADERS = \
 	gprs_mm_state_iu_fsm.h \
 	gprs_ns.h \
 	gprs_llc.h \
-	gprs_llc_xid.h \
 	gprs_ranap.h \
 	gprs_sm.h \
-	gprs_sndcp_comp.h \
-	gprs_sndcp_dcomp.h \
 	gprs_sndcp.h \
-	gprs_sndcp_pcomp.h \
-	gprs_sndcp_xid.h \
 	gprs_subscriber.h \
 	gprs_utils.h \
 	gtp.h \

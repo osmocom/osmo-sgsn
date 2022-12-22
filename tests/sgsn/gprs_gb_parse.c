@@ -24,12 +24,46 @@
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 
 #include "gprs_gb_parse.h"
+#include "gprs_llc_parse.h"
 
 #include <osmocom/sgsn/gprs_utils.h>
 
 #include <osmocom/sgsn/debug.h>
 
 #include <osmocom/gprs/gprs_bssgp.h>
+
+/* GSM 04.08, 10.5.1.4 */
+static int gprs_is_mi_tmsi(const uint8_t *value, size_t value_len)
+{
+	if (value_len != GSM48_TMSI_LEN)
+		return 0;
+
+	if (!value || (value[0] & GSM_MI_TYPE_MASK) != GSM_MI_TYPE_TMSI)
+		return 0;
+
+	return 1;
+}
+
+/* GSM 04.08, 10.5.1.4 */
+static int gprs_is_mi_imsi(const uint8_t *value, size_t value_len)
+{
+	if (value_len == 0)
+		return 0;
+
+	if (!value || (value[0] & GSM_MI_TYPE_MASK) != GSM_MI_TYPE_IMSI)
+		return 0;
+
+	return 1;
+}
+
+static void gprs_parse_tmsi(const uint8_t *value, uint32_t *tmsi)
+{
+	uint32_t tmsi_be;
+
+	memcpy(&tmsi_be, value, sizeof(tmsi_be));
+
+	*tmsi = ntohl(tmsi_be);
+}
 
 static int gprs_gb_parse_gmm_attach_req(uint8_t *data, size_t data_len,
 					struct gprs_gb_parse_context *parse_ctx)

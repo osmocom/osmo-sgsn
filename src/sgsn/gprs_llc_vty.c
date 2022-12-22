@@ -39,39 +39,32 @@
 #include <osmocom/vty/vty.h>
 #include <osmocom/vty/command.h>
 
-static void vty_dump_lle(struct vty *vty, struct gprs_llc_lle *lle)
+static void vty_dump_lle(struct vty *vty, struct sgsn_lle *lle)
 {
-	struct gprs_llc_params *par = &lle->params;
-	vty_out(vty, " SAPI %2u State %s VUsend=%u, VUrecv=%u", lle->sapi,
-		get_value_string(gprs_llc_lle_state_names, lle->state),
+	vty_out(vty, " SAPI %2u VUsend=%u, VUrecv=%u", lle->sapi,
 		lle->vu_send, lle->vu_recv);
 	vty_out(vty, " Vsent=%u Vack=%u Vrecv=%u, RetransCtr=%u%s",
 		lle->v_sent, lle->v_ack, lle->v_recv,
 		lle->retrans_ctr, VTY_NEWLINE);
-	vty_out(vty, "  T200=%u, N200=%u, N201-U=%u, N201-I=%u, mD=%u, "
-		"mU=%u, kD=%u, kU=%u%s", par->t200_201, par->n200,
-		par->n201_u, par->n201_i, par->mD, par->mU, par->kD,
-		par->kU, VTY_NEWLINE);
 }
 
 static uint8_t valid_sapis[] = { 1, 2, 3, 5, 7, 8, 9, 11 };
 
-static void vty_dump_llme(struct vty *vty, struct gprs_llc_llme *llme)
+static void vty_dump_llme(struct vty *vty, struct sgsn_llme *llme)
 {
 	unsigned int i;
 	struct timespec now_tp = {0};
 	osmo_clock_gettime(CLOCK_MONOTONIC, &now_tp);
 
 	vty_out(vty, "TLLI %08x (Old TLLI %08x) BVCI=%u NSEI=%u %s: "
-		"IOV-UI=0x%06x CKSN=%d Age=%d: State %s%s", llme->tlli,
+		"IOV-UI=0x%06x CKSN=%d Age=%d%s", llme->tlli,
 		llme->old_tlli, llme->bvci, llme->nsei,
 		get_value_string(gprs_cipher_names, llme->algo), llme->iov_ui,
 		llme->cksn, llme->age_timestamp == GPRS_LLME_RESET_AGE ? 0 :
-		(int)(now_tp.tv_sec - (time_t)llme->age_timestamp),
-		get_value_string(gprs_llc_llme_state_names, llme->state), VTY_NEWLINE);
+		(int)(now_tp.tv_sec - (time_t)llme->age_timestamp), VTY_NEWLINE);
 
 	for (i = 0; i < ARRAY_SIZE(valid_sapis); i++) {
-		struct gprs_llc_lle *lle;
+		struct sgsn_lle *lle;
 		uint8_t sapi = valid_sapis[i];
 
 		if (sapi >= ARRAY_SIZE(llme->lle))
@@ -87,16 +80,16 @@ DEFUN(show_llc, show_llc_cmd,
 	"show llc",
 	SHOW_STR "Display information about the LLC protocol")
 {
-	struct gprs_llc_llme *llme;
+	struct sgsn_llme *llme;
 
 	vty_out(vty, "State of LLC Entities%s", VTY_NEWLINE);
-	llist_for_each_entry(llme, &gprs_llc_llmes, list) {
+	llist_for_each_entry(llme, &sgsn_llmes, list) {
 		vty_dump_llme(vty, llme);
 	}
 	return CMD_SUCCESS;
 }
 
-int gprs_llc_vty_init(void)
+int sgsn_llc_vty_init(void)
 {
 	install_element_ve(&show_llc_cmd);
 

@@ -7,6 +7,8 @@
 
 struct gprs_llc_lle;
 
+#if 0
+
 /* A fragment queue header, maintaining list of fragments for one N-PDU */
 struct defrag_state {
 	/* PDU number for which the defragmentation state applies */
@@ -49,7 +51,7 @@ struct gprs_sndcp_entity {
 	/* FIXME: move this RA_ID up to the LLME or even higher */
 	struct gprs_ra_id ra_id;
 	/* reference to the LLC Entity below this SNDCP entity */
-	struct gprs_llc_lle *lle;
+	struct sgsn_lle *lle;
 	/* The NSAPI we shall use on top of LLC */
 	uint8_t nsapi;
 
@@ -63,39 +65,33 @@ struct gprs_sndcp_entity {
 
 extern struct llist_head gprs_sndcp_entities;
 
-int gprs_sndcp_vty_init(void);
-
-/* Set of SNDCP-XID negotiation (See also: TS 144 065,
- * Section 6.8 XID parameter negotiation) */
-int sndcp_sn_xid_req(struct gprs_llc_lle *lle, uint8_t nsapi);
-
 /* Process SNDCP-XID indication (See also: TS 144 065,
  * Section 6.8 XID parameter negotiation) */
 int sndcp_sn_xid_ind(struct gprs_llc_xid_field *xid_field_indication,
 		     struct gprs_llc_xid_field *xid_field_response,
-		     const struct gprs_llc_lle *lle);
+		     const struct sgsn_lle *lle);
 
 /* Process SNDCP-XID indication
  * (See also: TS 144 065, Section 6.8 XID parameter negotiation) */
 int sndcp_sn_xid_conf(struct gprs_llc_xid_field *xid_field_conf,
 		      struct gprs_llc_xid_field *xid_field_request,
-		      struct gprs_llc_lle *lle);
+		      struct sgsn_lle *lle);
 
-/* Clean up all gprs_sndcp_entities related to llme (OS#4824) */
-void gprs_sndcp_sm_deactivate_ind_by_llme(const struct gprs_llc_llme *llme);
+#endif
 
-/* Called by SNDCP when it has received/re-assembled a N-PDU */
-int sndcp_sn_unitdata_ind(struct gprs_sndcp_entity *sne, struct msgb *msg,
-		    uint32_t npdu_len, uint8_t *npdu);
-int sndcp_sn_unitdata_req(struct msgb *msg, struct gprs_llc_lle *lle, uint8_t nsapi,
-			void *mmcontext);
+int sgsn_sndcp_init(void);
+int sgsn_sndcp_vty_init(void);
 
-/* Entry point for the SNSM-ACTIVATE.indication */
-int sndcp_sm_activate_ind(struct gprs_llc_lle *lle, uint8_t nsapi);
-/* Entry point for the SNSM-DEACTIVATE.indication */
-int sndcp_sm_deactivate_ind(const struct gprs_llc_lle *lle, uint8_t nsapi);
+/* Set of SNDCP-XID negotiation (See also: TS 144 065,
+ * Section 6.8 XID parameter negotiation) */
+int sgsn_sndcp_sn_xid_req(uint32_t tlli, uint8_t nsapi, uint8_t sapi);
 
-int sndcp_ll_unitdata_ind(struct msgb *msg, struct gprs_llc_lle *lle,
-			 uint8_t *hdr, uint16_t len);
+int sgsn_sndcp_sn_unitdata_req(uint32_t tlli, uint8_t nsapi, uint8_t sapi,
+			       uint8_t *npdu, unsigned int npdu_len);
+
+/* Submit SNSM-ACTIVATE.indication to SNDCP */
+int sgsn_sndcp_snsm_activate_ind(uint32_t tlli, uint8_t nsapi, uint8_t sapi);
+/* Submit SNSM-DEACTIVATE.indication to SNDCP */
+int sgsn_sndcp_snsm_deactivate_ind(uint32_t tlli, uint8_t nsapi);
 
 #endif	/* INT_SNDCP_H */

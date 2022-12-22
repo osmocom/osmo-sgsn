@@ -19,7 +19,7 @@
 
 #define GSM_EXTENSION_LENGTH 15
 
-struct gprs_llc_lle;
+struct sgsn_lle;
 struct ctrl_handle;
 struct gprs_subscr;
 struct sgsn_ggsn_ctx;
@@ -114,7 +114,7 @@ struct sgsn_mm_ctx {
 		/* Additional bits not present in the GSM TS */
 		uint16_t		nsei;
 		uint16_t		bvci;
-		struct gprs_llc_llme	*llme;
+		struct sgsn_llme	*llme;
 		uint32_t		tlli;
 		uint32_t		tlli_new;
 
@@ -238,8 +238,8 @@ static inline bool sgsn_mm_ctx_is_authenticated(struct sgsn_mm_ctx *ctx)
 #endif
 
 #define LOGGBP(llme, category, level, fmt, args...) \
-	LOGP(category, level, "LLME(%08x/%08x){%s} " fmt, (llme)->old_tlli, \
-	     (llme)->tlli, get_value_string_or_null(gprs_llc_llme_state_names, (llme)->state), ## args);
+	LOGP(category, level, "LLME(%08x/%08x) " fmt, (llme)->old_tlli, \
+	     (llme)->tlli, ## args);
 
 #define LOGGBIUP(llme, msg, level, fmt, args...) \
 	do { \
@@ -251,8 +251,8 @@ static inline bool sgsn_mm_ctx_is_authenticated(struct sgsn_mm_ctx *ctx)
 	} else { OSMO_ASSERT(0); } \
 	} while (0)
 
-/* look-up a SGSN MM context based on TLLI + RAI */
-struct sgsn_mm_ctx *sgsn_mm_ctx_by_tlli(uint32_t tlli,
+struct sgsn_mm_ctx *sgsn_mm_ctx_by_tlli(uint32_t tlli);
+struct sgsn_mm_ctx *sgsn_mm_ctx_by_tlli_rai(uint32_t tlli,
 					const struct gprs_ra_id *raid);
 struct sgsn_mm_ctx *sgsn_mm_ctx_by_ptmsi(uint32_t tmsi);
 struct sgsn_mm_ctx *sgsn_mm_ctx_by_imsi(const char *imsi);

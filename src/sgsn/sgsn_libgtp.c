@@ -367,7 +367,7 @@ int send_act_pdp_cont_acc(struct sgsn_pdp_ctx *pctx)
 {
 	struct sgsn_signal_data sig_data;
 	int rc;
-	struct gprs_llc_lle *lle;
+	struct sgsn_lle *lle;
 
 	/* Inform others about it */
 	memset(&sig_data, 0, sizeof(sig_data));
@@ -382,7 +382,7 @@ int send_act_pdp_cont_acc(struct sgsn_pdp_ctx *pctx)
 	if (pctx->mm->ran_type == MM_CTX_T_GERAN_Gb) {
 		/* Send SNDCP XID to MS */
 		lle = &pctx->mm->gb.llme->lle[pctx->sapi];
-		rc = sndcp_sn_xid_req(lle,pctx->nsapi);
+		rc = sgsn_sndcp_sn_xid_req(lle->llme->tlli, pctx->nsapi, lle->sapi);
 		if (rc < 0)
 			return rc;
 	}
@@ -425,7 +425,7 @@ static int create_pdp_conf(struct pdp_t *pdp, void *cbp, int cause)
 
 	if (pctx->mm->ran_type == MM_CTX_T_GERAN_Gb) {
 		/* Activate the SNDCP layer */
-		sndcp_sm_activate_ind(&pctx->mm->gb.llme->lle[pctx->sapi], pctx->nsapi);
+		sgsn_sndcp_snsm_activate_ind(pctx->mm->gb.llme->tlli, pctx->nsapi, pctx->sapi);
 		return send_act_pdp_cont_acc(pctx);
 	} else if (pctx->mm->ran_type == MM_CTX_T_UTRAN_Iu) {
 #ifdef BUILD_IU
@@ -558,7 +558,7 @@ static int delete_pdp_conf(struct pdp_t *pdp, void *cbp, int cause)
 	if (pctx->mm) {
 		if (pctx->mm->ran_type == MM_CTX_T_GERAN_Gb) {
 			/* Deactivate the SNDCP layer */
-			sndcp_sm_deactivate_ind(&pctx->mm->gb.llme->lle[pctx->sapi], pctx->nsapi);
+			sgsn_sndcp_snsm_deactivate_ind(pctx->mm->gb.llme->tlli, pctx->nsapi);
 		} else {
 #ifdef BUILD_IU
 			/* Deactivate radio bearer */
@@ -724,8 +724,6 @@ static int cb_data_ind(struct pdp_t *lib, void *packet, unsigned int len)
 {
 	struct sgsn_pdp_ctx *pdp;
 	struct sgsn_mm_ctx *mm;
-	struct msgb *msg;
-	uint8_t *ud;
 
 	pdp = lib->priv;
 	if (!pdp) {
@@ -756,26 +754,16 @@ static int cb_data_ind(struct pdp_t *lib, void *packet, unsigned int len)
 #endif
 	}
 
-	msg = msgb_alloc_headroom(len+256, 128, "GTP->SNDCP");
-	ud = msgb_put(msg, len);
-	memcpy(ud, packet, len);
-
-	msgb_tlli(msg) = mm->gb.tlli;
-	msgb_bvci(msg) = mm->gb.bvci;
-	msgb_nsei(msg) = mm->gb.nsei;
-
 	switch (mm->gmm_fsm->state) {
 	case ST_GMM_REGISTERED_SUSPENDED:
 		LOGMMCTXP(LOGL_INFO, mm, "Dropping DL packet for MS in GMM state %s\n",
 			  osmo_fsm_inst_state_name(mm->gmm_fsm));
-		msgb_free(msg);
 		return -1;
 	case ST_GMM_REGISTERED_NORMAL:
 		switch (mm->gb.mm_state_fsm->state) {
 		case ST_MM_IDLE:
 			LOGP(DGPRS, LOGL_ERROR, "Dropping DL packet for MS in MM state %s\n",
 			     osmo_fsm_inst_state_name(mm->gb.mm_state_fsm));
-			msgb_free(msg);
 			return -1;
 		case ST_MM_READY:
 			/* Go ahead */
@@ -785,7 +773,6 @@ static int cb_data_ind(struct pdp_t *lib, void *packet, unsigned int len)
 				  osmo_fsm_inst_state_name(mm->gmm_fsm),
 				  osmo_fsm_inst_state_name(mm->gb.mm_state_fsm));
 			sgsn_bssgp_page_ps_ra(mm);
-
 			/* FIXME: queue the packet we received from GTP */
 			break;
 		}
@@ -793,7 +780,6 @@ static int cb_data_ind(struct pdp_t *lib, void *packet, unsigned int len)
 	default:
 		LOGP(DGPRS, LOGL_ERROR, "GTP DATA IND for TLLI %08X in state "
 			"%s\n", mm->gb.tlli, osmo_fsm_inst_state_name(mm->gmm_fsm));
-		msgb_free(msg);
 		return -1;
 	}
 
@@ -805,19 +791,18 @@ static int cb_data_ind(struct pdp_t *lib, void *packet, unsigned int len)
 	/* It is easier to have a global count */
 	pdp->cdr_bytes_out += len;
 
-	return sndcp_sn_unitdata_req(msg, &mm->gb.llme->lle[pdp->sapi],
-				  pdp->nsapi, mm);
+	return sgsn_sndcp_sn_unitdata_req(mm->gb.llme->tlli, pdp->nsapi, pdp->sapi,
+					  packet, len);
 }
 
 /* Called by SNDCP when it has received/re-assembled a N-PDU */
-int sgsn_gtp_data_req(struct gprs_ra_id *ra_id, int32_t tlli, uint8_t nsapi,
-			 struct msgb *msg, uint32_t npdu_len, uint8_t *npdu)
+int sgsn_gtp_data_req(int32_t tlli, uint8_t nsapi, uint8_t *npdu, uint32_t npdu_len)
 {
 	struct sgsn_mm_ctx *mmctx;
 	struct sgsn_pdp_ctx *pdp;
 
 	/* look-up the MM context for this message */
-	mmctx = sgsn_mm_ctx_by_tlli(tlli, ra_id);
+	mmctx = sgsn_mm_ctx_by_tlli(tlli);
 	if (!mmctx) {
 		LOGP(DGPRS, LOGL_ERROR,
 			"Cannot find MM CTX for TLLI %08x\n", tlli);

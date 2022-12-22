@@ -48,7 +48,7 @@ static void st_mm_idle_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state) {
 		osmo_timer_del(&ctx->timer);
 
 	if (ctx->gb.llme) {
-		gprs_llgmm_unassign(ctx->gb.llme);
+		sgsn_llgmm_unassign_req_mmctx(ctx);
 		ctx->gb.llme = NULL;
 	}
 }

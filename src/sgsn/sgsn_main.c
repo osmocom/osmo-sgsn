@@ -69,6 +69,7 @@
 
 #include <gtp.h>
 #include <osmocom/sgsn/sgsn_rim.h>
+#include <osmocom/sgsn/gprs_sndcp.h>
 
 #include "../../config.h"
 
@@ -415,8 +416,8 @@ int main(int argc, char **argv)
 
 	gprs_ns2_vty_init(sgsn_nsi);
 	bssgp_vty_init();
-	gprs_llc_vty_init();
-	gprs_sndcp_vty_init();
+	sgsn_llc_vty_init();
+	sgsn_sndcp_vty_init();
 
 	handle_options(argc, argv);
 
@@ -447,7 +448,15 @@ int main(int argc, char **argv)
 	if (rc < 0)
 		exit(1);
 
-	gprs_llc_init(sgsn->cfg.crypt_cipher_plugin_path);
+	if (sgsn_sndcp_init() < 0) {
+		LOGP(DGPRS, LOGL_ERROR, "Unable to instantiate SNDCP\n");
+		exit(1);
+	}
+
+	if (sgsn_llc_init(sgsn->cfg.crypt_cipher_plugin_path) < 0) {
+		LOGP(DGPRS, LOGL_ERROR, "Unable to instantiate LLC\n");
+		exit(1);
+	}
 
 	rc = sgsn_gtp_init(sgsn);
 	if (rc) {

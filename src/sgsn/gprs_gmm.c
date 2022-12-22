@@ -45,6 +45,7 @@
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 
 #include <osmocom/gprs/gprs_bssgp.h>
+#include <osmocom/gprs/llc/llc_prim.h>
 
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/gprs_llc.h>
@@ -131,21 +132,30 @@ time_t gprs_max_time_to_idle(void)
 int gsm48_gmm_sendmsg(struct msgb *msg, int command,
 			     struct sgsn_mm_ctx *mm, bool encryptable)
 {
+	struct osmo_gprs_llc_prim *llc_prim;
+	int rc;
+
 	if (mm) {
 		rate_ctr_inc(rate_ctr_group_get_ctr(mm->ctrg, GMM_CTR_PKTS_SIG_OUT));
 #ifdef BUILD_IU
 		if (mm->ran_type == MM_CTX_T_UTRAN_Iu)
-			return ranap_iu_tx(msg, GPRS_SAPI_GMM);
+			return ranap_iu_tx(msg, OSMO_GPRS_LLC_SAPI_GMM);
 #endif
 	}
 
 #ifdef BUILD_IU
 	if (MSG_IU_UE_CTX(msg))
-		return ranap_iu_tx(msg, GPRS_SAPI_GMM);
+		return ranap_iu_tx(msg, OSMO_GPRS_LLC_SAPI_GMM);
 #endif
 
-	/* caller needs to provide TLLI, BVCI and NSEI */
-	return gprs_llc_tx_ui(msg, GPRS_SAPI_GMM, command, mm, encryptable);
+	/* FIXME: what to do with "encryptable" ?*/
+	llc_prim = osmo_gprs_llc_prim_alloc_ll_unitdata_req(msgb_tlli(msg),
+							    OSMO_GPRS_LLC_SAPI_GMM,
+							    msgb_data(msg),
+							    msgb_length(msg));
+	OSMO_ASSERT(llc_prim);
+	rc = osmo_gprs_llc_prim_upper_down(llc_prim);
+	return rc;
 }
 
 /* copy identifiers from old message to new message, this
@@ -1149,7 +1159,7 @@ static bool mmctx_did_rat_change(struct sgsn_mm_ctx *mmctx, struct msgb *msg)
 }
 
 /* Notify the FSM of a RAT change */
-static void mmctx_handle_rat_change(struct sgsn_mm_ctx *mmctx, struct msgb *msg, struct gprs_llc_llme *llme)
+static void mmctx_handle_rat_change(struct sgsn_mm_ctx *mmctx, struct msgb *msg, struct sgsn_llme *llme)
 {
 	struct gmm_rat_change_data rat_chg = {
 		.llme = llme
@@ -1182,7 +1192,7 @@ static uint8_t gprs_ms_net_cap_gea_mask(const uint8_t *ms_net_cap, uint8_t cap_l
 
 /* 3GPP TS 24.008 § 9.4.1 Attach request */
 static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
-				struct gprs_llc_llme *llme)
+				struct sgsn_llme *llme)
 {
 	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
 	uint8_t *cur = gh->data, *msnc, *mi_data, *ms_ra_acc_cap;
@@ -1190,7 +1200,7 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 	uint16_t drx_par;
 	char mi_log_string[32];
 	struct gprs_ra_id ra_id;
-	uint16_t cid = 0;
+	//uint16_t cid = 0;
 	enum gsm48_gmm_cause reject_cause;
 	struct osmo_mobile_identity mi;
 	int rc;
@@ -1204,7 +1214,7 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 
 	if (!MSG_IU_UE_CTX(msg)) {
 		/* Gb mode */
-		cid = bssgp_parse_cell_id(&ra_id, msgb_bcid(msg));
+		//cid = bssgp_parse_cell_id(&ra_id, msgb_bcid(msg));
 	} else {
 #ifdef BUILD_IU
 		ra_id = MSG_IU_UE_CTX(msg)->ra_id;
@@ -1313,8 +1323,8 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 	msgid2mmctx(ctx, msg);
 	/* Update MM Context with currient RA and Cell ID */
 	ctx->ra = ra_id;
-	if (ctx->ran_type == MM_CTX_T_GERAN_Gb)
-		ctx->gb.cell_id = cid;
+	//if (ctx->ran_type == MM_CTX_T_GERAN_Gb)
+	//	ctx->gb.cell_id = cid;
 
 	/* Update MM Context with other data */
 	ctx->drx_parms = drx_par;
@@ -1358,7 +1368,7 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 		if (sgsn_mm_ctx_is_authenticated(ctx))
 			gprs_llme_copy_key(ctx, ctx->gb.llme);
 
-		gprs_llgmm_assign(ctx->gb.llme, ctx->gb.tlli, ctx->gb.tlli_new);
+		sgsn_llgmm_assign_req_mmctx(ctx, ctx->gb.tlli, ctx->gb.tlli_new);
 	}
 
 	osmo_fsm_inst_dispatch(ctx->gmm_att_req.fsm, E_ATTACH_REQ_RECV, msg);
@@ -1376,8 +1386,6 @@ rejected:
 	rc = gsm48_tx_gmm_att_rej_oldmsg(msg, reject_cause);
 	if (ctx)
 		mm_ctx_cleanup_free(ctx, "GMM ATTACH REJ");
-	else if (llme)
-		gprs_llgmm_unassign(llme);
 
 	return rc;
 
@@ -1408,9 +1416,8 @@ static int gsm48_rx_gmm_att_compl(struct sgsn_mm_ctx *mmctx)
 	case MM_CTX_T_GERAN_Gb:
 		/* Unassign the old TLLI */
 		mmctx->gb.tlli = mmctx->gb.tlli_new;
-		gprs_llme_copy_key(mmctx, mmctx->gb.llme);
-		gprs_llgmm_assign(mmctx->gb.llme, TLLI_UNASSIGNED,
-				  mmctx->gb.tlli_new);
+		//gprs_llme_copy_key(mmctx, mmctx->gb.llme);
+		sgsn_llgmm_assign_req_mmctx(mmctx, TLLI_UNASSIGNED, mmctx->gb.tlli_new);
 		osmo_fsm_inst_dispatch(mmctx->gb.mm_state_fsm, E_MM_GPRS_ATTACH, NULL);
 		break;
 	}
@@ -1607,7 +1614,7 @@ bool pdp_status_has_active_nsapis(const uint8_t *pdp_status, const size_t pdp_st
 
 /* Chapter 9.4.14: Routing area update request */
 static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
-				   struct gprs_llc_llme *llme)
+				   struct sgsn_llme *llme)
 {
 #ifndef PTMSI_ALLOC
 	struct sgsn_signal_data sig_data;
@@ -1740,7 +1747,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 			/* send a XID reset to re-set all LLC sequence numbers
 			 * in the MS */
 			LOGGBP(llme, DMM, LOGL_NOTICE, "LLC XID RESET\n");
-			gprs_llgmm_reset_oldmsg(msg, GPRS_SAPI_GMM, llme);
+			sgsn_llgmm_reset_req_oldmsg(msg, OSMO_GPRS_LLC_SAPI_GMM, llme->tlli);
 		}
 		/* The MS has to perform GPRS attach */
 		/* Device is still IMSI attached for CS but initiate GPRS ATTACH,
@@ -1791,7 +1798,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		mmctx->gb.tlli_new = gprs_tmsi2tlli(mmctx->p_tmsi, TLLI_LOCAL);
 
 		/* Inform LLC layer about new TLLI but keep accepting the old one during Rx */
-		gprs_llgmm_assign(mmctx->gb.llme, mmctx->gb.tlli,
+		sgsn_llgmm_assign_req_mmctx(mmctx, mmctx->gb.tlli,
 				  mmctx->gb.tlli_new);
 	}
 
@@ -1816,8 +1823,6 @@ rejected:
 	rc = gsm48_tx_gmm_ra_upd_rej(msg, reject_cause);
 	if (mmctx)
 		mm_ctx_cleanup_free(mmctx, "GMM RA UPDATE REJ");
-	else if (llme)
-		gprs_llgmm_unassign(llme);
 #ifdef BUILD_IU
 	else if (MSG_IU_UE_CTX(msg)) {
 		unsigned long X1001 = osmo_tdef_get(sgsn->cfg.T_defs, -1001, OSMO_TDEF_S, -1);
@@ -1846,8 +1851,7 @@ static int gsm48_rx_gmm_ra_upd_compl(struct sgsn_mm_ctx *mmctx)
 	case MM_CTX_T_GERAN_Gb:
 		/* Unassign the old TLLI */
 		mmctx->gb.tlli = mmctx->gb.tlli_new;
-		gprs_llgmm_assign(mmctx->gb.llme, TLLI_UNASSIGNED,
-				  mmctx->gb.tlli_new);
+		sgsn_llgmm_assign_req_mmctx(mmctx, TLLI_UNASSIGNED, mmctx->gb.tlli_new);
 		osmo_fsm_inst_dispatch(mmctx->gb.mm_state_fsm, E_MM_RA_UPDATE, NULL);
 		break;
 	}
@@ -1870,7 +1874,7 @@ static int gsm48_rx_gmm_ptmsi_reall_compl(struct sgsn_mm_ctx *mmctx)
 	if (mmctx->ran_type == MM_CTX_T_GERAN_Gb) {
 		/* Unassign the old TLLI */
 		mmctx->gb.tlli = mmctx->gb.tlli_new;
-		//gprs_llgmm_assign(mmctx->gb.llme, TLLI_UNASSIGNED, mmctx->gb.tlli_new, GPRS_ALGO_GEA0, NULL);
+		//sgsn_llgmm_assign_req_mmctx(mmctx, TLLI_UNASSIGNED, mmctx->gb.tlli_new, GPRS_ALGO_GEA0, NULL);
 	}
 	return 0;
 }
@@ -2004,34 +2008,26 @@ static int gsm48_rx_gmm_status(struct sgsn_mm_ctx *mmctx, struct msgb *msg)
 }
 
 /* Rx GPRS Mobility Management. MMCTX can be NULL when called. On !Gb (Iu), llme is NULL  */
-int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
-			   struct gprs_llc_llme *llme, bool drop_cipherable)
+int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg)
 {
 	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
+	struct sgsn_llme *llme = NULL;
 	int rc;
 
-	if (drop_cipherable && gsm48_hdr_gmm_cipherable(gh)) {
-		LOGMMCTXP(LOGL_NOTICE, mmctx, "Dropping cleartext GMM %s which "
-			  "is expected to be encrypted for TLLI 0x%08x\n",
-			  get_value_string(gprs_msgt_gmm_names, gh->msg_type),
-			  llme->tlli);
-		return -EBADMSG;
-	}
-
-	if (llme && !mmctx &&
+	if (!mmctx && llme &&
 	    gh->msg_type != GSM48_MT_GMM_ATTACH_REQ &&
 	    gh->msg_type != GSM48_MT_GMM_RA_UPD_REQ) {
 		LOGGBP(llme, DMM, LOGL_NOTICE, "Cannot handle GMM for unknown MM CTX\n");
 		/* 4.7.10 */
 		if (gh->msg_type == GSM48_MT_GMM_STATUS) {
 			/* TLLI unassignment */
-			gprs_llgmm_unassign(llme);
+			sgsn_llgmm_unassign_req(llme->tlli);
 			return 0;
 		}
 
 		/* Don't reply or establish a LLME on DETACH_ACK */
-		if (gh->msg_type == GSM48_MT_GMM_DETACH_ACK)
-			return gprs_llgmm_unassign(llme);
+		//if (gh->msg_type == GSM48_MT_GMM_DETACH_ACK)
+		//	return sgsn_llgmm_unassign_req(llme);
 
 		/* Don't reply to deatch requests, reason power off */
 		if (gh->msg_type == GSM48_MT_GMM_DETACH_REQ &&
@@ -2040,7 +2036,7 @@ int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		}
 
 
-		gprs_llgmm_reset(llme);
+		sgsn_llgmm_reset_req(llme->tlli);
 
 		/* Don't force it into re-attachment */
 		if (gh->msg_type == GSM48_MT_GMM_DETACH_REQ) {
@@ -2048,7 +2044,7 @@ int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 			rc = gsm48_rx_gmm_det_req(NULL, msg);
 
 			/* TLLI unassignment */
-			gprs_llgmm_unassign(llme);
+			sgsn_llgmm_unassign_req(llme->tlli);
 			return rc;
 		}
 
@@ -2056,7 +2052,7 @@ int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		rc = gsm0408_gprs_force_reattach_oldmsg(msg, llme);
 
 		/* TLLI unassignment */
-		gprs_llgmm_unassign(llme);
+		sgsn_llgmm_unassign_req(llme->tlli);
 		return rc;
 	}
 
@@ -2240,11 +2236,11 @@ static void mmctx_timer_cb(void *_mm)
 }
 
 int gsm0408_gprs_force_reattach_oldmsg(struct msgb *msg,
-				       struct gprs_llc_llme *llme)
+				       struct sgsn_llme *llme)
 {
 	int rc;
 	if (llme)
-		gprs_llgmm_reset_oldmsg(msg, GPRS_SAPI_GMM, llme);
+		sgsn_llgmm_reset_req_oldmsg(msg, OSMO_GPRS_LLC_SAPI_GMM, llme->tlli);
 
 	rc = gsm48_tx_gmm_detach_req_oldmsg(
 		msg, GPRS_DET_T_MT_REATT_REQ, GMM_CAUSE_IMPL_DETACHED);
@@ -2256,7 +2252,7 @@ int gsm0408_gprs_force_reattach(struct sgsn_mm_ctx *mmctx)
 {
 	int rc;
 	if (mmctx->ran_type == MM_CTX_T_GERAN_Gb)
-		gprs_llgmm_reset(mmctx->gb.llme);
+		sgsn_llgmm_reset_req(mmctx->gb.tlli);
 
 	rc = gsm48_tx_gmm_detach_req(
 		mmctx, GPRS_DET_T_MT_REATT_REQ, GMM_CAUSE_IMPL_DETACHED);
@@ -2270,7 +2266,7 @@ int gprs_gmm_rx_suspend(struct gprs_ra_id *raid, uint32_t tlli)
 {
 	struct sgsn_mm_ctx *mmctx;
 
-	mmctx = sgsn_mm_ctx_by_tlli(tlli, raid);
+	mmctx = sgsn_mm_ctx_by_tlli_rai(tlli, raid);
 	if (!mmctx) {
 		LOGP(DMM, LOGL_NOTICE, "SUSPEND request for unknown "
 			"TLLI=%08x\n", tlli);
@@ -2295,7 +2291,7 @@ int gprs_gmm_rx_resume(struct gprs_ra_id *raid, uint32_t tlli,
 
 	/* FIXME: make use of suspend reference? */
 
-	mmctx = sgsn_mm_ctx_by_tlli(tlli, raid);
+	mmctx = sgsn_mm_ctx_by_tlli_rai(tlli, raid);
 	if (!mmctx) {
 		LOGP(DMM, LOGL_NOTICE, "RESUME request for unknown "
 			"TLLI=%08x\n", tlli);
@@ -2322,18 +2318,19 @@ void gprs_gb_recv_pdu(struct sgsn_mm_ctx *mmctx, const struct msgb *msg)
 		osmo_fsm_inst_dispatch(mmctx->gb.mm_state_fsm, E_MM_PDU_RECEPTION, NULL);
 }
 
+#if 0
 /* Main entry point for incoming 04.08 GPRS messages from Gb */
-int gsm0408_gprs_rcvmsg_gb(struct msgb *msg, struct gprs_llc_llme *llme,
+int gsm0408_gprs_rcvmsg_gb(struct msgb *msg, struct sgsn_llme *llme,
 			   bool drop_cipherable)
 {
 	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
 	uint8_t pdisc = gsm48_hdr_pdisc(gh);
-	struct sgsn_mm_ctx *mmctx;
+	struct sgsn_mm_ctx *mmctx = NULL;
 	struct gprs_ra_id ra_id;
 	int rc = -EINVAL;
 
 	bssgp_parse_cell_id(&ra_id, msgb_bcid(msg));
-	mmctx = sgsn_mm_ctx_by_tlli(msgb_tlli(msg), &ra_id);
+	mmctx = sgsn_mm_ctx_by_tlli_rai(msgb_tlli(msg), &ra_id);
 	if (mmctx) {
 		rate_ctr_inc(rate_ctr_group_get_ctr(mmctx->ctrg, GMM_CTR_PKTS_SIG_IN));
 		mmctx->gb.llme = llme;
@@ -2348,6 +2345,49 @@ int gsm0408_gprs_rcvmsg_gb(struct msgb *msg, struct gprs_llc_llme *llme,
 		break;
 	case GSM48_PDISC_SM_GPRS:
 		rc = gsm0408_rcv_gsm(mmctx, msg, llme);
+		break;
+	default:
+		LOGMMCTXP(LOGL_NOTICE, mmctx,
+			"Unknown GSM 04.08 discriminator 0x%02x: %s\n",
+			pdisc, osmo_hexdump((uint8_t *)gh, msgb_l3len(msg)));
+		/* FIXME: return status message */
+		break;
+	}
+
+	/* MMCTX can be invalid */
+
+	return rc;
+}
+#endif
+
+/* Main entry point for incoming 04.08 GPRS messages from Gb */
+int gsm0408_rcv_gb(struct msgb *msg)
+{
+	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
+	uint8_t pdisc;
+	struct sgsn_mm_ctx *mmctx = NULL;
+	int rc = -EINVAL;
+
+	if (msgb_length(msg) < sizeof(struct gsm48_hdr)) {
+		LOGP(DMM, LOGL_NOTICE, "Rx gsm0408 too short (len=%u)", msgb_length(msg));
+		return -EINVAL;
+	}
+
+	pdisc = gsm48_hdr_pdisc(gh);
+	mmctx = sgsn_mm_ctx_by_tlli(msgb_tlli(msg));
+	if (mmctx) {
+		rate_ctr_inc(rate_ctr_group_get_ctr(mmctx->ctrg, GMM_CTR_PKTS_SIG_IN));
+		gprs_gb_recv_pdu(mmctx, msg);
+	}
+
+	/* MMCTX can be NULL */
+
+	switch (pdisc) {
+	case GSM48_PDISC_MM_GPRS:
+		rc = gsm0408_rcv_gmm(mmctx, msg);
+		break;
+	case GSM48_PDISC_SM_GPRS:
+		rc = gsm0408_rcv_gsm(mmctx, msg, NULL);
 		break;
 	default:
 		LOGMMCTXP(LOGL_NOTICE, mmctx,
