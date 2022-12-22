@@ -21,6 +21,8 @@ Build-Depends: debhelper (>= 10),
                libosmo-sigtran-dev (>= 1.9.0),
                libosmo-sccp-dev (>= 1.9.0),
                osmo-gsm-manuals-dev (>= 1.6.0)
+               libosmo-gprs-llc,
+               libosmo-gprs-sndcp
 Standards-Version: 3.9.8
 Vcs-Git: https://gitea.osmocom.org/cellular-infrastructure/osmo-sgsn
 Vcs-Browser: https://gitea.osmocom.org/cellular-infrastructure/osmo-sgsn
