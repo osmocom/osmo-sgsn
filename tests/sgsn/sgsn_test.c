@@ -27,7 +27,6 @@
 #include <osmocom/gsm/gsup.h>
 #include <osmocom/gsupclient/gsup_client.h>
 #include <osmocom/sgsn/gprs_utils.h>
-#include <osmocom/sgsn/gprs_gb_parse.h>
 #include <osmocom/sgsn/gprs_gmm_fsm.h>
 
 #include <osmocom/gprs/gprs_bssgp.h>
@@ -41,6 +40,8 @@
 #include <osmocom/vty/vty.h>
 
 #include <stdio.h>
+
+#include "gprs_gb_parse.h"
 
 void *tall_sgsn_ctx;
 static struct sgsn_instance sgsn_inst = {

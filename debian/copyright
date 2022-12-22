@@ -33,7 +33,6 @@ Files:     .gitignore
            include/osmocom/sgsn/crc24.h
            include/osmocom/sgsn/debug.h
            include/osmocom/sgsn/gb_proxy.h
-           include/osmocom/sgsn/gprs_gb_parse.h
            include/osmocom/sgsn/gprs_gmm.h
            include/osmocom/sgsn/gprs_llc.h
            include/osmocom/sgsn/gprs_sgsn.h
@@ -53,6 +52,7 @@ Files:     .gitignore
            tests/gprs/gprs_test.ok
            tests/gtphub/Makefile.am
            tests/gtphub/gtphub_test.ok
+           tests/sgsn/gprs_gb_parse.h
            tests/sgsn/Makefile.am
            tests/sgsn/sgsn_test.ok
            tests/slhc/Makefile.am
@@ -78,7 +78,6 @@ Files:     include/osmocom/sgsn/a_reset.h
            include/osmocom/sgsn/signal.h
            src/gprs/gprs_llc_parse.c
            src/gprs/crc24.c
-           src/gprs/gprs_gb_parse.c
            src/gprs/gprs_utils.c
            src/gprs/sgsn_ares.c
            src/gtphub/gtphub.c
@@ -103,6 +102,7 @@ Files:     include/osmocom/sgsn/a_reset.h
            src/sgsn/sgsn_main.c
            src/sgsn/sgsn_vty.c
            tests/gtphub/gtphub_test.c
+           tests/sgsn/gprs_gb_parse.c
            tests/sgsn/sgsn_test.c
            tests/slhc/slhc_test.c
            tests/sndcp_xid/sndcp_xid_test.c

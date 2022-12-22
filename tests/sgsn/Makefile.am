@@ -29,8 +29,13 @@ check_PROGRAMS = \
 	sgsn_test \
 	$(NULL)
 
+noinst_HEADERS = \
+	gprs_gb_parse.h \
+	$(NULL)
+
 sgsn_test_SOURCES = \
 	sgsn_test.c \
+	gprs_gb_parse.c \
 	$(NULL)
 
 sgsn_test_LDFLAGS = \
@@ -66,7 +71,6 @@ sgsn_test_LDADD = \
 	$(top_builddir)/src/sgsn/sgsn_rim.o \
 	$(top_builddir)/src/gprs/gprs_utils.o \
 	$(top_builddir)/src/gprs/gprs_llc_parse.o \
-	$(top_builddir)/src/gprs/gprs_gb_parse.o \
 	$(top_builddir)/src/gprs/crc24.o \
 	$(top_builddir)/src/gprs/sgsn_ares.o \
 	$(LIBOSMOABIS_LIBS) \

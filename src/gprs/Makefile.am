@@ -29,7 +29,6 @@ endif
 noinst_LTLIBRARIES = libcommon.la
 
 libcommon_la_SOURCES = \
-	gprs_gb_parse.c \
 	gprs_llc_parse.c \
 	crc24.c \
 	gprs_utils.c \

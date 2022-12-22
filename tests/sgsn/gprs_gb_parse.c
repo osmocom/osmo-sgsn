@@ -21,7 +21,7 @@
 #include <osmocom/gsm/gsm48.h>
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 
-#include <osmocom/sgsn/gprs_gb_parse.h>
+#include "gprs_gb_parse.h"
 
 #include <osmocom/sgsn/gprs_utils.h>
 
