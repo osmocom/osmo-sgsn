@@ -6,7 +6,6 @@
 #include <osmocom/gsm/tlv.h>
 #include <osmocom/gprs/gprs_bssgp_rim.h>
 
-struct gprs_ra_id;
 struct sgsn_instance;
 struct sgsn_ggsn_ctx;
 struct sgsn_pdp_ctx;
@@ -23,8 +22,7 @@ struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
 					 uint16_t nsapi,
 					 struct tlv_parsed *tp);
 
-int sgsn_gtp_data_req(struct gprs_ra_id *ra_id, int32_t tlli, uint8_t nsapi,
-		      struct msgb *msg, uint32_t npdu_len, uint8_t *npdu);
+int sgsn_gtp_data_req(int32_t tlli, uint8_t nsapi, uint8_t *npdu, uint32_t npdu_len);
 int sgsn_delete_pdp_ctx(struct sgsn_pdp_ctx *pctx);
 void sgsn_pdp_upd_gtp_u(struct sgsn_pdp_ctx *pdp, void *addr, size_t alen);
 int send_act_pdp_cont_acc(struct sgsn_pdp_ctx *pctx);

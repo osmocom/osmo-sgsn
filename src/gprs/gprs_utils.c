@@ -58,38 +58,6 @@ uint8_t gprs_secs_to_tmr_floor(int secs)
 	return GPRS_TMR_6MINUTE | GPRS_TMR_FACT_MASK;
 }
 
-/* GSM 04.08, 10.5.1.4 */
-int gprs_is_mi_tmsi(const uint8_t *value, size_t value_len)
-{
-	if (value_len != GSM48_TMSI_LEN)
-		return 0;
-
-	if (!value || (value[0] & GSM_MI_TYPE_MASK) != GSM_MI_TYPE_TMSI)
-		return 0;
-
-	return 1;
-}
-
-/* GSM 04.08, 10.5.1.4 */
-int gprs_is_mi_imsi(const uint8_t *value, size_t value_len)
-{
-	if (value_len == 0)
-		return 0;
-
-	if (!value || (value[0] & GSM_MI_TYPE_MASK) != GSM_MI_TYPE_IMSI)
-		return 0;
-
-	return 1;
-}
-
-void gprs_parse_tmsi(const uint8_t *value, uint32_t *tmsi)
-{
-	uint32_t tmsi_be;
-
-	memcpy(&tmsi_be, value, sizeof(tmsi_be));
-
-	*tmsi = ntohl(tmsi_be);
-}
 
 int gprs_ra_id_equals(const struct gprs_ra_id *id1,
 		      const struct gprs_ra_id *id2)

@@ -52,23 +52,18 @@ Files:     .gitignore
            tests/gprs/gprs_test.ok
            tests/gtphub/Makefile.am
            tests/gtphub/gtphub_test.ok
+           tests/sgsn/crc24.h
            tests/sgsn/gprs_gb_parse.h
+           tests/sgsn/gprs_llc_parse.h
            tests/sgsn/Makefile.am
            tests/sgsn/sgsn_test.ok
 Copyright: __NO_COPYRIGHT_NOR_LICENSE__
 License:   __NO_COPYRIGHT_NOR_LICENSE__
 
 Files:     include/osmocom/sgsn/a_reset.h
-           include/osmocom/sgsn/gprs_llc_xid.h
-           include/osmocom/sgsn/gprs_sndcp_comp.h
-           include/osmocom/sgsn/gprs_sndcp_dcomp.h
-           include/osmocom/sgsn/gprs_sndcp_pcomp.h
-           include/osmocom/sgsn/gprs_sndcp_xid.h
            include/osmocom/sgsn/gprs_utils.h
            include/osmocom/gtphub/gtphub.h
            include/osmocom/sgsn/signal.h
-           src/gprs/gprs_llc_parse.c
-           src/gprs/crc24.c
            src/gprs/gprs_utils.c
            src/gprs/sgsn_ares.c
            src/gtphub/gtphub.c
@@ -77,14 +72,9 @@ Files:     include/osmocom/sgsn/a_reset.h
            src/sgsn/gprs_gmm.c
            src/sgsn/gprs_llc.c
            src/sgsn/gprs_llc_vty.c
-           src/sgsn/gprs_llc_xid.c
            src/sgsn/gprs_sgsn.c
            src/sgsn/gprs_sndcp.c
-           src/sgsn/gprs_sndcp_comp.c
-           src/sgsn/gprs_sndcp_dcomp.c
-           src/sgsn/gprs_sndcp_pcomp.c
            src/sgsn/gprs_sndcp_vty.c
-           src/sgsn/gprs_sndcp_xid.c
            src/sgsn/gprs_subscriber.c
            src/sgsn/sgsn_auth.c
            src/sgsn/sgsn_cdr.c
@@ -93,7 +83,9 @@ Files:     include/osmocom/sgsn/a_reset.h
            src/sgsn/sgsn_main.c
            src/sgsn/sgsn_vty.c
            tests/gtphub/gtphub_test.c
+           tests/sgsn/crc24.c
            tests/sgsn/gprs_gb_parse.c
+           tests/sgsn/gprs_llc_parse.c
            tests/sgsn/sgsn_test.c
 Copyright: 2008-2015 Holger Hans Peter Freyther <zecke@selfish.org>
            2008-2016 Harald Welte <laforge@gnumonks.org>

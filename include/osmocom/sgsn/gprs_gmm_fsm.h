@@ -4,7 +4,7 @@
 
 #include <osmocom/sgsn/mmctx.h>
 
-struct gprs_llc_llme;
+struct sgsn_llme;
 
 /* 3GPP TS 24.008 § 4.1.3.3 GMM mobility management states on the network side */
 enum gmm_fsm_states {
@@ -32,7 +32,7 @@ enum gmm_fsm_events {
 
 struct gmm_rat_change_data {
 	enum sgsn_ran_type new_ran_type;
-	struct gprs_llc_llme *llme;
+	struct sgsn_llme *llme;
 };
 
 static inline bool gmm_fsm_is_registered(struct osmo_fsm_inst *fi)

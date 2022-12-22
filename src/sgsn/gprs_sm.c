@@ -421,7 +421,7 @@ static int do_act_pdp_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg, bool *del
 	char apn_str[GSM_APN_LENGTH] = { 0, };
 	char *hostname;
 	int rc;
-	struct gprs_llc_lle *lle;
+	struct sgsn_lle *lle;
 	char buf[INET_ADDRSTRLEN];
 
 	LOGMMCTXP(LOGL_INFO, mmctx, "-> ACTIVATE PDP CONTEXT REQ: SAPI=%u NSAPI=%u ",
@@ -510,7 +510,7 @@ static int do_act_pdp_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg, bool *del
 			if (pdp->mm->ran_type == MM_CTX_T_GERAN_Gb) {
 				/* Also re-transmit the SNDCP XID message */
 				lle = &pdp->mm->gb.llme->lle[pdp->sapi];
-				rc = sndcp_sn_xid_req(lle,pdp->nsapi);
+				rc = sgsn_sndcp_sn_xid_req(lle->llme->tlli, pdp->nsapi, lle->sapi);
 				if (rc < 0)
 					return rc;
 			}
@@ -712,7 +712,7 @@ static void pdpctx_timer_cb(void *_pdp)
 
 /* GPRS Session Management */
 int gsm0408_rcv_gsm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
-			   struct gprs_llc_llme *llme)
+			   struct sgsn_llme *llme)
 {
 	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
 	int rc;

@@ -98,26 +98,22 @@ static const struct rate_ctr_group_desc sgsn_ctrg_desc = {
 	sgsn_ctr_description,
 };
 
-static void sgsn_llme_cleanup_free(struct gprs_llc_llme *llme)
+static void sgsn_llme_cleanup_free(struct sgsn_llme *llme)
 {
 	struct sgsn_mm_ctx *mmctx = NULL;
 
 	llist_for_each_entry(mmctx, &sgsn->mm_list, list) {
 		if (llme == mmctx->gb.llme) {
 			gsm0408_gprs_access_cancelled(mmctx, SGSN_ERROR_CAUSE_NONE);
+			sgsn_llgmm_unassign_req_mmctx(mmctx);
 			return;
 		}
 	}
-
-	/* No MM context found */
-	LOGP(DGPRS, LOGL_INFO, "Deleting orphaned LLME, TLLI 0x%08x\n",
-	     llme->tlli);
-	gprs_llgmm_unassign(llme);
 }
 
 static void sgsn_llme_check_cb(void *data_)
 {
-	struct gprs_llc_llme *llme, *llme_tmp;
+	struct sgsn_llme *llme, *llme_tmp;
 	struct timespec now_tp;
 	time_t now, age;
 	time_t max_age = gprs_max_time_to_idle();
@@ -131,7 +127,7 @@ static void sgsn_llme_check_cb(void *data_)
 	LOGP(DGPRS, LOGL_DEBUG,
 	     "Checking for inactive LLMEs, time = %u\n", (unsigned)now);
 
-	llist_for_each_entry_safe(llme, llme_tmp, &gprs_llc_llmes, list) {
+	llist_for_each_entry_safe(llme, llme_tmp, &sgsn_llmes, list) {
 		if (llme->age_timestamp == GPRS_LLME_RESET_AGE)
 			llme->age_timestamp = now;
 

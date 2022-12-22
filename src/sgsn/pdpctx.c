@@ -33,7 +33,6 @@
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/signal.h>
 #include <osmocom/sgsn/gtp_ggsn.h>
-#include <osmocom/sgsn/gprs_llc_xid.h>
 #include <osmocom/sgsn/gprs_sndcp.h>
 #include <osmocom/sgsn/gprs_llc.h>
 #include <osmocom/sgsn/gprs_sm.h>
@@ -104,7 +103,7 @@ void sgsn_pdp_ctx_terminate(struct sgsn_pdp_ctx *pdp)
 	if (pdp->mm->ran_type == MM_CTX_T_GERAN_Gb) {
 		/* Force the deactivation of the SNDCP layer */
 		if (pdp->mm->gb.llme)
-			sndcp_sm_deactivate_ind(&pdp->mm->gb.llme->lle[pdp->sapi], pdp->nsapi);
+			sgsn_sndcp_snsm_deactivate_ind(pdp->mm->gb.llme->tlli, pdp->nsapi);
 	}
 
 	memset(&sig_data, 0, sizeof(sig_data));

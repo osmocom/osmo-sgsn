@@ -26,10 +26,51 @@
 #include <osmocom/gprs/gprs_bssgp.h>
 #include <osmocom/gprs/gprs_ns2.h>
 
+#include <osmocom/gprs/llc/llc_prim.h>
+
 #include <osmocom/sgsn/gprs_llc.h>
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/sgsn_rim.h>
+#include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/mmctx.h>
+
+/* receive an incoming LLC PDU (BSSGP-UL-UNITDATA-IND, 7.2.4.2) */
+static int sgsn_bssgp_rx_ul_unitdata(struct osmo_bssgp_prim *bp)
+{
+	struct osmo_gprs_llc_prim *llc_prim;
+	int rc;
+	struct gprs_ra_id ra_id;
+	uint8_t *llc_pdu =(uint8_t *)TLVP_VAL(bp->tp, BSSGP_IE_LLC_PDU);
+	size_t llc_pdu_len = TLVP_LEN(bp->tp, BSSGP_IE_LLC_PDU);
+
+	switch (gprs_tlli_type(bp->tlli)) {
+	case TLLI_LOCAL:
+	case TLLI_FOREIGN:
+	case TLLI_RANDOM:
+	case TLLI_AUXILIARY:
+		break;
+	default:
+		LOGP(DLLC, LOGL_ERROR,
+			"Discarding frame with strange TLLI type\n");
+		return -EINVAL;
+	}
+
+	/* TODO: Update LLE's (BVCI, NSEI) tuple */
+	//lle->llme->bvci = msgb_bvci(msg);
+	//lle->llme->nsei = msgb_nsei(msg);
+
+	OSMO_ASSERT(TLVP_PRES_LEN(bp->tp, BSSGP_IE_CELL_ID, 8));
+	bssgp_parse_cell_id(&ra_id, TLVP_VAL(bp->tp, BSSGP_IE_CELL_ID));
+
+	llc_prim = osmo_gprs_llc_prim_alloc_bssgp_ul_unitdata_ind(bp->tlli, llc_pdu, llc_pdu_len);
+	llc_prim->bssgp.ul_unitdata_ind.cell_id.ci =
+			bssgp_parse_cell_id(&llc_prim->bssgp.ul_unitdata_ind.cell_id.rai,
+					    TLVP_VAL(bp->tp, BSSGP_IE_CELL_ID));
+	OSMO_ASSERT(llc_prim);
+	rc = osmo_gprs_llc_prim_lower_up(llc_prim);
+
+	return rc;
+}
 
 /* call-back function for the BSSGP protocol */
 int sgsn_bssgp_rx_prim(struct osmo_prim_hdr *oph)
@@ -41,7 +82,7 @@ int sgsn_bssgp_rx_prim(struct osmo_prim_hdr *oph)
 	case SAP_BSSGP_LL:
 		switch (oph->primitive) {
 		case PRIM_BSSGP_UL_UD:
-			return gprs_llc_rcvmsg(oph->msg, bp->tp);
+			return sgsn_bssgp_rx_ul_unitdata(bp);
 		}
 		break;
 	case SAP_BSSGP_GMM:

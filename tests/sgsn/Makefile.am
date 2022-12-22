@@ -28,17 +28,22 @@ EXTRA_DIST = \
 	sgsn_test.ok \
 	$(NULL)
 
-check_PROGRAMS = \
-	sgsn_test \
-	$(NULL)
+#TODO: enable sgsn_test
+#check_PROGRAMS = \
+#	sgsn_test \
+#	$(NULL)
 
 noinst_HEADERS = \
+	crc24.h \
 	gprs_gb_parse.h \
+	gprs_llc_parse.h \
 	$(NULL)
 
 sgsn_test_SOURCES = \
 	sgsn_test.c \
+	crc24.c \
 	gprs_gb_parse.c \
+	gprs_llc_parse.c \
 	$(NULL)
 
 sgsn_test_LDFLAGS = \
@@ -81,8 +86,6 @@ sgsn_test_LDADD = \
         $(top_builddir)/src/sgsn/gprs_sndcp_dcomp.o \
 	$(top_builddir)/src/sgsn/sgsn_rim.o \
 	$(top_builddir)/src/gprs/gprs_utils.o \
-	$(top_builddir)/src/gprs/gprs_llc_parse.o \
-	$(top_builddir)/src/gprs/crc24.o \
 	$(top_builddir)/src/gprs/sgsn_ares.o \
 	$(LIBOSMOABIS_LIBS) \
 	$(LIBOSMOCORE_LIBS) \
