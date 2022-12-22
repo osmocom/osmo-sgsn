@@ -55,15 +55,6 @@ Files:     .gitignore
            tests/sgsn/gprs_gb_parse.h
            tests/sgsn/Makefile.am
            tests/sgsn/sgsn_test.ok
-           tests/slhc/Makefile.am
-           tests/slhc/slhc_test.ok
-           tests/sndcp_xid/Makefile.am
-           tests/sndcp_xid/sndcp_xid_test.ok
-           tests/testsuite.at
-           tests/v42bis/Makefile.am
-           tests/v42bis/v42bis_test.ok
-           tests/xid/Makefile.am
-           tests/xid/xid_test.ok
 Copyright: __NO_COPYRIGHT_NOR_LICENSE__
 License:   __NO_COPYRIGHT_NOR_LICENSE__
 
@@ -104,10 +95,6 @@ Files:     include/osmocom/sgsn/a_reset.h
            tests/gtphub/gtphub_test.c
            tests/sgsn/gprs_gb_parse.c
            tests/sgsn/sgsn_test.c
-           tests/slhc/slhc_test.c
-           tests/sndcp_xid/sndcp_xid_test.c
-           tests/v42bis/v42bis_test.c
-           tests/xid/xid_test.c
 Copyright: 2008-2015 Holger Hans Peter Freyther <zecke@selfish.org>
            2008-2016 Harald Welte <laforge@gnumonks.org>
            2009-2015 Holger Hans Peter Freyther
@@ -220,85 +207,6 @@ License:   GPL-3.0+
  .
  On Debian systems, the complete text of the GNU General Public License
  Version 3 can be found in `/usr/share/common-licenses/GPL-3'.
-
-Files:     src/gprs/v42bis.c
-Copyright: 2005-2011 Steve Underwood
-License:   LGPL-2.1
- This program is free software; you can redistribute it and/or modify
- it under the terms of the GNU Lesser General Public License version 2.1,
- as published by the Free Software Foundation.
- .
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU Lesser General Public License for more details.
- .
- You should have received a copy of the GNU Lesser General Public
- License along with this program; if not, write to the Free Software
- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- .
- THIS IS A WORK IN PROGRESS. IT IS NOT FINISHED.
- Currently it performs the core compression and decompression functions OK.
- However, a number of the bells and whistles in V.42bis are incomplete.
- .
- ! \file
- .
- The FSF address in the above text is the old one.
- .
- On Debian systems, the complete text of the GNU Lesser General Public License
- Version 2.1 can be found in `/usr/share/common-licenses/LGPL-2.1'.
-
-Files:     include/osmocom/sgsn/slhc.h
-Copyright: 1989 Regents of the University of California.
-License:   __UNKNOWN__
- Redistribution and use in source and binary forms are permitted
- provided that the above copyright notice and this paragraph are
- duplicated in all such forms and that any documentation,
- advertising materials, and other materials related to such
- distribution and use acknowledge that the software was developed
- by the University of California, Berkeley.  The name of the
- University may not be used to endorse or promote products derived
- from this software without specific prior written permission.
- THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
- IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
- WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- .
- Van Jacobson (van@helios.ee.lbl.gov), Dec 31, 1989:
- - Initial distribution.
- .
- modified for KA9Q Internet Software Package by
- Katie Stevens (dkstevens@ucdavis.edu)
- University of California, Davis
- Computing Services
- - 01-31-90	initial adaptation
-
-Files:     src/gprs/slhc.c
-Copyright: 1989 Regents of the University of California.
-License:   __UNKNOWN__
- Redistribution and use in source and binary forms are permitted
- provided that the above copyright notice and this paragraph are
- duplicated in all such forms and that any documentation,
- advertising materials, and other materials related to such
- distribution and use acknowledge that the software was developed
- by the University of California, Berkeley.  The name of the
- University may not be used to endorse or promote products derived
- from this software without specific prior written permission.
- THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
- IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
- WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- .
- Van Jacobson (van@helios.ee.lbl.gov), Dec 31, 1989:
- - Initial distribution.
- .
- modified for KA9Q Internet Software Package by
- Katie Stevens (dkstevens@ucdavis.edu)
- University of California, Davis
- Computing Services
- - 01-31-90	initial adaptation (from 1.19)
- PPP.05	02-15-90 [ks]
- PPP.08	05-02-90 [ks]	use PPP protocol field to signal compression
- PPP.15	09-90	 [ks]	improve mbuf handling
- PPP.16	11-02	 [karn]	substantially rewritten to use NOS facilities
 
 Files:     m4/ax_check_compile_flag.m4
 Copyright: 2008 Guido U. Draheim <guidod@gmx.de>

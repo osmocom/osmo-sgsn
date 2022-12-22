@@ -43,6 +43,8 @@ BuildRequires:  pkgconfig(libosmoctrl) >= 1.7.0
 BuildRequires:  pkgconfig(libosmogb) >= 1.7.0
 BuildRequires:  pkgconfig(libosmogsm) >= 1.7.0
 BuildRequires:  pkgconfig(libosmovty) >= 1.7.0
+BuildRequires:  pkgconfig(libosmo-gprs-llc)
+BuildRequires:  pkgconfig(libosmo-gprs-sndcp)
 %{?systemd_requires}
 %if %{with_iu}
 BuildRequires:  pkgconfig(libasn1c)

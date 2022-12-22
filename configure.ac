@@ -47,6 +47,8 @@ PKG_CHECK_MODULES(LIBOSMOABIS, libosmoabis >= 1.3.0)
 PKG_CHECK_MODULES(LIBOSMONETIF, libosmo-netif >= 1.2.0)
 PKG_CHECK_MODULES(LIBOSMOGSUPCLIENT, libosmo-gsup-client >= 1.5.0)
 PKG_CHECK_MODULES(LIBGTP, libgtp >= 1.9.0)
+PKG_CHECK_MODULES(LIBOSMOGPRSLLC, libosmo-gprs-llc)
+PKG_CHECK_MODULES(LIBOSMOGPRSSNDCP, libosmo-gprs-sndcp)
 
 # Enable/disable 3G aka IuPS + IuCS support?
 AC_ARG_ENABLE([iu], [AS_HELP_STRING([--enable-iu], [Build 3G support, aka IuPS and IuCS interfaces])],
@@ -246,10 +248,6 @@ AC_OUTPUT(
     tests/gprs/Makefile
     tests/sgsn/Makefile
     tests/gtphub/Makefile
-    tests/xid/Makefile
-    tests/sndcp_xid/Makefile
-    tests/slhc/Makefile
-    tests/v42bis/Makefile
     doc/Makefile
     doc/examples/Makefile
     doc/manuals/Makefile
