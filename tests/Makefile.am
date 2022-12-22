@@ -2,10 +2,6 @@ SUBDIRS = \
 	gprs \
 	gtphub \
 	sgsn \
-	xid \
-	sndcp_xid \
-	slhc \
-	v42bis \
 	$(NULL)
 
 # The `:;' works around a Bash 3.2 bug when the output is not writeable.
