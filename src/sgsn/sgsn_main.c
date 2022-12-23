@@ -62,6 +62,7 @@
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/gprs_ranap.h>
 #include <osmocom/sgsn/gprs_gb.h>
+#include <osmocom/sgsn/gprs_bssgp.h>
 
 #include <osmocom/ctrl/control_if.h>
 #include <osmocom/ctrl/ports.h>
@@ -97,34 +98,11 @@ const char *openbsc_copyright =
 
 struct sgsn_instance *sgsn;
 
-/* call-back function for the BSSGP protocol */
+/* call-back function for the BSSGP protocol.
+ * Must be left here so that we can add a new one in tests/sgsn_test */
 int bssgp_prim_cb(struct osmo_prim_hdr *oph, void *ctx)
 {
-	struct osmo_bssgp_prim *bp;
-	bp = container_of(oph, struct osmo_bssgp_prim, oph);
-
-	switch (oph->sap) {
-	case SAP_BSSGP_LL:
-		switch (oph->primitive) {
-		case PRIM_BSSGP_UL_UD:
-			return gprs_llc_rcvmsg(oph->msg, bp->tp);
-		}
-		break;
-	case SAP_BSSGP_GMM:
-		switch (oph->primitive) {
-		case PRIM_BSSGP_GMM_SUSPEND:
-			return gprs_gmm_rx_suspend(bp->ra_id, bp->tlli);
-		case PRIM_BSSGP_GMM_RESUME:
-			return gprs_gmm_rx_resume(bp->ra_id, bp->tlli,
-						  bp->u.resume.suspend_ref);
-		}
-		break;
-	case SAP_BSSGP_NM:
-		break;
-	case SAP_BSSGP_RIM:
-		return sgsn_rim_rx_from_gb(bp, oph->msg);
-	}
-	return 0;
+	return sgsn_bssgp_rx_prim(oph);
 }
 
 static void signal_handler(int signum)
@@ -434,7 +412,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 	sgsn->cfg.nsi = sgsn_nsi;
-	bssgp_set_bssgp_callback(gprs_gb_send_cb, sgsn_nsi);
+	bssgp_set_bssgp_callback(sgsn_bssgp_dispatch_ns_unitdata_req_cb, sgsn_nsi);
 
 	gprs_llc_init("/usr/local/lib/osmocom/crypt/");
 	sgsn_rate_ctr_init();

@@ -84,40 +84,6 @@ int gsm0408_gprs_rcvmsg_gb(struct msgb *msg, struct gprs_llc_llme *llme,
 	return rc;
 }
 
-
-int gprs_gb_page_ps_ra(struct sgsn_mm_ctx *mmctx)
-{
-	struct bssgp_paging_info pinfo;
-	int rc;
-
-	/* FIXME: page whole routing area, not only the last known cell */
-
-	/* initiate PS PAGING procedure */
-	memset(&pinfo, 0, sizeof(pinfo));
-	pinfo.mode = BSSGP_PAGING_PS;
-	pinfo.scope = BSSGP_PAGING_BVCI;
-	pinfo.bvci = mmctx->gb.bvci;
-	pinfo.imsi = mmctx->imsi;
-	pinfo.ptmsi = &mmctx->p_tmsi;
-	pinfo.drx_params = mmctx->drx_parms;
-	pinfo.qos[0] = 0; // FIXME
-	rc = bssgp_tx_paging(mmctx->gb.nsei, 0, &pinfo);
-	rate_ctr_inc(rate_ctr_group_get_ctr(mmctx->ctrg, GMM_CTR_PAGING_PS));
-
-	return rc;
-}
-
-/* called by the bssgp layer to send NS PDUs */
-int gprs_gb_send_cb(void *ctx, struct msgb *msg)
-{
-	struct gprs_ns2_inst *nsi = (struct gprs_ns2_inst *) ctx;
-	struct osmo_gprs_ns2_prim nsp = {};
-	nsp.nsei = msgb_nsei(msg);
-	nsp.bvci = msgb_bvci(msg);
-	osmo_prim_init(&nsp.oph, SAP_NS, GPRS_NS2_PRIM_UNIT_DATA, PRIM_OP_REQUEST, msg);
-	return gprs_ns2_recv_prim(nsi, &nsp.oph);
-}
-
 void gprs_ns_prim_status_cb(struct osmo_gprs_ns2_prim *nsp)
 {
 	switch (nsp->u.status.cause) {

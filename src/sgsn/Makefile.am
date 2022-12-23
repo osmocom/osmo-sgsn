@@ -40,6 +40,7 @@ bin_PROGRAMS = \
 	$(NULL)
 
 osmo_sgsn_SOURCES = \
+	gprs_bssgp.c \
 	gprs_gb.c \
 	gprs_gmm_attach.c \
 	gprs_gmm.c \

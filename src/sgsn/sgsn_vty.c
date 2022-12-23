@@ -37,6 +37,7 @@
 #include <osmocom/gprs/gprs_ns2.h>
 #include <osmocom/sgsn/gprs_gb.h>
 #include <osmocom/sgsn/gprs_gmm.h>
+#include <osmocom/sgsn/gprs_bssgp.h>
 #include <osmocom/sgsn/gprs_sgsn.h>
 #include <osmocom/sgsn/gtp_mme.h>
 #include <osmocom/sgsn/vty.h>
@@ -1284,7 +1285,7 @@ DEFUN(page_subscr, page_subscr_info_cmd,
 		return CMD_WARNING;
 	}
 
-	gprs_gb_page_ps_ra(mm);
+	sgsn_bssgp_page_ps_ra(mm);
 	return CMD_SUCCESS;
 }
 
