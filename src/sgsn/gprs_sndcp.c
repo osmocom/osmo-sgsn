@@ -32,7 +32,7 @@
 #include <osmocom/gprs/gprs_bssgp.h>
 
 #include <osmocom/sgsn/debug.h>
-#include <osmocom/sgsn/gprs_gb.h>
+#include <osmocom/sgsn/gprs_ns.h>
 #include <osmocom/sgsn/gprs_llc.h>
 #include <osmocom/sgsn/sgsn.h>
 #include <osmocom/sgsn/gprs_sndcp.h>

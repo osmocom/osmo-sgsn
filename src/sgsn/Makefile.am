@@ -41,11 +41,11 @@ bin_PROGRAMS = \
 
 osmo_sgsn_SOURCES = \
 	gprs_bssgp.c \
-	gprs_gb.c \
 	gprs_gmm_attach.c \
 	gprs_gmm.c \
 	gprs_gmm_fsm.c \
 	gprs_mm_state_gb_fsm.c \
+	gprs_ns.c \
 	gprs_sgsn.c \
 	gprs_sm.c \
 	gprs_sndcp.c \

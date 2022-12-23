@@ -49,7 +49,7 @@ sgsn_test_LDFLAGS = \
 sgsn_test_LDADD = \
 	$(top_builddir)/src/sgsn/gprs_bssgp.o \
 	$(top_builddir)/src/sgsn/gprs_llc.o \
-	$(top_builddir)/src/sgsn/gprs_gb.o \
+	$(top_builddir)/src/sgsn/gprs_ns.o \
 	$(top_builddir)/src/sgsn/gprs_sndcp.o \
 	$(top_builddir)/src/sgsn/gprs_gmm_attach.o \
 	$(top_builddir)/src/sgsn/gprs_gmm.o \

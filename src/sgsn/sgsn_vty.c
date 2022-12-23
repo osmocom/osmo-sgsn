@@ -35,7 +35,7 @@
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/sgsn.h>
 #include <osmocom/gprs/gprs_ns2.h>
-#include <osmocom/sgsn/gprs_gb.h>
+#include <osmocom/sgsn/gprs_ns.h>
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/gprs_bssgp.h>
 #include <osmocom/sgsn/gprs_sgsn.h>

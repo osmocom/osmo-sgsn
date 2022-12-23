@@ -61,7 +61,7 @@
 #include <osmocom/sgsn/gprs_llc.h>
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/gprs_ranap.h>
-#include <osmocom/sgsn/gprs_gb.h>
+#include <osmocom/sgsn/gprs_ns.h>
 #include <osmocom/sgsn/gprs_bssgp.h>
 
 #include <osmocom/ctrl/control_if.h>
