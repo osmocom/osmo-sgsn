@@ -28,6 +28,11 @@ int gprs_gmm_rx_suspend(struct gprs_ra_id *raid, uint32_t tlli);
 int gprs_gmm_rx_resume(struct gprs_ra_id *raid, uint32_t tlli,
 		       uint8_t suspend_ref);
 
+int gsm0408_gprs_rcvmsg_gb(struct msgb *msg, struct gprs_llc_llme *llme,
+			   bool drop_cipherable);
+/* Has to be called whenever any PDU (signaling, data, ...) has been received */
+void gprs_gb_recv_pdu(struct sgsn_mm_ctx *mmctx, const struct msgb *msg);
+
 time_t gprs_max_time_to_idle(void);
 
 int gsm48_tx_gmm_id_req(struct sgsn_mm_ctx *mm, uint8_t id_type);
