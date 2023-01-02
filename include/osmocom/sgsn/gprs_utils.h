@@ -32,7 +32,6 @@ struct gprs_ra_id;
 int gprs_str_to_apn(uint8_t *apn_enc, size_t max_len, const char *str);
 
 /* GSM 04.08, 10.5.7.3 GPRS Timer */
-int gprs_tmr_to_secs(uint8_t tmr);
 uint8_t gprs_secs_to_tmr_floor(int secs);
 
 int gprs_is_mi_tmsi(const uint8_t *value, size_t value_len);

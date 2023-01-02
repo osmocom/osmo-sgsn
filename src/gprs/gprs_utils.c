@@ -64,22 +64,6 @@ int gprs_str_to_apn(uint8_t *apn_enc, size_t max_len, const char *str)
 	return len;
 }
 
-/* GSM 04.08, 10.5.7.3 GPRS Timer */
-int gprs_tmr_to_secs(uint8_t tmr)
-{
-	switch (tmr & GPRS_TMR_UNIT_MASK) {
-	case GPRS_TMR_2SECONDS:
-		return 2 * (tmr & GPRS_TMR_FACT_MASK);
-	default:
-	case GPRS_TMR_MINUTE:
-		return 60 * (tmr & GPRS_TMR_FACT_MASK);
-	case GPRS_TMR_6MINUTE:
-		return 360 * (tmr & GPRS_TMR_FACT_MASK);
-	case GPRS_TMR_DEACTIVATED:
-		return -1;
-	}
-}
-
 /* This functions returns a tmr value such that
  *   - f is monotonic
  *   - f(s) <= s

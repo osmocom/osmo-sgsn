@@ -48,6 +48,22 @@ static void test_8_4_2()
 	ASSERT_FALSE(nu_is_retransmission(479, 511)); // wrapped
 }
 
+/* GSM 04.08, 10.5.7.3 GPRS Timer */
+static int gprs_tmr_to_secs(uint8_t tmr)
+{
+	switch (tmr & GPRS_TMR_UNIT_MASK) {
+	case GPRS_TMR_2SECONDS:
+		return 2 * (tmr & GPRS_TMR_FACT_MASK);
+	default:
+	case GPRS_TMR_MINUTE:
+		return 60 * (tmr & GPRS_TMR_FACT_MASK);
+	case GPRS_TMR_6MINUTE:
+		return 360 * (tmr & GPRS_TMR_FACT_MASK);
+	case GPRS_TMR_DEACTIVATED:
+		return -1;
+	}
+}
+
 static void test_gprs_timer_enc_dec(void)
 {
 	int i, u, secs, tmr;
