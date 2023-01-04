@@ -30,40 +30,6 @@
 
 #include <string.h>
 
-int gprs_str_to_apn(uint8_t *apn_enc, size_t max_len, const char *str)
-{
-	uint8_t *last_len_field;
-	int len;
-
-	/* Can we even write the length field to the output? */
-	if (max_len == 0)
-		return -1;
-
-	/* Remember where we need to put the length once we know it */
-	last_len_field = apn_enc;
-	len = 1;
-	apn_enc += 1;
-
-	while (str[0]) {
-		if (len >= max_len)
-			return -1;
-
-		if (str[0] == '.') {
-			*last_len_field = (apn_enc - last_len_field) - 1;
-			last_len_field = apn_enc;
-		} else {
-			*apn_enc = str[0];
-		}
-		apn_enc += 1;
-		str += 1;
-		len += 1;
-	}
-
-	*last_len_field = (apn_enc - last_len_field) - 1;
-
-	return len;
-}
-
 /* This functions returns a tmr value such that
  *   - f is monotonic
  *   - f(s) <= s
