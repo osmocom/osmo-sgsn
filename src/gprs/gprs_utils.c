@@ -116,19 +116,6 @@ int gprs_is_mi_imsi(const uint8_t *value, size_t value_len)
 	return 1;
 }
 
-int gprs_parse_mi_tmsi(const uint8_t *value, size_t value_len, uint32_t *tmsi)
-{
-	uint32_t tmsi_be;
-
-	if (!gprs_is_mi_tmsi(value, value_len))
-		return 0;
-
-	memcpy(&tmsi_be, value + 1, sizeof(tmsi_be));
-
-	*tmsi = ntohl(tmsi_be);
-	return 1;
-}
-
 void gprs_parse_tmsi(const uint8_t *value, uint32_t *tmsi)
 {
 	uint32_t tmsi_be;
