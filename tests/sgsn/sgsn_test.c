@@ -38,6 +38,7 @@
 #include <osmocom/sgsn/gprs_subscriber.h>
 #include <osmocom/sgsn/gprs_utils.h>
 #include <osmocom/sgsn/gprs_gmm_fsm.h>
+#include <osmocom/sgsn/gtp_ggsn.h>
 
 #include <stdio.h>
 

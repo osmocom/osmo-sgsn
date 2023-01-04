@@ -39,6 +39,7 @@
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/gprs_bssgp.h>
 #include <osmocom/sgsn/gprs_sgsn.h>
+#include <osmocom/sgsn/gtp_ggsn.h>
 #include <osmocom/sgsn/gtp_mme.h>
 #include <osmocom/sgsn/vty.h>
 #include <osmocom/gsupclient/gsup_client.h>

@@ -27,6 +27,7 @@
 #include <osmocom/gsm/apn.h>
 
 #include <osmocom/sgsn/vty.h>
+#include <osmocom/sgsn/gtp_ggsn.h>
 
 #include <gtp.h>
 #include <pdp.h>

@@ -36,6 +36,7 @@
 #include <osmocom/sgsn/gprs_sm.h>
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/gprs_utils.h>
+#include <osmocom/sgsn/gtp_ggsn.h>
 #include <osmocom/sgsn/sgsn.h>
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/gprs_llc.h>

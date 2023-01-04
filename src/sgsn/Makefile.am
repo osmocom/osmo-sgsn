@@ -54,6 +54,7 @@ osmo_sgsn_SOURCES = \
 	gprs_sndcp_pcomp.c \
 	gprs_sndcp_vty.c \
 	gprs_sndcp_xid.c \
+	gtp_ggsn.c \
 	gtp_mme.c \
 	sgsn_main.c \
 	sgsn_vty.c \

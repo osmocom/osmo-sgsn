@@ -55,6 +55,7 @@
 #include <osmocom/sgsn/gprs_ranap.h>
 #include <osmocom/sgsn/gprs_gmm_fsm.h>
 #include <osmocom/sgsn/gprs_mm_state_gb_fsm.h>
+#include <osmocom/sgsn/gtp_ggsn.h>
 #include <osmocom/sgsn/gtp_mme.h>
 #include <osmocom/sgsn/sgsn_rim.h>
 #include <osmocom/sgsn/gprs_bssgp.h>

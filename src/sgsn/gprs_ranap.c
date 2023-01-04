@@ -37,6 +37,7 @@
 #include <osmocom/sgsn/gprs_ranap.h>
 #include <osmocom/sgsn/gprs_gmm_attach.h>
 #include <osmocom/sgsn/gprs_mm_state_iu_fsm.h>
+#include <osmocom/sgsn/gtp_ggsn.h>
 
 /* Send RAB activation requests for all PDP contexts */
 void activate_pdp_rabs(struct sgsn_mm_ctx *ctx)
