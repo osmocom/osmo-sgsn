@@ -53,7 +53,7 @@ struct value_string gprs_llc_state_strs[] = {
 static void vty_dump_lle(struct vty *vty, struct gprs_llc_lle *lle)
 {
 	struct gprs_llc_params *par = &lle->params;
-	vty_out(vty, " SAPI %2u State %s VUsend=%u, VUrecv=%u", lle->sapi, 
+	vty_out(vty, " SAPI %2u State %s VUsend=%u, VUrecv=%u", lle->sapi,
 		get_value_string(gprs_llc_state_strs, lle->state),
 		lle->vu_send, lle->vu_recv);
 	vty_out(vty, " Vsent=%u Vack=%u Vrecv=%u, RetransCtr=%u%s",
