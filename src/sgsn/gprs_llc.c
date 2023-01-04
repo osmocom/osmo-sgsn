@@ -50,6 +50,17 @@ const struct value_string gprs_llc_llme_state_names[] = {
 	{ 0, NULL }
 };
 
+const struct value_string gprs_llc_lle_state_names[] = {
+	{ GPRS_LLES_UNASSIGNED,		"TLLI Unassigned" },
+	{ GPRS_LLES_ASSIGNED_ADM,	"TLLI Assigned" },
+	{ GPRS_LLES_LOCAL_EST,		"Local Establishment" },
+	{ GPRS_LLES_REMOTE_EST,		"Remote Establishment" },
+	{ GPRS_LLES_ABM,		"Asynchronous Balanced Mode" },
+	{ GPRS_LLES_LOCAL_REL,		"Local Release" },
+	{ GPRS_LLES_TIMER_REC,		"Timer Recovery" },
+	{ 0, NULL }
+};
+
 static struct gprs_llc_llme *llme_alloc(uint32_t tlli);
 static int gprs_llc_tx_xid(const struct gprs_llc_lle *lle, struct msgb *msg,
 			   int command);

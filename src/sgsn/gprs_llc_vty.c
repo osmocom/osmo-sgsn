@@ -39,22 +39,11 @@
 #include <osmocom/vty/vty.h>
 #include <osmocom/vty/command.h>
 
-struct value_string gprs_llc_state_strs[] = {
-	{ GPRS_LLES_UNASSIGNED, 	"TLLI Unassigned" },
-	{ GPRS_LLES_ASSIGNED_ADM,	"TLLI Assigned" },
-	{ GPRS_LLES_LOCAL_EST,		"Local Establishment" },
-	{ GPRS_LLES_REMOTE_EST,		"Remote Establishment" },
-	{ GPRS_LLES_ABM,		"Asynchronous Balanced Mode" },
-	{ GPRS_LLES_LOCAL_REL,		"Local Release" },
-	{ GPRS_LLES_TIMER_REC,		"Timer Recovery" },
-	{ 0, NULL }
-};
-
 static void vty_dump_lle(struct vty *vty, struct gprs_llc_lle *lle)
 {
 	struct gprs_llc_params *par = &lle->params;
 	vty_out(vty, " SAPI %2u State %s VUsend=%u, VUrecv=%u", lle->sapi,
-		get_value_string(gprs_llc_state_strs, lle->state),
+		get_value_string(gprs_llc_lle_state_names, lle->state),
 		lle->vu_send, lle->vu_recv);
 	vty_out(vty, " Vsent=%u Vack=%u Vrecv=%u, RetransCtr=%u%s",
 		lle->v_sent, lle->v_ack, lle->v_recv,

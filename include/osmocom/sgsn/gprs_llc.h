@@ -90,6 +90,7 @@ enum gprs_llc_lle_state {
 	GPRS_LLES_LOCAL_REL	= 6,	/* Local Release */
 	GPRS_LLES_TIMER_REC 	= 7,	/* Timer Recovery */
 };
+extern const struct value_string gprs_llc_lle_state_names[];
 
 enum gprs_llc_llme_state {
 	GPRS_LLMS_UNASSIGNED	= 1,	/* No TLLI yet */
