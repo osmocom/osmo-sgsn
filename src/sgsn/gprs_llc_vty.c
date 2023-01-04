@@ -79,7 +79,7 @@ static void vty_dump_llme(struct vty *vty, struct gprs_llc_llme *llme)
 		get_value_string(gprs_cipher_names, llme->algo), llme->iov_ui,
 		llme->cksn, llme->age_timestamp == GPRS_LLME_RESET_AGE ? 0 :
 		(int)(now_tp.tv_sec - (time_t)llme->age_timestamp),
-		get_value_string(gprs_llc_state_strs, llme->state), VTY_NEWLINE);
+		get_value_string(gprs_llc_llme_state_names, llme->state), VTY_NEWLINE);
 
 	for (i = 0; i < ARRAY_SIZE(valid_sapis); i++) {
 		struct gprs_llc_lle *lle;
