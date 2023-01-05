@@ -82,16 +82,17 @@ int sndcp_sn_xid_conf(struct gprs_llc_xid_field *xid_field_conf,
 void gprs_sndcp_sm_deactivate_ind_by_llme(const struct gprs_llc_llme *llme);
 
 /* Called by SNDCP when it has received/re-assembled a N-PDU */
-int sndcp_sn_ud_ind(struct gprs_sndcp_entity *sne, struct msgb *msg,
+int sndcp_sn_unitdata_ind(struct gprs_sndcp_entity *sne, struct msgb *msg,
 		    uint32_t npdu_len, uint8_t *npdu);
+int sndcp_sn_unitdata_req(struct msgb *msg, struct gprs_llc_lle *lle, uint8_t nsapi,
+			void *mmcontext);
 
 /* Entry point for the SNSM-ACTIVATE.indication */
 int sndcp_sm_activate_ind(struct gprs_llc_lle *lle, uint8_t nsapi);
 /* Entry point for the SNSM-DEACTIVATE.indication */
 int sndcp_sm_deactivate_ind(const struct gprs_llc_lle *lle, uint8_t nsapi);
-int sndcp_unitdata_req(struct msgb *msg, struct gprs_llc_lle *lle, uint8_t nsapi,
-			void *mmcontext);
-int sndcp_llunitdata_ind(struct msgb *msg, struct gprs_llc_lle *lle,
+
+int sndcp_ll_unitdata_ind(struct msgb *msg, struct gprs_llc_lle *lle,
 			 uint8_t *hdr, uint16_t len);
 
 #endif	/* INT_SNDCP_H */

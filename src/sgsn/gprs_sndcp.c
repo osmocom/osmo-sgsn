@@ -399,7 +399,7 @@ static int defrag_segments(struct gprs_sndcp_entity *sne)
 	}
 
 	/* Hand off packet to SGSN (SNDCP SN-UNITDATA.ind), which will forward it to GGSN (GTP): */
-	rc = sndcp_sn_ud_ind(sne, msg, npdu_len, expnd);
+	rc = sndcp_sn_unitdata_ind(sne, msg, npdu_len, expnd);
 
 ret_free:
 	/* we must free the memory we allocated above; ownership is not transferred
@@ -684,7 +684,7 @@ static int sndcp_send_ud_frag(struct sndcp_frag_state *fs,
 }
 
 /* Request transmission of a SN-PDU over specified LLC Entity + SAPI */
-int sndcp_unitdata_req(struct msgb *msg, struct gprs_llc_lle *lle, uint8_t nsapi,
+int sndcp_sn_unitdata_req(struct msgb *msg, struct gprs_llc_lle *lle, uint8_t nsapi,
 			void *mmcontext)
 {
 	struct gprs_sndcp_entity *sne;
@@ -794,7 +794,7 @@ int sndcp_unitdata_req(struct msgb *msg, struct gprs_llc_lle *lle, uint8_t nsapi
 }
 
 /* Section 5.1.2.17 LL-UNITDATA.ind */
-int sndcp_llunitdata_ind(struct msgb *msg, struct gprs_llc_lle *lle,
+int sndcp_ll_unitdata_ind(struct msgb *msg, struct gprs_llc_lle *lle,
 			 uint8_t *hdr, uint16_t len)
 {
 	struct gprs_sndcp_entity *sne;
@@ -878,7 +878,7 @@ int sndcp_llunitdata_ind(struct msgb *msg, struct gprs_llc_lle *lle,
 	}
 
 	/* Hand off packet to gtp */
-	rc = sndcp_sn_ud_ind(sne, msg, npdu_len, expnd);
+	rc = sndcp_sn_unitdata_ind(sne, msg, npdu_len, expnd);
 
 ret_free:
 	if (any_pcomp_or_dcomp_active(sgsn))
@@ -890,7 +890,7 @@ ret_free:
 /* 5.1.1.4 SN-UNITDATA.indication
  * Called by SNDCP when it has received/re-assembled a N-PDU
  */
-int sndcp_sn_ud_ind(struct gprs_sndcp_entity *sne,
+int sndcp_sn_unitdata_ind(struct gprs_sndcp_entity *sne,
 		    struct msgb *msg, uint32_t npdu_len, uint8_t *npdu)
 {
 	/* Hand it off N-PDU to the correct GTP tunnel + GGSN: */

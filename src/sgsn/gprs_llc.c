@@ -1030,7 +1030,7 @@ int gprs_llc_rcvmsg(struct msgb *msg, struct tlv_parsed *tv)
 		case GPRS_SAPI_SNDCP9:
 		case GPRS_SAPI_SNDCP11:
 			/* send LL_DATA_IND/LL_UNITDATA_IND to SNDCP */
-			rc = sndcp_llunitdata_ind(msg, lle, llhp.data, llhp.data_len);
+			rc = sndcp_ll_unitdata_ind(msg, lle, llhp.data, llhp.data_len);
 			break;
 		case GPRS_SAPI_SMS:
 			/* FIXME */

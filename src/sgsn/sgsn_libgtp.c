@@ -804,7 +804,7 @@ static int cb_data_ind(struct pdp_t *lib, void *packet, unsigned int len)
 	/* It is easier to have a global count */
 	pdp->cdr_bytes_out += len;
 
-	return sndcp_unitdata_req(msg, &mm->gb.llme->lle[pdp->sapi],
+	return sndcp_sn_unitdata_req(msg, &mm->gb.llme->lle[pdp->sapi],
 				  pdp->nsapi, mm);
 }
 
