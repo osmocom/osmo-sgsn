@@ -60,6 +60,8 @@ struct gprs_sndcp_entity {
 
 extern struct llist_head gprs_sndcp_entities;
 
+int gprs_sndcp_vty_init(void);
+
 /* Set of SNDCP-XID negotiation (See also: TS 144 065,
  * Section 6.8 XID parameter negotiation) */
 int sndcp_sn_xid_req(struct gprs_llc_lle *lle, uint8_t nsapi);

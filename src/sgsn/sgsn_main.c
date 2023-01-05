@@ -59,6 +59,7 @@
 #include <osmocom/sgsn/vty.h>
 #include <osmocom/sgsn/sgsn.h>
 #include <osmocom/sgsn/gprs_llc.h>
+#include <osmocom/sgsn/gprs_sndcp.h>
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/gprs_ranap.h>
 #include <osmocom/sgsn/gprs_ns.h>
