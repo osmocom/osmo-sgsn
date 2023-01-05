@@ -28,6 +28,7 @@
 
 #include <osmocom/sgsn/vty.h>
 #include <osmocom/sgsn/gtp_ggsn.h>
+#include <osmocom/sgsn/pdpctx.h>
 
 #include <gtp.h>
 #include <pdp.h>

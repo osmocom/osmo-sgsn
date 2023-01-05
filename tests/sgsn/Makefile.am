@@ -60,6 +60,7 @@ sgsn_test_LDADD = \
 	$(top_builddir)/src/sgsn/gprs_sgsn.o \
 	$(top_builddir)/src/sgsn/gtp_ggsn.o \
 	$(top_builddir)/src/sgsn/gtp_mme.o \
+	$(top_builddir)/src/sgsn/pdpctx.o \
 	$(top_builddir)/src/sgsn/sgsn_cdr.o \
 	$(top_builddir)/src/sgsn/sgsn_ctrl.o \
 	$(top_builddir)/src/sgsn/sgsn_vty.o \

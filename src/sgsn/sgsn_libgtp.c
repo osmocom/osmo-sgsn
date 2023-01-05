@@ -59,6 +59,7 @@
 #include <osmocom/sgsn/gtp_mme.h>
 #include <osmocom/sgsn/sgsn_rim.h>
 #include <osmocom/sgsn/gprs_bssgp.h>
+#include <osmocom/sgsn/pdpctx.h>
 
 #include <gtp.h>
 #include <pdp.h>

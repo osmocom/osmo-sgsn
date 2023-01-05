@@ -26,6 +26,7 @@ noinst_HEADERS = \
 	gtphub.h \
 	gtp_ggsn.h \
 	gtp_mme.h \
+	pdpctx.h \
 	sgsn.h \
 	sgsn_rim.h \
 	signal.h \

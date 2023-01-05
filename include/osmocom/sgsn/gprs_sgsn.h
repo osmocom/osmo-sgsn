@@ -23,6 +23,7 @@ struct gprs_llc_lle;
 struct ctrl_handle;
 struct gprs_subscr;
 struct sgsn_ggsn_ctx;
+struct sgsn_pdp_ctx;
 
 enum gsm48_gsm_cause;
 
@@ -38,13 +39,6 @@ enum gprs_mm_ctr {
 	GMM_CTR_PAGING_PS,
 	GMM_CTR_PAGING_CS,
 	GMM_CTR_RA_UPDATE,
-};
-
-enum gprs_pdp_ctx {
-	PDP_CTR_PKTS_UDATA_IN,
-	PDP_CTR_PKTS_UDATA_OUT,
-	PDP_CTR_BYTES_UDATA_IN,
-	PDP_CTR_BYTES_UDATA_OUT,
 };
 
 enum gprs_t3350_mode {
@@ -291,64 +285,6 @@ struct sgsn_ggsn_ctx *sgsn_mm_ctx_find_ggsn_ctx(struct sgsn_mm_ctx *mmctx,
 						enum gsm48_gsm_cause *gsm_cause,
 						char *apn_str);
 
-enum pdp_ctx_state {
-	PDP_STATE_NONE,
-	PDP_STATE_CR_REQ,
-	PDP_STATE_CR_CONF,
-
-	/* 04.08 / Figure 6.2 / 6.1.2.2 */
-	PDP_STATE_INACT_PEND,
-	PDP_STATE_INACTIVE = PDP_STATE_NONE,
-};
-
-enum pdp_type {
-	PDP_TYPE_NONE,
-	PDP_TYPE_ETSI_PPP,
-	PDP_TYPE_IANA_IPv4,
-	PDP_TYPE_IANA_IPv6,
-};
-
-struct sgsn_pdp_ctx {
-	struct llist_head	list;	/* list_head for mmctx->pdp_list */
-	struct llist_head	g_list;	/* list_head for global list */
-	struct sgsn_mm_ctx	*mm;	/* back pointer to MM CTX */
-	int			destroy_ggsn; /* destroy it on destruction */
-	struct sgsn_ggsn_ctx	*ggsn;	/* which GGSN serves this PDP */
-	struct llist_head	ggsn_list;	/* list_head for ggsn->pdp_list */
-	struct rate_ctr_group	*ctrg;
-
-	//unsigned int		id;
-	struct pdp_t		*lib;	/* pointer to libgtp PDP ctx */
-	enum pdp_ctx_state	state;
-	enum pdp_type		type;
-	uint32_t		address;
-	char 			*apn_subscribed;
-	//char 			*apn_used;
-	uint16_t		nsapi;	/* SNDCP */
-	uint16_t		sapi;	/* LLC */
-	uint8_t			ti;	/* transaction identifier */
-	int			vplmn_allowed;
-	uint32_t		qos_profile_subscr;
-	//uint32_t		qos_profile_req;
-	//uint32_t		qos_profile_neg;
-	uint8_t			radio_prio;
-	//uint32_t		charging_id;
-
-	struct osmo_timer_list	timer;
-	unsigned int		T;		/* Txxxx number */
-	unsigned int		num_T_exp;	/* number of consecutive T expirations */
-
-	struct osmo_timer_list	cdr_timer;	/* CDR record wird timer */
-	struct timespec		cdr_start;	/* The start of the CDR */
-	uint64_t		cdr_bytes_in;
-	uint64_t		cdr_bytes_out;
-	uint32_t		cdr_charging_id;
-};
-
-#define LOGPDPCTXP(level, pdp, fmt, args...) \
-	LOGP(DGPRS, level, "PDP(%s/%u) " \
-	     fmt, (pdp)->mm ? (pdp)->mm->imsi : "---", (pdp)->ti, ## args)
-
 /* look up PDP context by MM context and NSAPI */
 struct sgsn_pdp_ctx *sgsn_pdp_ctx_by_nsapi(const struct sgsn_mm_ctx *mm,
 					   uint8_t nsapi);
@@ -356,18 +292,9 @@ struct sgsn_pdp_ctx *sgsn_pdp_ctx_by_nsapi(const struct sgsn_mm_ctx *mm,
 struct sgsn_pdp_ctx *sgsn_pdp_ctx_by_tid(const struct sgsn_mm_ctx *mm,
 					 uint8_t tid);
 
-struct sgsn_pdp_ctx *sgsn_pdp_ctx_alloc(struct sgsn_mm_ctx *mm,
-					struct sgsn_ggsn_ctx *ggsn,
-					uint8_t nsapi);
-void sgsn_pdp_ctx_terminate(struct sgsn_pdp_ctx *pdp);
-void sgsn_pdp_ctx_free(struct sgsn_pdp_ctx *pdp);
-
 extern struct llist_head sgsn_mm_ctxts;
-extern struct llist_head sgsn_pdp_ctxts;
 
 uint32_t sgsn_alloc_ptmsi(void);
-
-char *gprs_pdpaddr2str(uint8_t *pdpa, uint8_t len, bool return_ipv6);
 
 /*
  * ctrl interface related work

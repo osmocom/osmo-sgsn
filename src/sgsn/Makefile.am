@@ -62,6 +62,7 @@ osmo_sgsn_SOURCES = \
 	sgsn_libgtp.c \
 	gprs_llc.c \
 	gprs_llc_vty.c \
+	pdpctx.c \
 	sgsn_ctrl.c \
 	sgsn_auth.c \
 	gprs_subscriber.c \

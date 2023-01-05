@@ -62,6 +62,7 @@
 #include <osmocom/sgsn/gprs_ranap.h>
 #include <osmocom/sgsn/gprs_sm.h>
 #include <osmocom/sgsn/gtp.h>
+#include <osmocom/sgsn/pdpctx.h>
 
 #include <pdp.h>
 

@@ -42,6 +42,7 @@
 #include <osmocom/sgsn/gtp_ggsn.h>
 #include <osmocom/sgsn/gtp_mme.h>
 #include <osmocom/sgsn/vty.h>
+#include <osmocom/sgsn/pdpctx.h>
 #include <osmocom/gsupclient/gsup_client.h>
 
 #include <osmocom/vty/tdef_vty.h>

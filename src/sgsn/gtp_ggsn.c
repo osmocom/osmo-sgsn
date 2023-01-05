@@ -34,6 +34,7 @@
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/gprs_gmm_fsm.h>
 #include <osmocom/sgsn/gprs_sm.h>
+#include <osmocom/sgsn/pdpctx.h>
 
 void sgsn_ggsn_ctx_check_echo_timer(struct sgsn_ggsn_ctx *ggc)
 {
