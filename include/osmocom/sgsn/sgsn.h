@@ -152,6 +152,8 @@ struct sgsn_instance {
 	struct rate_ctr_group *rate_ctrs;
 
 	struct llist_head mme_list; /* list of struct sgsn_mme_ctx */
+
+	struct ctrl_handle *ctrlh;
 };
 
 extern struct sgsn_instance *sgsn;
@@ -163,6 +165,8 @@ int sgsn_parse_config(const char *config_file);
 char *sgsn_gtp_ntoa(struct ul16_t *ul);
 
 /* sgsn.c */
+struct sgsn_instance *sgsn_instance_alloc(void *talloc_ctx);
+int sgsn_inst_init(struct sgsn_instance *sgsn);
 
 /* Main input function for Gb proxy */
 int sgsn_rcvmsg(struct msgb *msg, struct gprs_ns2_vc *nsvc, uint16_t ns_bvci);
@@ -197,6 +201,7 @@ int sndcp_llunitdata_ind(struct msgb *msg, struct gprs_llc_lle *lle,
  * CDR related functionality
  */
 int sgsn_cdr_init(struct sgsn_instance *sgsn);
+void sgsn_cdr_release(struct sgsn_instance *sgsn);
 
 
 /*

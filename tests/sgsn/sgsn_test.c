@@ -45,15 +45,7 @@
 #include "gprs_gb_parse.h"
 
 void *tall_sgsn_ctx;
-static struct sgsn_instance sgsn_inst = {
-	.config_file = "osmo_sgsn.cfg",
-	.cfg = {
-		.gtp_statedir = "./",
-		.auth_policy = SGSN_AUTH_POLICY_CLOSED,
-		.gea_encryption_mask = 0x1,
-	},
-};
-struct sgsn_instance *sgsn = &sgsn_inst;
+struct sgsn_instance *sgsn;
 unsigned sgsn_tx_counter = 0;
 struct msgb *last_msg = NULL;
 struct gprs_gb_parse_context last_dl_parse_ctx;
@@ -70,6 +62,7 @@ static void reset_last_msg(void)
 static void cleanup_test(void)
 {
 	reset_last_msg();
+	TALLOC_FREE(sgsn);
 }
 
 static uint32_t get_new_ptmsi(const struct gprs_gb_parse_context *parse_ctx)
@@ -574,6 +567,7 @@ static void test_subscriber_gsup(void)
 	printf("Testing subscriber GSUP handling\n");
 
 	update_subscriber_data_cb = my_dummy_sgsn_update_subscriber_data;
+	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
 
 	/* Check for emptiness */
 	OSMO_ASSERT(gprs_subscr_get_by_imsi(imsi1) == NULL);
@@ -750,6 +744,7 @@ static void test_gmm_detach(void)
 	uint32_t local_tlli;
 
 	printf("Testing GMM detach\n");
+	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
 
 	/* DTAP - Detach Request (MO) */
 	/* normal detach, power_off = 0 */
@@ -791,6 +786,7 @@ static void test_gmm_detach_power_off(void)
 	uint32_t local_tlli;
 
 	printf("Testing GMM detach (power off)\n");
+	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
 
 	/* DTAP - Detach Request (MO) */
 	/* normal detach, power_off = 1 */
@@ -831,6 +827,7 @@ static void test_gmm_detach_no_mmctx(void)
 	uint32_t local_tlli;
 
 	printf("Testing GMM detach (no MMCTX)\n");
+	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
 
 	/* DTAP - Detach Request (MO) */
 	/* normal detach, power_off = 0 */
@@ -1197,6 +1194,7 @@ static void test_gmm_reject(void)
 	};
 
 	printf("Testing GMM reject\n");
+	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
 
 	/* reset the PRNG used by sgsn_alloc_ptmsi */
 	srand(1);
@@ -1243,6 +1241,9 @@ static void test_gmm_cancel(void)
 	uint32_t foreign_tlli;
 	uint32_t local_tlli = 0;
 	struct gprs_llc_lle *lle;
+
+	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
+	sgsn->cfg.gea_encryption_mask = 0x1;
 	const enum sgsn_auth_policy saved_auth_policy = sgsn->cfg.auth_policy;
 
 	/* DTAP - Attach Request */
@@ -1273,8 +1274,7 @@ static void test_gmm_cancel(void)
 	};
 
 	printf("Testing cancellation\n");
-
-	sgsn_inst.cfg.auth_policy = SGSN_AUTH_POLICY_OPEN;
+	sgsn->cfg.auth_policy = SGSN_AUTH_POLICY_OPEN;
 
 	foreign_tlli = gprs_tmsi2tlli(0xc0000023, TLLI_FOREIGN);
 
@@ -1456,6 +1456,7 @@ static void test_ggsn_selection(void)
 	printf("Testing GGSN selection\n");
 
 	osmo_gsup_client_send_cb = my_gsup_client_send_dummy;
+	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
 
 	/* Check for emptiness */
 	OSMO_ASSERT(gprs_subscr_get_by_imsi(imsi1) == NULL);
@@ -1654,11 +1655,7 @@ int main(int argc, char **argv)
 	tall_sgsn_ctx = talloc_named_const(osmo_sgsn_ctx, 0, "sgsn");
 	msgb_ctx = msgb_talloc_ctx_init(osmo_sgsn_ctx, 0);
 
-	sgsn_rate_ctr_init();
-	sgsn_auth_init(sgsn);
-	gprs_subscr_init(sgsn);
 	vty_init(&vty_info);
-	sgsn_vty_init(&sgsn->cfg);
 
 	test_llme();
 	test_subscriber();
@@ -1678,7 +1675,7 @@ int main(int argc, char **argv)
 
 	talloc_report_full(osmo_sgsn_ctx, stderr);
 	OSMO_ASSERT(talloc_total_blocks(msgb_ctx) == 1);
-	OSMO_ASSERT(talloc_total_blocks(tall_sgsn_ctx) == 2);
+	OSMO_ASSERT(talloc_total_blocks(tall_sgsn_ctx) == 1);
 	return 0;
 }
 

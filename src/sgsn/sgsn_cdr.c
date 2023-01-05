@@ -41,7 +41,6 @@
 
 /* TODO...avoid going through a global */
 extern struct sgsn_instance *sgsn;
-extern struct ctrl_handle *g_ctrlh;
 
 /**
  * The CDR module will generate an entry like:
@@ -65,7 +64,7 @@ extern struct ctrl_handle *g_ctrlh;
 
 static void send_cdr_trap(char *value)
 {
-	if (ctrl_cmd_send_trap(g_ctrlh, "cdr-v1", value) < 0)
+	if (ctrl_cmd_send_trap(sgsn->ctrlh, "cdr-v1", value) < 0)
 		LOGP(DGPRS, LOGL_ERROR, "Failed to create and send TRAP cdr-v1\n");
 }
 
@@ -299,4 +298,9 @@ int sgsn_cdr_init(struct sgsn_instance *sgsn)
 	osmo_signal_register_handler(SS_SGSN, handle_sgsn_sig, sgsn);
 
 	return 0;
+}
+
+void sgsn_cdr_release(struct sgsn_instance *sgsn)
+{
+	osmo_signal_unregister_handler(SS_SGSN, handle_sgsn_sig, sgsn);
 }

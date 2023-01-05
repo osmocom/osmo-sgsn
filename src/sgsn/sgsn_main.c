@@ -67,9 +67,6 @@
 #include <osmocom/sgsn/gprs_subscriber.h>
 #include <osmocom/sgsn/gtp.h>
 
-#include <osmocom/ctrl/control_if.h>
-#include <osmocom/ctrl/ports.h>
-
 #include <gtp.h>
 #include <osmocom/sgsn/sgsn_rim.h>
 
@@ -85,7 +82,6 @@
 #include <getopt.h>
 
 void *tall_sgsn_ctx;
-struct ctrl_handle *g_ctrlh;
 
 struct gprs_ns2_inst *sgsn_nsi;
 static int daemonize = 0;
@@ -418,16 +414,11 @@ int main(int argc, char **argv)
 	bssgp_set_bssgp_callback(sgsn_bssgp_dispatch_ns_unitdata_req_cb, sgsn_nsi);
 
 	gprs_llc_init("/usr/local/lib/osmocom/crypt/");
-	sgsn_rate_ctr_init();
-	sgsn_inst_init(sgsn);
-
 
 	gprs_ns2_vty_init(sgsn_nsi);
 	bssgp_vty_init();
 	gprs_llc_vty_init();
 	gprs_sndcp_vty_init();
-	sgsn_auth_init(sgsn);
-	sgsn_cdr_init(sgsn);
 
 	handle_options(argc, argv);
 
@@ -458,20 +449,6 @@ int main(int argc, char **argv)
 	if (rc < 0)
 		exit(1);
 
-	/* start control interface after reading config for
-	 * ctrl_vty_get_bind_addr() */
-	g_ctrlh = ctrl_interface_setup(NULL, OSMO_CTRL_PORT_SGSN, NULL);
-	if (!g_ctrlh) {
-		LOGP(DGPRS, LOGL_ERROR, "Failed to create CTRL interface.\n");
-		exit(1);
-	}
-
-	if (sgsn_ctrl_cmds_install() != 0) {
-		LOGP(DGPRS, LOGL_ERROR, "Failed to install CTRL commands.\n");
-		exit(1);
-	}
-
-
 	rc = sgsn_gtp_init(sgsn);
 	if (rc) {
 		LOGP(DGPRS, LOGL_FATAL, "Cannot bind/listen on GTP socket\n");
@@ -479,9 +456,9 @@ int main(int argc, char **argv)
 	} else
 		LOGP(DGPRS, LOGL_NOTICE, "libGTP v%s initialized\n", gtp_version());
 
-	rc = gprs_subscr_init(sgsn);
+	rc = sgsn_inst_init(sgsn);
 	if (rc < 0) {
-		LOGP(DGPRS, LOGL_FATAL, "Cannot set up subscriber management\n");
+		LOGP(DGPRS, LOGL_FATAL, "Cannot set up SGSN\n");
 		exit(2);
 	}
 

@@ -99,7 +99,7 @@ const struct value_string sgsn_auth_pol_strs[] = {
 #define NONSPEC_X1001_SECS     5       /* wait for a RANAP Release Complete */
 
 
-static struct osmo_tdef sgsn_T_defs[] = {
+struct osmo_tdef sgsn_T_defs[] = {
 	{ .T=3312, .default_val=GSM0408_T3312_SECS, .desc="Periodic RA Update timer (s)" },
 	{ .T=3313, .default_val=GSM0408_T3313_SECS, .desc="Waiting for paging response timer (s)" },
 	{ .T=3314, .default_val=GSM0408_T3314_SECS, .desc="READY timer. Force to STANDBY on expiry timer (s)" },
@@ -1738,12 +1738,6 @@ DEFUN(cfg_mme_no_ran_info_relay_default, cfg_mme_no_ran_info_relay_default_cmd,
 int sgsn_vty_init(struct sgsn_config *cfg)
 {
 	g_cfg = cfg;
-
-	g_cfg->T_defs = sgsn_T_defs;
-	osmo_tdefs_reset(g_cfg->T_defs);
-
-	g_cfg->T_defs_gtp = gtp_T_defs;
-	osmo_tdefs_reset(g_cfg->T_defs_gtp);
 
 	install_element_ve(&show_sgsn_cmd);
 	//install_element_ve(&show_mmctx_tlli_cmd);

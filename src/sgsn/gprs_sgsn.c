@@ -27,6 +27,8 @@
 #include <osmocom/core/rate_ctr.h>
 #include <osmocom/core/stats.h>
 #include <osmocom/core/backtrace.h>
+#include <osmocom/ctrl/control_if.h>
+#include <osmocom/ctrl/ports.h>
 #include <osmocom/gprs/gprs_ns2.h>
 #include <osmocom/gprs/gprs_bssgp.h>
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
@@ -59,6 +61,7 @@
 
 extern struct sgsn_instance *sgsn;
 extern void *tall_sgsn_ctx;
+extern struct osmo_tdef sgsn_T_defs[];
 
 LLIST_HEAD(sgsn_mm_ctxts);
 LLIST_HEAD(sgsn_ggsn_ctxts);
@@ -144,12 +147,6 @@ static const struct rate_ctr_group_desc sgsn_ctrg_desc = {
 	ARRAY_SIZE(sgsn_ctr_description),
 	sgsn_ctr_description,
 };
-
-void sgsn_rate_ctr_init(void)
-{
-	sgsn->rate_ctrs = rate_ctr_group_alloc(tall_sgsn_ctx, &sgsn_ctrg_desc, 0);
-	OSMO_ASSERT(sgsn->rate_ctrs);
-}
 
 /* look-up an SGSN MM context based on Iu UE context (struct ue_conn_ctx)*/
 struct sgsn_mm_ctx *sgsn_mm_ctx_by_ue_ctx(const void *uectx)
@@ -893,21 +890,67 @@ static void sgsn_llme_check_cb(void *data_)
 	osmo_timer_schedule(&sgsn->llme_timer, GPRS_LLME_CHECK_TICK, 0);
 }
 
+static int sgsn_instance_talloc_destructor(struct sgsn_instance *sgi)
+{
+	sgsn_cdr_release(sgi);
+	osmo_timer_del(&sgi->llme_timer);
+	rate_ctr_group_free(sgi->rate_ctrs);
+	return 0;
+}
+
 struct sgsn_instance *sgsn_instance_alloc(void *talloc_ctx)
 {
 	struct sgsn_instance *inst;
 	inst = talloc_zero(talloc_ctx, struct sgsn_instance);
+
+	talloc_set_destructor(inst, sgsn_instance_talloc_destructor);
+
 	inst->cfg.gtp_statedir = talloc_strdup(inst, "./");
 	inst->cfg.auth_policy = SGSN_AUTH_POLICY_CLOSED;
 	inst->cfg.require_authentication = true; /* only applies if auth_policy is REMOTE */
 	inst->cfg.gsup_server_port = OSMO_GSUP_PORT;
 
+	inst->cfg.T_defs = sgsn_T_defs;
+	osmo_tdefs_reset(inst->cfg.T_defs);
+	inst->cfg.T_defs_gtp = gtp_T_defs;
+	osmo_tdefs_reset(inst->cfg.T_defs_gtp);
+
+	inst->rate_ctrs = rate_ctr_group_alloc(inst, &sgsn_ctrg_desc, 0);
+	OSMO_ASSERT(inst->rate_ctrs);
+
 	INIT_LLIST_HEAD(&inst->mme_list);
+
+	osmo_timer_setup(&inst->llme_timer, sgsn_llme_check_cb, NULL);
+	osmo_timer_schedule(&inst->llme_timer, GPRS_LLME_CHECK_TICK, 0);
+	/* These are mostly setting up stuff not related to VTY cfg, so they can be set up here: */
+	sgsn_auth_init(inst);
+	sgsn_cdr_init(inst);
 	return inst;
 }
 
-void sgsn_inst_init(struct sgsn_instance *sgsn)
+/* To be called after VTY config parsing: */
+int sgsn_inst_init(struct sgsn_instance *sgsn)
 {
-	osmo_timer_setup(&sgsn->llme_timer, sgsn_llme_check_cb, NULL);
-	osmo_timer_schedule(&sgsn->llme_timer, GPRS_LLME_CHECK_TICK, 0);
+	int rc;
+
+	/* start control interface after reading config for
+	 * ctrl_vty_get_bind_addr() */
+	sgsn->ctrlh = ctrl_interface_setup(NULL, OSMO_CTRL_PORT_SGSN, NULL);
+	if (!sgsn->ctrlh) {
+		LOGP(DGPRS, LOGL_ERROR, "Failed to create CTRL interface.\n");
+		return -EIO;
+	}
+
+	rc = sgsn_ctrl_cmds_install();
+	if (rc != 0) {
+		LOGP(DGPRS, LOGL_ERROR, "Failed to install CTRL commands.\n");
+		return -EFAULT;
+	}
+
+	rc = gprs_subscr_init(sgsn);
+	if (rc < 0) {
+		LOGP(DGPRS, LOGL_FATAL, "Cannot set up SGSN\n");
+		return rc;
+	}
+	return 0;
 }

@@ -7,6 +7,7 @@ AM_CFLAGS = \
 	-Wall \
 	-ggdb3 \
 	$(LIBOSMOCORE_CFLAGS) \
+	$(LIBOSMOCTRL_CFLAGS) \
 	$(LIBOSMOABIS_CFLAGS) \
 	$(LIBOSMOGSM_CFLAGS) \
 	$(LIBOSMOGSUPCLIENT_CFLAGS) \
@@ -58,6 +59,8 @@ sgsn_test_LDADD = \
 	$(top_builddir)/src/sgsn/gprs_sgsn.o \
 	$(top_builddir)/src/sgsn/gtp_ggsn.o \
 	$(top_builddir)/src/sgsn/gtp_mme.o \
+	$(top_builddir)/src/sgsn/sgsn_cdr.o \
+	$(top_builddir)/src/sgsn/sgsn_ctrl.o \
 	$(top_builddir)/src/sgsn/sgsn_vty.o \
 	$(top_builddir)/src/sgsn/sgsn_libgtp.o \
 	$(top_builddir)/src/sgsn/sgsn_auth.o \
@@ -77,6 +80,7 @@ sgsn_test_LDADD = \
 	$(top_builddir)/src/gprs/sgsn_ares.o \
 	$(LIBOSMOABIS_LIBS) \
 	$(LIBOSMOCORE_LIBS) \
+	$(LIBOSMOCTRL_LIBS) \
 	$(LIBOSMOGSM_LIBS) \
 	$(LIBOSMOGB_LIBS) \
 	$(LIBOSMOGSUPCLIENT_LIBS) \
