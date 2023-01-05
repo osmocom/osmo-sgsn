@@ -1435,9 +1435,6 @@ static void test_apn_matching(void)
 	cleanup_test();
 }
 
-struct sgsn_subscriber_pdp_data* sgsn_subscriber_pdp_data_alloc(
-	struct sgsn_subscriber_data *sdata);
-
 static void test_ggsn_selection(void)
 {
 	struct apn_ctx *actxs[4];
