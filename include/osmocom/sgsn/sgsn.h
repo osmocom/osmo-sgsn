@@ -180,18 +180,6 @@ void sgsn_ggsn_echo_req(struct sgsn_ggsn_ctx *ggc);
 int send_act_pdp_cont_acc(struct sgsn_pdp_ctx *pctx);
 int sgsn_mme_ran_info_req(struct sgsn_mme_ctx *mme, const struct bssgp_ran_information_pdu *pdu);
 
-/* gprs_sndcp.c */
-
-/* Entry point for the SNSM-ACTIVATE.indication */
-int sndcp_sm_activate_ind(struct gprs_llc_lle *lle, uint8_t nsapi);
-/* Entry point for the SNSM-DEACTIVATE.indication */
-int sndcp_sm_deactivate_ind(const struct gprs_llc_lle *lle, uint8_t nsapi);
-int sndcp_unitdata_req(struct msgb *msg, struct gprs_llc_lle *lle, uint8_t nsapi,
-			void *mmcontext);
-int sndcp_llunitdata_ind(struct msgb *msg, struct gprs_llc_lle *lle,
-			 uint8_t *hdr, uint16_t len);
-
-
 /*
  * CDR related functionality
  */

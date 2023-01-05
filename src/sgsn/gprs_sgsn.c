@@ -49,6 +49,7 @@
 #include <osmocom/sgsn/gprs_mm_state_iu_fsm.h>
 #include <osmocom/sgsn/gprs_gmm_fsm.h>
 #include <osmocom/sgsn/gprs_llc.h>
+#include <osmocom/sgsn/gprs_sndcp.h>
 #include <osmocom/sgsn/gtp_ggsn.h>
 
 #include <pdp.h>
