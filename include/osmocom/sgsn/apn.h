@@ -6,8 +6,6 @@ struct sgsn_ggsn_ctx;
 
 #define GSM_APN_LENGTH 102
 
-extern struct llist_head sgsn_apn_ctxts;
-
 struct apn_ctx {
 	struct llist_head list;
 	struct sgsn_ggsn_ctx *ggsn;

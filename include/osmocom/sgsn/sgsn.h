@@ -151,6 +151,7 @@ struct sgsn_instance {
 
 	struct rate_ctr_group *rate_ctrs;
 
+	struct llist_head apn_list; /* list of struct sgsn_apn_ctx */
 	struct llist_head ggsn_list; /* list of struct sgsn_ggsn_ctx */
 	struct llist_head mme_list; /* list of struct sgsn_mme_ctx */
 

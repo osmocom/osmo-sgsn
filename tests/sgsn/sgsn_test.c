@@ -1346,6 +1346,7 @@ static void test_apn_matching(void)
 	struct apn_ctx *actx, *actxs[9];
 
 	printf("Testing APN matching\n");
+	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
 
 	actxs[0] = sgsn_apn_ctx_find_alloc("*.test", "");
 	actxs[1] = sgsn_apn_ctx_find_alloc("*.def.test", "");

@@ -25,22 +25,21 @@
 #include <talloc.h>
 
 #include <osmocom/sgsn/apn.h>
+#include <osmocom/sgsn/sgsn.h>
 
 extern void *tall_sgsn_ctx;
-
-LLIST_HEAD(sgsn_apn_ctxts);
 
 static struct apn_ctx *sgsn_apn_ctx_alloc(const char *ap_name, const char *imsi_prefix)
 {
 	struct apn_ctx *actx;
 
-	actx = talloc_zero(tall_sgsn_ctx, struct apn_ctx);
+	actx = talloc_zero(sgsn, struct apn_ctx);
 	if (!actx)
 		return NULL;
 	actx->name = talloc_strdup(actx, ap_name);
 	actx->imsi_prefix = talloc_strdup(actx, imsi_prefix);
 
-	llist_add_tail(&actx->list, &sgsn_apn_ctxts);
+	llist_add_tail(&actx->list, &sgsn->apn_list);
 
 	return actx;
 }
@@ -59,7 +58,7 @@ struct apn_ctx *sgsn_apn_ctx_match(const char *name, const char *imsi)
 	size_t name_prio = 0;
 	size_t name_req_len = strlen(name);
 
-	llist_for_each_entry(actx, &sgsn_apn_ctxts, list) {
+	llist_for_each_entry(actx, &sgsn->apn_list, list) {
 		size_t name_ref_len, imsi_ref_len;
 		const char *name_ref_start, *name_match_start;
 
@@ -106,7 +105,7 @@ struct apn_ctx *sgsn_apn_ctx_by_name(const char *name, const char *imsi_prefix)
 {
 	struct apn_ctx *actx;
 
-	llist_for_each_entry(actx, &sgsn_apn_ctxts, list) {
+	llist_for_each_entry(actx, &sgsn->apn_list, list) {
 		if (strcasecmp(name, actx->name) == 0 &&
 		    strcasecmp(imsi_prefix, actx->imsi_prefix) == 0)
 			return actx;

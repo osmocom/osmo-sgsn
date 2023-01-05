@@ -311,9 +311,9 @@ static int config_write_sgsn(struct vty *vty)
 	llist_for_each_entry(acl, &g_cfg->imsi_acl, list)
 		vty_out(vty, " imsi-acl add %s%s", acl->imsi, VTY_NEWLINE);
 
-	if (llist_empty(&sgsn_apn_ctxts))
+	if (llist_empty(&sgsn->apn_list))
 		vty_out(vty, " ! apn * ggsn 0%s", VTY_NEWLINE);
-	llist_for_each_entry(actx, &sgsn_apn_ctxts, list) {
+	llist_for_each_entry(actx, &sgsn->apn_list, list) {
 		if (strlen(actx->imsi_prefix) > 0)
 			vty_out(vty, " apn %s imsi-prefix %s ggsn %u%s",
 				actx->name, actx->imsi_prefix, actx->ggsn->id,

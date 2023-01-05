@@ -658,7 +658,7 @@ struct sgsn_ggsn_ctx *sgsn_mm_ctx_find_ggsn_ctx(struct sgsn_mm_ctx *mmctx,
 				insert_extra(tp, mmctx->subscr->sgsn_data, pdp);
 				continue;
 			}
-			if (!llist_empty(&sgsn_apn_ctxts)) {
+			if (!llist_empty(&sgsn->apn_list)) {
 				apn_ctx = sgsn_apn_ctx_match(req_apn_str, mmctx->imsi);
 				/* Not configured */
 				if (apn_ctx == NULL)
@@ -711,7 +711,7 @@ struct sgsn_ggsn_ctx *sgsn_mm_ctx_find_ggsn_ctx(struct sgsn_mm_ctx *mmctx,
 
 	if (apn_ctx != NULL) {
 		ggsn = apn_ctx->ggsn;
-	} else if (llist_empty(&sgsn_apn_ctxts)) {
+	} else if (llist_empty(&sgsn->apn_list)) {
 		/* No configuration -> use GGSN 0 */
 		ggsn = sgsn_ggsn_ctx_by_id(0);
 	} else if (allow_any_apn &&
@@ -821,6 +821,7 @@ struct sgsn_instance *sgsn_instance_alloc(void *talloc_ctx)
 	inst->rate_ctrs = rate_ctr_group_alloc(inst, &sgsn_ctrg_desc, 0);
 	OSMO_ASSERT(inst->rate_ctrs);
 
+	INIT_LLIST_HEAD(&inst->apn_list);
 	INIT_LLIST_HEAD(&inst->ggsn_list);
 	INIT_LLIST_HEAD(&inst->mme_list);
 
