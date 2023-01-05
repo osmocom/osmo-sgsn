@@ -39,8 +39,6 @@
 #include <osmocom/sgsn/gprs_sm.h>
 #include <osmocom/sgsn/gtp.h>
 
-LLIST_HEAD(sgsn_pdp_ctxts);
-
 static const struct rate_ctr_desc pdpctx_ctr_description[] = {
 	{ "udata:packets:in",	"User Data  Messages ( In)" },
 	{ "udata:packets:out",	"User Data  Messages (Out)" },
@@ -67,7 +65,7 @@ struct sgsn_pdp_ctx *sgsn_pdp_ctx_alloc(struct sgsn_mm_ctx *mm,
 	if (pdp)
 		return NULL;
 
-	pdp = talloc_zero(tall_sgsn_ctx, struct sgsn_pdp_ctx);
+	pdp = talloc_zero(sgsn, struct sgsn_pdp_ctx);
 	if (!pdp)
 		return NULL;
 
@@ -82,7 +80,7 @@ struct sgsn_pdp_ctx *sgsn_pdp_ctx_alloc(struct sgsn_mm_ctx *mm,
 	}
 	llist_add(&pdp->list, &mm->pdp_list);
 	sgsn_ggsn_ctx_add_pdp(pdp->ggsn, pdp);
-	llist_add(&pdp->g_list, &sgsn_pdp_ctxts);
+	llist_add(&pdp->g_list, &sgsn->pdp_list);
 
 	return pdp;
 }

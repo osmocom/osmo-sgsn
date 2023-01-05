@@ -90,7 +90,5 @@ struct sgsn_pdp_ctx *sgsn_pdp_ctx_alloc(struct sgsn_mm_ctx *mm,
 void sgsn_pdp_ctx_terminate(struct sgsn_pdp_ctx *pdp);
 void sgsn_pdp_ctx_free(struct sgsn_pdp_ctx *pdp);
 
-extern struct llist_head sgsn_pdp_ctxts;
-
 char *gprs_pdpaddr2str(uint8_t *pdpa, uint8_t len, bool return_ipv6);
 

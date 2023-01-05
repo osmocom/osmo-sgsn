@@ -704,6 +704,7 @@ struct sgsn_instance *sgsn_instance_alloc(void *talloc_ctx)
 	INIT_LLIST_HEAD(&inst->apn_list);
 	INIT_LLIST_HEAD(&inst->ggsn_list);
 	INIT_LLIST_HEAD(&inst->mme_list);
+	INIT_LLIST_HEAD(&inst->pdp_list);
 
 	osmo_timer_setup(&inst->llme_timer, sgsn_llme_check_cb, NULL);
 	osmo_timer_schedule(&inst->llme_timer, GPRS_LLME_CHECK_TICK, 0);

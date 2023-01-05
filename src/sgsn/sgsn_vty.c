@@ -723,7 +723,7 @@ DEFUN(show_pdpctx_all, show_pdpctx_all_cmd,
 {
 	struct sgsn_pdp_ctx *pdp;
 
-	llist_for_each_entry(pdp, &sgsn_pdp_ctxts, g_list)
+	llist_for_each_entry(pdp, &sgsn->pdp_list, g_list)
 		vty_dump_pdp(vty, "", pdp);
 
 	return CMD_SUCCESS;
