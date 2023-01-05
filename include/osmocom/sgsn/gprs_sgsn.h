@@ -460,6 +460,6 @@ struct gsm_auth_tuple *sgsn_auth_get_tuple(struct sgsn_mm_ctx *mmctx,
 /* Called on subscriber data updates */
 void sgsn_update_subscriber_data(struct sgsn_mm_ctx *mmctx);
 
-void sgsn_rate_ctr_init();
+void sgsn_rate_ctr_init(void);
 
 #endif /* _GPRS_SGSN_H */

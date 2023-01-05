@@ -971,7 +971,7 @@ static inline void set_tei(struct gtp_packet_desc *p, uint32_t tei)
 
 static void gtphub_mapping_del_cb(struct expiring_item *expi);
 
-static struct nr_mapping *gtphub_mapping_new()
+static struct nr_mapping *gtphub_mapping_new(void)
 {
 	struct nr_mapping *nrm;
 	nrm = talloc_zero(osmo_gtphub_ctx, struct nr_mapping);
@@ -995,7 +995,7 @@ static const char *gtphub_tunnel_side_str(struct gtphub_tunnel *tun,
 	char *pos = buf;
 	int left = sizeof(buf);
 	int l;
-	                 
+
 	struct gtphub_tunnel_endpoint *c, *u;
 	c = &tun->endpoint[side_idx][GTPH_PLANE_CTRL];
 	u = &tun->endpoint[side_idx][GTPH_PLANE_USER];
@@ -1104,7 +1104,7 @@ static void gtphub_tunnel_del_cb(struct expiring_item *expi)
 /* rate counter index for hubs: [7; 10] */
 #define CTR_IDX_HUB(s, p) CTR_IDX(s, p, 3, 2)
 
-static struct gtphub_tunnel *gtphub_tunnel_new()
+static struct gtphub_tunnel *gtphub_tunnel_new(void)
 {
 	struct gtphub_tunnel *tun;
 	tun = talloc_zero(osmo_gtphub_ctx, struct gtphub_tunnel);
@@ -2283,7 +2283,7 @@ int gtphub_handle_buf(struct gtphub *hub,
 		    != 0)
 			return -1;
 	}
-	
+
 	/* Either to_peer was resolved from an existing tunnel,
 	 * or a PDP Ctx and thus a tunnel has just been created,
 	 * or the tunnel has been deleted due to this message. */
@@ -2690,7 +2690,7 @@ static struct gtphub_peer_addr *gtphub_addr_have(struct gtphub *hub,
 	struct gtphub_peer *peer = gtphub_peer_new(hub, bind);
 
 	a = gtphub_peer_add_addr(peer, addr);
-	
+
 	LOG(LOGL_DEBUG, "New peer address: %s %s\n",
 	    bind->label,
 	    gsn_addr_to_str(&a->addr));

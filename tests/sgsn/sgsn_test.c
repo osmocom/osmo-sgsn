@@ -58,7 +58,7 @@ unsigned sgsn_tx_counter = 0;
 struct msgb *last_msg = NULL;
 struct gprs_gb_parse_context last_dl_parse_ctx;
 
-static void reset_last_msg()
+static void reset_last_msg(void)
 {
 	if (last_msg)
 		msgb_free(last_msg);
@@ -67,7 +67,7 @@ static void reset_last_msg()
 	memset(&last_dl_parse_ctx, 0, sizeof(last_dl_parse_ctx));
 }
 
-static void cleanup_test()
+static void cleanup_test(void)
 {
 	reset_last_msg();
 }
@@ -284,7 +284,7 @@ static void show_subscrs(FILE *out)
 	}
 }
 
-static void assert_no_subscrs()
+static void assert_no_subscrs(void)
 {
 	show_subscrs(stdout);
 	fflush(stdout);

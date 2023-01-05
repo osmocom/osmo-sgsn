@@ -145,7 +145,8 @@ static const struct rate_ctr_group_desc sgsn_ctrg_desc = {
 	sgsn_ctr_description,
 };
 
-void sgsn_rate_ctr_init() {
+void sgsn_rate_ctr_init(void)
+{
 	sgsn->rate_ctrs = rate_ctr_group_alloc(tall_sgsn_ctx, &sgsn_ctrg_desc, 0);
 	OSMO_ASSERT(sgsn->rate_ctrs);
 }

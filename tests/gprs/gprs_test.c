@@ -24,7 +24,7 @@ static int nu_is_retransmission(uint16_t nu, uint16_t vur)
 	return ret;
 }
 
-static void test_8_4_2()
+static void test_8_4_2(void)
 {
 	printf("Testing gprs_llc_is_retransmit.\n");
 

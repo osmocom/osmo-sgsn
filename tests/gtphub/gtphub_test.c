@@ -577,7 +577,7 @@ time_t now;
 static struct gtphub _hub;
 static struct gtphub *hub = &_hub;
 
-static int setup_test_hub()
+static int setup_test_hub(void)
 {
 	/* Not really needed, but to make 100% sure... */
 	ZERO_STRUCT(hub);
@@ -613,7 +613,7 @@ static int setup_test_hub()
 	return 1;
 }
 
-static int clear_test_hub()
+static int clear_test_hub(void)
 {
 	/* expire all */
 	gtphub_gc(hub, now + (60 * GTPH_EXPIRE_SLOWLY_MINUTES) + 1);
@@ -817,7 +817,7 @@ static void test_echo(void)
 		"87"	/* 135: Quality of Service (QoS) Profile */ \
 		  "0004" /* length */ \
 		  "00"	/* priority */ \
-		  "0b921f" /* QoS profile data */ 
+		  "0b921f" /* QoS profile data */
 
 #define MSG_PDP_CTX_RSP(len, tei_h, seq, restart, tei_u, tei_c, gsn_c, gsn_u) \
 		"32" \
@@ -898,7 +898,7 @@ static int msg_from_ggsn(int plane_idx,
 	return 1;
 }
 
-static int create_pdp_ctx()
+static int create_pdp_ctx(void)
 {
 	const char *gtp_req_from_sgsn =
 		MSG_PDP_CTX_REQ("0068",
