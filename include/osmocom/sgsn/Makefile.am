@@ -1,4 +1,5 @@
 noinst_HEADERS = \
+	apn.h \
 	common.h \
 	crc24.h \
 	debug.h \

@@ -14,10 +14,10 @@
 #include <osmocom/gsm/protocol/gsm_23_003.h>
 #include <osmocom/crypt/auth.h>
 
+#include <osmocom/sgsn/apn.h>
 #include <osmocom/sgsn/gprs_subscriber.h>
 
 #define GSM_EXTENSION_LENGTH 15
-#define GSM_APN_LENGTH 102
 
 struct gprs_llc_lle;
 struct ctrl_handle;
@@ -362,21 +362,7 @@ struct sgsn_pdp_ctx *sgsn_pdp_ctx_alloc(struct sgsn_mm_ctx *mm,
 void sgsn_pdp_ctx_terminate(struct sgsn_pdp_ctx *pdp);
 void sgsn_pdp_ctx_free(struct sgsn_pdp_ctx *pdp);
 
-struct apn_ctx {
-	struct llist_head list;
-	struct sgsn_ggsn_ctx *ggsn;
-	char *name;
-	char *imsi_prefix;
-	char *description;
-};
-
-struct apn_ctx *sgsn_apn_ctx_find_alloc(const char *name, const char *imsi_prefix);
-void sgsn_apn_ctx_free(struct apn_ctx *actx);
-struct apn_ctx *sgsn_apn_ctx_by_name(const char *name, const char *imsi_prefix);
-struct apn_ctx *sgsn_apn_ctx_match(const char *name, const char *imsi_prefix);
-
 extern struct llist_head sgsn_mm_ctxts;
-extern struct llist_head sgsn_apn_ctxts;
 extern struct llist_head sgsn_pdp_ctxts;
 
 uint32_t sgsn_alloc_ptmsi(void);

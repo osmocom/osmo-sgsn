@@ -6,6 +6,8 @@
 #include <osmocom/core/linuxlist.h>
 #include <osmocom/gsm/protocol/gsm_23_003.h>
 
+#include <osmocom/sgsn/apn.h>
+
 struct sgsn_instance;
 struct sgsn_mm_ctx;
 
