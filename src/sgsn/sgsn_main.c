@@ -63,6 +63,7 @@
 #include <osmocom/sgsn/gprs_ranap.h>
 #include <osmocom/sgsn/gprs_ns.h>
 #include <osmocom/sgsn/gprs_bssgp.h>
+#include <osmocom/sgsn/gprs_subscriber.h>
 
 #include <osmocom/ctrl/control_if.h>
 #include <osmocom/ctrl/ports.h>

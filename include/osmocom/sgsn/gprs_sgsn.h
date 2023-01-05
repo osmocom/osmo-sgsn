@@ -457,36 +457,6 @@ void sgsn_auth_update(struct sgsn_mm_ctx *mm);
 struct gsm_auth_tuple *sgsn_auth_get_tuple(struct sgsn_mm_ctx *mmctx,
 					   unsigned key_seq);
 
-/*
- * GPRS subscriber data
- */
-#define GPRS_SUBSCRIBER_FIRST_CONTACT	0x00000001
-#define GPRS_SUBSCRIBER_UPDATE_AUTH_INFO_PENDING	(1 << 16)
-#define GPRS_SUBSCRIBER_UPDATE_LOCATION_PENDING		(1 << 17)
-#define GPRS_SUBSCRIBER_CANCELLED			(1 << 18)
-#define GPRS_SUBSCRIBER_ENABLE_PURGE			(1 << 19)
-
-#define GPRS_SUBSCRIBER_UPDATE_PENDING_MASK ( \
-		GPRS_SUBSCRIBER_UPDATE_LOCATION_PENDING | \
-		GPRS_SUBSCRIBER_UPDATE_AUTH_INFO_PENDING  \
-)
-
-int gprs_subscr_init(struct sgsn_instance *sgi);
-int gprs_subscr_request_update_location(struct sgsn_mm_ctx *mmctx);
-int gprs_subscr_request_auth_info(struct sgsn_mm_ctx *mmctx,
-				  const uint8_t *auts,
-				  const uint8_t *auts_rand);
-int gprs_subscr_auth_sync(struct gprs_subscr *subscr,
-			  const uint8_t *auts, const uint8_t *auts_rand);
-void gprs_subscr_cleanup(struct gprs_subscr *subscr);
-struct gprs_subscr *gprs_subscr_get_or_create(const char *imsi);
-struct gprs_subscr *gprs_subscr_get_or_create_by_mmctx( struct sgsn_mm_ctx *mmctx);
-struct gprs_subscr *gprs_subscr_get_by_imsi(const char *imsi);
-void gprs_subscr_cancel(struct gprs_subscr *subscr);
-void gprs_subscr_update(struct gprs_subscr *subscr);
-void gprs_subscr_update_auth_info(struct gprs_subscr *subscr);
-int gprs_subscr_rx_gsup_message(struct msgb *msg);
-
 /* Called on subscriber data updates */
 void sgsn_update_subscriber_data(struct sgsn_mm_ctx *mmctx);
 
