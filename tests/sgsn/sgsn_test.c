@@ -1473,9 +1473,9 @@ static void test_ggsn_selection(void)
 
 	/* TODO: Add PDP info entries to s1 */
 
-	ggcs[0] = sgsn_ggsn_ctx_find_alloc(0);
-	ggcs[1] = sgsn_ggsn_ctx_find_alloc(1);
-	ggcs[2] = sgsn_ggsn_ctx_find_alloc(2);
+	ggcs[0] = sgsn_ggsn_ctx_find_alloc(sgsn, 0);
+	ggcs[1] = sgsn_ggsn_ctx_find_alloc(sgsn, 1);
+	ggcs[2] = sgsn_ggsn_ctx_find_alloc(sgsn, 2);
 
 	actxs[0] = sgsn_apn_ctx_find_alloc("test.apn", "123456");
 	actxs[0]->ggsn = ggcs[0];

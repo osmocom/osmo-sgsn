@@ -600,7 +600,7 @@ static int cb_recovery3(struct gsn_t *gsn, struct sockaddr_in *peer, struct pdp_
 	struct sgsn_ggsn_ctx *ggsn;
 	struct sgsn_pdp_ctx *pctx = NULL;
 
-	ggsn = sgsn_ggsn_ctx_by_addr(&peer->sin_addr);
+	ggsn = sgsn_ggsn_ctx_by_addr(sgsn, &peer->sin_addr);
 	if (!ggsn) {
 		LOGP(DGPRS, LOGL_NOTICE, "Received Recovery IE for unknown GGSN\n");
 		return -EINVAL;

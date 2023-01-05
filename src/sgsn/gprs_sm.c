@@ -378,7 +378,7 @@ static void ggsn_lookup_cb(void *arg, int status, int timeouts, struct hostent *
 		goto reject_due_failure;
 	}
 
-	ggsn = sgsn_ggsn_ctx_alloc(UINT32_MAX);
+	ggsn = sgsn_ggsn_ctx_alloc(sgsn, UINT32_MAX);
 	if (!ggsn) {
 		LOGMMCTXP(LOGL_ERROR, lookup->mmctx, "Failed to create ggsn.\n");
 		goto reject_due_failure;

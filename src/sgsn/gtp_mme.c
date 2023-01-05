@@ -39,7 +39,7 @@ static bool _eutran_tai_equal(const struct osmo_eutran_tai *t1, const struct osm
 struct sgsn_mme_ctx *sgsn_mme_ctx_alloc(struct sgsn_instance *sgsn, const char *name)
 {
 	struct sgsn_mme_ctx *mme;
-	mme = talloc_zero(tall_sgsn_ctx, struct sgsn_mme_ctx);
+	mme = talloc_zero(sgsn, struct sgsn_mme_ctx);
 	if (!mme)
 		return NULL;
 

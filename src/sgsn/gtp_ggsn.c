@@ -35,8 +35,6 @@
 #include <osmocom/sgsn/gprs_gmm_fsm.h>
 #include <osmocom/sgsn/gprs_sm.h>
 
-extern void *tall_sgsn_ctx;
-
 void sgsn_ggsn_ctx_check_echo_timer(struct sgsn_ggsn_ctx *ggc)
 {
 	bool pending = osmo_timer_pending(&ggc->echo_timer);
@@ -59,11 +57,11 @@ static void echo_timer_cb(void *data)
 	osmo_timer_schedule(&ggc->echo_timer, ggc->echo_interval, 0);
 }
 
-struct sgsn_ggsn_ctx *sgsn_ggsn_ctx_alloc(uint32_t id)
+struct sgsn_ggsn_ctx *sgsn_ggsn_ctx_alloc(struct sgsn_instance *sgsn, uint32_t id)
 {
 	struct sgsn_ggsn_ctx *ggc;
 
-	ggc = talloc_zero(tall_sgsn_ctx, struct sgsn_ggsn_ctx);
+	ggc = talloc_zero(sgsn, struct sgsn_ggsn_ctx);
 	if (!ggc)
 		return NULL;
 
@@ -86,7 +84,7 @@ void sgsn_ggsn_ctx_free(struct sgsn_ggsn_ctx *ggc)
 	talloc_free(ggc);
 }
 
-struct sgsn_ggsn_ctx *sgsn_ggsn_ctx_by_id(uint32_t id)
+struct sgsn_ggsn_ctx *sgsn_ggsn_ctx_by_id(struct sgsn_instance *sgsn, uint32_t id)
 {
 	struct sgsn_ggsn_ctx *ggc;
 
@@ -97,7 +95,7 @@ struct sgsn_ggsn_ctx *sgsn_ggsn_ctx_by_id(uint32_t id)
 	return NULL;
 }
 
-struct sgsn_ggsn_ctx *sgsn_ggsn_ctx_by_addr(struct in_addr *addr)
+struct sgsn_ggsn_ctx *sgsn_ggsn_ctx_by_addr(struct sgsn_instance *sgsn, struct in_addr *addr)
 {
 	struct sgsn_ggsn_ctx *ggc;
 
@@ -109,13 +107,13 @@ struct sgsn_ggsn_ctx *sgsn_ggsn_ctx_by_addr(struct in_addr *addr)
 }
 
 
-struct sgsn_ggsn_ctx *sgsn_ggsn_ctx_find_alloc(uint32_t id)
+struct sgsn_ggsn_ctx *sgsn_ggsn_ctx_find_alloc(struct sgsn_instance *sgsn, uint32_t id)
 {
 	struct sgsn_ggsn_ctx *ggc;
 
-	ggc = sgsn_ggsn_ctx_by_id(id);
+	ggc = sgsn_ggsn_ctx_by_id(sgsn, id);
 	if (!ggc)
-		ggc = sgsn_ggsn_ctx_alloc(id);
+		ggc = sgsn_ggsn_ctx_alloc(sgsn, id);
 	return ggc;
 }
 

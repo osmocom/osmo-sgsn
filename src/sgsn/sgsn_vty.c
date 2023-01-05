@@ -422,7 +422,7 @@ DEFUN(cfg_ggsn_remote_ip, cfg_ggsn_remote_ip_cmd,
 	"IPv4 Address\n")
 {
 	uint32_t id = atoi(argv[0]);
-	struct sgsn_ggsn_ctx *ggc = sgsn_ggsn_ctx_find_alloc(id);
+	struct sgsn_ggsn_ctx *ggc = sgsn_ggsn_ctx_find_alloc(sgsn, id);
 
 	inet_aton(argv[1], &ggc->remote_addr);
 
@@ -447,7 +447,7 @@ DEFUN(cfg_ggsn_gtp_version, cfg_ggsn_gtp_version_cmd,
 	"Version 0\n" "Version 1\n")
 {
 	uint32_t id = atoi(argv[0]);
-	struct sgsn_ggsn_ctx *ggc = sgsn_ggsn_ctx_find_alloc(id);
+	struct sgsn_ggsn_ctx *ggc = sgsn_ggsn_ctx_find_alloc(sgsn, id);
 
 	if (atoi(argv[1]))
 		ggc->gtp_version = 1;
@@ -465,7 +465,7 @@ DEFUN(cfg_ggsn_echo_interval, cfg_ggsn_echo_interval_cmd,
 	"Interval between echo requests in seconds.\n")
 {
 	uint32_t id = atoi(argv[0]);
-	struct sgsn_ggsn_ctx *ggc = sgsn_ggsn_ctx_find_alloc(id);
+	struct sgsn_ggsn_ctx *ggc = sgsn_ggsn_ctx_find_alloc(sgsn, id);
 
 	ggc->echo_interval = atoi(argv[1]);
 
@@ -484,7 +484,7 @@ DEFUN(cfg_ggsn_no_echo_interval, cfg_ggsn_no_echo_interval_cmd,
 	NO_STR "Send an echo request to this static GGSN every interval.\n")
 {
 	uint32_t id = atoi(argv[0]);
-	struct sgsn_ggsn_ctx *ggc = sgsn_ggsn_ctx_find_alloc(id);
+	struct sgsn_ggsn_ctx *ggc = sgsn_ggsn_ctx_find_alloc(sgsn, id);
 
 	ggc->echo_interval = 0;
 	sgsn_ggsn_ctx_check_echo_timer(ggc);
@@ -525,7 +525,7 @@ static int add_apn_ggsn_mapping(struct vty *vty, const char *apn_str,
 	struct apn_ctx *actx;
 	struct sgsn_ggsn_ctx *ggsn;
 
-	ggsn = sgsn_ggsn_ctx_by_id(ggsn_id);
+	ggsn = sgsn_ggsn_ctx_by_id(sgsn, ggsn_id);
 	if (ggsn == NULL) {
 		vty_out(vty, "%% a GGSN with id %d has not been defined%s",
 			ggsn_id, VTY_NEWLINE);

@@ -713,11 +713,11 @@ struct sgsn_ggsn_ctx *sgsn_mm_ctx_find_ggsn_ctx(struct sgsn_mm_ctx *mmctx,
 		ggsn = apn_ctx->ggsn;
 	} else if (llist_empty(&sgsn->apn_list)) {
 		/* No configuration -> use GGSN 0 */
-		ggsn = sgsn_ggsn_ctx_by_id(0);
+		ggsn = sgsn_ggsn_ctx_by_id(sgsn, 0);
 	} else if (allow_any_apn &&
 		   (selected_apn_str == NULL || strlen(selected_apn_str) == 0)) {
 		/* No APN given and no default configuration -> Use GGSN 0 */
-		ggsn = sgsn_ggsn_ctx_by_id(0);
+		ggsn = sgsn_ggsn_ctx_by_id(sgsn, 0);
 	} else {
 		/* No matching configuration found */
 		LOGMMCTXP(LOGL_NOTICE, mmctx,
