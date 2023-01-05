@@ -22,6 +22,30 @@ extern struct llist_head * const gprs_subscribers;
 		GPRS_SUBSCRIBER_UPDATE_AUTH_INFO_PENDING  \
 )
 
+struct gsm_auth_tuple {
+	int use_count;
+	int key_seq;
+	struct osmo_auth_vector vec;
+};
+#define GSM_KEY_SEQ_INVAL	7 /* GSM 04.08 - 10.5.1.2 */
+
+struct sgsn_subscriber_data {
+	struct sgsn_mm_ctx	*mm;
+	struct gsm_auth_tuple	auth_triplets[5];
+	int			auth_triplets_updated;
+	struct llist_head	pdp_list;
+	int			error_cause;
+
+	uint8_t			msisdn[9];
+	size_t			msisdn_len;
+
+	uint8_t			hlr[9];
+	size_t			hlr_len;
+
+	uint8_t			pdp_charg[2];
+	bool			has_pdp_charg;
+};
+
 struct gprs_subscr {
 	struct llist_head entry;
 	int use_count;

@@ -14,6 +14,8 @@
 #include <osmocom/gsm/protocol/gsm_23_003.h>
 #include <osmocom/crypt/auth.h>
 
+#include <osmocom/sgsn/gprs_subscriber.h>
+
 #define GSM_EXTENSION_LENGTH 15
 #define GSM_APN_LENGTH 102
 
@@ -104,13 +106,6 @@ struct service_info {
 };
 
 struct ranap_ue_conn_ctx;
-
-struct gsm_auth_tuple {
-        int use_count;
-        int key_seq;
-        struct osmo_auth_vector vec;
-};
-#define GSM_KEY_SEQ_INVAL       7       /* GSM 04.08 - 10.5.1.2 */
 
 /* According to TS 03.60, Table 5: SGSN MM and PDP Contexts */
 /* Extended by 3GPP TS 23.060, Table 6: SGSN MM and PDP Contexts */
@@ -414,23 +409,6 @@ struct sgsn_subscriber_pdp_data {
 	char			apn_str[GSM_APN_LENGTH];
 	uint8_t			qos_subscribed[20];
 	size_t			qos_subscribed_len;
-	uint8_t			pdp_charg[2];
-	bool			has_pdp_charg;
-};
-
-struct sgsn_subscriber_data {
-	struct sgsn_mm_ctx	*mm;
-	struct gsm_auth_tuple	auth_triplets[5];
-	int			auth_triplets_updated;
-	struct llist_head	pdp_list;
-	int			error_cause;
-
-	uint8_t			msisdn[9];
-	size_t			msisdn_len;
-
-	uint8_t			hlr[9];
-	size_t			hlr_len;
-
 	uint8_t			pdp_charg[2];
 	bool			has_pdp_charg;
 };
