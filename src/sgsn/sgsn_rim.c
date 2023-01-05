@@ -12,6 +12,7 @@
 #include <osmocom/gprs/gprs_bssgp_rim.h>
 #include <osmocom/sgsn/sgsn_rim.h>
 #include <osmocom/sgsn/gtp_mme.h>
+#include <osmocom/sgsn/gtp.h>
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/sgsn.h>
 

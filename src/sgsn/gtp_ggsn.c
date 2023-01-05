@@ -29,6 +29,7 @@
 #include <osmocom/core/stats.h>
 
 #include <osmocom/sgsn/gtp_ggsn.h>
+#include <osmocom/sgsn/gtp.h>
 #include <osmocom/sgsn/sgsn.h>
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/gprs_gmm_fsm.h>

@@ -168,18 +168,6 @@ char *sgsn_gtp_ntoa(struct ul16_t *ul);
 /* sgsn.c */
 struct sgsn_instance *sgsn_instance_alloc(void *talloc_ctx);
 int sgsn_inst_init(struct sgsn_instance *sgsn);
-
-/* sgsn_libgtp.c */
-struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
-					 struct sgsn_mm_ctx *mmctx,
-					 uint16_t nsapi,
-					 struct tlv_parsed *tp);
-int sgsn_delete_pdp_ctx(struct sgsn_pdp_ctx *pctx);
-void sgsn_pdp_upd_gtp_u(struct sgsn_pdp_ctx *pdp, void *addr, size_t alen);
-void sgsn_ggsn_echo_req(struct sgsn_ggsn_ctx *ggc);
-int send_act_pdp_cont_acc(struct sgsn_pdp_ctx *pctx);
-int sgsn_mme_ran_info_req(struct sgsn_mme_ctx *mme, const struct bssgp_ran_information_pdu *pdu);
-
 /*
  * CDR related functionality
  */

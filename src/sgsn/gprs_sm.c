@@ -42,6 +42,7 @@
 #include <osmocom/sgsn/gprs_llc.h>
 #include <osmocom/sgsn/gprs_sndcp.h>
 #include <osmocom/sgsn/gprs_ranap.h>
+#include <osmocom/sgsn/gtp.h>
 
 extern void *tall_sgsn_ctx;
 
