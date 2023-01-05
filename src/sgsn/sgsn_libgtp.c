@@ -809,7 +809,7 @@ static int cb_data_ind(struct pdp_t *lib, void *packet, unsigned int len)
 }
 
 /* Called by SNDCP when it has received/re-assembled a N-PDU */
-int sgsn_rx_sndcp_ud_ind(struct gprs_ra_id *ra_id, int32_t tlli, uint8_t nsapi,
+int sgsn_gtp_data_req(struct gprs_ra_id *ra_id, int32_t tlli, uint8_t nsapi,
 			 struct msgb *msg, uint32_t npdu_len, uint8_t *npdu)
 {
 	struct sgsn_mm_ctx *mmctx;

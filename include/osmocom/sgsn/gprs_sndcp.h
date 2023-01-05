@@ -81,4 +81,8 @@ int sndcp_sn_xid_conf(struct gprs_llc_xid_field *xid_field_conf,
 /* Clean up all gprs_sndcp_entities related to llme (OS#4824) */
 void gprs_sndcp_sm_deactivate_ind_by_llme(const struct gprs_llc_llme *llme);
 
+/* Called by SNDCP when it has received/re-assembled a N-PDU */
+int sndcp_sn_ud_ind(struct gprs_sndcp_entity *sne, struct msgb *msg,
+		    uint32_t npdu_len, uint8_t *npdu);
+
 #endif	/* INT_SNDCP_H */

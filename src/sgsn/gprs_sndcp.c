@@ -42,6 +42,7 @@
 #include <osmocom/sgsn/gprs_sndcp_dcomp.h>
 #include <osmocom/sgsn/gprs_sndcp_comp.h>
 #include <osmocom/sgsn/gprs_gmm.h>
+#include <osmocom/sgsn/gtp.h>
 
 #define DEBUG_IP_PACKETS 0	/* 0=Disabled, 1=Enabled */
 
@@ -397,9 +398,8 @@ static int defrag_segments(struct gprs_sndcp_entity *sne)
 		expnd = npdu;
 	}
 
-	/* Hand off packet to gtp */
-	rc = sgsn_rx_sndcp_ud_ind(&sne->ra_id, sne->lle->llme->tlli,
-				  sne->nsapi, msg, npdu_len, expnd);
+	/* Hand off packet to SGSN (SNDCP SN-UNITDATA.ind), which will forward it to GGSN (GTP): */
+	rc = sndcp_sn_ud_ind(sne, msg, npdu_len, expnd);
 
 ret_free:
 	/* we must free the memory we allocated above; ownership is not transferred
@@ -864,8 +864,7 @@ int sndcp_llunitdata_ind(struct msgb *msg, struct gprs_llc_lle *lle,
 		LOGP(DSNDCP, LOGL_ERROR, "Short SNDCP N-PDU: %d\n", npdu_len);
 		return -EIO;
 	}
-	/* actually send the N-PDU to the SGSN core code, which then
-	 * hands it off to the correct GTP tunnel + GGSN via gtp_data_req() */
+	/* actually send the N-PDU to the SGSN core code (SNDCP SN-UNITDATA.ind) */
 
 	/* Decompress packet */
 	if (any_pcomp_or_dcomp_active(sgsn)) {
@@ -879,14 +878,24 @@ int sndcp_llunitdata_ind(struct msgb *msg, struct gprs_llc_lle *lle,
 	}
 
 	/* Hand off packet to gtp */
-	rc = sgsn_rx_sndcp_ud_ind(&sne->ra_id, lle->llme->tlli,
-				  sne->nsapi, msg, npdu_len, expnd);
+	rc = sndcp_sn_ud_ind(sne, msg, npdu_len, expnd);
 
 ret_free:
 	if (any_pcomp_or_dcomp_active(sgsn))
 		talloc_free(expnd);
 
 	return rc;
+}
+
+/* 5.1.1.4 SN-UNITDATA.indication
+ * Called by SNDCP when it has received/re-assembled a N-PDU
+ */
+int sndcp_sn_ud_ind(struct gprs_sndcp_entity *sne,
+		    struct msgb *msg, uint32_t npdu_len, uint8_t *npdu)
+{
+	/* Hand it off N-PDU to the correct GTP tunnel + GGSN: */
+	return sgsn_gtp_data_req(&sne->ra_id, sne->lle->llme->tlli,
+				  sne->nsapi, msg, npdu_len, npdu);
 }
 
 #if 0
