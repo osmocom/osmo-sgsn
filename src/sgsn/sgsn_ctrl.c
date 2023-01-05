@@ -27,8 +27,6 @@
 
 #include <pdp.h>
 
-extern vector ctrl_node_vec;
-
 static int get_subscriber_list(struct ctrl_cmd *cmd, void *d)
 {
 	struct sgsn_mm_ctx *mm;
