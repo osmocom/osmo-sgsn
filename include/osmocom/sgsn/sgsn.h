@@ -169,9 +169,6 @@ char *sgsn_gtp_ntoa(struct ul16_t *ul);
 struct sgsn_instance *sgsn_instance_alloc(void *talloc_ctx);
 int sgsn_inst_init(struct sgsn_instance *sgsn);
 
-/* Main input function for Gb proxy */
-int sgsn_rcvmsg(struct msgb *msg, struct gprs_ns2_vc *nsvc, uint16_t ns_bvci);
-
 /* sgsn_libgtp.c */
 struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
 					 struct sgsn_mm_ctx *mmctx,
