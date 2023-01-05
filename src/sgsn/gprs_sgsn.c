@@ -64,7 +64,6 @@ extern void *tall_sgsn_ctx;
 extern struct osmo_tdef sgsn_T_defs[];
 
 LLIST_HEAD(sgsn_mm_ctxts);
-LLIST_HEAD(sgsn_ggsn_ctxts);
 LLIST_HEAD(sgsn_apn_ctxts);
 LLIST_HEAD(sgsn_pdp_ctxts);
 
@@ -918,6 +917,7 @@ struct sgsn_instance *sgsn_instance_alloc(void *talloc_ctx)
 	inst->rate_ctrs = rate_ctr_group_alloc(inst, &sgsn_ctrg_desc, 0);
 	OSMO_ASSERT(inst->rate_ctrs);
 
+	INIT_LLIST_HEAD(&inst->ggsn_list);
 	INIT_LLIST_HEAD(&inst->mme_list);
 
 	osmo_timer_setup(&inst->llme_timer, sgsn_llme_check_cb, NULL);

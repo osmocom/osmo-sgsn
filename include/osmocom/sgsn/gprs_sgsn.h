@@ -376,7 +376,6 @@ struct apn_ctx *sgsn_apn_ctx_by_name(const char *name, const char *imsi_prefix);
 struct apn_ctx *sgsn_apn_ctx_match(const char *name, const char *imsi_prefix);
 
 extern struct llist_head sgsn_mm_ctxts;
-extern struct llist_head sgsn_ggsn_ctxts;
 extern struct llist_head sgsn_apn_ctxts;
 extern struct llist_head sgsn_pdp_ctxts;
 

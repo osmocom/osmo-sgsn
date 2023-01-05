@@ -252,7 +252,7 @@ static int config_write_sgsn(struct vty *vty)
 	vty_out(vty, " gtp local-ip %s%s",
 		inet_ntoa(g_cfg->gtp_listenaddr.sin_addr), VTY_NEWLINE);
 
-	llist_for_each_entry(gctx, &sgsn_ggsn_ctxts, list) {
+	llist_for_each_entry(gctx, &sgsn->ggsn_list, list) {
 		if (gctx->id == UINT32_MAX)
 			continue;
 

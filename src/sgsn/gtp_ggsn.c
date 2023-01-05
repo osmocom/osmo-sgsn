@@ -73,7 +73,7 @@ struct sgsn_ggsn_ctx *sgsn_ggsn_ctx_alloc(uint32_t id)
 	ggc->gsn = sgsn->gsn;
 	INIT_LLIST_HEAD(&ggc->pdp_list);
 	osmo_timer_setup(&ggc->echo_timer, echo_timer_cb, ggc);
-	llist_add(&ggc->list, &sgsn_ggsn_ctxts);
+	llist_add(&ggc->list, &sgsn->ggsn_list);
 
 	return ggc;
 }
@@ -89,7 +89,7 @@ struct sgsn_ggsn_ctx *sgsn_ggsn_ctx_by_id(uint32_t id)
 {
 	struct sgsn_ggsn_ctx *ggc;
 
-	llist_for_each_entry(ggc, &sgsn_ggsn_ctxts, list) {
+	llist_for_each_entry(ggc, &sgsn->ggsn_list, list) {
 		if (id == ggc->id)
 			return ggc;
 	}
@@ -100,7 +100,7 @@ struct sgsn_ggsn_ctx *sgsn_ggsn_ctx_by_addr(struct in_addr *addr)
 {
 	struct sgsn_ggsn_ctx *ggc;
 
-	llist_for_each_entry(ggc, &sgsn_ggsn_ctxts, list) {
+	llist_for_each_entry(ggc, &sgsn->ggsn_list, list) {
 		if (!memcmp(addr, &ggc->remote_addr, sizeof(*addr)))
 			return ggc;
 	}
