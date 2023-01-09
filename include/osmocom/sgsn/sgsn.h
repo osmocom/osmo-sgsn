@@ -77,6 +77,7 @@ struct sgsn_config {
 	/* misc */
 	struct gprs_ns2_inst *nsi;
 
+	char *crypt_cipher_plugin_path;
 	enum sgsn_auth_policy auth_policy;
 	uint8_t gea_encryption_mask;
 	uint8_t uea_encryption_mask;

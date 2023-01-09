@@ -282,6 +282,8 @@ static int config_write_sgsn(struct vty *vty)
 
 		vty_out(vty, "%s", VTY_NEWLINE);
 	}
+	if (g_cfg->crypt_cipher_plugin_path)
+		vty_out(vty, "encryption cipher-plugin-path %s%s", g_cfg->crypt_cipher_plugin_path, VTY_NEWLINE);
 	if (g_cfg->sgsn_ipa_name)
 		vty_out(vty, " gsup ipa-name %s%s", g_cfg->sgsn_ipa_name, VTY_NEWLINE);
 	if (g_cfg->gsup_server_addr.sin_addr.s_addr)
@@ -836,6 +838,27 @@ DEFUN(cfg_encrypt2, cfg_encrypt2_cmd,
 		}
 	}
 
+	return CMD_SUCCESS;
+}
+
+DEFUN(cfg_encrypt_cipher_plugin_path, cfg_encrypt_cipher_plugin_path_cmd,
+	"encryption cipher-plugin-path PATH",
+	ENCRYPTION_STR
+	"Path to gprs encryption cipher plugin directory\n"
+	"Plugin path\n")
+{
+	osmo_talloc_replace_string(sgsn, &sgsn->cfg.crypt_cipher_plugin_path, argv[0]);
+
+	return CMD_SUCCESS;
+}
+
+DEFUN(cfg_no_encrypt_cipher_plugin_path, cfg_no_encrypt_cipher_plugin_path_cmd,
+	"no encryption cipher-plugin-path PATH",
+	NO_STR ENCRYPTION_STR
+	"Path to gprs encryption cipher plugin directory\n"
+	"Plugin path\n")
+{
+	TALLOC_FREE(sgsn->cfg.crypt_cipher_plugin_path);
 	return CMD_SUCCESS;
 }
 
@@ -1773,6 +1796,8 @@ int sgsn_vty_init(struct sgsn_config *cfg)
 	install_element(SGSN_NODE, &cfg_encrypt2_cmd);
 	install_element(SGSN_NODE, &cfg_encrypt_cmd);
 	install_element(SGSN_NODE, &cfg_encryption_uea_cmd);
+	install_element(SGSN_NODE, &cfg_encrypt_cipher_plugin_path_cmd);
+	install_element(SGSN_NODE, &cfg_no_encrypt_cipher_plugin_path_cmd);
 
 	install_element(SGSN_NODE, &cfg_gsup_ipa_name_cmd);
 	install_element(SGSN_NODE, &cfg_gsup_remote_ip_cmd);

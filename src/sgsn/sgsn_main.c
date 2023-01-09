@@ -413,8 +413,6 @@ int main(int argc, char **argv)
 	sgsn->cfg.nsi = sgsn_nsi;
 	bssgp_set_bssgp_callback(sgsn_bssgp_dispatch_ns_unitdata_req_cb, sgsn_nsi);
 
-	gprs_llc_init("/usr/local/lib/osmocom/crypt/");
-
 	gprs_ns2_vty_init(sgsn_nsi);
 	bssgp_vty_init();
 	gprs_llc_vty_init();
@@ -448,6 +446,8 @@ int main(int argc, char **argv)
 			       vty_get_bind_addr(), OSMO_VTY_PORT_SGSN);
 	if (rc < 0)
 		exit(1);
+
+	gprs_llc_init(sgsn->cfg.crypt_cipher_plugin_path);
 
 	rc = sgsn_gtp_init(sgsn);
 	if (rc) {
