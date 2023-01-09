@@ -99,7 +99,7 @@ static void sgsn_llme_cleanup_free(struct gprs_llc_llme *llme)
 {
 	struct sgsn_mm_ctx *mmctx = NULL;
 
-	llist_for_each_entry(mmctx, &sgsn_mm_ctxts, list) {
+	llist_for_each_entry(mmctx, &sgsn->mm_list, list) {
 		if (llme == mmctx->gb.llme) {
 			gsm0408_gprs_access_cancelled(mmctx, SGSN_ERROR_CAUSE_NONE);
 			return;
@@ -176,6 +176,7 @@ struct sgsn_instance *sgsn_instance_alloc(void *talloc_ctx)
 	INIT_LLIST_HEAD(&inst->apn_list);
 	INIT_LLIST_HEAD(&inst->ggsn_list);
 	INIT_LLIST_HEAD(&inst->mme_list);
+	INIT_LLIST_HEAD(&inst->mm_list);
 	INIT_LLIST_HEAD(&inst->pdp_list);
 
 	osmo_timer_setup(&inst->llme_timer, sgsn_llme_check_cb, NULL);

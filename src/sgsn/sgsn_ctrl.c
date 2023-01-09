@@ -33,7 +33,7 @@ static int get_subscriber_list(struct ctrl_cmd *cmd, void *d)
 	struct sgsn_mm_ctx *mm;
 
 	cmd->reply = talloc_strdup(cmd, "");
-	llist_for_each_entry(mm, &sgsn_mm_ctxts, list) {
+	llist_for_each_entry(mm, &sgsn->mm_list, list) {
 		char *addr = NULL;
 		struct sgsn_pdp_ctx *pdp;
 

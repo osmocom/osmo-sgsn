@@ -60,8 +60,6 @@
 
 #include "../../config.h"
 
-LLIST_HEAD(sgsn_mm_ctxts);
-
 const struct value_string sgsn_ran_type_names[] = {
 	{ MM_CTX_T_GERAN_Gb, "GPRS/EDGE via Gb" },
 	{ MM_CTX_T_UTRAN_Iu, "UMTS via Iu" },
@@ -98,7 +96,7 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_by_ue_ctx(const void *uectx)
 {
 	struct sgsn_mm_ctx *ctx;
 
-	llist_for_each_entry(ctx, &sgsn_mm_ctxts, list) {
+	llist_for_each_entry(ctx, &sgsn->mm_list, list) {
 		if (ctx->ran_type == MM_CTX_T_UTRAN_Iu
 		    && uectx == ctx->iu.ue_ctx)
 			return ctx;
@@ -113,7 +111,7 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_by_tlli(uint32_t tlli,
 {
 	struct sgsn_mm_ctx *ctx;
 
-	llist_for_each_entry(ctx, &sgsn_mm_ctxts, list) {
+	llist_for_each_entry(ctx, &sgsn->mm_list, list) {
 		if ((tlli == ctx->gb.tlli || tlli == ctx->gb.tlli_new) &&
 		    gprs_ra_id_equals(raid, &ctx->ra))
 			return ctx;
@@ -137,7 +135,7 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_by_tlli_and_ptmsi(uint32_t tlli,
 	if (tlli_type != TLLI_FOREIGN && tlli_type != TLLI_LOCAL)
 		return NULL;
 
-	llist_for_each_entry(ctx, &sgsn_mm_ctxts, list) {
+	llist_for_each_entry(ctx, &sgsn->mm_list, list) {
 		if ((gprs_tmsi2tlli(ctx->p_tmsi, tlli_type) == tlli ||
 		     gprs_tmsi2tlli(ctx->p_tmsi_old, tlli_type) == tlli) &&
 		    gprs_ra_id_equals(raid, &ctx->ra))
@@ -151,7 +149,7 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_by_ptmsi(uint32_t p_tmsi)
 {
 	struct sgsn_mm_ctx *ctx;
 
-	llist_for_each_entry(ctx, &sgsn_mm_ctxts, list) {
+	llist_for_each_entry(ctx, &sgsn->mm_list, list) {
 		if (p_tmsi == ctx->p_tmsi ||
 		    (ctx->p_tmsi_old && ctx->p_tmsi_old == p_tmsi))
 			return ctx;
@@ -163,7 +161,7 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_by_imsi(const char *imsi)
 {
 	struct sgsn_mm_ctx *ctx;
 
-	llist_for_each_entry(ctx, &sgsn_mm_ctxts, list) {
+	llist_for_each_entry(ctx, &sgsn->mm_list, list) {
 		if (!strcmp(imsi, ctx->imsi))
 			return ctx;
 	}
@@ -205,7 +203,7 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_alloc(uint32_t rate_ctr_id)
 
 	INIT_LLIST_HEAD(&ctx->pdp_list);
 
-	llist_add(&ctx->list, &sgsn_mm_ctxts);
+	llist_add(&ctx->list, &sgsn->mm_list);
 
 	return ctx;
 
@@ -411,7 +409,7 @@ restart:
 		goto restart;
 	}
 
-	llist_for_each_entry(mm, &sgsn_mm_ctxts, list) {
+	llist_for_each_entry(mm, &sgsn->mm_list, list) {
 		if (mm->p_tmsi == ptmsi) {
 			if (!max_retries--)
 				goto failed;

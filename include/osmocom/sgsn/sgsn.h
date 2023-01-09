@@ -156,6 +156,7 @@ struct sgsn_instance {
 	struct llist_head apn_list; /* list of struct sgsn_apn_ctx */
 	struct llist_head ggsn_list; /* list of struct sgsn_ggsn_ctx */
 	struct llist_head mme_list; /* list of struct sgsn_mme_ctx */
+	struct llist_head mm_list; /* list of struct sgsn_mm_ctx */
 	struct llist_head pdp_list; /* list of struct sgsn_pdp_ctx */
 
 	struct ctrl_handle *ctrlh;

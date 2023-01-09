@@ -711,7 +711,7 @@ DEFUN(swow_mmctx_all, show_mmctx_all_cmd,
 	SHOW_STR MMCTX_STR "All MM Contexts\n" INCLUDE_PDP_STR)
 {
 	struct sgsn_mm_ctx *mm;
-	llist_for_each_entry(mm, &sgsn_mm_ctxts, list)
+	llist_for_each_entry(mm, &sgsn->mm_list, list)
 		vty_dump_mmctx(vty, "", mm, (argc > 0) ? 1 : 0);
 
 	return CMD_SUCCESS;
@@ -1006,7 +1006,7 @@ DEFUN_HIDDEN(reset_sgsn_state,
 	struct gprs_subscr *subscr, *tmp_subscr;
 	struct sgsn_mm_ctx *mm, *tmp_mm;
 
-	llist_for_each_entry_safe(mm, tmp_mm, &sgsn_mm_ctxts, list)
+	llist_for_each_entry_safe(mm, tmp_mm, &sgsn->mm_list, list)
 	{
 		gsm0408_gprs_access_cancelled(mm, SGSN_ERROR_CAUSE_NONE);
 	}

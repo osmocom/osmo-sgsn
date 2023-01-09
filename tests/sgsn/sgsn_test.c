@@ -379,6 +379,7 @@ static void test_auth_triplets(void)
 	uint32_t local_tlli = 0xffeeddcc;
 
 	printf("Testing authentication triplet handling\n");
+	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
 
 	/* Check for emptiness */
 	OSMO_ASSERT(gprs_subscr_get_by_imsi(imsi1) == NULL);
@@ -864,6 +865,7 @@ static void test_gmm_detach_accept_unexpected(void)
 	uint32_t local_tlli;
 
 	printf("Testing GMM detach accept (unexpected)\n");
+	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
 
 	/* DTAP - Detach Accept (MT) */
 	/* normal detach */
@@ -900,6 +902,7 @@ static void test_gmm_status_no_mmctx(void)
 	uint32_t local_tlli;
 
 	printf("Testing GMM Status (no MMCTX)\n");
+	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
 
 	/* DTAP - GMM Status, protocol error */
 	static const unsigned char gmm_status[] = {
