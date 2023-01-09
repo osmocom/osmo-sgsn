@@ -22,7 +22,7 @@
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 #include <osmocom/core/utils.h>
 #include <osmocom/sgsn/sgsn.h>
-#include <osmocom/sgsn/gprs_sgsn.h>
+#include <osmocom/sgsn/mmctx.h>
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/gprs_subscriber.h>
 #include <osmocom/sgsn/debug.h>

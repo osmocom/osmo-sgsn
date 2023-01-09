@@ -40,6 +40,7 @@
 #include <osmocom/sgsn/gtp_ggsn.h>
 #include <osmocom/sgsn/gtp.h>
 #include <osmocom/sgsn/pdpctx.h>
+#include <osmocom/sgsn/mmctx.h>
 
 /* Send RAB activation requests for all PDP contexts */
 void activate_pdp_rabs(struct sgsn_mm_ctx *ctx)

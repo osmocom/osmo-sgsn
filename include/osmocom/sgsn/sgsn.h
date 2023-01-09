@@ -8,7 +8,7 @@
 #include <osmocom/gprs/gprs_ns2.h>
 #include <osmocom/gprs/gprs_bssgp.h>
 
-#include <osmocom/sgsn/gprs_sgsn.h>
+#include <osmocom/sgsn/auth.h>
 #include <osmocom/sgsn/gtp_mme.h>
 #include <osmocom/gsm/oap_client.h>
 #include <osmocom/gsupclient/gsup_client.h>
@@ -24,6 +24,8 @@
 #include <gtp.h>
 
 struct hostent;
+
+#define SGSN_ERROR_CAUSE_NONE (-1)
 
 enum sgsn_auth_policy {
 	SGSN_AUTH_POLICY_OPEN,

@@ -1,7 +1,10 @@
 #pragma once
 
 #include <osmocom/core/msgb.h>
-#include <osmocom/sgsn/gprs_sgsn.h>
+
+struct sgsn_mm_ctx;
+struct sgsn_pdp_ctx;
+struct gprs_llc_llme;
 
 int gsm48_tx_gsm_deact_pdp_req(struct sgsn_pdp_ctx *pdp, uint8_t sm_cause, bool teardown);
 int gsm48_tx_gsm_act_pdp_rej(struct sgsn_mm_ctx *mm, uint8_t tid,

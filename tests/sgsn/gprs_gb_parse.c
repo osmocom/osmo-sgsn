@@ -18,6 +18,8 @@
  *
  */
 
+#include <arpa/inet.h>
+
 #include <osmocom/gsm/gsm48.h>
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 

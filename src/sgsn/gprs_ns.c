@@ -31,7 +31,6 @@
 
 #include "config.h"
 
-#include <osmocom/sgsn/gprs_sgsn.h>
 #include <osmocom/sgsn/debug.h>
 
 void gprs_ns_prim_status_cb(struct osmo_gprs_ns2_prim *nsp)

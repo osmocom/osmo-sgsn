@@ -30,7 +30,7 @@
 #include <osmocom/gsupclient/gsup_client.h>
 
 #include <osmocom/sgsn/sgsn.h>
-#include <osmocom/sgsn/gprs_sgsn.h>
+#include <osmocom/sgsn/mmctx.h>
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/gprs_utils.h>
 

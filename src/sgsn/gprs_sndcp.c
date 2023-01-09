@@ -42,6 +42,7 @@
 #include <osmocom/sgsn/gprs_sndcp_dcomp.h>
 #include <osmocom/sgsn/gprs_sndcp_comp.h>
 #include <osmocom/sgsn/gprs_gmm.h>
+#include <osmocom/sgsn/mmctx.h>
 #include <osmocom/sgsn/gtp.h>
 
 #define DEBUG_IP_PACKETS 0	/* 0=Disabled, 1=Enabled */

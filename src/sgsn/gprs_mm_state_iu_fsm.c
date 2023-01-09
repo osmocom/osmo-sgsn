@@ -31,6 +31,7 @@
 #include <osmocom/sgsn/gprs_ranap.h>
 #include <osmocom/sgsn/gtp.h>
 #include <osmocom/sgsn/pdpctx.h>
+#include <osmocom/sgsn/mmctx.h>
 
 #define X(s) (1 << (s))
 

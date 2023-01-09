@@ -47,7 +47,7 @@
 #include <osmocom/sgsn/sgsn.h>
 #include <osmocom/sgsn/gprs_ns.h>
 #include <osmocom/sgsn/gprs_llc.h>
-#include <osmocom/sgsn/gprs_sgsn.h>
+#include <osmocom/sgsn/mmctx.h>
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/gprs_sm.h>
 #include <osmocom/sgsn/gprs_subscriber.h>

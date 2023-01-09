@@ -2,8 +2,14 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <osmocom/sgsn/gprs_sgsn.h>
+
+#include <osmocom/core/timer.h>
+#include <osmocom/gsm/tlv.h>
+#include <osmocom/crypt/gprs_cipher.h>
+
 #include <osmocom/sgsn/gprs_llc_xid.h>
+
+struct sgsn_mm_ctx;
 
 /* Section 4.7 LLC Layer Structure */
 enum gprs_llc_sapi {

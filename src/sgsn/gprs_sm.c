@@ -44,6 +44,7 @@
 #include <osmocom/sgsn/gprs_ranap.h>
 #include <osmocom/sgsn/gtp.h>
 #include <osmocom/sgsn/pdpctx.h>
+#include <osmocom/sgsn/mmctx.h>
 
 /* 3GPP TS 04.08 sec 6.1.3.4.3(.a) "Abnormal cases" */
 #define T339X_MAX_RETRANS 4

@@ -1,8 +1,10 @@
 #pragma once
 
 #include <osmocom/core/fsm.h>
-#include <osmocom/sgsn/gprs_sgsn.h>
 
+#include <osmocom/sgsn/mmctx.h>
+
+struct gprs_llc_llme;
 
 /* 3GPP TS 24.008 § 4.1.3.3 GMM mobility management states on the network side */
 enum gmm_fsm_states {

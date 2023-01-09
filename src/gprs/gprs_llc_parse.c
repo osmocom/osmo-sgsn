@@ -29,7 +29,7 @@
 #include <osmocom/gprs/gprs_bssgp.h>
 
 #include <osmocom/sgsn/debug.h>
-#include <osmocom/sgsn/gprs_sgsn.h>
+#include <osmocom/sgsn/mmctx.h>
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/gprs_llc.h>
 #include <osmocom/sgsn/crc24.h>

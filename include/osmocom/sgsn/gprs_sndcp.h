@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 #include <osmocom/core/linuxlist.h>
+#include <osmocom/gsm/gsm48.h>
+
+struct gprs_llc_lle;
 
 /* A fragment queue header, maintaining list of fragments for one N-PDU */
 struct defrag_state {

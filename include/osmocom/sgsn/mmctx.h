@@ -1,5 +1,4 @@
-#ifndef _GPRS_SGSN_H
-#define _GPRS_SGSN_H
+#pragma once
 
 #include <stdint.h>
 #include <netinet/in.h>
@@ -15,6 +14,7 @@
 #include <osmocom/crypt/auth.h>
 
 #include <osmocom/sgsn/apn.h>
+#include <osmocom/sgsn/auth.h>
 #include <osmocom/sgsn/gprs_subscriber.h>
 
 #define GSM_EXTENSION_LENGTH 15
@@ -47,17 +47,6 @@ enum gprs_t3350_mode {
 	GMM_T3350_MODE_RAU,
 	GMM_T3350_MODE_PTMSI_REALL,
 };
-
-/* Authorization/ACL handling */
-enum sgsn_auth_state {
-	SGSN_AUTH_UNKNOWN,
-	SGSN_AUTH_AUTHENTICATE,
-	SGSN_AUTH_UMTS_RESYNC,
-	SGSN_AUTH_ACCEPTED,
-	SGSN_AUTH_REJECTED
-};
-
-#define MS_RADIO_ACCESS_CAPA
 
 enum sgsn_ggsn_lookup_state {
 	SGSN_GGSN_2DIGIT,
@@ -296,32 +285,5 @@ extern struct llist_head sgsn_mm_ctxts;
 
 uint32_t sgsn_alloc_ptmsi(void);
 
-/*
- * Authorization/ACL handling
- */
-struct imsi_acl_entry {
-	struct llist_head list;
-	char imsi[OSMO_IMSI_BUF_SIZE];
-};
-
-#define SGSN_ERROR_CAUSE_NONE (-1)
-
-struct sgsn_config;
-struct sgsn_instance;
-extern const struct value_string *sgsn_auth_state_names;
-
-void sgsn_auth_init(struct sgsn_instance *sgsn);
-struct imsi_acl_entry *sgsn_acl_lookup(const char *imsi, const struct sgsn_config *cfg);
-int sgsn_acl_add(const char *imsi, struct sgsn_config *cfg);
-int sgsn_acl_del(const char *imsi, struct sgsn_config *cfg);
-/* Request authorization */
-int sgsn_auth_request(struct sgsn_mm_ctx *mm);
-enum sgsn_auth_state sgsn_auth_state(struct sgsn_mm_ctx *mm);
-void sgsn_auth_update(struct sgsn_mm_ctx *mm);
-struct gsm_auth_tuple *sgsn_auth_get_tuple(struct sgsn_mm_ctx *mmctx,
-					   unsigned key_seq);
-
 /* Called on subscriber data updates */
 void sgsn_update_subscriber_data(struct sgsn_mm_ctx *mmctx);
-
-#endif /* _GPRS_SGSN_H */

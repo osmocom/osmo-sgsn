@@ -29,6 +29,7 @@
 #include <osmocom/sgsn/gprs_llc.h>
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/sgsn_rim.h>
+#include <osmocom/sgsn/mmctx.h>
 
 /* call-back function for the BSSGP protocol */
 int sgsn_bssgp_rx_prim(struct osmo_prim_hdr *oph)

@@ -27,6 +27,7 @@
 
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/sgsn.h>
+#include <osmocom/sgsn/mmctx.h>
 
 #define X(s) (1 << (s))
 

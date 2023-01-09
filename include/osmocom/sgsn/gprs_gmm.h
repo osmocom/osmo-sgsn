@@ -1,10 +1,14 @@
 #ifndef _GPRS_GMM_H
 #define _GPRS_GMM_H
 
-#include <osmocom/core/msgb.h>
-#include <osmocom/sgsn/gprs_sgsn.h>
-
 #include <stdbool.h>
+
+#include <osmocom/core/msgb.h>
+#include <osmocom/gsm/gsm48.h>
+#include <osmocom/crypt/auth.h>
+
+struct sgsn_mm_ctx;
+struct gprs_llc_llme;
 
 int gsm48_tx_gmm_auth_ciph_req(struct sgsn_mm_ctx *mm,
 				      const struct osmo_auth_vector *vec,

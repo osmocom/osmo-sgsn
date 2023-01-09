@@ -47,7 +47,6 @@ osmo_sgsn_SOURCES = \
 	gprs_gmm_fsm.c \
 	gprs_mm_state_gb_fsm.c \
 	gprs_ns.c \
-	gprs_sgsn.c \
 	gprs_sm.c \
 	gprs_sndcp.c \
 	gprs_sndcp_comp.c \
@@ -57,11 +56,13 @@ osmo_sgsn_SOURCES = \
 	gprs_sndcp_xid.c \
 	gtp_ggsn.c \
 	gtp_mme.c \
+	sgsn.c \
 	sgsn_main.c \
 	sgsn_vty.c \
 	sgsn_libgtp.c \
 	gprs_llc.c \
 	gprs_llc_vty.c \
+	mmctx.c \
 	pdpctx.c \
 	sgsn_ctrl.c \
 	sgsn_auth.c \
