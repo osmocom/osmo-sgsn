@@ -41,7 +41,7 @@
 #include <osmocom/vty/misc.h>
 
 #include <osmocom/sgsn/debug.h>
-#include <osmocom/sgsn/gtphub.h>
+#include <osmocom/gtphub/gtphub.h>
 #include <osmocom/sgsn/vty.h>
 
 #include "../../bscconfig.h"

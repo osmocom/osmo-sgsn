@@ -25,7 +25,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <osmocom/sgsn/gtphub.h>
+#include <osmocom/gtphub/gtphub.h>
 #include <osmocom/sgsn/debug.h>
 
 /* Convenience makro, note: only within this C file. */

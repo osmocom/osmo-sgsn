@@ -28,7 +28,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <osmocom/sgsn/gtphub.h>
+#include <osmocom/gtphub/gtphub.h>
 #include <osmocom/sgsn/debug.h>
 
 #include <osmocom/core/utils.h>

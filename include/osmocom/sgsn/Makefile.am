@@ -23,7 +23,6 @@ noinst_HEADERS = \
 	gprs_subscriber.h \
 	gprs_utils.h \
 	gtp.h \
-	gtphub.h \
 	gtp_ggsn.h \
 	gtp_mme.h \
 	pdpctx.h \

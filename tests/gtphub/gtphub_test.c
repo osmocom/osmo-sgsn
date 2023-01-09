@@ -30,7 +30,7 @@
 
 #include <osmocom/sgsn/debug.h>
 
-#include <osmocom/sgsn/gtphub.h>
+#include <osmocom/gtphub/gtphub.h>
 #include <gtp.h>
 #include <gtpie.h>
 

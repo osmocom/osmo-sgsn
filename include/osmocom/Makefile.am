@@ -1,3 +1,4 @@
 SUBDIRS = \
+	gtphub \
 	sgsn \
 	$(NULL)

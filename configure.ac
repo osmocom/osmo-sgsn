@@ -235,6 +235,7 @@ AM_CONFIG_HEADER(bscconfig.h)
 AC_OUTPUT(
     include/Makefile
     include/osmocom/Makefile
+    include/osmocom/gtphub/Makefile
     include/osmocom/sgsn/Makefile
     src/Makefile
     src/gprs/Makefile

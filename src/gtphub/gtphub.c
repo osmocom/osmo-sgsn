@@ -32,7 +32,7 @@
 #include <gtp.h>
 #include <gtpie.h>
 
-#include <osmocom/sgsn/gtphub.h>
+#include <osmocom/gtphub/gtphub.h>
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/gprs_utils.h>
 

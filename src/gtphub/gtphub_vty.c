@@ -31,7 +31,7 @@
 #include <osmocom/vty/misc.h>
 
 #include <osmocom/sgsn/vty.h>
-#include <osmocom/sgsn/gtphub.h>
+#include <osmocom/gtphub/gtphub.h>
 
 /* TODO split GRX ares from sgsn into a separate struct and allow use without
  * globals. */

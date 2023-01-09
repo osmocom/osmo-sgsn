@@ -74,7 +74,7 @@ Files:     include/osmocom/sgsn/a_reset.h
            include/osmocom/sgsn/gprs_sndcp_pcomp.h
            include/osmocom/sgsn/gprs_sndcp_xid.h
            include/osmocom/sgsn/gprs_utils.h
-           include/osmocom/sgsn/gtphub.h
+           include/osmocom/gtphub/gtphub.h
            include/osmocom/sgsn/signal.h
            src/gprs/gprs_llc_parse.c
            src/gprs/crc24.c
