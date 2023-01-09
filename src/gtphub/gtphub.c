@@ -475,7 +475,7 @@ static int get_ie_imsi_str(union gtpie_member *ie[], int i,
  * present but cannot be decoded. */
 static int get_ie_apn_str(union gtpie_member *ie[], const char **apn_str)
 {
-	static char apn_buf[GSM_APN_LENGTH];
+	static char apn_buf[APN_MAXLEN+1];
 	unsigned int len;
 	if (gtpie_gettlv(ie, GTPIE_APN, 0,
 			 &len, apn_buf, sizeof(apn_buf)) != 0)

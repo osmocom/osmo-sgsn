@@ -27,9 +27,7 @@
 #include <osmocom/core/select.h>
 #include <osmocom/core/timer.h>
 #include <osmocom/core/rate_ctr.h>
-
-#include <osmocom/sgsn/gprs_sgsn.h>
-
+#include <osmocom/gsm/apn.h>
 
 /* support */
 
@@ -428,7 +426,7 @@ struct gtphub_resolved_ggsn {
 
 	/* The APN OI, the Operator Identifier, is the combined address,
 	 * including parts of the IMSI and APN NI, and ending with ".gprs". */
-	char apn_oi_str[GSM_APN_LENGTH];
+	char apn_oi_str[APN_MAXLEN+1];
 
 	/* Which address and port we resolved that to. */
 	struct gtphub_peer_port *peer;

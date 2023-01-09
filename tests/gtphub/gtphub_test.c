@@ -27,6 +27,7 @@
 
 #include <osmocom/core/utils.h>
 #include <osmocom/core/application.h>
+#include <osmocom/gsm/protocol/gsm_23_003.h>
 
 #include <osmocom/sgsn/debug.h>
 
@@ -376,7 +377,7 @@ static void test_expiry(void)
 }
 
 char resolve_ggsn_got_imsi[GSM23003_IMSI_MAX_DIGITS+1];
-char resolve_ggsn_got_ni[GSM_APN_LENGTH];
+char resolve_ggsn_got_ni[APN_MAXLEN+1];
 
 struct sgsn_sockaddr resolved_ggsn_addr;
 static int resolve_to_ggsn(const char *addr, uint16_t port)

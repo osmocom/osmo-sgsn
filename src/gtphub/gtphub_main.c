@@ -34,6 +34,7 @@
 #include <osmocom/core/logging.h>
 #include <osmocom/core/utils.h>
 #include <osmocom/core/rate_ctr.h>
+#include <osmocom/core/msgb.h>
 
 #include <osmocom/vty/logging.h>
 #include <osmocom/vty/telnet_interface.h>

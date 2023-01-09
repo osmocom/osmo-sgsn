@@ -33,6 +33,7 @@
 
 #include <osmocom/core/utils.h>
 #include <osmocom/gsm/apn.h>
+#include <osmocom/gsm/protocol/gsm_23_003.h>
 
 /* TODO split GRX ares from sgsn into a separate struct and allow use without
  * globals. */
@@ -56,8 +57,8 @@ struct ggsn_lookup {
 	struct gtphub *hub;
 
 	char imsi_str[GSM23003_IMSI_MAX_DIGITS+1];
-	char apn_ni_str[GSM_APN_LENGTH];
-	char apn_oi_str[GSM_APN_LENGTH];
+	char apn_ni_str[APN_MAXLEN+1];
+	char apn_oi_str[APN_MAXLEN+1];
 	int have_3dig_mnc;
 };
 
