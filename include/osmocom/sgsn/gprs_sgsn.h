@@ -297,11 +297,6 @@ extern struct llist_head sgsn_mm_ctxts;
 uint32_t sgsn_alloc_ptmsi(void);
 
 /*
- * ctrl interface related work
- */
-int sgsn_ctrl_cmds_install(void);
-
-/*
  * Authorization/ACL handling
  */
 struct imsi_acl_entry {

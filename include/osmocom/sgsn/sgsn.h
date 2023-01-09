@@ -162,6 +162,11 @@ struct sgsn_instance {
 extern struct sgsn_instance *sgsn;
 extern void *tall_sgsn_ctx;
 
+/*
+ * ctrl interface related work (sgsn_ctrl.c)
+ */
+int sgsn_ctrl_cmds_install(void);
+
 /* sgsn_vty.c */
 
 int sgsn_vty_init(struct sgsn_config *cfg);
