@@ -306,11 +306,6 @@ struct imsi_acl_entry {
 
 #define SGSN_ERROR_CAUSE_NONE (-1)
 
-#define LOGGSUBSCRP(level, subscr, fmt, args...) \
-	LOGP(DGPRS, level, "SUBSCR(%s) " fmt, \
-	     (subscr) ? (subscr)->imsi : "---", \
-	     ## args)
-
 struct sgsn_config;
 struct sgsn_instance;
 extern const struct value_string *sgsn_auth_state_names;

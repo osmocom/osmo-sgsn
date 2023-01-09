@@ -99,3 +99,8 @@ void gprs_subscr_cancel(struct gprs_subscr *subscr);
 void gprs_subscr_update(struct gprs_subscr *subscr);
 void gprs_subscr_update_auth_info(struct gprs_subscr *subscr);
 int gprs_subscr_rx_gsup_message(struct msgb *msg);
+
+#define LOGGSUBSCRP(level, subscr, fmt, args...) \
+	LOGP(DGPRS, level, "SUBSCR(%s) " fmt, \
+	     (subscr) ? (subscr)->imsi : "---", \
+	     ## args)
