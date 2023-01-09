@@ -34,7 +34,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "bscconfig.h"
+#include "config.h"
 
 #include <osmocom/core/talloc.h>
 #include <osmocom/core/select.h>

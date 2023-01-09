@@ -70,7 +70,7 @@
 #include <gtp.h>
 #include <osmocom/sgsn/sgsn_rim.h>
 
-#include "../../bscconfig.h"
+#include "../../config.h"
 
 #if BUILD_IU
 #include <osmocom/sigtran/osmo_ss7.h>

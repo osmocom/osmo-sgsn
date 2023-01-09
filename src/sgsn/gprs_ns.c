@@ -29,7 +29,7 @@
 #include <osmocom/gprs/gprs_bssgp_bss.h>
 #include <osmocom/sgsn/gprs_llc.h>
 
-#include "bscconfig.h"
+#include "config.h"
 
 #include <osmocom/sgsn/gprs_sgsn.h>
 #include <osmocom/sgsn/debug.h>

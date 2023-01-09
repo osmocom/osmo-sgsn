@@ -58,7 +58,7 @@
 
 #include <time.h>
 
-#include "../../bscconfig.h"
+#include "../../config.h"
 
 #define GPRS_LLME_CHECK_TICK 30
 

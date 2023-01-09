@@ -30,7 +30,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "bscconfig.h"
+#include "config.h"
 
 #include <osmocom/core/msgb.h>
 #include <osmocom/gsm/tlv.h>

@@ -14,7 +14,7 @@
 #include <osmocom/gsupclient/gsup_client.h>
 #include <osmocom/sgsn/common.h>
 
-#include "../../bscconfig.h"
+#include "../../config.h"
 
 #if BUILD_IU
 #include <osmocom/ranap/iu_client.h>

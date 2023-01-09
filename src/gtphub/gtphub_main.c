@@ -44,7 +44,7 @@
 #include <osmocom/gtphub/gtphub.h>
 #include <osmocom/sgsn/vty.h>
 
-#include "../../bscconfig.h"
+#include "../../config.h"
 
 #if BUILD_IU
 #include <osmocom/sigtran/osmo_ss7.h>

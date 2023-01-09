@@ -21,7 +21,7 @@
  *
  */
 
-#include "bscconfig.h"
+#include "config.h"
 #include <gtp.h>
 
 #include <osmocom/core/rate_ctr.h>

@@ -58,7 +58,7 @@
 #include <pdp.h>
 #include <gtp.h>
 
-#include "../../bscconfig.h"
+#include "../../config.h"
 
 #ifdef BUILD_IU
 #include <osmocom/ranap/iu_client.h>

@@ -26,7 +26,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-#include "bscconfig.h"
+#include "config.h"
 
 #include <osmocom/core/rate_ctr.h>
 #include <osmocom/core/tdef.h>
