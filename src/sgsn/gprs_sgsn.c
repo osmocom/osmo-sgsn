@@ -61,7 +61,6 @@
 
 #define GPRS_LLME_CHECK_TICK 30
 
-extern struct sgsn_instance *sgsn;
 extern struct osmo_tdef sgsn_T_defs[];
 
 LLIST_HEAD(sgsn_mm_ctxts);

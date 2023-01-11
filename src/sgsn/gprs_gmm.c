@@ -67,8 +67,6 @@
 
 #define PTMSI_ALLOC
 
-extern struct sgsn_instance *sgsn;
-
 static const struct tlv_definition gsm48_gmm_att_tlvdef = {
 	.def = {
 		[GSM48_IE_GMM_CIPH_CKSN]	= { TLV_TYPE_FIXED, 1 },

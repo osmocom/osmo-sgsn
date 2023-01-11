@@ -39,9 +39,6 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-/* TODO...avoid going through a global */
-extern struct sgsn_instance *sgsn;
-
 /**
  * The CDR module will generate an entry like:
  *
