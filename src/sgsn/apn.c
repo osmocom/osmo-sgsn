@@ -27,8 +27,6 @@
 #include <osmocom/sgsn/apn.h>
 #include <osmocom/sgsn/sgsn.h>
 
-extern void *tall_sgsn_ctx;
-
 static struct apn_ctx *sgsn_apn_ctx_alloc(const char *ap_name, const char *imsi_prefix)
 {
 	struct apn_ctx *actx;

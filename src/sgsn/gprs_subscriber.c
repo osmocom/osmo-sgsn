@@ -48,8 +48,6 @@
 	     (gsup)->imsi, \
 	     ## args)
 
-extern void *tall_sgsn_ctx;
-
 LLIST_HEAD(_gprs_subscribers);
 struct llist_head * const gprs_subscribers = &_gprs_subscribers;
 

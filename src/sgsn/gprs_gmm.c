@@ -68,7 +68,6 @@
 #define PTMSI_ALLOC
 
 extern struct sgsn_instance *sgsn;
-extern void *tall_sgsn_ctx;
 
 static const struct tlv_definition gsm48_gmm_att_tlvdef = {
 	.def = {

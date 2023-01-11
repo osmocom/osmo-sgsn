@@ -26,8 +26,6 @@
 #include <osmocom/sgsn/gtp_mme.h>
 #include <osmocom/sgsn/sgsn.h>
 
-extern void *tall_sgsn_ctx;
-
 static bool _eutran_tai_equal(const struct osmo_eutran_tai *t1, const struct osmo_eutran_tai *t2)
 {
 	return  t1->mcc == t2->mcc &&

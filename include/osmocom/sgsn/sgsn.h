@@ -159,6 +159,7 @@ struct sgsn_instance {
 };
 
 extern struct sgsn_instance *sgsn;
+extern void *tall_sgsn_ctx;
 
 /* sgsn_vty.c */
 
