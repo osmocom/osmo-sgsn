@@ -40,10 +40,10 @@
 #include <osmocom/sgsn/gtp.h>
 
 static const struct rate_ctr_desc pdpctx_ctr_description[] = {
-	{ "udata:packets:in",	"User Data  Messages ( In)" },
-	{ "udata:packets:out",	"User Data  Messages (Out)" },
-	{ "udata:bytes:in",	"User Data  Bytes    ( In)" },
-	{ "udata:bytes:out",	"User Data  Bytes    (Out)" },
+	{ "udata:packets:in",	"User Data Messages ( In)" },
+	{ "udata:packets:out",	"User Data Messages (Out)" },
+	{ "udata:bytes:in",	"User Data Bytes    ( In)" },
+	{ "udata:bytes:out",	"User Data Bytes    (Out)" },
 };
 
 static const struct rate_ctr_group_desc pdpctx_ctrg_desc = {
