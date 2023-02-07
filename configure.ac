@@ -38,23 +38,23 @@ dnl use a defined standard across all builds and don't depend on compiler defaul
 CFLAGS="$CFLAGS -std=gnu11"
 
 dnl checks for libraries
-PKG_CHECK_MODULES(LIBOSMOCORE, libosmocore >= 1.7.0)
-PKG_CHECK_MODULES(LIBOSMOVTY, libosmovty >= 1.7.0)
-PKG_CHECK_MODULES(LIBOSMOCTRL, libosmoctrl >= 1.7.0)
-PKG_CHECK_MODULES(LIBOSMOGSM, libosmogsm >= 1.7.0)
-PKG_CHECK_MODULES(LIBOSMOGB, libosmogb >= 1.7.0)
-PKG_CHECK_MODULES(LIBOSMOABIS, libosmoabis >= 1.3.0)
-PKG_CHECK_MODULES(LIBOSMONETIF, libosmo-netif >= 1.2.0)
-PKG_CHECK_MODULES(LIBOSMOGSUPCLIENT, libosmo-gsup-client >= 1.5.0)
-PKG_CHECK_MODULES(LIBGTP, libgtp >= 1.9.0)
+PKG_CHECK_MODULES(LIBOSMOCORE, libosmocore >= 1.8.0)
+PKG_CHECK_MODULES(LIBOSMOVTY, libosmovty >= 1.8.0)
+PKG_CHECK_MODULES(LIBOSMOCTRL, libosmoctrl >= 1.8.0)
+PKG_CHECK_MODULES(LIBOSMOGSM, libosmogsm >= 1.8.0)
+PKG_CHECK_MODULES(LIBOSMOGB, libosmogb >= 1.8.0)
+PKG_CHECK_MODULES(LIBOSMOABIS, libosmoabis >= 1.4.0)
+PKG_CHECK_MODULES(LIBOSMONETIF, libosmo-netif >= 1.3.0)
+PKG_CHECK_MODULES(LIBOSMOGSUPCLIENT, libosmo-gsup-client >= 1.6.0)
+PKG_CHECK_MODULES(LIBGTP, libgtp >= 1.10.0)
 
 # Enable/disable 3G aka IuPS + IuCS support?
 AC_ARG_ENABLE([iu], [AS_HELP_STRING([--enable-iu], [Build 3G support, aka IuPS and IuCS interfaces])],
     [osmo_ac_iu="$enableval"],[osmo_ac_iu="no"])
 if test "x$osmo_ac_iu" = "xyes" ; then
-    PKG_CHECK_MODULES(LIBOSMOSIGTRAN, libosmo-sigtran >= 1.6.0)
+    PKG_CHECK_MODULES(LIBOSMOSIGTRAN, libosmo-sigtran >= 1.7.0)
     PKG_CHECK_MODULES(LIBASN1C, libasn1c >= 0.9.30)
-    PKG_CHECK_MODULES(LIBOSMORANAP, libosmo-ranap >= 1.3.0)
+    PKG_CHECK_MODULES(LIBOSMORANAP, libosmo-ranap >= 1.4.0)
     AC_DEFINE(BUILD_IU, 1, [Define if we want to build IuPS and IuCS interfaces support])
 fi
 AM_CONDITIONAL(BUILD_IU, test "x$osmo_ac_iu" = "xyes")

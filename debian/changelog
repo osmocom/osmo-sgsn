@@ -1,3 +1,71 @@
+osmo-sgsn (1.10.0) unstable; urgency=medium
+
+  [ Vadim Yanitskiy ]
+  * configure.ac: do not require unused dlsym/dlopen
+  * gprs_llc: fix misleading spacing in gprs_llc_rcvmsg()
+  * gprs_llc.h: use '#pragma once'
+  * llc: gprs_llc_fcs(): make the input data pointer const
+
+  [ Max ]
+  * Set working directory in systemd service file
+  * SNDCP: log more details on failure
+  * GTP: migrate from deprecated function
+  * Constify LLC/SNDCP parameters
+  * GMM: permit E_GMM_COMMON_PROC_SUCCESS in normal state
+  * ctrl: take both address and port from vty config
+
+  [ Pau Espin Pedrol ]
+  * vty: Make new libgtp tdefs configurable through VTY
+  * sndcp: Put decompress handling code into helper function
+  * Move gprs_gb_parse.[c,h] to tests/sgsn/
+  * Create new specific file for BSSGP code
+  * Move some functions gprs_gb.[c,h] -> gprs_gmm.[c,h]
+  * Rename gprs_gb.[c,h] -> gprs_ns.[c,h]
+  * Move gprs_tmr_to_secs() to tests/gprs/gprs_test.c
+  * cosmetic: gprs_llc_vty.c: Fix trailing whitespace
+  * vty: Fix wrong value_string used to print llme state
+  * Standarize lle and llme state enum & value_string
+  * Remove unused function gprs_parse_mi_tmsi()
+  * Replace gprs_str_to_apn() with libosmocore API osmo_apn_from_str()
+  * Move struct sgsn_ggsn_ctx to its own file gtp_ggsn.{c,h}
+  * gprs_subscriber: Move API declarations to correct header
+  * Move gprs_sndcp_vty_init() declaration to gprs_sndcp.h
+  * Introduce new header file sgsn/gtp.h
+  * Fix -Werror=old-style-definition
+  * Move related structs to gprs_subscriber.h
+  * Remove unneeded extern declaration from libosmocotrl
+  * Keep sgsn subsystems under struct sgsn_instance lifecycle
+  * Move global ggsn_list into struct sgsn_instance
+  * Move struct apn_ctx and APN related definitions to its own file
+  * Move struct sgsn_subscriber_pdp_data to gprs_subscriber.h
+  * sgsn.h: Drop declaration of non existing function
+  * Properly split llc->sndcp->gtp unitdata pathi through extra func call
+  * Move func defintions of funcs implemented in gprs_sndcp.c to gprs_sndcp.h
+  * sndcp: Standarize unitdata function naming
+  * Move gtp related functions to gtp.h
+  * Move global apn_list inside struct sgsn_instance
+  * gtp_{ggsn,mme}: Allocate contexts under struct sgsn_instance
+  * Move extern declarations of tall_sgsn_ctx to sgsn.h
+  * Drop extern declarations of global sgsn_instance in source files
+  * Move sgsn_pdp_ctx to its own file pdpctx.{c,h}
+  * Move global pdp_list inside struct sgsn_instance
+  * Move gtphub header to include/osmocom/gtphub/
+  * Move sgsn_ctrl_cmds_install() declaration to sgsn.h
+  * Move LOGGSUBSCRP to gprs_subscriber.h
+  * Rename bscconfig.h -> config.h
+  * gtphub.h: Remove dependency on sgsn/gprs_sgsn.h
+  * Split gprs_sgsn.{c,h} -> {auth,mmctx,sgsn}.{c,h}
+  * Move global mmctx list into struct sgsn_instance
+  * vty: Introduce encryption cipher-plugin-path command
+  * Fix extra whitespace in pdpctx_ctr_description
+
+  [ Oliver Smith ]
+  * contrib/jenkins.sh: use enable-werror with IU too
+  * sgsn_libgtp: cb_data_ind: remove mm_idle assert
+  * osmo-gtphub.cfg: fix conflict with osmo-ggsn.cfg
+
+ -- Pau Espin Pedrol <pespin@sysmocom.de>  Tue, 07 Feb 2023 17:34:26 +0100
+
 osmo-sgsn (1.9.0) unstable; urgency=medium
 
   [ Oliver Smith ]
