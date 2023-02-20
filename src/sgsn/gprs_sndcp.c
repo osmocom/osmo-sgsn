@@ -176,7 +176,7 @@ struct sndcp_common_hdr {
 	uint8_t first:1;
 	uint8_t spare:1;
 #elif OSMO_IS_BIG_ENDIAN
-/* auto-generated from the little endian part above (libosmocore/contrib/struct_endianess.py) */
+/* auto-generated from the little endian part above (libosmocore/contrib/struct_endianness.py) */
 	uint8_t spare:1, first:1, type:1, more:1, nsapi:4;
 #endif
 } __attribute__((packed));
@@ -188,7 +188,7 @@ struct sndcp_comp_hdr {
 	uint8_t pcomp:4;
 	uint8_t dcomp:4;
 #elif OSMO_IS_BIG_ENDIAN
-/* auto-generated from the little endian part above (libosmocore/contrib/struct_endianess.py) */
+/* auto-generated from the little endian part above (libosmocore/contrib/struct_endianness.py) */
 	uint8_t dcomp:4, pcomp:4;
 #endif
 } __attribute__((packed));
@@ -201,7 +201,7 @@ struct sndcp_udata_hdr {
 	/* octet 4 */
 	uint8_t npdu_low;
 #elif OSMO_IS_BIG_ENDIAN
-/* auto-generated from the little endian part above (libosmocore/contrib/struct_endianess.py) */
+/* auto-generated from the little endian part above (libosmocore/contrib/struct_endianness.py) */
 	uint8_t seg_nr:4, npdu_high:4;
 	uint8_t npdu_low;
 #endif
