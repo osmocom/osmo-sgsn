@@ -442,8 +442,7 @@ int main(int argc, char **argv)
 	}
 
 	/* start telnet after reading config for vty_get_bind_addr() */
-	rc = telnet_init_dynif(tall_sgsn_ctx, NULL,
-			       vty_get_bind_addr(), OSMO_VTY_PORT_SGSN);
+	rc = telnet_init_default(tall_sgsn_ctx, NULL, OSMO_VTY_PORT_SGSN);
 	if (rc < 0)
 		exit(1);
 
