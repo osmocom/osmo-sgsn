@@ -12,6 +12,8 @@ AM_CFLAGS = \
 	$(LIBGTP_CFLAGS) \
 	$(NULL)
 
+AM_LDFLAGS = -no-install
+
 EXTRA_DIST = \
 	gtphub_test.ok \
 	$(NULL)
@@ -28,6 +30,7 @@ gtphub_test_LDFLAGS = \
 	-Wl,--wrap=gtphub_resolve_ggsn_addr \
 	-Wl,--wrap=gtphub_ares_init \
 	-Wl,--wrap=gtphub_write \
+	$(AM_LDFLAGS) \
 	$(NULL)
 
 gtphub_test_LDADD = \

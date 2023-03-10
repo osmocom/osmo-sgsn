@@ -11,6 +11,8 @@ AM_CFLAGS = \
 	$(LIBCARES_CFLAGS) \
 	$(NULL)
 
+AM_LDFLAGS = -no-install
+
 EXTRA_DIST = \
 	xid_test.ok \
 	$(NULL)

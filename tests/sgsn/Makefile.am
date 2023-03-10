@@ -22,6 +22,8 @@ AM_CFLAGS += \
 	$(NULL)
 endif
 
+AM_LDFLAGS = -no-install
+
 EXTRA_DIST = \
 	sgsn_test.ok \
 	$(NULL)
@@ -45,6 +47,7 @@ sgsn_test_LDFLAGS = \
 	-Wl,--wrap=gprs_subscr_request_update_location \
 	-Wl,--wrap=gprs_subscr_request_auth_info \
 	-Wl,--wrap=osmo_gsup_client_send \
+	$(AM_LDFLAGS) \
 	$(NULL)
 
 sgsn_test_LDADD = \
