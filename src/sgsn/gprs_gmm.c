@@ -70,7 +70,7 @@
 
 static const struct tlv_definition gsm48_gmm_att_tlvdef = {
 	.def = {
-		[GSM48_IE_GMM_CIPH_CKSN]	= { TLV_TYPE_FIXED, 1 },
+		[GSM48_IE_GMM_CIPH_CKSN]	= { TLV_TYPE_SINGLE_TV, 1 },
 		[GSM48_IE_GMM_TIMER_READY]	= { TLV_TYPE_TV, 1 },
 		[GSM48_IE_GMM_ALLOC_PTMSI]	= { TLV_TYPE_TLV, 0 },
 		[GSM48_IE_GMM_PTMSI_SIG]	= { TLV_TYPE_FIXED, 3 },
