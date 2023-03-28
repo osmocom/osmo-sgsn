@@ -15,6 +15,14 @@
       Conversion to asciidoc, removal of sysmoBTS specific parts.
     </revremark>
   </revision>
+  <revision>
+    <revnumber>3</revnumber>
+    <date>April 2024</date>
+    <authorinitials>AC</authorinitials>
+    <revremark>
+      Replace NS chapter with new NS2 chapter to match the code.
+    </revremark>
+  </revision>
 </revhistory>
 
 <authorgroup>
@@ -27,6 +35,17 @@
       <shortaffil>sysmocom</shortaffil>
       <orgname>sysmocom - s.f.m.c. GmbH</orgname>
       <jobtitle>Managing Director</jobtitle>
+    </affiliation>
+  </author>
+  <author>
+    <firstname>Alexander</firstname>
+    <surname>Couzens</surname>
+    <email>acouzens@sysmocom.de</email>
+    <authorinitials>AC</authorinitials>
+    <affiliation>
+      <shortaffil>sysmocom</shortaffil>
+      <orgname>sysmocom - s.f.m.c. GmbH</orgname>
+      <jobtitle>Developer</jobtitle>
     </affiliation>
   </author>
 </authorgroup>
