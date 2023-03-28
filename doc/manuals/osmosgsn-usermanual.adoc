@@ -21,7 +21,7 @@ include::{srcdir}/chapters/configuration.adoc[]
 
 include::./common/chapters/cs7-config.adoc[]
 
-include::./common/chapters/gb.adoc[]
+include::./common/chapters/gb-ns2.adoc[]
 
 include::./common/chapters/control_if.adoc[]
 
