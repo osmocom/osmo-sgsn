@@ -281,7 +281,7 @@ static void handle_options(struct cmdline_cfg *ccfg, int argc, char **argv)
 			ccfg->config_file = optarg;
 			break;
 		case 'T':
-			log_set_print_timestamp(osmo_stderr_target, 1);
+			log_set_print_timestamp2(osmo_stderr_target, LOG_TIMESTAMP_CTIME);
 			break;
 		case 'e':
 			log_set_log_level(osmo_stderr_target, atoi(optarg));
