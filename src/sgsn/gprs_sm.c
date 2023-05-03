@@ -450,7 +450,7 @@ static int do_act_pdp_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg, bool *del
 		DEBUGPC(DMM, "IPv4 ");
 		if (req_pdpa_len >= 6) {
 			struct in_addr ia;
-			ia.s_addr = ntohl(*((uint32_t *) (req_pdpa+2)));
+			ia.s_addr = osmo_load32be(req_pdpa+2);
 			DEBUGPC(DMM, "%s ", inet_ntop(AF_INET, &ia, buf, sizeof(buf)));
 		}
 		break;
