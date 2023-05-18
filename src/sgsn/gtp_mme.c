@@ -1,6 +1,6 @@
 /* TS 29.060 § 7.5.14 RAN Information Management Messages */
 /*
- * (C) 2021 by sysmocom - s.m.f.c. GmbH <info@sysmocom.de>
+ * (C) 2021 by sysmocom - s.f.m.c. GmbH <info@sysmocom.de>
  * All Rights Reserved
  *
  * SPDX-License-Identifier: AGPL-3.0+

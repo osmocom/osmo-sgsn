@@ -1,6 +1,6 @@
 /* TS 23.060 § 6.1.2 Mobility Management States (Iu mode) */
 /*
- * (C) 2019 by sysmocom - s.m.f.c. GmbH <info@sysmocom.de>
+ * (C) 2019 by sysmocom - s.f.m.c. GmbH <info@sysmocom.de>
  * All Rights Reserved
  *
  * SPDX-License-Identifier: AGPL-3.0+
