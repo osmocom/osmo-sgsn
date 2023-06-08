@@ -422,6 +422,7 @@ cs7 instance 0
  point-code 0.23.4
  asp asp-clnt-OsmoSGSN 2905 0 m3ua
   remote-ip 127.0.0.1
+  role asp
   sctp-role client
  as as-clnt-OsmoSGSN m3ua
   asp asp-clnt-OsmoSGSN
