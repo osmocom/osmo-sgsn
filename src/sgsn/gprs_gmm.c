@@ -1766,6 +1766,10 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		/* Update the MM context with the new (i.e. foreign) TLLI */
 		mmctx->gb.tlli = msgb_tlli(msg);
 	}
+	/* Update the MM context with the new DRX params */
+	if (TLVP_PRESENT(&tp, GSM48_IE_GMM_DRX_PARAM))
+		memcpy(&mmctx->drx_parms, TLVP_VAL(&tp, GSM48_IE_GMM_DRX_PARAM), sizeof(mmctx->drx_parms));
+
 	/* FIXME: Update the MM context with the MS radio acc capabilities */
 	/* FIXME: Update the MM context with the MS network capabilities */
 
