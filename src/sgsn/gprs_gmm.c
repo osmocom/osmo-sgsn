@@ -79,6 +79,7 @@ static const struct tlv_definition gsm48_gmm_att_tlvdef = {
 		[GSM48_IE_GMM_AUTH_RES_EXT]	= { TLV_TYPE_TLV, 0 },
 		[GSM48_IE_GMM_AUTH_FAIL_PAR]	= { TLV_TYPE_TLV, 0 },
 		[GSM48_IE_GMM_IMEISV]		= { TLV_TYPE_TLV, 0 },
+		[GSM48_IE_GMM_RX_NPDU_NUM_LIST] = { TLV_TYPE_TLV, 0 },
 		[GSM48_IE_GMM_DRX_PARAM]	= { TLV_TYPE_FIXED, 2 },
 		[GSM48_IE_GMM_MS_NET_CAPA]	= { TLV_TYPE_TLV, 0 },
 		[GSM48_IE_GMM_PDP_CTX_STATUS]	= { TLV_TYPE_TLV, 0 },
