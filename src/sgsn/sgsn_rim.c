@@ -89,7 +89,7 @@ err:
 	return -1;
 }
 
-/* Receive a RIM PDU from GTPvC1 (EUTRAN) */
+/* Receive a RIM PDU from GTPv1C (EUTRAN) */
 int sgsn_rim_rx_from_gtp(struct bssgp_ran_information_pdu *pdu, struct sgsn_mme_ctx *mme)
 {
 	struct sgsn_mme_ctx *mme_tmp;
