@@ -695,9 +695,31 @@ static int cb_gtp_ran_info_relay_ind(struct sockaddr_in *peer, union gtpie_membe
 
 	LOGMME(mme, DGTP, LOGL_INFO, "Rx GTP RAN Information Relay\n");
 
+	int rc;
 	unsigned int len = 0;
-	struct msgb *msg = msgb_alloc(4096, "gtpcv1_ran_info");
-	struct bssgp_ran_information_pdu pdu;
+	struct msgb *msg = bssgp_msgb_alloc();
+
+	uint8_t rim_ra_encoded[1024];
+	unsigned int rim_ra_encoded_len = 0;
+	struct bssgp_rim_routing_info rim_ra;
+
+	/* Read RIM Routing Address */
+	if (gtpie_gettlv(ie, GTPIE_RIM_RA_DISCR, 0, &rim_ra_encoded_len, rim_ra_encoded,
+			 sizeof(rim_ra_encoded)) || rim_ra_encoded_len <= 0) {
+		LOGMME(mme, DGTP, LOGL_ERROR, "Rx GTP RAN Information Relay: No RIM Routing Address Discriminator IE found!\n");
+		goto ret_error;
+	}
+	if (gtpie_gettlv(ie, GTPIE_RIM_ROUT_ADDR, 0, &rim_ra_encoded_len, rim_ra_encoded + 1,
+			 sizeof(rim_ra_encoded) - 1) || rim_ra_encoded_len <= 0) {
+		LOGMME(mme, DGTP, LOGL_ERROR, "Rx GTP RAN Information Relay: No RIM Routing Address IE found!\n");
+		goto ret_error;
+	}
+	rim_ra_encoded_len += 1;
+	rc = bssgp_parse_rim_ri(&rim_ra, rim_ra_encoded, rim_ra_encoded_len);
+	if (rc < 0) {
+		LOGMME(mme, DGTP, LOGL_ERROR, "Rx GTP RAN Information Relay: Failed parsing RIM Routing Address/RIM Routing Address Discriminator IE!\n");
+		goto ret_error;
+	}
 
 	if (gtpie_gettlv(ie, GTPIE_RAN_T_CONTAIN, 0, &len, msgb_data(msg), 4096) || len <= 0) {
 		LOGMME(mme, DGTP, LOGL_ERROR, "Rx GTP RAN Information Relay: No Transparent Container IE found!\n");
@@ -706,13 +728,8 @@ static int cb_gtp_ran_info_relay_ind(struct sockaddr_in *peer, union gtpie_membe
 	msgb_put(msg, len);
 	msgb_bssgph(msg) = msg->data;
 	msgb_nsei(msg) = 0;
-	if (bssgp_parse_rim_pdu(&pdu, msg) < 0) {
-		LOGMME(mme, DGTP, LOGL_ERROR, "Rx GTP RAN Information Relay: Failed parsing Transparent Container IE!\n");
-		goto ret_error;
-	}
 
-	msgb_free(msg);
-	return sgsn_rim_rx_from_gtp(&pdu, mme);
+	return sgsn_rim_rx_from_gtp(msg, &rim_ra, mme);
 
 ret_error:
 	msgb_free(msg);
