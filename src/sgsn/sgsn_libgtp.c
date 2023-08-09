@@ -712,7 +712,7 @@ static int cb_gtp_ran_info_relay_ind(struct sockaddr_in *peer, union gtpie_membe
 	}
 
 	msgb_free(msg);
-	return sgsn_rim_rx_from_gtp(&pdu, mme);
+	return sgsn_rim_rx_from_gtp(&pdu);
 
 ret_error:
 	msgb_free(msg);

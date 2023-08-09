@@ -91,35 +91,24 @@ err:
 }
 
 /* Receive a RIM PDU from GTPv1C (EUTRAN) */
-int sgsn_rim_rx_from_gtp(struct bssgp_ran_information_pdu *pdu, struct sgsn_mme_ctx *mme)
+int sgsn_rim_rx_from_gtp(struct bssgp_ran_information_pdu *pdu)
 {
-	struct sgsn_mme_ctx *mme_tmp;
 	if (pdu->routing_info_src.discr != BSSGP_RIM_ROUTING_INFO_EUTRAN) {
-		LOGMME(mme, DRIM, LOGL_ERROR, "Rx GTP RAN Information Relay: Expected src %s, got %s\n",
-		       bssgp_rim_routing_info_discr_str(BSSGP_RIM_ROUTING_INFO_EUTRAN),
-		       bssgp_rim_routing_info_discr_str(pdu->routing_info_src.discr));
+		LOGP(DRIM, LOGL_ERROR, "Rx GTP RAN Information Relay: Expected src %s, got %s\n",
+		     bssgp_rim_routing_info_discr_str(BSSGP_RIM_ROUTING_INFO_EUTRAN),
+		     bssgp_rim_routing_info_discr_str(pdu->routing_info_src.discr));
 		return -EINVAL;
 	}
 
 	if (pdu->routing_info_dest.discr != BSSGP_RIM_ROUTING_INFO_GERAN) {
-		LOGMME(mme, DRIM, LOGL_ERROR, "Rx GTP RAN Information Relay: Expected dst %s, got %s\n",
-		       bssgp_rim_routing_info_discr_str(BSSGP_RIM_ROUTING_INFO_GERAN),
-		       bssgp_rim_routing_info_discr_str(pdu->routing_info_dest.discr));
+		LOGP(DRIM, LOGL_ERROR, "Rx GTP RAN Information Relay: Expected dst %s, got %s\n",
+		     bssgp_rim_routing_info_discr_str(BSSGP_RIM_ROUTING_INFO_GERAN),
+		     bssgp_rim_routing_info_discr_str(pdu->routing_info_dest.discr));
 		return -EINVAL;
 	}
 
-	mme_tmp = sgsn_mme_ctx_by_route(sgsn, &pdu->routing_info_src.eutran.tai);
-	if (!mme_tmp)/* See if we have a default route configured */
-		mme_tmp = sgsn_mme_ctx_by_default_route(sgsn);
-	if (mme != mme_tmp) {
-		LOGP(DRIM, LOGL_ERROR, "Rx GTP RAN Information Relay: "
-		     "Source MME doesn't have RIM routing configured for TAI: %s\n",
-		     bssgp_rim_ri_name(&pdu->routing_info_src));
-		return -EINVAL;
-	}
-
-	LOGMME(mme, DRIM, LOGL_INFO, "Rx GTP RAN Information Relay for dest cell %s\n",
-	       bssgp_rim_ri_name(&pdu->routing_info_dest));
+	LOGP(DRIM, LOGL_INFO, "Rx GTP RAN Information Relay for dest cell %s\n",
+	     bssgp_rim_ri_name(&pdu->routing_info_dest));
 
 	return sgsn_bssgp_fwd_rim_to_geran(pdu);
 }
