@@ -93,13 +93,6 @@ err:
 /* Receive a RIM PDU from GTPv1C (EUTRAN) */
 int sgsn_rim_rx_from_gtp(struct bssgp_ran_information_pdu *pdu)
 {
-	if (pdu->routing_info_src.discr != BSSGP_RIM_ROUTING_INFO_EUTRAN) {
-		LOGP(DRIM, LOGL_ERROR, "Rx GTP RAN Information Relay: Expected src %s, got %s\n",
-		     bssgp_rim_routing_info_discr_str(BSSGP_RIM_ROUTING_INFO_EUTRAN),
-		     bssgp_rim_routing_info_discr_str(pdu->routing_info_src.discr));
-		return -EINVAL;
-	}
-
 	if (pdu->routing_info_dest.discr != BSSGP_RIM_ROUTING_INFO_GERAN) {
 		LOGP(DRIM, LOGL_ERROR, "Rx GTP RAN Information Relay: Expected dst %s, got %s\n",
 		     bssgp_rim_routing_info_discr_str(BSSGP_RIM_ROUTING_INFO_GERAN),
