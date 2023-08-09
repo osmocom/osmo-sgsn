@@ -21,6 +21,7 @@ static int sgsn_bssgp_fwd_rim_to_geran(const struct bssgp_ran_information_pdu *p
 	struct bssgp_bvc_ctx *bvc_ctx;
 	OSMO_ASSERT(pdu->routing_info_dest.discr == BSSGP_RIM_ROUTING_INFO_GERAN);
 
+	/* Resolve RIM ROUTING ADDRESS to a BVC context */
 	bvc_ctx = btsctx_by_raid_cid(&pdu->routing_info_dest.geran.raid, pdu->routing_info_dest.geran.cid);
 	if (!bvc_ctx) {
 		LOGP(DRIM, LOGL_ERROR, "Unable to find NSEI for destination cell %s\n",
@@ -28,7 +29,7 @@ static int sgsn_bssgp_fwd_rim_to_geran(const struct bssgp_ran_information_pdu *p
 		return -EINVAL;
 	}
 
-	/* Forward PDU as it is to the correct interface */
+	/* Forward PDU to the NSEI of the resolved BVC context */
 	return bssgp_tx_rim(pdu, bvc_ctx->nsei);
 }
 
