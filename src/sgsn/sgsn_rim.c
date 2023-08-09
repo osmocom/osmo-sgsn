@@ -33,6 +33,23 @@ static int sgsn_bssgp_fwd_rim_to_geran(const struct bssgp_ran_information_pdu *p
 	return bssgp_tx_rim(pdu, bvc_ctx->nsei);
 }
 
+static int sgsn_bssgp_fwd_rim_to_geran_encoded(struct msgb *msg, struct bssgp_rim_routing_info *rim_routing_address)
+{
+	struct bssgp_bvc_ctx *bvc_ctx;
+	OSMO_ASSERT(rim_routing_address->discr == BSSGP_RIM_ROUTING_INFO_GERAN);
+
+	/* Resolve RIM ROUTING ADDRESS to a BVC context */
+	bvc_ctx = btsctx_by_raid_cid(&rim_routing_address->geran.raid, rim_routing_address->geran.cid);
+	if (!bvc_ctx) {
+		LOGP(DRIM, LOGL_ERROR, "Unable to find NSEI for destination cell %s\n",
+		       bssgp_rim_ri_name(rim_routing_address));
+		return -EINVAL;
+	}
+
+	/* Forward PDU to the NSEI of the resolved BVC context */
+	return bssgp_tx_rim_encoded(msg, bvc_ctx->nsei);
+}
+
 static int sgsn_bssgp_fwd_rim_to_eutran(const struct bssgp_ran_information_pdu *pdu)
 {
 	struct sgsn_mme_ctx *mme;
@@ -91,17 +108,20 @@ err:
 }
 
 /* Receive a RIM PDU from GTPv1C (EUTRAN) */
-int sgsn_rim_rx_from_gtp(struct bssgp_ran_information_pdu *pdu)
+int sgsn_rim_rx_from_gtp(struct msgb *msg, struct bssgp_rim_routing_info *rim_routing_address)
 {
-	if (pdu->routing_info_dest.discr != BSSGP_RIM_ROUTING_INFO_GERAN) {
+	/* TODO: In this code path, we currently only support RIM message forwarding to GERAN (BSSGP). However, it
+	 * technically also be possible to route a message back to GTP (BSSGP_RIM_ROUTING_INFO_EUTRAN) or to
+	 * IuPS (BSSGP_RIM_ROUTING_INFO_UTRAN) */
+	if (rim_routing_address->discr != BSSGP_RIM_ROUTING_INFO_GERAN) {
 		LOGP(DRIM, LOGL_ERROR, "Rx GTP RAN Information Relay: Expected dst %s, got %s\n",
 		     bssgp_rim_routing_info_discr_str(BSSGP_RIM_ROUTING_INFO_GERAN),
-		     bssgp_rim_routing_info_discr_str(pdu->routing_info_dest.discr));
+		     bssgp_rim_routing_info_discr_str(rim_routing_address->discr));
 		return -EINVAL;
 	}
 
 	LOGP(DRIM, LOGL_INFO, "Rx GTP RAN Information Relay for dest cell %s\n",
-	     bssgp_rim_ri_name(&pdu->routing_info_dest));
+	     bssgp_rim_ri_name(rim_routing_address));
 
-	return sgsn_bssgp_fwd_rim_to_geran(pdu);
+	return sgsn_bssgp_fwd_rim_to_geran_encoded(msg, rim_routing_address);
 }
