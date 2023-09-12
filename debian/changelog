@@ -1,3 +1,33 @@
+osmo-sgsn (1.11.0) unstable; urgency=medium
+
+  [ Oliver Smith ]
+  * Run struct_endianness.py
+  * debian: set compat level to 10
+  * systemd: depend on networking-online.target
+
+  [ arehbein ]
+  * Transition to use of 'telnet_init_default'
+
+  [ Vadim Yanitskiy ]
+  * tests: use -no-install libtool flag to avoid ./lt-* scripts
+  * tests: $(BUILT_SOURCES) is not defined, depend on osmo-sgsn
+  * copyright: fix typo: sysmocom s/s.m.f.c./s.f.m.c./ GmbH
+
+  [ Pau Espin Pedrol ]
+  * gmm: Ciphering Key Sequence Number IE has half octet tag
+  * gprs_sm.c: Fix load of misaligned ptr address
+  * Write explicit role & sctp-role fields in ASP configurations
+  * gmm: Update DRX params during rx RAU REQ
+  * gmm: Add missing GSM48_IE_GMM_RX_NPDU_NUM_LIST IE in gsm48_gmm_att_tlvdef
+
+  [ Philipp Maier ]
+  * sgsn_rim: fix typo
+  * sgsn_rim: cosmetic: improve comment
+  * sgsn_rim: get rid of MME check in sgsn_rim_rx_from_gtp:
+  * sgsn_rim: do not check the origin of a RIM message
+
+ -- Pau Espin Pedrol <pespin@sysmocom.de>  Tue, 12 Sep 2023 16:57:02 +0200
+
 osmo-sgsn (1.10.0) unstable; urgency=medium
 
   [ Vadim Yanitskiy ]
