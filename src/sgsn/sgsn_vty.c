@@ -292,7 +292,7 @@ static int config_write_sgsn(struct vty *vty)
 		vty_out(vty, "%s", VTY_NEWLINE);
 	}
 	if (g_cfg->crypt_cipher_plugin_path)
-		vty_out(vty, "encryption cipher-plugin-path %s%s", g_cfg->crypt_cipher_plugin_path, VTY_NEWLINE);
+		vty_out(vty, " encryption cipher-plugin-path %s%s", g_cfg->crypt_cipher_plugin_path, VTY_NEWLINE);
 	if (g_cfg->sgsn_ipa_name)
 		vty_out(vty, " gsup ipa-name %s%s", g_cfg->sgsn_ipa_name, VTY_NEWLINE);
 	if (g_cfg->gsup_server_addr.sin_addr.s_addr)
