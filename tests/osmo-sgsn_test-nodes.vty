@@ -120,3 +120,14 @@ sgsn
   gtp remote-ip 5.6.7.8
 ...
 OsmoSGSN(config-sgsn)# no mme test1
+OsmoSGSN(config-sgsn)# encryption gea 0 3
+OsmoSGSN(config-sgsn)# encryption uea 1 2
+OsmoSGSN(config-sgsn)# encryption cipher-plugin-path /foo/bar
+OsmoSGSN(config-sgsn)# show running-config
+...
+sgsn
+...
+ encryption gea 0 3
+ encryption uea 1 2
+ encryption cipher-plugin-path /foo/bar
+...
