@@ -417,7 +417,7 @@ static int create_pdp_conf(struct pdp_t *pdp, void *cbp, int cause)
 	}
 
 	/* Check for cause value if it was really successful */
-	if (cause != GTPCAUSE_ACC_REQ) {
+	if (!gtp_cause_successful(cause)) {
 		reject_cause = cause_map(gtp2sm_cause_map, cause,
 					 GSM_CAUSE_ACT_REJ_GGSN);
 		goto reject;
