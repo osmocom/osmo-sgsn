@@ -282,6 +282,15 @@ static int config_write_sgsn(struct vty *vty)
 
 		vty_out(vty, "%s", VTY_NEWLINE);
 	}
+	if (g_cfg->uea_encryption_mask != 0) {
+		vty_out(vty, " encryption uea");
+
+		for (i = 0; i < _OSMO_UTRAN_UEA_NUM; i++)
+			if (g_cfg->uea_encryption_mask >> i & 1)
+				vty_out(vty, " %u", i);
+
+		vty_out(vty, "%s", VTY_NEWLINE);
+	}
 	if (g_cfg->crypt_cipher_plugin_path)
 		vty_out(vty, "encryption cipher-plugin-path %s%s", g_cfg->crypt_cipher_plugin_path, VTY_NEWLINE);
 	if (g_cfg->sgsn_ipa_name)
