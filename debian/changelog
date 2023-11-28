@@ -1,3 +1,16 @@
+osmo-sgsn (1.11.1) unstable; urgency=medium
+
+  [ Philipp Maier ]
+  * sgsn_rim: forward message based on RIM ROUTING ADDRESS
+
+  [ Daniel Willmann ]
+  * sgsn_vty: Fix output in config_write_sgsn
+  * sgsn_vty: Correctly indent encryption cipher-plugin-path
+  * vty-tests: Test encryption options
+  * libgtp: Check for all successful create_pdp_conf causes
+
+ -- Oliver Smith <osmith@sysmocom.de>  Tue, 28 Nov 2023 13:32:46 +0100
+
 osmo-sgsn (1.11.0) unstable; urgency=medium
 
   [ Oliver Smith ]

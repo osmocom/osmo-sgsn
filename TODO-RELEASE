@@ -1,2 +1,1 @@
 #component	what		description / commit summary line
-libgtp > 1.10			use gtp_cause_successful()
