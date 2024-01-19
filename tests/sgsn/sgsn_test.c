@@ -1489,7 +1489,8 @@ static void test_ggsn_selection(void)
 
 	pdp_data = sgsn_subscriber_pdp_data_alloc(s1->sgsn_data);
 	pdp_data->context_id = 1;
-	pdp_data->pdp_type = 0x0121;
+	pdp_data->pdp_type_org = PDP_TYPE_ORG_IETF;
+	pdp_data->pdp_type_nr = PDP_TYPE_N_IETF_IPv4;
 	osmo_strlcpy(pdp_data->apn_str, "*", sizeof(pdp_data->apn_str));
 
 	/* Resolve GGSNs */

@@ -1,1 +1,2 @@
 #component	what		description / commit summary line
+libosmocore     > 1.9.0         gsup.h: Using new fields in struct osmo_gsup_pdp_info (ABI break)

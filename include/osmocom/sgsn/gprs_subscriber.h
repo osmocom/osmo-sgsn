@@ -4,7 +4,9 @@
 #include <stdint.h>
 
 #include <osmocom/core/linuxlist.h>
+#include <osmocom/core/socket.h>
 #include <osmocom/gsm/protocol/gsm_23_003.h>
+#include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 
 #include <osmocom/sgsn/apn.h>
 
@@ -54,7 +56,9 @@ struct sgsn_subscriber_pdp_data {
 	struct llist_head	list;
 
 	unsigned int		context_id;
-	uint16_t		pdp_type;
+	enum gsm48_pdp_type_org	pdp_type_org;
+	enum gsm48_pdp_type_nr	pdp_type_nr;
+	struct osmo_sockaddr	pdp_address[2];
 	char			apn_str[GSM_APN_LENGTH];
 	uint8_t			qos_subscribed[20];
 	size_t			qos_subscribed_len;

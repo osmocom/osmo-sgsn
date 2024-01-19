@@ -990,8 +990,17 @@ static void subscr_dump_full_vty(struct vty *vty, struct gprs_subscr *gsub, int 
 	}
 
 	llist_for_each_entry(pdp, &gsub->sgsn_data->pdp_list, list) {
-		vty_out(vty, "    PDP info: Id: %d, Type: 0x%04x, APN: '%s'",
-			pdp->context_id, pdp->pdp_type, pdp->apn_str);
+		char ip_str[INET6_ADDRSTRLEN] = { 0 };
+
+		vty_out(vty, "    PDP info: Id: %d, Addr(Org: 0x%02x Type: 0x%02x",
+			pdp->context_id, pdp->pdp_type_org, pdp->pdp_type_nr);
+
+		if (pdp->pdp_address[0].u.sa.sa_family != AF_UNSPEC)
+			vty_out(vty, " Addr[0]: %s", osmo_sockaddr_ntop(&pdp->pdp_address[0].u.sa, ip_str));
+		if (pdp->pdp_address[0].u.sa.sa_family != AF_UNSPEC)
+			vty_out(vty, " Addr[1]: %s", osmo_sockaddr_ntop(&pdp->pdp_address[1].u.sa, ip_str));
+
+		vty_out(vty, ") APN: '%s'", pdp->apn_str);
 
 		if (pdp->qos_subscribed_len)
 			vty_out(vty, " QoS: %s", osmo_hexdump(pdp->qos_subscribed, pdp->qos_subscribed_len));

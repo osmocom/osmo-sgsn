@@ -376,7 +376,8 @@ static void gprs_subscr_gsup_insert_data(struct gprs_subscr *subscr,
 		}
 
 		OSMO_ASSERT(pdp_data != NULL);
-		pdp_data->pdp_type = pdp_info->pdp_type;
+		pdp_data->pdp_type_org = pdp_info->pdp_type_org;
+		pdp_data->pdp_type_nr = pdp_info->pdp_type_nr;
 		osmo_apn_to_str(pdp_data->apn_str,
 				pdp_info->apn_enc, pdp_info->apn_enc_len);
 
