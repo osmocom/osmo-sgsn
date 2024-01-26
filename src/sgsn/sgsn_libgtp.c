@@ -35,6 +35,14 @@
 #include <arpa/inet.h>
 
 #include "config.h"
+#include "gtpie.h"
+#include <osmocom/core/byteswap.h>
+#include <osmocom/core/linuxlist.h>
+#include <osmocom/core/logging.h>
+#include <osmocom/core/utils.h>
+#include <osmocom/crypt/auth.h>
+#include <osmocom/gsm/gsm23003.h>
+#include <osmocom/gsm/gsm48.h>
 
 #include <osmocom/core/talloc.h>
 #include <osmocom/core/select.h>
@@ -751,6 +759,142 @@ ret_error:
 	return -EINVAL;
 }
 
+static int gtp_mm_ctx(uint8_t *buf, unsigned int size, const struct sgsn_mm_ctx *mmctx)
+{
+	uint8_t length = 0, sec_mode = 0, no_vecs = 0;
+	uint32_t tmp32;
+	uint16_t tmp16;
+	uint8_t *ptr = buf, *len_ptr;
+#define CHECK_SPACE_ERR(bytes) \
+	if (ptr - buf + (bytes) > size) \
+		return -1;
+#define MEMCPY_CHK(dst, src, len) \
+	CHECK_SPACE_ERR((len)) \
+	memcpy((dst), (uint8_t *)(src), (len)); \
+	(dst) += (len);
+
+	// CKSN
+	OSMO_ASSERT(mmctx->ran_type == MM_CTX_T_GERAN_Gb);
+	// FIXME: KSI/CKSN for Iu?;
+	*ptr++ = 0xf8 | (mmctx->auth_triplet.key_seq & 0x07);
+
+	// Sec Mode | No Vecs | Used Cipher
+	switch (mmctx->auth_triplet.vec.auth_types) {
+	case OSMO_AUTH_TYPE_GSM:
+		sec_mode = 1;
+		break;
+	case OSMO_AUTH_TYPE_UMTS:
+		sec_mode = 2;
+		break;
+	default:
+		return -1;
+	}
+
+	for (int i = 0; i < 5; i++) {
+		if (mmctx->subscr->sgsn_data->auth_triplets[i].key_seq != GSM_KEY_SEQ_INVAL)
+			no_vecs++;
+	}
+	*ptr++ = (sec_mode << 6) | (no_vecs << 3) | (mmctx->ciph_algo & 0x7);
+	// Kc or CK/IK
+	switch (sec_mode & 0x01) {
+	case 0:
+		/* UMTS keys */
+		MEMCPY_CHK(ptr, mmctx->auth_triplet.vec.ck, sizeof(mmctx->auth_triplet.vec.ck));
+		MEMCPY_CHK(ptr, mmctx->auth_triplet.vec.ik, sizeof(mmctx->auth_triplet.vec.ik));
+		break;
+	case 1:
+		/* GSM keys */
+		MEMCPY_CHK(ptr, mmctx->auth_triplet.vec.kc, sizeof(mmctx->auth_triplet.vec.kc));
+	}
+
+    /* 7.7.35 Authentication Triplet/Quintuplet */
+	if ((sec_mode & 1) == 1) {
+			/* Triplets */
+		for (int i = 0; i < 5; i++) {
+			const struct osmo_auth_vector *auth = &mmctx->subscr->sgsn_data->auth_triplets[i].vec;
+			if (mmctx->subscr->sgsn_data->auth_triplets[i].key_seq == GSM_KEY_SEQ_INVAL)
+				continue;
+
+			MEMCPY_CHK(ptr, auth->rand, sizeof(auth->rand));
+			MEMCPY_CHK(ptr, auth->sres, 4);
+			MEMCPY_CHK(ptr, auth->kc, 8);
+		}
+	} else {
+		/* Quintuplets */
+		CHECK_SPACE_ERR(2);
+		len_ptr = (uint8_t *)ptr; /* size will be filled later */
+		ptr += 2;
+
+		for (int i = 0; i < 5; i++) {
+			const struct osmo_auth_vector *auth = &mmctx->subscr->sgsn_data->auth_triplets[i].vec;
+			if (mmctx->subscr->sgsn_data->auth_triplets[i].key_seq == GSM_KEY_SEQ_INVAL)
+				continue;
+			*ptr++ = auth->res_len;
+			MEMCPY_CHK(ptr, auth->res, auth->res_len);
+
+			MEMCPY_CHK(ptr, auth->ck, sizeof(auth->ck));
+			MEMCPY_CHK(ptr, auth->ik, sizeof(auth->ik));
+
+			*ptr++ = sizeof(auth->autn);
+			MEMCPY_CHK(ptr, auth->autn, sizeof(auth->autn));
+		}
+		*len_ptr = htobe16(ptr - (((uint8_t *)len_ptr) + 2));
+	}
+
+
+	// DRX
+	MEMCPY_CHK(ptr, &mmctx->drx_parms, sizeof(mmctx->drx_parms));
+
+	// MS Network Cap Len
+	*ptr++ = mmctx->ms_network_capa.len;
+	// MS Network Cap
+	MEMCPY_CHK(ptr, mmctx->ms_network_capa.buf, mmctx->ms_network_capa.len);
+
+	// Container Len
+	*ptr++ = 0;
+	*ptr++ = 0;
+	// Container
+	// FIXME: Container
+
+	// Access Restriction Data Len
+	*ptr++ = 0;
+	// FIXME: NRSRA
+
+	return ptr - buf;
+#undef CHECK_SPACE_ERR
+#undef MEMCPY_CHK
+}
+
+static int cb_gtp_sgsn_context_request_ind(struct gsn_t *gsn, struct sockaddr_in *peer, const struct osmo_routing_area_id *rai, uint32_t teic, struct osmo_mobile_identity *mi, union gtpie_member **ie)
+{
+	struct sgsn_mm_ctx *mmctx = NULL;
+	struct sgsn_pdp_ctx *pdp;
+	struct ul255_t mm;
+	char mi_str[40];
+	char rai_str[40];
+	osmo_mobile_identity_to_str_buf(mi_str, sizeof(mi_str), mi);
+	osmo_rai_name2_buf(rai_str, sizeof(rai_str), rai);
+	LOGP(DGPRS, LOGL_NOTICE, "RAI: %s MI: %s\n", rai_str, mi_str);
+	if (mi->type == GSM_MI_TYPE_IMSI)
+		mmctx = sgsn_mm_ctx_by_imsi(mi->imsi);
+	else if (mi->type == GSM_MI_TYPE_TMSI) {
+		mmctx = sgsn_mm_ctx_by_ptmsi(mi->tmsi);
+	}
+
+	if (!mmctx) {
+		LOGP(DGPRS, LOGL_NOTICE, "No context found\n");
+		return gtp_sgsn_context_conf(gsn, peer, 0, teic, GTPCAUSE_CONTEXT_NOT_FOUND, &gsn->gsnc, NULL, 0, NULL, NULL);
+		return -EINVAL;
+	}
+
+	LOGMMCTXP(LOGL_INFO, mmctx, "Found context\n");
+	mm.l = gtp_mm_ctx(mm.v, 255, mmctx);
+	//FIXME: Set mmctx->new_sgsn_addr =
+
+	pdp = llist_first_entry(&mmctx->pdp_list, struct sgsn_pdp_ctx, list);
+	return gtp_sgsn_context_conf(gsn, peer, 0, teic, GTPCAUSE_ACC_REQ, &gsn->gsnc, pdp->lib, pdp->sapi, &mm, NULL);
+}
+
 /* Called whenever we receive a DATA packet */
 static int cb_data_ind(struct pdp_t *lib, void *packet, unsigned int len)
 {
@@ -950,6 +1094,7 @@ int sgsn_gtp_init(struct sgsn_instance *sgi)
 	gtp_set_cb_unsup_ind(gsn, cb_unsup_ind);
 	gtp_set_cb_extheader_ind(gsn, cb_extheader_ind);
 	gtp_set_cb_ran_info_relay_ind(gsn, cb_gtp_ran_info_relay_ind);
+	gtp_set_cb_sgsn_context_request_ind(gsn, cb_gtp_sgsn_context_request_ind);
 
 	return 0;
 }
