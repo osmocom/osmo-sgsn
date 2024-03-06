@@ -763,11 +763,13 @@ static int gtp_mm_ctx(uint8_t *buf, unsigned int size, const struct sgsn_mm_ctx 
 {
 	uint8_t length = 0, sec_mode = 0, no_vecs = 0;
 	uint32_t tmp32;
-	uint16_t tmp16;
-	uint8_t *ptr = buf, *len_ptr;
+	uint16_t tmp16, *len_ptr;
+	uint8_t *ptr = buf;
 #define CHECK_SPACE_ERR(bytes) \
-	if (ptr - buf + (bytes) > size) \
-		return -1;
+	if (ptr - buf + (bytes) > size) { \
+		LOGP(DGPRS, LOGL_ERROR, "Ran out of space encoding mm ctx: %lu, %lu\n", (ptr - buf), bytes); \
+		return -1; \
+	}
 #define MEMCPY_CHK(dst, src, len) \
 	CHECK_SPACE_ERR((len)) \
 	memcpy((dst), (uint8_t *)(src), (len)); \
@@ -779,16 +781,12 @@ static int gtp_mm_ctx(uint8_t *buf, unsigned int size, const struct sgsn_mm_ctx 
 	*ptr++ = 0xf8 | (mmctx->auth_triplet.key_seq & 0x07);
 
 	// Sec Mode | No Vecs | Used Cipher
-	switch (mmctx->auth_triplet.vec.auth_types) {
-	case OSMO_AUTH_TYPE_GSM:
-		sec_mode = 1;
-		break;
-	case OSMO_AUTH_TYPE_UMTS:
+	if (mmctx->auth_triplet.vec.auth_types & OSMO_AUTH_TYPE_UMTS)
 		sec_mode = 2;
-		break;
-	default:
+	else if (mmctx->auth_triplet.vec.auth_types & OSMO_AUTH_TYPE_GSM)
+		sec_mode = 1;
+	else
 		return -1;
-	}
 
 	for (int i = 0; i < 5; i++) {
 		if (mmctx->subscr->sgsn_data->auth_triplets[i].key_seq != GSM_KEY_SEQ_INVAL)
@@ -822,13 +820,14 @@ static int gtp_mm_ctx(uint8_t *buf, unsigned int size, const struct sgsn_mm_ctx 
 	} else {
 		/* Quintuplets */
 		CHECK_SPACE_ERR(2);
-		len_ptr = (uint8_t *)ptr; /* size will be filled later */
+		len_ptr = (uint16_t *)ptr; /* size will be filled later */
 		ptr += 2;
 
 		for (int i = 0; i < 5; i++) {
 			const struct osmo_auth_vector *auth = &mmctx->subscr->sgsn_data->auth_triplets[i].vec;
 			if (mmctx->subscr->sgsn_data->auth_triplets[i].key_seq == GSM_KEY_SEQ_INVAL)
 				continue;
+			MEMCPY_CHK(ptr, auth->rand, sizeof(auth->rand));
 			*ptr++ = auth->res_len;
 			MEMCPY_CHK(ptr, auth->res, auth->res_len);
 
@@ -865,15 +864,23 @@ static int gtp_mm_ctx(uint8_t *buf, unsigned int size, const struct sgsn_mm_ctx 
 #undef MEMCPY_CHK
 }
 
-static int cb_gtp_sgsn_context_request_ind(struct gsn_t *gsn, struct sockaddr_in *peer, const struct osmo_routing_area_id *rai, uint32_t teic, struct osmo_mobile_identity *mi, union gtpie_member **ie)
+static int cb_gtp_sgsn_context_request_ind(struct gsn_t *gsn, struct sockaddr_in *peer, uint16_t seq, const struct osmo_routing_area_id *rai, uint32_t teic, struct osmo_mobile_identity *mi, union gtpie_member **ie)
 {
 	struct sgsn_mm_ctx *mmctx = NULL;
 	struct sgsn_pdp_ctx *pdp;
-	struct ul255_t mm;
+	uint8_t mm[512];
+	int mm_len;
 	char mi_str[40];
 	char rai_str[40];
+	uint64_t imsi;
+
+	/* FIXME: Open5gs uses the wrong byte-order in TMSI */
+	//if (mi->type == GSM_MI_TYPE_TMSI)
+	//	mi->tmsi = osmo_htonl(mi->tmsi);
+
 	osmo_mobile_identity_to_str_buf(mi_str, sizeof(mi_str), mi);
 	osmo_rai_name2_buf(rai_str, sizeof(rai_str), rai);
+
 	LOGP(DGPRS, LOGL_NOTICE, "RAI: %s MI: %s\n", rai_str, mi_str);
 	if (mi->type == GSM_MI_TYPE_IMSI)
 		mmctx = sgsn_mm_ctx_by_imsi(mi->imsi);
@@ -883,16 +890,21 @@ static int cb_gtp_sgsn_context_request_ind(struct gsn_t *gsn, struct sockaddr_in
 
 	if (!mmctx) {
 		LOGP(DGPRS, LOGL_NOTICE, "No context found\n");
-		return gtp_sgsn_context_conf(gsn, peer, 0, teic, GTPCAUSE_CONTEXT_NOT_FOUND, &gsn->gsnc, NULL, 0, NULL, NULL);
+		return gtp_sgsn_context_conf(gsn, peer, seq, teic, GTPCAUSE_CONTEXT_NOT_FOUND, 0, &gsn->gsnc, NULL, 0, NULL, 0, NULL);
 		return -EINVAL;
 	}
 
 	LOGMMCTXP(LOGL_INFO, mmctx, "Found context\n");
-	mm.l = gtp_mm_ctx(mm.v, 255, mmctx);
+
+	imsi = imsi_str2gtp(mmctx->imsi);
+	/* NOTE: gtpie_gettv8 already converts to host byte order, but imsi_gtp2str seems to prefer big endian */
+	imsi = ntoh64(imsi);
+
+	mm_len = gtp_mm_ctx(mm, sizeof(mm), mmctx);
 	//FIXME: Set mmctx->new_sgsn_addr =
 
 	pdp = llist_first_entry(&mmctx->pdp_list, struct sgsn_pdp_ctx, list);
-	return gtp_sgsn_context_conf(gsn, peer, 0, teic, GTPCAUSE_ACC_REQ, &gsn->gsnc, pdp->lib, pdp->sapi, &mm, NULL);
+	return gtp_sgsn_context_conf(gsn, peer, seq, teic, GTPCAUSE_ACC_REQ, imsi, &gsn->gsnc, pdp->lib, pdp->sapi, mm, mm_len, NULL);
 }
 
 /* Called whenever we receive a DATA packet */
