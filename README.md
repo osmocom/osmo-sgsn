@@ -1,28 +1,30 @@
-osmo-sgssn - Osmocom SGSN Implementation
-========================================
+osmo-sgsn - Osmocom SGSN Implementation
+=======================================
 
-This repository contains a C-language implementation of a GSM Serving GPRS
-Support Node (SGSN) for 2G (GSM) and 3G (UMTS).  It is part of the
+This repository contains a C-language implementation of a *Serving GPRS
+Support Node (SGSN)* for 2.5/2.75G (GPRS/EDGE) and 3G (UMTS).  It is part of the
 [Osmocom](https://osmocom.org/) Open Source Mobile Communications
 project.
 
 OsmoSGSN exposes
- * Gb towards PCUs (e.g. OsmoPCU): Various GbIP flavors + Gb/FR/E1
- * GTP towards a GGSN (e.g. OsmoGGSN);
- * IuPS over IP towards RNCs / HNBGW (e.g. osmo-hnbgw)
- * The Osmocom typical telnet VTY and CTRL interfaces.
- * The Osmocom typical statsd exporter.
- * GSUP (custom MAP-like protocol) towards osmo-hlr
+
+ * *Gb* towards PCUs (e.g. [OsmoPCU](https://osmocom.org/projects/osmopcu/wiki/OsmoPCU)): Various GbIP flavors + Gb/FR/E1
+ * *GTP* towards a GGSN (e.g. [OsmoGGSN](https://osmocom.org/projects/openggsn/wiki))
+ * IuPS over IP towards RNCs / HNBGW (e.g. [osmo-hnbgw](https://osmocom.org/projects/osmohnbgw/wiki))
+ * The Osmocom typical telnet *VTY* and *CTRL* interfaces.
+ * The Osmocom typical *statsd* exporter.
+ * GSUP (custom MAP-like protocol) towards [osmo-hlr](https://osmocom.org/projects/osmo-hlr/wiki/OsmoHLR)
 
 OsmoSGSN implements
+
  * GPRS mobility management
  * GPRS session management
+
 
 Homepage
 --------
 
-You can find the OsmoSGSN issue tracker and wiki online at
-<https://osmocom.org/projects/osmosgsn> and <https://osmocom.org/projects/osmosgsn/wiki>.
+You can find the OsmoSGSN homepage online at <https://osmocom.org/projects/osmosgsn/wiki>.
 
 
 GIT Repository
