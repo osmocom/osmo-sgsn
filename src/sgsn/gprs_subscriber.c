@@ -28,6 +28,7 @@
 #include <osmocom/core/logging.h>
 #include <osmocom/sgsn/gprs_subscriber.h>
 #include <osmocom/gsupclient/gsup_client.h>
+#include <osmocom/sgsn/gprs_gmm_attach.h>
 
 #include <osmocom/sgsn/sgsn.h>
 #include <osmocom/sgsn/mmctx.h>
@@ -538,9 +539,8 @@ static int gprs_subscr_handle_gsup_upd_loc_err(struct gprs_subscr *subscr,
 			get_value_string(gsm48_gmm_cause_names, gsup_msg->cause),
 			gsup_msg->cause);
 
-		subscr->authorized = 0;
-		subscr->sgsn_data->error_cause = gsup_msg->cause;
-		gprs_subscr_update_auth_info(subscr);
+		osmo_fsm_inst_dispatch(subscr->sgsn_data->mm->gmm_att_req.fsm,
+				       E_REJECT, (void *) gsup_msg->cause);
 		break;
 
 	case EHOSTUNREACH:
