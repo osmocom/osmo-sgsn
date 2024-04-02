@@ -1,7 +1,6 @@
 SUBDIRS = \
 	gprs \
 	gtphub \
-	sgsn \
 	xid \
 	sndcp_xid \
 	slhc \
