@@ -111,9 +111,14 @@ static void mmctx_timer_start(struct sgsn_mm_ctx *mm, unsigned int T)
 
 static void mmctx_timer_stop(struct sgsn_mm_ctx *mm, unsigned int T)
 {
-	if (mm->T != T)
+	if (!osmo_timer_pending(&mm->timer)) {
+		LOGMMCTXP(LOGL_NOTICE, mm, "Stopping *inactive* MM timer %u\n", T);
+		return;
+	}
+	if (mm->T != T) {
 		LOGMMCTXP(LOGL_ERROR, mm, "Stopping MM timer %u but "
 			"%u is running\n", T, mm->T);
+	}
 	osmo_timer_del(&mm->timer);
 }
 
