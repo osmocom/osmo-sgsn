@@ -1391,11 +1391,11 @@ static int gsm48_rx_gmm_att_compl(struct sgsn_mm_ctx *mmctx)
 	/* only in case SGSN offered new P-TMSI */
 	LOGMMCTXP(LOGL_INFO, mmctx, "-> GMM ATTACH COMPLETE\n");
 
-	#ifdef BUILD_IU
+#ifdef BUILD_IU
 	if (mmctx->iu.ue_ctx) {
 		ranap_iu_tx_release(mmctx->iu.ue_ctx, NULL);
 	}
-	#endif
+#endif
 
 	mmctx_timer_stop(mmctx, 3350);
 	mmctx->t3350_mode = GMM_T3350_MODE_NONE;
