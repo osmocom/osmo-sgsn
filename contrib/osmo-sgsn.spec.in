@@ -99,6 +99,8 @@ chown osmocom:osmocom /etc/osmocom/osmo-sgsn.cfg
 chmod 0660 /etc/osmocom/osmo-sgsn.cfg
 chown root:osmocom /etc/osmocom
 chmod 2775 /etc/osmocom
+mkdir -p /var/lib/osmocom
+chown -R osmocom:osmocom /var/lib/osmocom
 
 %if 0%{?suse_version}
 %preun  -n osmo-gtphub %service_del_preun   osmo-gtphub.service

@@ -30,7 +30,7 @@ Homepage: https://projects.osmocom.org/projects/osmo-sgsn
 Package: osmo-sgsn
 Architecture: any
 Multi-Arch: foreign
-Depends: ${misc:Depends}, ${shlibs:Depends}, adduser
+Depends: ${misc:Depends}, ${shlibs:Depends}
 Description: OsmoSGSN: Osmocom's Serving GPRS Support Node for 2G and 3G packet-switched mobile networks
 
 Package: osmo-sgsn-dbg
@@ -42,7 +42,7 @@ Description: OsmoSGSN: Osmocom's Serving GPRS Support Node for 2G and 3G packet-
 
 Package: osmo-gtphub
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, adduser
+Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: Osmocom GTP Hub: Proxy for GTP traffic between multiple SGSNs and GGSNs
 
 Package: osmo-gtphub-dbg
