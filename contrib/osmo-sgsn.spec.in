@@ -100,10 +100,12 @@ chmod 0660 /etc/osmocom/osmo-sgsn.cfg
 chown root:osmocom /etc/osmocom
 chmod 2775 /etc/osmocom
 
+%if 0%{?suse_version}
 %preun  -n osmo-gtphub %service_del_preun   osmo-gtphub.service
 %postun -n osmo-gtphub %service_del_postun  osmo-gtphub.service
 %pre    -n osmo-gtphub %service_add_pre     osmo-gtphub.service
 %post   -n osmo-gtphub %service_add_post    osmo-gtphub.service
+%endif
 
 %check
 make %{?_smp_mflags} check || (find . -name testsuite.log -exec cat {} +)
