@@ -1868,9 +1868,6 @@ int sgsn_parse_config(const char *config_file)
 	/* make sure sgsn_vty_init() was called before this */
 	OSMO_ASSERT(g_cfg);
 
-	g_cfg->gea_encryption_mask = 0x1; /* support GEA0 by default unless specific encryption config exists */
-	g_cfg->uea_encryption_mask = (1 << OSMO_UTRAN_UEA0); /* support UEA0 by default unless specific encryption config exists */
-
 	rc = vty_read_config_file(config_file, NULL);
 	if (rc < 0) {
 		fprintf(stderr, "Failed to parse the config file: '%s'\n", config_file);

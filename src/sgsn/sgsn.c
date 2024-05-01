@@ -36,6 +36,9 @@
 #include <osmocom/gsm/gsm_utils.h>
 #include <osmocom/gsm/gsup.h>
 
+#include <osmocom/crypt/gprs_cipher.h>
+#include <osmocom/crypt/utran_cipher.h>
+
 #include <osmocom/sgsn/gprs_subscriber.h>
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/sgsn.h>
@@ -162,6 +165,8 @@ struct sgsn_instance *sgsn_instance_alloc(void *talloc_ctx)
 
 	inst->cfg.gtp_statedir = talloc_strdup(inst, "./");
 	inst->cfg.auth_policy = SGSN_AUTH_POLICY_CLOSED;
+	inst->cfg.gea_encryption_mask = (1 << GPRS_ALGO_GEA0); /* no encryption */
+	inst->cfg.uea_encryption_mask = (1 << OSMO_UTRAN_UEA0); /* no encryption */
 	inst->cfg.require_authentication = true; /* only applies if auth_policy is REMOTE */
 	inst->cfg.gsup_server_port = OSMO_GSUP_PORT;
 
