@@ -166,7 +166,7 @@ struct sgsn_instance *sgsn_instance_alloc(void *talloc_ctx)
 	inst->cfg.gtp_statedir = talloc_strdup(inst, "./");
 	inst->cfg.auth_policy = SGSN_AUTH_POLICY_CLOSED;
 	inst->cfg.gea_encryption_mask = (1 << GPRS_ALGO_GEA0); /* no encryption */
-	inst->cfg.uea_encryption_mask = (1 << OSMO_UTRAN_UEA0); /* no encryption */
+	inst->cfg.uea_encryption_mask = (1 << OSMO_UTRAN_UEA2) | (1 << OSMO_UTRAN_UEA1);
 	inst->cfg.require_authentication = true; /* only applies if auth_policy is REMOTE */
 	inst->cfg.gsup_server_port = OSMO_GSUP_PORT;
 
