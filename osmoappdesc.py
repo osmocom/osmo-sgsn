@@ -16,7 +16,7 @@
 
 
 app_configs = {
-    "sgsn": ["doc/examples/osmo-sgsn/osmo-sgsn.cfg"],
+    "sgsn": ["tests/osmo-sgsn.cfg"],
     "gtphub": ["doc/examples/osmo-gtphub/osmo-gtphub-1iface.cfg"]
 }
 
@@ -25,7 +25,6 @@ apps = [(4245, "src/sgsn/osmo-sgsn", "OsmoSGSN", "sgsn"),
         (4253, "src/gtphub/osmo-gtphub", "OsmoGTPhub", "gtphub")
         ]
 
-vty_command = ["./src/sgsn/osmo-sgsn", "-c",
-               "doc/examples/osmo-sgsn/osmo-sgsn.cfg"]
+vty_command = ["./src/sgsn/osmo-sgsn", "-c", "tests/osmo-sgsn.cfg"]
 
 vty_app = apps[0]

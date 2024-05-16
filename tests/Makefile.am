@@ -32,6 +32,8 @@ EXTRA_DIST = \
 	$(TESTSUITE) \
 	vty_test_runner.py \
 	ctrl_test_runner.py \
+	osmo-sgsn-accept-all.cfg \
+	osmo-sgsn.cfg \
 	osmo-sgsn_test-nodes.vty \
 	$(NULL)
 
@@ -62,7 +64,7 @@ vty-python-test: $(top_builddir)/src/sgsn/osmo-sgsn
 vty-transcript-test: $(top_builddir)/src/sgsn/osmo-sgsn
 	osmo_verify_transcript_vty.py -v \
 		-n OsmoSGSN -p 4245 \
-		-r "$(top_builddir)/src/sgsn/osmo-sgsn -c $(top_srcdir)/doc/examples/osmo-sgsn/osmo-sgsn.cfg" \
+		-r "$(top_builddir)/src/sgsn/osmo-sgsn -c $(top_srcdir)/tests/osmo-sgsn.cfg" \
 		$(U) $${T:-$(srcdir)/osmo-sgsn*.vty}
 	rm -f $(builddir)/gsn_restart
 
