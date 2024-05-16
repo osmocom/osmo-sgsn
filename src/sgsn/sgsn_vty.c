@@ -24,6 +24,8 @@
 #include <arpa/inet.h>
 #include <time.h>
 #include <inttypes.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include <osmocom/core/talloc.h>
 #include <osmocom/core/utils.h>
@@ -404,6 +406,11 @@ DEFUN(cfg_sgsn_state_dir, cfg_sgsn_state_dir_cmd,
 	"Set the directory for the GTP State file\n"
 	"Local Directory\n")
 {
+	if (mkdir(argv[0], 0755) == -1 && errno != EEXIST) {
+		vty_out(vty, "%% Failed to create state-dir: %s%s", argv[0], VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+
 	osmo_talloc_replace_string(sgsn, &sgsn->cfg.gtp_statedir, argv[0]);
 
 	return CMD_SUCCESS;
