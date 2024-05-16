@@ -70,8 +70,7 @@ class TestVTYBase(unittest.TestCase):
 class TestVTYSGSN(TestVTYBase):
 
     def vty_command(self):
-        return ["./src/sgsn/osmo-sgsn", "-c",
-                "doc/examples/osmo-sgsn/osmo-sgsn-accept-all.cfg"]
+        return ["./src/sgsn/osmo-sgsn", "-c", "tests/osmo-sgsn-accept-all.cfg"]
 
     def vty_app(self):
         return (4245, "./src/sgsn/osmo-sgsn", "OsmoSGSN", "sgsn")

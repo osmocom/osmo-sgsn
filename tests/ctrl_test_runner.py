@@ -145,8 +145,7 @@ class TestCtrlBase(unittest.TestCase):
 
 class TestCtrlSGSN(TestCtrlBase):
     def ctrl_command(self):
-        return ["./src/sgsn/osmo-sgsn", "-c",
-                "doc/examples/osmo-sgsn/osmo-sgsn.cfg"]
+        return ["./src/sgsn/osmo-sgsn", "-c", "tests/osmo-sgsn.cfg"]
 
     def ctrl_app(self):
         return (4251, "./src/sgsn/osmo-sgsn", "OsmoSGSN", "sgsn")
