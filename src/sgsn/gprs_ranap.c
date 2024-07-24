@@ -103,6 +103,8 @@ static int sgsn_ranap_rab_ass_resp(struct sgsn_mm_ctx *ctx, RANAP_RAB_SetupOrMod
 		LOGP(DRANAP, LOGL_DEBUG, "Updating TEID on RNC side from 0x%08x to 0x%08x\n",
 			pdp->lib->teid_own, tei);
 		pdp->lib->teid_own = tei;
+		pdp->lib->dir_tun_flags.l = 1;
+		pdp->lib->dir_tun_flags.v[0] = 0x01; /* Set DTI flag in Direct Tunnel Flags */
 		require_pdp_update = true;
 	}
 

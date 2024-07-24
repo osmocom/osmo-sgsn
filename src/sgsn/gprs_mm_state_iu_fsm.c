@@ -52,6 +52,9 @@ static void mmctx_change_gtpu_endpoints_to_sgsn(struct sgsn_mm_ctx *mm_ctx)
 		LOGMMCTXP(LOGL_INFO, mm_ctx, "Changing GTP-U endpoints %s -> %s\n",
 			  sgsn_gtp_ntoa(&pdp->lib->gsnlu),
 			  inet_ntop(AF_INET, &sgsn->cfg.gtp_listenaddr.sin_addr, buf, sizeof(buf)));
+		/* Disable Direct Tunnel Flags DTI. Other flags make no sense here, so also set to 0. */
+		pdp->lib->dir_tun_flags.l = 1;
+		pdp->lib->dir_tun_flags.v[0] = 0x00;
 		sgsn_pdp_upd_gtp_u(pdp,
 				   &sgsn->cfg.gtp_listenaddr.sin_addr,
 				   sizeof(sgsn->cfg.gtp_listenaddr.sin_addr));
