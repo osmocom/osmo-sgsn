@@ -1,3 +1,43 @@
+osmo-sgsn (1.12.0) unstable; urgency=medium
+
+  [ Andreas Eversberg ]
+  * Use uniform log format for default config files
+
+  [ Vadim Yanitskiy ]
+  * build: include README.md into the release tarball
+  * gmm: cosmetic: fix preprocessor macro formatting
+  * gmm: mmctx_timer_stop(): warn about timer not running
+  * VTY: move default settings to sgsn_instance_alloc()
+  * VTY: sync default UMTS UEA config with osmo-msc
+  * README.md: cosmetic: fix a typo
+
+  [ Pau Espin Pedrol ]
+  * gsup: Use new libosmogsm struct osmo_gsup_pdp_info fields
+
+  [ Harald Welte ]
+  * Add funding link to github mirror
+  * README.md: Overhaul (more links; improved formatting)
+  * README.md: Add Forum and Issue Tracker sections
+
+  [ Max ]
+  * .deb/.rpm: add osmocom user during package install
+
+  [ Oliver Smith ]
+  * contrib/osmo-sgsn.spec: fix build for almalinux:8
+  * .deb/.rpm: various fixes related to non-root
+  * contrib: remove rpm spec file
+  * debian/postinst: add checks, be verbose
+  * sgsn/sgsn_vty: create state-dir
+  * debian/osmo-gtphub.init: delete
+  * doc: set state-dir to /var/lib/osmocom/osmo-sgsn
+
+  [ Alexander Couzens ]
+  * docs: replace legacy NS with new NS2 chapters
+  * docs: update year to 2024
+  * docs: front page: use https:// instead of http://
+
+ -- Oliver Smith <osmith@sysmocom.de>  Wed, 24 Jul 2024 17:31:38 +0200
+
 osmo-sgsn (1.11.1) unstable; urgency=medium
 
   [ Philipp Maier ]
