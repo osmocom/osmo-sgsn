@@ -166,6 +166,9 @@ struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
 	pdp->priv = pctx;
 	pctx->lib = pdp;
 
+	/* Back up our own local TEID in case we update the library one with RNC TEID when setting up Direct Tunnel: */
+	pctx->sgsn_teid_own = pdp->teid_own;
+
 	//pdp->peer =	/* sockaddr_in of GGSN (receive) */
 	//pdp->ipif =	/* not used by library */
 	pdp->version = ggsn->gtp_version;
@@ -783,6 +786,8 @@ static int cb_data_ind(struct pdp_t *lib, void *packet, unsigned int len)
 #ifdef BUILD_IU
 		/* Ignore the packet for now and page the UE to get the RAB
 		 * reestablished */
+		LOGMMCTXP(LOGL_INFO, mm, "Rx GTP for UE in PMM state %s, paging it\n",
+			  osmo_fsm_inst_state_name(mm->iu.mm_state_fsm));
 		ranap_iu_page_ps(mm->imsi, &mm->p_tmsi, mm->ra.lac, mm->ra.rac);
 
 		return 0;

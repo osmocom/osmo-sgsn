@@ -69,6 +69,9 @@ struct sgsn_pdp_ctx {
 	uint8_t			radio_prio;
 	//uint32_t		charging_id;
 	bool			ue_pdp_active; /* PDP Context is active for this NSAPI?  */
+	/* Keeps original SGSN local TEID when lib->teid_own is updated with
+	 * RNC's TEID upon use of Direct Tunnel feature: */
+	uint32_t		sgsn_teid_own;
 
 	struct osmo_timer_list	timer;
 	unsigned int		T;		/* Txxxx number */
