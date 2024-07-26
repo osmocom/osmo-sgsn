@@ -378,6 +378,7 @@ int send_act_pdp_cont_acc(struct sgsn_pdp_ctx *pctx)
 	rc = gsm48_tx_gsm_act_pdp_acc(pctx);
 	if (rc < 0)
 		return rc;
+	pctx->ue_pdp_active = true;
 
 	if (pctx->mm->ran_type == MM_CTX_T_GERAN_Gb) {
 		/* Send SNDCP XID to MS */
@@ -567,9 +568,11 @@ static int delete_pdp_conf(struct pdp_t *pdp, void *cbp, int cause)
 			return -ENOTSUP;
 #endif
 		}
-
-		/* Confirm deactivation of PDP context to MS */
-		rc = gsm48_tx_gsm_deact_pdp_acc(pctx);
+		if (pctx->ue_pdp_active) {
+			/* Confirm deactivation of PDP context to MS */
+			rc = gsm48_tx_gsm_deact_pdp_acc(pctx);
+			pctx->ue_pdp_active = false;
+		}
 	} else {
 		LOGPDPCTXP(LOGL_NOTICE, pctx,
 			   "Not deactivating SNDCP layer since the MM context "

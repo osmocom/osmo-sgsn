@@ -68,6 +68,7 @@ struct sgsn_pdp_ctx {
 	//uint32_t		qos_profile_neg;
 	uint8_t			radio_prio;
 	//uint32_t		charging_id;
+	bool			ue_pdp_active; /* PDP Context is active for this NSAPI?  */
 
 	struct osmo_timer_list	timer;
 	unsigned int		T;		/* Txxxx number */
