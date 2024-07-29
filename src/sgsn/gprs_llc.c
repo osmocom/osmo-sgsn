@@ -102,7 +102,7 @@ int sgsn_llc_prim_up_cb(struct osmo_gprs_llc_prim *llc_prim, void *user_data)
 	int rc = 0;
 
 	switch (llc_prim->oph.sap) {
-	case OSMO_GPRS_LLC_SAP_LLGM:
+	case OSMO_GPRS_LLC_SAP_LLGMM:
 		LOGP(DLLC, LOGL_DEBUG, "%s(): Rx %s TLLI=0x%08x\n",
 		     __func__, pdu_name, llc_prim->llgmm.tlli);
 		break;
@@ -250,7 +250,7 @@ int sgsn_llgmm_assign_req(uint32_t old_tlli, uint32_t new_tlli)
 	struct osmo_gprs_llc_prim *llc_prim;
 	int rc;
 
-	llc_prim = osmo_gprs_llc_prim_alloc_llgm_assign_req(old_tlli);
+	llc_prim = osmo_gprs_llc_prim_alloc_llgmm_assign_req(old_tlli);
 	OSMO_ASSERT(llc_prim);
 	llc_prim->llgmm.assign_req.tlli_new = new_tlli;
 	rc = osmo_gprs_llc_prim_upper_down(llc_prim);
@@ -262,7 +262,7 @@ int sgsn_llgmm_assign_req_mmctx(struct sgsn_mm_ctx *mmctx, uint32_t old_tlli, ui
 	struct osmo_gprs_llc_prim *llc_prim;
 	int rc;
 
-	llc_prim = osmo_gprs_llc_prim_alloc_llgm_assign_req(old_tlli);
+	llc_prim = osmo_gprs_llc_prim_alloc_llgmm_assign_req(old_tlli);
 	OSMO_ASSERT(llc_prim);
 	llc_prim->llgmm.assign_req.tlli_new = new_tlli;
 	llc_prim->llgmm.assign_req.gea = mmctx->ciph_algo;
@@ -292,7 +292,7 @@ int sgsn_llgmm_reset_req(unsigned int tlli)
 	struct osmo_gprs_llc_prim *llc_prim;
 	int rc;
 
-	llc_prim = osmo_gprs_llc_prim_alloc_llgm_reset_req(tlli);
+	llc_prim = osmo_gprs_llc_prim_alloc_llgmm_reset_req(tlli);
 	OSMO_ASSERT(llc_prim);
 
 	rc = osmo_gprs_llc_prim_upper_down(llc_prim);
