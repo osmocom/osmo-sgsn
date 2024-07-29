@@ -30,6 +30,7 @@
 #include <osmocom/sgsn/sgsn.h>
 #include <osmocom/sgsn/gprs_ranap.h>
 #include <osmocom/sgsn/gtp.h>
+#include <osmocom/sgsn/gtp_ggsn.h>
 #include <osmocom/sgsn/pdpctx.h>
 #include <osmocom/sgsn/mmctx.h>
 
@@ -44,22 +45,30 @@ static const struct osmo_tdef_state_timeout mm_state_iu_fsm_timeouts[32] = {
 #define mm_state_iu_fsm_state_chg(fi, NEXT_STATE) \
 	osmo_tdef_fsm_inst_state_chg(fi, NEXT_STATE, mm_state_iu_fsm_timeouts, sgsn->cfg.T_defs, -1)
 
-static void mmctx_change_gtpu_endpoints_to_sgsn(struct sgsn_mm_ctx *mm_ctx)
+
+static void pdpctx_change_gtpu_endpoint_to_sgsn(const struct sgsn_mm_ctx *mm_ctx, struct sgsn_pdp_ctx *pdp)
 {
 	char buf[INET_ADDRSTRLEN];
+	LOGMMCTXP(LOGL_INFO, mm_ctx, "Changing GTP-U endpoints %s/0x%08x -> %s/0x%08x\n",
+			sgsn_gtp_ntoa(&pdp->lib->gsnlu), pdp->lib->teid_own,
+			inet_ntop(AF_INET, &sgsn->cfg.gtp_listenaddr.sin_addr, buf, sizeof(buf)),
+			pdp->sgsn_teid_own);
+	pdp->lib->gsnlu.l = sizeof(sgsn->cfg.gtp_listenaddr.sin_addr);
+	memcpy(pdp->lib->gsnlu.v, &sgsn->cfg.gtp_listenaddr.sin_addr,
+	       sizeof(sgsn->cfg.gtp_listenaddr.sin_addr));
+	pdp->lib->teid_own = pdp->sgsn_teid_own;
+	/* Disable Direct Tunnel Flags DTI. Other flags make no sense here, so also set to 0. */
+	pdp->lib->dir_tun_flags.l = 1;
+	pdp->lib->dir_tun_flags.v[0] = 0x00;
+}
+
+static void mmctx_change_gtpu_endpoints_to_sgsn(struct sgsn_mm_ctx *mm_ctx, struct sgsn_pdp_ctx *pdp_skip_gtp_upd_req)
+{
 	struct sgsn_pdp_ctx *pdp;
 	llist_for_each_entry(pdp, &mm_ctx->pdp_list, list) {
-		LOGMMCTXP(LOGL_INFO, mm_ctx, "Changing GTP-U endpoints %s/0x%08x -> %s/0x%08x\n",
-			  sgsn_gtp_ntoa(&pdp->lib->gsnlu), pdp->lib->teid_own,
-			  inet_ntop(AF_INET, &sgsn->cfg.gtp_listenaddr.sin_addr, buf, sizeof(buf)),
-			  pdp->sgsn_teid_own);
-		pdp->lib->teid_own = pdp->sgsn_teid_own;
-		/* Disable Direct Tunnel Flags DTI. Other flags make no sense here, so also set to 0. */
-		pdp->lib->dir_tun_flags.l = 1;
-		pdp->lib->dir_tun_flags.v[0] = 0x00;
-		sgsn_pdp_upd_gtp_u(pdp,
-				   &sgsn->cfg.gtp_listenaddr.sin_addr,
-				   sizeof(sgsn->cfg.gtp_listenaddr.sin_addr));
+		pdpctx_change_gtpu_endpoint_to_sgsn(mm_ctx, pdp);
+		if (pdp != pdp_skip_gtp_upd_req)
+			gtp_update_context(pdp->ggsn->gsn, pdp->lib, pdp, &pdp->lib->hisaddr0);
 	}
 }
 
@@ -71,17 +80,24 @@ static void st_pmm_detached(struct osmo_fsm_inst *fi, uint32_t event, void *data
 		break;
 	case E_PMM_PS_DETACH:
 		break;
+	case E_PMM_RX_GGSN_GTPU_DT_EI:
+		/* This should in general not happen, since Direct Tunnel is not
+		 * enabled during PMM-IDLE, but there may be a race condition of
+		 * packets/events, so simply ignore it. */
+		break;
 	}
 }
 
 static void st_pmm_connected(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	struct sgsn_mm_ctx *ctx = fi->priv;
+	struct sgsn_pdp_ctx *pctx;
 
 	switch(event) {
 	case E_PMM_PS_CONN_RELEASE:
 		sgsn_ranap_iu_free(ctx);
 		mm_state_iu_fsm_state_chg(fi, ST_PMM_IDLE);
+		mmctx_change_gtpu_endpoints_to_sgsn(ctx, NULL);
 		break;
 	case E_PMM_PS_DETACH:
 		sgsn_ranap_iu_release_free(ctx, NULL);
@@ -89,14 +105,14 @@ static void st_pmm_connected(struct osmo_fsm_inst *fi, uint32_t event, void *dat
 		break;
 	case E_PMM_RA_UPDATE:
 		break;
+	case E_PMM_RX_GGSN_GTPU_DT_EI:
+		/* GTPU Direct Tunnel (RNC<->GGSN): GGSN Received Error Indication when transmitting DL data*/
+		pctx = (struct sgsn_pdp_ctx *)data;
+		sgsn_ranap_iu_free(ctx);
+		mm_state_iu_fsm_state_chg(fi, ST_PMM_IDLE);
+		mmctx_change_gtpu_endpoints_to_sgsn(ctx, pctx);
+		break;
 	}
-}
-
-static void st_pmm_idle_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state)
-{
-	struct sgsn_mm_ctx *ctx = fi->priv;
-
-	mmctx_change_gtpu_endpoints_to_sgsn(ctx);
 }
 
 static void st_pmm_idle(struct osmo_fsm_inst *fi, uint32_t event, void *data)
@@ -109,12 +125,19 @@ static void st_pmm_idle(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 	case E_PMM_PS_DETACH:
 		mm_state_iu_fsm_state_chg(fi, ST_PMM_DETACHED);
 		break;
+	case E_PMM_RX_GGSN_GTPU_DT_EI:
+		/* This should in general not happen, since Direct Tunnel is not
+		 * enabled during PMM-IDLE, but there may be a race condition of
+		 * packets/events, so simply ignore it. */
+		break;
 	}
 }
 
 static struct osmo_fsm_state mm_state_iu_fsm_states[] = {
 	[ST_PMM_DETACHED] = {
-		.in_event_mask = X(E_PMM_PS_ATTACH) | X(E_PMM_PS_DETACH),
+		.in_event_mask = X(E_PMM_PS_ATTACH) |
+				 X(E_PMM_PS_DETACH) |
+				 X(E_PMM_RX_GGSN_GTPU_DT_EI),
 		.out_state_mask = X(ST_PMM_CONNECTED),
 		.name = "Detached",
 		.action = st_pmm_detached,
@@ -123,7 +146,8 @@ static struct osmo_fsm_state mm_state_iu_fsm_states[] = {
 		.in_event_mask =
 			X(E_PMM_PS_CONN_RELEASE) |
 			X(E_PMM_RA_UPDATE) |
-			X(E_PMM_PS_DETACH),
+			X(E_PMM_PS_DETACH) |
+			X(E_PMM_RX_GGSN_GTPU_DT_EI),
 		.out_state_mask = X(ST_PMM_DETACHED) | X(ST_PMM_IDLE),
 		.name = "Connected",
 		.action = st_pmm_connected,
@@ -132,10 +156,10 @@ static struct osmo_fsm_state mm_state_iu_fsm_states[] = {
 		.in_event_mask =
 			X(E_PMM_PS_DETACH) |
 			X(E_PMM_PS_CONN_ESTABLISH) |
-			X(E_PMM_PS_ATTACH),
+			X(E_PMM_PS_ATTACH) |
+			X(E_PMM_RX_GGSN_GTPU_DT_EI),
 		.out_state_mask = X(ST_PMM_DETACHED) | X(ST_PMM_CONNECTED),
 		.name = "Idle",
-		.onenter = st_pmm_idle_on_enter,
 		.action = st_pmm_idle,
 	},
 };
@@ -146,6 +170,7 @@ const struct value_string mm_state_iu_fsm_event_names[] = {
 	OSMO_VALUE_STRING(E_PMM_PS_CONN_ESTABLISH),
 	OSMO_VALUE_STRING(E_PMM_PS_DETACH),
 	OSMO_VALUE_STRING(E_PMM_RA_UPDATE),
+	OSMO_VALUE_STRING(E_PMM_RX_GGSN_GTPU_DT_EI),
 	{ 0, NULL }
 };
 

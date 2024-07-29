@@ -55,6 +55,7 @@
 #include <osmocom/sgsn/gprs_ranap.h>
 #include <osmocom/sgsn/gprs_gmm_fsm.h>
 #include <osmocom/sgsn/gprs_mm_state_gb_fsm.h>
+#include <osmocom/sgsn/gprs_mm_state_iu_fsm.h>
 #include <osmocom/sgsn/gtp_ggsn.h>
 #include <osmocom/sgsn/gtp_mme.h>
 #include <osmocom/sgsn/sgsn_rim.h>
@@ -468,13 +469,6 @@ reject:
 	return EOF;
 }
 
-void sgsn_pdp_upd_gtp_u(struct sgsn_pdp_ctx *pdp, void *addr, size_t alen)
-{
-	pdp->lib->gsnlu.l = alen;
-	memcpy(pdp->lib->gsnlu.v, addr, alen);
-	gtp_update_context(pdp->ggsn->gsn, pdp->lib, pdp, &pdp->lib->hisaddr0);
-}
-
 void sgsn_ggsn_echo_req(struct sgsn_ggsn_ctx *ggc)
 {
 	LOGGGSN(ggc, LOGL_INFO, "GTP Tx Echo Request\n");
@@ -653,6 +647,52 @@ static int cb_conf(int type, int cause, struct pdp_t *pdp, void *cbp)
 		break;
 	}
 	return 0;
+}
+
+/* Called whenever a PDP context is updated from the GGSN for any reason */
+static int cb_update_context_ind(struct pdp_t *pdp)
+{
+	struct sgsn_pdp_ctx *pctx;
+	struct sgsn_mm_ctx *mm;
+	int rc;
+
+	LOGPDPX(DGPRS, LOGL_INFO, pdp, "Context %p was updated\n", pdp);
+
+	pctx = pdp->priv;
+	if (!pctx) {
+		LOGP(DGPRS, LOGL_NOTICE,
+		     "GTP DATA IND from GGSN for unknown PDP\n");
+		return -EIO;
+	}
+	mm = pctx->mm;
+	if (!mm) {
+		LOGP(DGPRS, LOGL_ERROR,
+		     "PDP context (address=%u) without MM context!\n",
+		     pctx->address);
+		return -EIO;
+	}
+
+	if (mm->ran_type == MM_CTX_T_UTRAN_Iu) {
+#ifdef BUILD_IU
+		if (pdp->dir_tun_flags.v[0] & 0x04) { /* EI bit set ? */
+			/* GGSN informed us that it received an Error Indication when sending DL data to the RNC.
+			 * This probably means the RNC lost its state, aka crashed or was rebooted.
+			 * Page the UE so it re-creates the state at the RNC. */
+			LOGMMCTXP(LOGL_INFO, mm,
+				  "GGSN received ErrorInd from RNC while tx DL data. Paging UE in state %s\n",
+				  osmo_fsm_inst_state_name(mm->gmm_fsm));
+			rc = osmo_fsm_inst_dispatch(mm->iu.mm_state_fsm, E_PMM_RX_GGSN_GTPU_DT_EI, pctx);
+			rc = gtp_update_context_resp(sgsn->gsn, pdp,
+				 GTPCAUSE_ACC_REQ);
+			ranap_iu_page_ps(mm->imsi, &mm->p_tmsi, mm->ra.lac, mm->ra.rac);
+			return rc;
+		}
+#endif
+	}
+
+	rc = gtp_update_context_resp(sgsn->gsn, pdp,
+				 GTPCAUSE_ACC_REQ);
+	return rc;
 }
 
 /* Called whenever a PDP context is deleted for any reason */
@@ -951,6 +991,7 @@ int sgsn_gtp_init(struct sgsn_instance *sgi)
 	}
 
 	/* Register callbackcs with libgtp */
+	gtp_set_cb_update_context_ind(gsn, cb_update_context_ind);
 	gtp_set_cb_delete_context(gsn, cb_delete_context);
 	gtp_set_cb_conf(gsn, cb_conf);
 	gtp_set_cb_recovery3(gsn, cb_recovery3);
