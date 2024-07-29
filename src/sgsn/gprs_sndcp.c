@@ -152,7 +152,7 @@ static int sgsn_sndcp_prim_snsm_cb(struct osmo_gprs_sndcp_prim *sndcp_prim, void
 int sgsn_sndcp_init(void)
 {
 	int rc;
-	rc = osmo_gprs_sndcp_init();
+	rc = osmo_gprs_sndcp_init(OSMO_GPRS_SNDCP_LOCATION_NET);
 	if (rc != 0)
 		return rc;
 
