@@ -63,10 +63,10 @@ static int sgsn_bssgp_rx_ul_unitdata(struct osmo_bssgp_prim *bp)
 	bssgp_parse_cell_id(&ra_id, TLVP_VAL(bp->tp, BSSGP_IE_CELL_ID));
 
 	llc_prim = osmo_gprs_llc_prim_alloc_bssgp_ul_unitdata_ind(bp->tlli, llc_pdu, llc_pdu_len);
+	OSMO_ASSERT(llc_prim);
 	llc_prim->bssgp.ul_unitdata_ind.cell_id.ci =
 			bssgp_parse_cell_id(&llc_prim->bssgp.ul_unitdata_ind.cell_id.rai,
 					    TLVP_VAL(bp->tp, BSSGP_IE_CELL_ID));
-	OSMO_ASSERT(llc_prim);
 	rc = osmo_gprs_llc_prim_lower_up(llc_prim);
 
 	return rc;
