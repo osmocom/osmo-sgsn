@@ -21,7 +21,7 @@
 #endif
 
 #include <ares.h>
-#include <gtp.h>
+#include <osmocom/gtp/gtp.h>
 
 struct hostent;
 
