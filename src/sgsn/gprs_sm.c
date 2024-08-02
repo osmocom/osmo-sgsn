@@ -716,16 +716,17 @@ int gsm0408_rcv_gsm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 {
 	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
 	int rc;
+	uint32_t tlli = msgb_tlli(msg);
 
 	/* MMCTX can be NULL when called */
 
 	if (!mmctx) {
-		LOGGBIUP(llme, msg, LOGL_NOTICE, "Cannot handle SM for unknown MM CTX\n");
+		LOGGBIUP(tlli, msg, LOGL_NOTICE, "Cannot handle SM for unknown MM CTX\n");
 		/* 6.1.3.6 */
 		if (gh->msg_type == GSM48_MT_GSM_STATUS)
 			return 0;
 
-		return gsm0408_gprs_force_reattach_oldmsg(msg, llme);
+		return gsm0408_gprs_force_reattach_oldmsg(msg, tlli);
 	}
 
 	switch (gh->msg_type) {

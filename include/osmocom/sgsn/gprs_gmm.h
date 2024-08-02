@@ -22,7 +22,7 @@ int gsm48_gmm_sendmsg(struct msgb *msg, int command,
 			     struct sgsn_mm_ctx *mm, bool encryptable);
 int gsm0408_gprs_force_reattach(struct sgsn_mm_ctx *mmctx);
 int gsm0408_gprs_force_reattach_oldmsg(struct msgb *msg,
-				       struct sgsn_llme *llme);
+				       uint32_t tlli);
 void gsm0408_gprs_access_granted(struct sgsn_mm_ctx *mmctx);
 void gsm0408_gprs_access_denied(struct sgsn_mm_ctx *mmctx, int gmm_cause);
 void gsm0408_gprs_access_cancelled(struct sgsn_mm_ctx *mmctx, int gmm_cause);

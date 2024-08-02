@@ -32,7 +32,6 @@ enum gmm_fsm_events {
 
 struct gmm_rat_change_data {
 	enum sgsn_ran_type new_ran_type;
-	struct sgsn_llme *llme;
 };
 
 static inline bool gmm_fsm_is_registered(struct osmo_fsm_inst *fi)

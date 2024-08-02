@@ -248,6 +248,9 @@ int sgsn_bssgp_page_ps_ra(struct sgsn_mm_ctx *mmctx)
 		return -ENOENT;
 	}
 
+	/* FIXME FIXME FIXME:
+	 * Can't use cache entries here, the MS doesn't have an active TLLI cache entry, thats the reason why we want to page it.
+	 */
 	/* initiate PS PAGING procedure */
 	memset(&pinfo, 0, sizeof(pinfo));
 	pinfo.mode = BSSGP_PAGING_PS;

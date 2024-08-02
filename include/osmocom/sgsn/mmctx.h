@@ -237,15 +237,14 @@ static inline bool sgsn_mm_ctx_is_authenticated(struct sgsn_mm_ctx *ctx)
 	LOGP(DMM, level, "UE(%p){NOTSUPPORTED} " fmt, ue, ## args)
 #endif
 
-#define LOGGBP(llme, category, level, fmt, args...) \
-	LOGP(category, level, "LLME(%08x/%08x) " fmt, (llme)->old_tlli, \
-	     (llme)->tlli, ## args);
+#define LOGGBP(tlli, category, level, fmt, args...) \
+	LOGP(category, level, "TLLI(%08x) " fmt, tlli, ## args);
 
-#define LOGGBIUP(llme, msg, level, fmt, args...) \
+#define LOGGBIUP(tlli, msg, level, fmt, args...) \
 	do { \
 	struct ranap_ue_conn_ctx * _ue; \
-	if (llme) { \
-		LOGGBP(llme, DMM, level, fmt, ## args); \
+	if (tlli != 0 && tlli != 0xffffffff) { \
+		LOGGBP(tlli, DMM, level, fmt, ## args); \
 	} else if ((msg) && (_ue = MSG_IU_UE_CTX(msg))) { \
 		LOGIUP(_ue, level, fmt, ## args); \
 	} else { OSMO_ASSERT(0); } \

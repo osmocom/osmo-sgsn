@@ -200,8 +200,6 @@ void msgid2mmctx(struct sgsn_mm_ctx *mm, const struct msgb *msg)
 void mmctx2msgid(struct msgb *msg, const struct sgsn_mm_ctx *mm)
 {
 	msgb_tlli(msg) = mm->gb.tlli;
-	msgb_bvci(msg) = mm->gb.bvci;
-	msgb_nsei(msg) = mm->gb.nsei;
 	MSG_IU_UE_CTX_SET(msg, mm->iu.ue_ctx);
 }
 
@@ -1165,11 +1163,9 @@ static bool mmctx_did_rat_change(struct sgsn_mm_ctx *mmctx, struct msgb *msg)
 }
 
 /* Notify the FSM of a RAT change */
-static void mmctx_handle_rat_change(struct sgsn_mm_ctx *mmctx, struct msgb *msg, struct sgsn_llme *llme)
+static void mmctx_handle_rat_change(struct sgsn_mm_ctx *mmctx, struct msgb *msg)
 {
-	struct gmm_rat_change_data rat_chg = {
-		.llme = llme
-	};
+	struct gmm_rat_change_data rat_chg = {};
 
 	rat_chg.new_ran_type = MSG_IU_UE_CTX(msg) ? MM_CTX_T_UTRAN_Iu : MM_CTX_T_GERAN_Gb;
 
@@ -1197,8 +1193,7 @@ static uint8_t gprs_ms_net_cap_gea_mask(const uint8_t *ms_net_cap, uint8_t cap_l
 }
 
 /* 3GPP TS 24.008 § 9.4.1 Attach request */
-static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
-				struct sgsn_llme *llme)
+static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 {
 	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
 	uint8_t *cur = gh->data, *msnc, *mi_data, *ms_ra_acc_cap;
@@ -1320,11 +1315,10 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 	}
 
 	if (mmctx_did_rat_change(ctx, msg))
-		mmctx_handle_rat_change(ctx, msg, llme);
+		mmctx_handle_rat_change(ctx, msg);
 
 	if (ctx->ran_type == MM_CTX_T_GERAN_Gb) {
 		ctx->gb.tlli = msgb_tlli(msg);
-		ctx->gb.llme = llme;
 	}
 	msgid2mmctx(ctx, msg);
 	/* Update MM Context with currient RA and Cell ID */
@@ -1602,8 +1596,7 @@ bool pdp_status_has_active_nsapis(const uint8_t *pdp_status, const size_t pdp_st
 }
 
 /* Chapter 9.4.14: Routing area update request */
-static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
-				   struct sgsn_llme *llme)
+static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg)
 {
 #ifndef PTMSI_ALLOC
 	struct sgsn_signal_data sig_data;
@@ -1616,6 +1609,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	uint8_t upd_type;
 	enum gsm48_gmm_cause reject_cause = GMM_CAUSE_PROTO_ERR_UNSPEC;
 	int rc;
+	uint32_t tlli = msgb_tlli(msg);
 
 	/* TODO: In iu mode - handle follow-on request.
 	 * The follow-on request can be signaled in an Attach Request on IuPS.
@@ -1672,7 +1666,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		/* Look-up the MM context based on old RA-ID and TLLI */
 		if (!MSG_IU_UE_CTX(msg)) {
 			/* Gb */
-			mmctx = sgsn_mm_ctx_by_tlli_and_ptmsi(msgb_tlli(msg), &old_ra_id);
+			mmctx = sgsn_mm_ctx_by_tlli_and_ptmsi(tlli, &old_ra_id);
 		} else if (TLVP_PRESENT(&tp, GSM48_IE_GMM_ALLOC_PTMSI)) {
 #ifdef BUILD_IU
 			/* In Iu mode search only for ptmsi */
@@ -1732,22 +1726,21 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	}
 
 	if (!mmctx) {
-		if (llme) {
-			/* send a XID reset to re-set all LLC sequence numbers
-			 * in the MS */
-			LOGGBP(llme, DMM, LOGL_NOTICE, "LLC XID RESET\n");
-			sgsn_llgmm_reset_req_oldmsg(msg, OSMO_GPRS_LLC_SAPI_GMM, llme->tlli);
-		}
+		/* send a XID reset to re-set all LLC sequence numbers
+		 * in the MS */
+		LOGGBP(tlli, DMM, LOGL_NOTICE, "LLC XID RESET\n");
+		sgsn_llgmm_reset_req_oldmsg(msg, OSMO_GPRS_LLC_SAPI_GMM, tlli);
+
 		/* The MS has to perform GPRS attach */
 		/* Device is still IMSI attached for CS but initiate GPRS ATTACH,
 		 * see GSM 04.08, 4.7.5.1.4 and G.6 */
-		LOGGBIUP(llme, msg, LOGL_ERROR, "Rejecting GMM RA Update Request: MS should GMM Attach first\n");
+		LOGGBIUP(tlli, msg, LOGL_ERROR, "Rejecting GMM RA Update Request: MS should GMM Attach first\n");
 		reject_cause = GMM_CAUSE_IMPL_DETACHED;
 		goto rejected;
 	}
 
 	if (mmctx_did_rat_change(mmctx, msg)) {
-		mmctx_handle_rat_change(mmctx, msg, llme);
+		mmctx_handle_rat_change(mmctx, msg);
 		osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_GMM_COMMON_PROC_INIT_REQ, NULL);
 	}
 
@@ -2004,17 +1997,17 @@ static int gsm48_rx_gmm_status(struct sgsn_mm_ctx *mmctx, struct msgb *msg)
 int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg)
 {
 	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
-	struct sgsn_llme *llme = NULL;
 	int rc;
+	uint32_t tlli = msgb_tlli(msg);
 
-	if (!mmctx && llme &&
+	if (!mmctx &&
 	    gh->msg_type != GSM48_MT_GMM_ATTACH_REQ &&
 	    gh->msg_type != GSM48_MT_GMM_RA_UPD_REQ) {
-		LOGGBP(llme, DMM, LOGL_NOTICE, "Cannot handle GMM for unknown MM CTX\n");
+		LOGGBP(tlli, DMM, LOGL_NOTICE, "Cannot handle GMM for unknown MM CTX\n");
 		/* 4.7.10 */
 		if (gh->msg_type == GSM48_MT_GMM_STATUS) {
 			/* TLLI unassignment */
-			sgsn_llgmm_unassign_req(llme->tlli);
+			sgsn_llgmm_unassign_req(tlli);
 			return 0;
 		}
 
@@ -2022,14 +2015,13 @@ int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg)
 		//if (gh->msg_type == GSM48_MT_GMM_DETACH_ACK)
 		//	return sgsn_llgmm_unassign_req(llme);
 
-		/* Don't reply to deatch requests, reason power off */
+		/* Don't reply to detach requests, reason power off */
 		if (gh->msg_type == GSM48_MT_GMM_DETACH_REQ &&
 			gh->data[0] & 0x8) {
 			return 0;
 		}
 
-
-		sgsn_llgmm_reset_req(llme->tlli);
+		sgsn_llgmm_reset_req(tlli);
 
 		/* Don't force it into re-attachment */
 		if (gh->msg_type == GSM48_MT_GMM_DETACH_REQ) {
@@ -2037,15 +2029,15 @@ int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg)
 			rc = gsm48_rx_gmm_det_req(NULL, msg);
 
 			/* TLLI unassignment */
-			sgsn_llgmm_unassign_req(llme->tlli);
+			sgsn_llgmm_unassign_req(tlli);
 			return rc;
 		}
 
 		/* Force the MS to re-attach */
-		rc = gsm0408_gprs_force_reattach_oldmsg(msg, llme);
+		rc = gsm0408_gprs_force_reattach_oldmsg(msg, tlli);
 
 		/* TLLI unassignment */
-		sgsn_llgmm_unassign_req(llme->tlli);
+		sgsn_llgmm_unassign_req(tlli);
 		return rc;
 	}
 
@@ -2077,10 +2069,10 @@ int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg)
 	 */
 	switch (gh->msg_type) {
 	case GSM48_MT_GMM_RA_UPD_REQ:
-		rc = gsm48_rx_gmm_ra_upd_req(mmctx, msg, llme);
+		rc = gsm48_rx_gmm_ra_upd_req(mmctx, msg);
 		break;
 	case GSM48_MT_GMM_ATTACH_REQ:
-		rc = gsm48_rx_gmm_att_req(mmctx, msg, llme);
+		rc = gsm48_rx_gmm_att_req(mmctx, msg);
 		break;
 	case GSM48_MT_GMM_SERVICE_REQ:
 		rc = gsm48_rx_gmm_service_req(mmctx, msg);
@@ -2144,7 +2136,7 @@ int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg)
 	return rc;
 
 null_mmctx:
-	LOGGBIUP(llme, msg, LOGL_ERROR,
+	LOGGBIUP(tlli, msg, LOGL_ERROR,
 	     "Received GSM 04.08 message type %s,"
 	     " but no MM context available\n",
 	     get_value_string(gprs_msgt_gmm_names, gh->msg_type));
@@ -2229,11 +2221,10 @@ static void mmctx_timer_cb(void *_mm)
 }
 
 int gsm0408_gprs_force_reattach_oldmsg(struct msgb *msg,
-				       struct sgsn_llme *llme)
+				       uint32_t tlli)
 {
 	int rc;
-	if (llme)
-		sgsn_llgmm_reset_req_oldmsg(msg, OSMO_GPRS_LLC_SAPI_GMM, llme->tlli);
+	sgsn_llgmm_reset_req_oldmsg(msg, OSMO_GPRS_LLC_SAPI_GMM, tlli);
 
 	rc = gsm48_tx_gmm_detach_req_oldmsg(
 		msg, GPRS_DET_T_MT_REATT_REQ, GMM_CAUSE_IMPL_DETACHED);

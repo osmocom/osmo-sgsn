@@ -1,3 +1,4 @@
+
 #include <osmocom/core/tdef.h>
 #include <osmocom/crypt/utran_cipher.h>
 
@@ -6,6 +7,7 @@
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/gprs_gmm.h>
+#include <osmocom/sgsn/gprs_llc.h>
 #include <osmocom/sgsn/mmctx.h>
 #include <osmocom/sgsn/sgsn.h>
 
@@ -205,6 +207,10 @@ static void st_accept_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state)
 		return;
 	}
 	ctx->p_tmsi = p_tmsi;
+
+	/* inform the LLC layer about the new TLLI */
+	ctx->gb.tlli_new = gprs_tmsi2tlli(ctx->p_tmsi, TLLI_LOCAL);
+	sgsn_llgmm_assign_req_mmctx(ctx, ctx->gb.tlli, ctx->gb.tlli_new);
 
 	gsm48_tx_gmm_att_ack(ctx);
 }
