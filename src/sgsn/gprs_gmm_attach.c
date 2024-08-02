@@ -192,11 +192,20 @@ static void st_auth(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 static void st_accept_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_state)
 {
 	struct sgsn_mm_ctx *ctx = fi->priv;
+	uint32_t p_tmsi;
 
 	ctx->num_T_exp = 0;
 
 	/* TODO: remove pending_req as soon the sgsn_auth code doesn't depend on it */
 	ctx->pending_req = 0;
+	p_tmsi = sgsn_alloc_ptmsi();
+	if (p_tmsi == GSM_RESERVED_TMSI) {
+		LOGMMCTXP(LOGL_ERROR, ctx, "Failed to generate a new P-TMSI. Reject Attach Req with NET_FAIL.\n");
+		osmo_fsm_inst_dispatch(fi, E_REJECT, (void *) GMM_CAUSE_NET_FAIL);
+		return;
+	}
+	ctx->p_tmsi = p_tmsi;
+
 	gsm48_tx_gmm_att_ack(ctx);
 }
 

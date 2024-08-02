@@ -1360,23 +1360,6 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 
 	ctx->ciph_algo = gprs_ms_net_select_best_gea(ctx->ue_cipher_mask, sgsn->cfg.gea_encryption_mask);
 
-#ifdef PTMSI_ALLOC
-	/* Allocate a new P-TMSI (+ P-TMSI signature) and update TLLI */
-	ptmsi_update(ctx);
-#endif
-
-	if (ctx->ran_type == MM_CTX_T_GERAN_Gb) {
-		/* Even if there is no P-TMSI allocated, the MS will
-		 * switch from foreign TLLI to local TLLI */
-		ctx->gb.tlli_new = gprs_tmsi2tlli(ctx->p_tmsi, TLLI_LOCAL);
-
-		/* Inform LLC layer about new TLLI but keep old active */
-		if (sgsn_mm_ctx_is_authenticated(ctx))
-			gprs_llme_copy_key(ctx, ctx->gb.llme);
-
-		sgsn_llgmm_assign_req_mmctx(ctx, ctx->gb.tlli, ctx->gb.tlli_new);
-	}
-
 	osmo_fsm_inst_dispatch(ctx->gmm_att_req.fsm, E_ATTACH_REQ_RECV, msg);
 	return 0;
 
