@@ -24,6 +24,7 @@
 #include <osmocom/gtp/gtp.h>
 
 struct hostent;
+struct ul16_t;
 
 #define SGSN_ERROR_CAUSE_NONE (-1)
 
