@@ -50,16 +50,20 @@ static int sgsn_bssgp_rx_ul_unitdata(struct osmo_bssgp_prim *bp)
 	case TLLI_AUXILIARY:
 		break;
 	default:
-		LOGP(DLLC, LOGL_ERROR,
+		LOGP(DGPRS, LOGL_ERROR,
 			"Discarding frame with strange TLLI type\n");
 		return -EINVAL;
 	}
 
-	/* TODO: Update LLE's (BVCI, NSEI) tuple */
-	//lle->llme->bvci = msgb_bvci(msg);
-	//lle->llme->nsei = msgb_nsei(msg);
+	rc = tlli_cache_update(&sgsn->bssgp, bp->tlli, bp->nsei, bp->bvci);
+	if (rc < 0)
+		return rc;
 
-	OSMO_ASSERT(TLVP_PRES_LEN(bp->tp, BSSGP_IE_CELL_ID, 8));
+	if (!TLVP_PRES_LEN(bp->tp, BSSGP_IE_CELL_ID, 8)) {
+		LOGP(DGPRS, LOGL_ERROR,
+		     "Discarding BSSGP without IE CELL_ID\n");
+		return -EINVAL;
+	}
 	bssgp_parse_cell_id(&ra_id, TLVP_VAL(bp->tp, BSSGP_IE_CELL_ID));
 
 	llc_prim = osmo_gprs_llc_prim_alloc_bssgp_ul_unitdata_ind(bp->tlli, llc_pdu, llc_pdu_len);
