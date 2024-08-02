@@ -1,7 +1,7 @@
 #ifndef _SGSN_H
 #define _SGSN_H
 
-
+#include <osmocom/core/hashtable.h>
 #include <osmocom/core/msgb.h>
 #include <osmocom/core/select.h>
 #include <osmocom/crypt/gprs_cipher.h>
@@ -132,6 +132,31 @@ struct sgsn_config {
 	char *sgsn_ipa_name;
 };
 
+struct bssgp_tlli {
+	struct hlist_node list;
+
+	uint32_t tlli;
+	/* in usec since epoch */
+	uint64_t last_seen;
+
+	uint16_t nsei;
+	uint16_t bvci;
+
+	// TODO: decide if we want this
+	// struct gprs_ra_id ra;
+	// uint16_t ci;
+};
+
+struct bssgp_state {
+	/* (struct bssgp_tlli) a hash table from tlli to NSEI/BVCI + Cell Id mapping */
+	struct {
+		DECLARE_HASHTABLE(entries, 16);
+		struct osmo_timer_list timer;
+		/* how long an entry is valid (sec) */
+		uint8_t timeout;
+	} tlli_cache;
+};
+
 struct sgsn_instance {
 	char *config_file;
 	struct sgsn_config cfg;
@@ -159,6 +184,8 @@ struct sgsn_instance {
 	struct llist_head mme_list; /* list of struct sgsn_mme_ctx */
 	struct llist_head mm_list; /* list of struct sgsn_mm_ctx */
 	struct llist_head pdp_list; /* list of struct sgsn_pdp_ctx */
+
+	struct bssgp_state bssgp;
 
 	struct ctrl_handle *ctrlh;
 };

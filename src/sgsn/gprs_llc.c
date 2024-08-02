@@ -38,6 +38,7 @@
 
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/mmctx.h>
+#include <osmocom/sgsn/gprs_bssgp.h>
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/gprs_llc.h>
 #include <osmocom/sgsn/sgsn.h>
@@ -140,59 +141,7 @@ int sgsn_llc_prim_up_cb(struct osmo_gprs_llc_prim *llc_prim, void *user_data)
 	}
 	return rc;
 }
-
-/* Entry function from upper level (LLC), asking us to transmit a BSSGP PDU
- * to a remote MS (identified by TLLI) at a BTS identified by its BVCI and NSEI */
-static int _bssgp_tx_dl_ud(struct osmo_gprs_llc_prim *llc_prim)
-{
-	struct msgb *msg;
-	struct sgsn_mm_ctx *mmctx;
-	struct bssgp_dl_ud_par dup;
-	const uint8_t qos_profile_default[3] = { 0x00, 0x00, 0x20 };
-	int rc;
-
-	memset(&dup, 0, sizeof(dup));
-	/* before we have received some identity from the MS, we might
-	 * not yet have a MMC context (e.g. XID negotiation of primarly
-	 * LLC connection from GMM sapi). */
-	mmctx = sgsn_mm_ctx_by_tlli(llc_prim->bssgp.tlli);
-	if (mmctx) {
-		/* In rare cases the LLME is NULL in those cases don't
-		 * use the mm radio capabilities */
-		dup.imsi = mmctx->imsi;
-		if (mmctx->gb.llme) {
-			dup.drx_parms = mmctx->drx_parms;
-			dup.ms_ra_cap.len = mmctx->ms_radio_access_capa.len;
-			dup.ms_ra_cap.v = mmctx->ms_radio_access_capa.buf;
-
-			/* make sure we only send it to the right llme */
-			if (!(llc_prim->ll.tlli == mmctx->gb.llme->tlli
-			      || llc_prim->ll.tlli == mmctx->gb.llme->old_tlli)) {
-				LOGP(DLLC, LOGL_ERROR,
-				     "_bssgp_tx_dl_ud(): Attempt to send Downlink Unitdata to wrong LLME:"
-				     " msgb_tlli=0x%x mmctx->gb.llme->tlli=0x%x ->old_tlli=0x%x\n",
-				     llc_prim->ll.tlli, mmctx->gb.llme->tlli, mmctx->gb.llme->old_tlli);
-				return -EINVAL;
-			}
-		}
-	}
-	memcpy(&dup.qos_profile, qos_profile_default,
-		sizeof(qos_profile_default));
-
-	msg = msgb_alloc_headroom(4096, 128, "llc2bssgp");
-	msgb_tlli(msg) = llc_prim->ll.tlli;
-	msgb_bvci(msg) = mmctx ? mmctx->gb.bvci : 0;
-	msgb_nsei(msg) = mmctx ? mmctx->gb.nsei : 0;
-	msgb_gmmh(msg) = msgb_put(msg, llc_prim->bssgp.ll_pdu_len);
-	if (llc_prim->bssgp.ll_pdu_len > 0) {
-		memcpy(msgb_put(msg, llc_prim->bssgp.ll_pdu_len), llc_prim->bssgp.ll_pdu, llc_prim->bssgp.ll_pdu_len);
-	}
-
-	rc = bssgp_tx_dl_ud(msg, 1000, &dup);
-	//TODO: free msg?
-	return rc;
-}
-
+/* callback from LLC layer to SGSN which forward it to BSSGP */
 int sgsn_llc_prim_down_cb(struct osmo_gprs_llc_prim *llc_prim, void *user_data)
 {
 	const char *pdu_name = osmo_gprs_llc_prim_name(llc_prim);
@@ -209,7 +158,7 @@ int sgsn_llc_prim_down_cb(struct osmo_gprs_llc_prim *llc_prim, void *user_data)
 		     llc_prim->bssgp.tlli, osmo_hexdump(llc_prim->bssgp.ll_pdu, llc_prim->bssgp.ll_pdu_len));
 		switch (llc_prim->oph.primitive) {
 		case OSMO_GPRS_LLC_BSSGP_DL_UNITDATA:
-			rc = _bssgp_tx_dl_ud(llc_prim);
+			rc = sgsn_bssgp_tx_dl_unitdata(llc_prim);
 			break;
 		case OSMO_GPRS_LLC_BSSGP_UL_UNITDATA:
 			OSMO_ASSERT(0);

@@ -447,6 +447,12 @@ int main(int argc, char **argv)
 	if (rc < 0)
 		exit(1);
 
+	/* init bssgp */
+	if (sgsn_bssgp_init() < 0) {
+		LOGP(DGPRS, LOGL_ERROR, "Unable to instantiate BSSGP\n");
+		exit(1);
+	}
+
 	if (sgsn_sndcp_init() < 0) {
 		LOGP(DGPRS, LOGL_ERROR, "Unable to instantiate SNDCP\n");
 		exit(1);
