@@ -2,6 +2,9 @@
 
 #include <osmocom/core/msgb.h>
 
+struct osmo_prim_hdr;
+struct sgsn_mm_ctx;
+
 /* Called by bssgp layer when a prim is received from lower layers. */
 int sgsn_bssgp_rx_prim(struct osmo_prim_hdr *oph);
 
