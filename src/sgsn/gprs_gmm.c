@@ -312,7 +312,7 @@ int gsm48_tx_gmm_att_ack(struct sgsn_mm_ctx *mm)
 	t = osmo_tdef_get(sgsn->cfg.T_defs, 3312, OSMO_TDEF_S, -1);
 	aa->ra_upd_timer = gprs_secs_to_tmr_floor(t);
 	aa->radio_prio = 0x44;	/* lowest */
-	gsm48_encode_ra(&aa->ra_id, &mm->ra);
+	osmo_routing_area_id_encode_buf((uint8_t *) &aa->ra_id, sizeof(struct gsm48_ra_id), &mm->ra);
 
 #if 0
 	/* Optional: P-TMSI signature */
@@ -1195,7 +1195,7 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 	uint8_t msnc_len, att_type, mi_len, ms_ra_acc_cap_len;
 	uint16_t drx_par;
 	char mi_log_string[32];
-	struct gprs_ra_id ra_id;
+	struct osmo_routing_area_id ra_id;
 	uint16_t cid = 0;
 	enum gsm48_gmm_cause reject_cause;
 	struct osmo_mobile_identity mi;
@@ -1210,10 +1210,10 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 
 	if (!MSG_IU_UE_CTX(msg)) {
 		/* Gb mode */
-		cid = bssgp_parse_cell_id(&ra_id, msgb_bcid(msg));
+		bssgp_parse_cell_id2(&ra_id, &cid, msgb_bcid(msg), 8);
 	} else {
 #ifdef BUILD_IU
-		ra_id = MSG_IU_UE_CTX(msg)->ra_id;
+		gprs_rai_to_osmo(&ra_id, &MSG_IU_UE_CTX(msg)->ra_id);
 #else
 		LOGMMCTXP(LOGL_ERROR, ctx, "Cannot handle Iu Attach Request, built without Iu support\n");
 		return -ENOTSUP;
@@ -1515,7 +1515,7 @@ static int gsm48_tx_gmm_ra_upd_ack(struct sgsn_mm_ctx *mm)
 	t = osmo_tdef_get(sgsn->cfg.T_defs, 3312, OSMO_TDEF_S, -1);
 	rua->ra_upd_timer = gprs_secs_to_tmr_floor(t);
 
-	gsm48_encode_ra(&rua->ra_id, &mm->ra);
+	osmo_routing_area_id_encode_buf((uint8_t *)&rua->ra_id, sizeof(struct gsm48_ra_id), &mm->ra);
 
 #if 0
 	/* Optional: P-TMSI signature */
@@ -1622,7 +1622,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
 	uint8_t *cur = gh->data;
 	uint8_t ms_ra_acc_cap_len;
-	struct gprs_ra_id old_ra_id;
+	struct osmo_routing_area_id old_ra_id;
 	struct tlv_parsed tp;
 	uint8_t upd_type;
 	enum gsm48_gmm_cause reject_cause = GMM_CAUSE_PROTO_ERR_UNSPEC;
@@ -1642,7 +1642,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		get_value_string(gprs_upd_t_strs, upd_type));
 
 	/* Old routing area identification 10.5.5.15 */
-	gsm48_parse_ra(&old_ra_id, cur);
+	osmo_routing_area_id_decode(&old_ra_id, cur, msgb_l3len(msg) - (cur - msgb_gmmh(msg)));
 	cur += 6;
 
 	/* MS Radio Access Capability 10.5.5.12a */
@@ -1709,7 +1709,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 				msgb_tlli(msg),
 				mmctx->p_tmsi, mmctx->p_tmsi_old,
 				mmctx->gb.tlli, mmctx->gb.tlli_new,
-				osmo_rai_name(&mmctx->ra));
+				osmo_rai_name2(&mmctx->ra));
 			/* A RAT change will trigger the common procedure
 			 * below after handling the RAT change. Protect it
 			 * here from being called twice */
@@ -1717,26 +1717,26 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 				osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_GMM_COMMON_PROC_INIT_REQ, NULL);
 
 		}
-	} else if (!gprs_ra_id_equals(&mmctx->ra, &old_ra_id) ||
+	} else if (osmo_rai_cmp(&mmctx->ra, &old_ra_id) ||
 		mmctx->gmm_fsm->state == ST_GMM_DEREGISTERED)
 	{
 		/* We've received either a RAU for a MS which isn't registered
 		 * or a RAU with an unknown RA ID. As long the SGSN doesn't support
 		 * PS handover we treat this as invalid RAU */
-		struct gprs_ra_id new_ra_id;
+		struct osmo_routing_area_id new_ra_id = {};
 		char new_ra[32];
 
-		bssgp_parse_cell_id(&new_ra_id, msgb_bcid(msg));
-		osmo_rai_name_buf(new_ra, sizeof(new_ra), &new_ra_id);
+		bssgp_parse_cell_id2(&new_ra_id, NULL, msgb_bcid(msg), 8);
+		osmo_rai_name2_buf(new_ra, sizeof(new_ra), &new_ra_id);
 
 		if (mmctx->gmm_fsm->state == ST_GMM_DEREGISTERED)
 			LOGMMCTXP(LOGL_INFO, mmctx,
 				  "Rejecting RAU - GMM state is deregistered. Old RA: %s New RA: %s\n",
-				  osmo_rai_name(&old_ra_id), new_ra);
+				  osmo_rai_name2(&old_ra_id), new_ra);
 		else
 			LOGMMCTXP(LOGL_INFO, mmctx,
 				  "Rejecting RAU - Old RA doesn't match MM. Old RA: %s New RA: %s\n",
-				  osmo_rai_name(&old_ra_id), new_ra);
+				  osmo_rai_name2(&old_ra_id), new_ra);
 
 		reject_cause = GMM_CAUSE_IMPL_DETACHED;
 		goto rejected;
@@ -1757,10 +1757,10 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 			mmctx = sgsn_mm_ctx_by_llme(llme);
 			if (mmctx) {
 				char old_ra_id_name[32];
-				osmo_rai_name_buf(old_ra_id_name, sizeof(old_ra_id_name), &old_ra_id);
+				osmo_rai_name2_buf(old_ra_id_name, sizeof(old_ra_id_name), &old_ra_id);
 				LOGMMCTXP(LOGL_NOTICE, mmctx,
 					  "Rx RA Update Request with unexpected TLLI=%08x Old RA=%s (expected Old RA: %s)!\n",
-					  msgb_tlli(msg), old_ra_id_name, osmo_rai_name(&mmctx->ra));
+					  msgb_tlli(msg), old_ra_id_name, osmo_rai_name2(&mmctx->ra));
 				/* mmctx will be released (and its llme un assigned) after REJECT below. */
 			}
 		}
@@ -1784,7 +1784,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 
 	/* Update the MM context with the new RA-ID */
 	if (mmctx->ran_type == MM_CTX_T_GERAN_Gb && msgb_bcid(msg)) {
-		bssgp_parse_cell_id(&mmctx->ra, msgb_bcid(msg));
+		bssgp_parse_cell_id2(&mmctx->ra, NULL, msgb_bcid(msg), 8);
 		/* Update the MM context with the new (i.e. foreign) TLLI */
 		mmctx->gb.tlli = msgb_tlli(msg);
 	}
@@ -2292,7 +2292,7 @@ int gsm0408_gprs_force_reattach(struct sgsn_mm_ctx *mmctx)
 	return rc;
 }
 
-int gprs_gmm_rx_suspend(struct gprs_ra_id *raid, uint32_t tlli)
+int gprs_gmm_rx_suspend(struct osmo_routing_area_id *raid, uint32_t tlli)
 {
 	struct sgsn_mm_ctx *mmctx;
 
@@ -2314,7 +2314,7 @@ int gprs_gmm_rx_suspend(struct gprs_ra_id *raid, uint32_t tlli)
 	return 0;
 }
 
-int gprs_gmm_rx_resume(struct gprs_ra_id *raid, uint32_t tlli,
+int gprs_gmm_rx_resume(struct osmo_routing_area_id *raid, uint32_t tlli,
 		       uint8_t suspend_ref)
 {
 	struct sgsn_mm_ctx *mmctx;
@@ -2355,10 +2355,10 @@ int gsm0408_gprs_rcvmsg_gb(struct msgb *msg, struct gprs_llc_llme *llme,
 	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
 	uint8_t pdisc = gsm48_hdr_pdisc(gh);
 	struct sgsn_mm_ctx *mmctx;
-	struct gprs_ra_id ra_id;
+	struct osmo_routing_area_id ra_id = {};
 	int rc = -EINVAL;
 
-	bssgp_parse_cell_id(&ra_id, msgb_bcid(msg));
+	bssgp_parse_cell_id2(&ra_id, NULL, msgb_bcid(msg), 8);
 	mmctx = sgsn_mm_ctx_by_tlli(msgb_tlli(msg), &ra_id);
 	if (mmctx) {
 		rate_ctr_inc(rate_ctr_group_get_ctr(mmctx->ctrg, GMM_CTR_PKTS_SIG_IN));

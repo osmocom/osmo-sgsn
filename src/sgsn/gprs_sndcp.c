@@ -834,7 +834,7 @@ int sndcp_ll_unitdata_ind(struct msgb *msg, struct gprs_llc_lle *lle,
 		return -EIO;
 	}
 	/* FIXME: move this RA_ID up to the LLME or even higher */
-	bssgp_parse_cell_id(&sne->ra_id, msgb_bcid(msg));
+	bssgp_parse_cell_id2(&sne->ra_id, NULL, msgb_bcid(msg), 8);
 
 	mmctx = sgsn_mm_ctx_by_tlli(msgb_tlli(msg), &sne->ra_id);
 	if (!mmctx) {

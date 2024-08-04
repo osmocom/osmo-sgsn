@@ -133,9 +133,9 @@ enum sgsn_auth_state sgsn_auth_state(struct sgsn_mm_ctx *mmctx)
 		/* We simply assume that the IMSI exists, as long as it is part
 		 * of 'our' network */
 		snprintf(mccmnc, sizeof(mccmnc), "%s%s",
-			 osmo_mcc_name(mmctx->ra.mcc),
-			 osmo_mnc_name(mmctx->ra.mnc, mmctx->ra.mnc_3_digits));
-		if (strncmp(mccmnc, mmctx->imsi, mmctx->ra.mnc_3_digits ? 6 : 5) == 0)
+			 osmo_mcc_name(mmctx->ra.lac.plmn.mcc),
+			 osmo_mnc_name(mmctx->ra.lac.plmn.mnc, mmctx->ra.lac.plmn.mnc_3_digits));
+		if (strncmp(mccmnc, mmctx->imsi, mmctx->ra.lac.plmn.mnc_3_digits ? 6 : 5) == 0)
 			return SGSN_AUTH_ACCEPTED;
 	}
 

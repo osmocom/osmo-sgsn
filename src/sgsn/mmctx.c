@@ -122,13 +122,13 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_by_llme(const struct gprs_llc_llme *llme)
 
 /* look-up a SGSN MM context based on TLLI + RAI */
 struct sgsn_mm_ctx *sgsn_mm_ctx_by_tlli(uint32_t tlli,
-					const struct gprs_ra_id *raid)
+					const struct osmo_routing_area_id *raid)
 {
 	struct sgsn_mm_ctx *ctx;
 
 	llist_for_each_entry(ctx, &sgsn->mm_list, list) {
 		if ((tlli == ctx->gb.tlli || tlli == ctx->gb.tlli_new) &&
-		    gprs_ra_id_equals(raid, &ctx->ra))
+		    !osmo_rai_cmp(raid, &ctx->ra))
 			return ctx;
 	}
 
@@ -136,7 +136,7 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_by_tlli(uint32_t tlli,
 }
 
 struct sgsn_mm_ctx *sgsn_mm_ctx_by_tlli_and_ptmsi(uint32_t tlli,
-					const struct gprs_ra_id *raid)
+					const struct osmo_routing_area_id *raid)
 {
 	struct sgsn_mm_ctx *ctx;
 	int tlli_type;
@@ -153,7 +153,7 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_by_tlli_and_ptmsi(uint32_t tlli,
 	llist_for_each_entry(ctx, &sgsn->mm_list, list) {
 		if ((gprs_tmsi2tlli(ctx->p_tmsi, tlli_type) == tlli ||
 		     gprs_tmsi2tlli(ctx->p_tmsi_old, tlli_type) == tlli) &&
-		    gprs_ra_id_equals(raid, &ctx->ra))
+		    !osmo_rai_cmp(raid, &ctx->ra))
 			return ctx;
 	}
 
@@ -239,7 +239,7 @@ out:
 }
 /* Allocate a new SGSN MM context for GERAN_Gb */
 struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_gb(uint32_t tlli,
-					 const struct gprs_ra_id *raid)
+					 const struct osmo_routing_area_id *raid)
 {
 	struct sgsn_mm_ctx *ctx;
 
@@ -267,7 +267,7 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_iu(void *uectx)
 		return NULL;
 
 	/* Need to get RAID from IU conn */
-	ctx->ra = ue_ctx->ra_id;
+	gprs_rai_to_osmo(&ctx->ra, &ue_ctx->ra_id);
 	ctx->ran_type = MM_CTX_T_UTRAN_Iu;
 	ctx->iu.ue_ctx = ue_ctx;
 	ctx->iu.ue_ctx->rab_assign_addr_enc = sgsn->cfg.iu.rab_assign_addr_enc;

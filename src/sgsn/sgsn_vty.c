@@ -651,7 +651,7 @@ static void vty_dump_mmctx(struct vty *vty, const char *pfx,
 		pfx, mm->msisdn, id, mm->hlr, VTY_NEWLINE);
 	vty_out(vty, "%s  GMM State: %s, Routeing Area: %s, Cell ID: %u%s",
 		pfx, osmo_fsm_inst_state_name(mm->gmm_fsm),
-		osmo_rai_name(&mm->ra), mm->gb.cell_id, VTY_NEWLINE);
+		osmo_rai_name2(&mm->ra), mm->gb.cell_id, VTY_NEWLINE);
 	vty_out(vty, "%s  MM State: %s, RAN Type: %s%s", pfx, mm_state_name,
 		get_value_string(sgsn_ran_type_names, mm->ran_type), VTY_NEWLINE);
 

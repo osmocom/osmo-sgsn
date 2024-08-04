@@ -105,7 +105,7 @@ struct sgsn_mm_ctx {
 	char 			imei[GSM23003_IMEISV_NUM_DIGITS+1];
 	/* Opt: Software Version Numbber / TS 23.195 */
 	char 			msisdn[GSM_EXTENSION_LENGTH];
-	struct gprs_ra_id	ra;
+	struct osmo_routing_area_id	ra;
 	struct {
 		uint16_t		cell_id;	/* Gb only */
 		uint32_t		cell_id_age;	/* Gb only */
@@ -253,7 +253,7 @@ static inline bool sgsn_mm_ctx_is_authenticated(struct sgsn_mm_ctx *ctx)
 
 /* look-up a SGSN MM context based on TLLI + RAI */
 struct sgsn_mm_ctx *sgsn_mm_ctx_by_tlli(uint32_t tlli,
-					const struct gprs_ra_id *raid);
+					const struct osmo_routing_area_id *raid);
 struct sgsn_mm_ctx *sgsn_mm_ctx_by_ptmsi(uint32_t tmsi);
 struct sgsn_mm_ctx *sgsn_mm_ctx_by_imsi(const char *imsi);
 struct sgsn_mm_ctx *sgsn_mm_ctx_by_ue_ctx(const void *uectx);
@@ -261,11 +261,11 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_by_llme(const struct gprs_llc_llme *llme);
 
 /* look-up by matching TLLI and P-TMSI (think twice before using this) */
 struct sgsn_mm_ctx *sgsn_mm_ctx_by_tlli_and_ptmsi(uint32_t tlli,
-					const struct gprs_ra_id *raid);
+					const struct osmo_routing_area_id *raid);
 
 /* Allocate a new SGSN MM context */
 struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_gb(uint32_t tlli,
-					const struct gprs_ra_id *raid);
+					const struct osmo_routing_area_id *raid);
 struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_iu(void *uectx);
 
 void sgsn_mm_ctx_cleanup_free(struct sgsn_mm_ctx *ctx);

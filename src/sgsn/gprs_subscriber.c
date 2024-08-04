@@ -877,8 +877,8 @@ struct gprs_subscr *gprs_subscr_get_or_create_by_mmctx(struct sgsn_mm_ctx *mmctx
 
 	osmo_strlcpy(subscr->imei, mmctx->imei, sizeof(subscr->imei));
 
-	if (subscr->lac != mmctx->ra.lac)
-		subscr->lac = mmctx->ra.lac;
+	if (subscr->lac != mmctx->ra.lac.lac)
+		subscr->lac = mmctx->ra.lac.lac;
 
 	subscr->sgsn_data->mm = mmctx;
 	mmctx->subscr = gprs_subscr_get(subscr);
