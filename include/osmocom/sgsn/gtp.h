@@ -23,7 +23,7 @@ struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
 					 uint16_t nsapi,
 					 struct tlv_parsed *tp);
 
-int sgsn_gtp_data_req(struct gprs_ra_id *ra_id, int32_t tlli, uint8_t nsapi,
+int sgsn_gtp_data_req(struct osmo_routing_area_id *ra_id, int32_t tlli, uint8_t nsapi,
 		      struct msgb *msg, uint32_t npdu_len, uint8_t *npdu);
 int sgsn_delete_pdp_ctx(struct sgsn_pdp_ctx *pctx);
 int send_act_pdp_cont_acc(struct sgsn_pdp_ctx *pctx);

@@ -9,6 +9,7 @@
 
 struct sgsn_mm_ctx;
 struct gprs_llc_llme;
+struct osmo_routing_area_id;
 
 int gsm48_tx_gmm_auth_ciph_req(struct sgsn_mm_ctx *mm,
 				      const struct osmo_auth_vector *vec,
@@ -28,8 +29,8 @@ void gsm0408_gprs_access_denied(struct sgsn_mm_ctx *mmctx, int gmm_cause);
 void gsm0408_gprs_access_cancelled(struct sgsn_mm_ctx *mmctx, int gmm_cause);
 void gsm0408_gprs_authenticate(struct sgsn_mm_ctx *mmctx);
 
-int gprs_gmm_rx_suspend(struct gprs_ra_id *raid, uint32_t tlli);
-int gprs_gmm_rx_resume(struct gprs_ra_id *raid, uint32_t tlli,
+int gprs_gmm_rx_suspend(struct osmo_routing_area_id *raid, uint32_t tlli);
+int gprs_gmm_rx_resume(struct osmo_routing_area_id *raid, uint32_t tlli,
 		       uint8_t suspend_ref);
 
 int gsm0408_gprs_rcvmsg_gb(struct msgb *msg, struct gprs_llc_llme *llme,

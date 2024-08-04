@@ -143,7 +143,7 @@ struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
 					 uint16_t nsapi,
 					 struct tlv_parsed *tp)
 {
-	struct gprs_ra_id raid;
+	struct osmo_routing_area_id raid = {};
 	struct sgsn_pdp_ctx *pctx;
 	struct pdp_t *pdp;
 	uint64_t imsi_ui64;
@@ -273,9 +273,9 @@ struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
 	/* Routing Area Identifier with LAC and RAC fixed values, as
 	 * requested in 29.006 7.3.1 */
 	raid = mmctx->ra;
-	raid.lac = 0xFFFE;
+	raid.lac.lac = 0xFFFE;
 	raid.rac = 0xFF;
-	gsm48_encode_ra((struct gsm48_ra_id *)pdp->rai.v, &raid);
+	osmo_routing_area_id_encode_buf(pdp->rai.v, pdp->rai.l, &raid);
 
 	/* Encode User Location Information accordint to TS 29.060 7.7.51 */
 	pdp->userloc_given = 1;
@@ -290,12 +290,12 @@ struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
 		pdp->userloc_given = 1;
 		pdp->userloc.l = 8;
 		pdp->userloc.v[0] = 0; /* CGI for GERAN */
-		bssgp_create_cell_id(&pdp->userloc.v[1], &mmctx->ra, mmctx->gb.cell_id);
+		bssgp_create_cell_id2(&pdp->userloc.v[1], 8, &mmctx->ra, mmctx->gb.cell_id);
 		break;
 	case MM_CTX_T_UTRAN_Iu:
 		pdp->userloc.v[0] = 1; /* SAI for UTRAN */
 		/* SAI is like CGI but with SAC instead of CID, so we can abuse this function */
-		bssgp_create_cell_id(&pdp->userloc.v[1], &mmctx->ra, mmctx->iu.sac);
+		bssgp_create_cell_id2(&pdp->userloc.v[1], 8, &mmctx->ra, mmctx->iu.sac);
 		break;
 	}
 
@@ -684,7 +684,7 @@ static int cb_update_context_ind(struct pdp_t *pdp)
 			rc = osmo_fsm_inst_dispatch(mm->iu.mm_state_fsm, E_PMM_RX_GGSN_GTPU_DT_EI, pctx);
 			rc = gtp_update_context_resp(sgsn->gsn, pdp,
 				 GTPCAUSE_ACC_REQ);
-			ranap_iu_page_ps(mm->imsi, &mm->p_tmsi, mm->ra.lac, mm->ra.rac);
+			ranap_iu_page_ps(mm->imsi, &mm->p_tmsi, mm->ra.lac.lac, mm->ra.rac);
 			return rc;
 		}
 #endif
@@ -828,7 +828,7 @@ static int cb_data_ind(struct pdp_t *lib, void *packet, unsigned int len)
 		 * reestablished */
 		LOGMMCTXP(LOGL_INFO, mm, "Rx GTP for UE in PMM state %s, paging it\n",
 			  osmo_fsm_inst_state_name(mm->iu.mm_state_fsm));
-		ranap_iu_page_ps(mm->imsi, &mm->p_tmsi, mm->ra.lac, mm->ra.rac);
+		ranap_iu_page_ps(mm->imsi, &mm->p_tmsi, mm->ra.lac.lac, mm->ra.rac);
 
 		return 0;
 #else
@@ -890,7 +890,7 @@ static int cb_data_ind(struct pdp_t *lib, void *packet, unsigned int len)
 }
 
 /* Called by SNDCP when it has received/re-assembled a N-PDU */
-int sgsn_gtp_data_req(struct gprs_ra_id *ra_id, int32_t tlli, uint8_t nsapi,
+int sgsn_gtp_data_req(struct osmo_routing_area_id *ra_id, int32_t tlli, uint8_t nsapi,
 			 struct msgb *msg, uint32_t npdu_len, uint8_t *npdu)
 {
 	struct sgsn_mm_ctx *mmctx;

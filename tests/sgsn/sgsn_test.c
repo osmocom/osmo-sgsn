@@ -181,7 +181,7 @@ static struct msgb *create_msg(const uint8_t *data, size_t len)
 /*
  * Create a context and search for it
  */
-static struct sgsn_mm_ctx *alloc_mm_ctx(uint32_t tlli, struct gprs_ra_id *raid)
+static struct sgsn_mm_ctx *alloc_mm_ctx(uint32_t tlli, struct osmo_routing_area_id *raid)
 {
 	struct sgsn_mm_ctx *ctx, *ictx;
 	struct gprs_llc_lle *lle;
@@ -200,7 +200,7 @@ static struct sgsn_mm_ctx *alloc_mm_ctx(uint32_t tlli, struct gprs_ra_id *raid)
 }
 
 static void send_0408_message(struct gprs_llc_llme *llme, uint32_t tlli,
-			      const struct gprs_ra_id *bssgp_raid,
+			      const struct osmo_routing_area_id *bssgp_raid,
 			      const uint8_t *data, size_t data_len)
 {
 	struct msgb *msg;
@@ -210,7 +210,7 @@ static void send_0408_message(struct gprs_llc_llme *llme, uint32_t tlli,
 
 	msg = create_msg(data, data_len);
 	msgb_tlli(msg) = tlli;
-	bssgp_create_cell_id(msgb_bcid(msg), bssgp_raid, 0);
+	bssgp_create_cell_id2(msgb_bcid(msg), 8, bssgp_raid, 0);
 	gsm0408_gprs_rcvmsg_gb(msg, llme, false);
 	msgb_free(msg);
 }
@@ -375,7 +375,7 @@ static void test_auth_triplets(void)
 	const char *imsi1 = "1234567890";
 	struct gsm_auth_tuple *at;
 	struct sgsn_mm_ctx *ctx;
-	struct gprs_ra_id raid = { 0, };
+	struct osmo_routing_area_id raid = { 0, };
 	uint32_t local_tlli = 0xffeeddcc;
 
 	printf("Testing authentication triplet handling\n");
@@ -455,7 +455,7 @@ static void test_subscriber_gsup(void)
 	struct gprs_subscr *s1, *s1found;
 	const char *imsi1 = "1234567890";
 	struct sgsn_mm_ctx *ctx;
-	struct gprs_ra_id raid = { 0, };
+	struct osmo_routing_area_id raid = { 0, };
 	uint32_t local_tlli = 0xffeeddcc;
 	struct sgsn_subscriber_pdp_data *pdpd;
 	int rc;
@@ -740,7 +740,7 @@ int my_gsup_client_send_dummy(struct osmo_gsup_client *gsupc, struct msgb *msg)
  */
 static void test_gmm_detach(void)
 {
-	struct gprs_ra_id raid = { 0, };
+	struct osmo_routing_area_id raid = { 0, };
 	struct sgsn_mm_ctx *ctx, *ictx;
 	uint32_t local_tlli;
 
@@ -782,7 +782,7 @@ static void test_gmm_detach(void)
  */
 static void test_gmm_detach_power_off(void)
 {
-	struct gprs_ra_id raid = { 0, };
+	struct osmo_routing_area_id raid = { 0, };
 	struct sgsn_mm_ctx *ctx, *ictx;
 	uint32_t local_tlli;
 
@@ -823,7 +823,7 @@ static void test_gmm_detach_power_off(void)
  */
 static void test_gmm_detach_no_mmctx(void)
 {
-	struct gprs_ra_id raid = { 0, };
+	struct osmo_routing_area_id raid = { 0, };
 	struct gprs_llc_lle *lle;
 	uint32_t local_tlli;
 
@@ -860,7 +860,7 @@ static void test_gmm_detach_no_mmctx(void)
  */
 static void test_gmm_detach_accept_unexpected(void)
 {
-	struct gprs_ra_id raid = { 0, };
+	struct osmo_routing_area_id raid = { 0, };
 	struct gprs_llc_lle *lle;
 	uint32_t local_tlli;
 
@@ -897,7 +897,7 @@ static void test_gmm_detach_accept_unexpected(void)
  */
 static void test_gmm_status_no_mmctx(void)
 {
-	struct gprs_ra_id raid = { 0, };
+	struct osmo_routing_area_id raid = { 0, };
 	struct gprs_llc_lle *lle;
 	uint32_t local_tlli;
 
@@ -1092,7 +1092,7 @@ int my_gsup_client_send(struct osmo_gsup_client *gsupc, struct msgb *msg)
  */
 static void test_gmm_reject(void)
 {
-	struct gprs_ra_id raid = { 0, };
+	struct osmo_routing_area_id raid = { 0, };
 	struct sgsn_mm_ctx *ctx = NULL;
 	uint32_t foreign_tlli;
 	struct gprs_llc_lle *lle;
@@ -1237,7 +1237,7 @@ static void test_gmm_reject(void)
  */
 static void test_gmm_cancel(void)
 {
-	struct gprs_ra_id raid = { 0, };
+	struct osmo_routing_area_id raid = { 0, };
 	struct sgsn_mm_ctx *ctx = NULL;
 	struct sgsn_mm_ctx *ictx;
 	uint32_t ptmsi1;
@@ -1446,7 +1446,7 @@ static void test_ggsn_selection(void)
 	struct gprs_subscr *s1;
 	const char *imsi1 = "1234567890";
 	struct sgsn_mm_ctx *ctx;
-	struct gprs_ra_id raid = { 0, };
+	struct osmo_routing_area_id raid = { 0, };
 	uint32_t local_tlli = 0xffeeddcc;
 	enum gsm48_gsm_cause gsm_cause;
 	struct tlv_parsed tp;

@@ -26,6 +26,8 @@
 #include <osmocom/gprs/gprs_bssgp.h>
 #include <osmocom/gprs/gprs_ns2.h>
 
+#include <osmocom/gsm/gsm48.h>
+
 #include <osmocom/sgsn/gprs_llc.h>
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/sgsn_rim.h>
@@ -35,6 +37,7 @@
 int sgsn_bssgp_rx_prim(struct osmo_prim_hdr *oph)
 {
 	struct osmo_bssgp_prim *bp;
+	struct osmo_routing_area_id ra_id = {};
 	bp = container_of(oph, struct osmo_bssgp_prim, oph);
 
 	switch (oph->sap) {
@@ -45,11 +48,12 @@ int sgsn_bssgp_rx_prim(struct osmo_prim_hdr *oph)
 		}
 		break;
 	case SAP_BSSGP_GMM:
+		gprs_rai_to_osmo(&ra_id, bp->ra_id);
 		switch (oph->primitive) {
 		case PRIM_BSSGP_GMM_SUSPEND:
-			return gprs_gmm_rx_suspend(bp->ra_id, bp->tlli);
+			return gprs_gmm_rx_suspend(&ra_id, bp->tlli);
 		case PRIM_BSSGP_GMM_RESUME:
-			return gprs_gmm_rx_resume(bp->ra_id, bp->tlli,
+			return gprs_gmm_rx_resume(&ra_id, bp->tlli,
 						  bp->u.resume.suspend_ref);
 		}
 		break;
