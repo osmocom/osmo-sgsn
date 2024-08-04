@@ -20,6 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 #include <osmocom/core/prim.h>
 #include <osmocom/core/rate_ctr.h>
 
@@ -28,8 +29,54 @@
 
 #include <osmocom/sgsn/gprs_llc.h>
 #include <osmocom/sgsn/gprs_gmm.h>
+#include <osmocom/sgsn/gprs_routing_area.h>
 #include <osmocom/sgsn/sgsn_rim.h>
 #include <osmocom/sgsn/mmctx.h>
+
+void osmo_ra_id_to_gprs_ra_id(const struct osmo_routing_area_id *osmo_ra_id,
+			   struct gprs_ra_id *ra_id)
+{
+	OSMO_ASSERT(ra_id);
+	OSMO_ASSERT(osmo_ra_id);
+
+	ra_id->mcc = osmo_ra_id->lac.plmn.mcc;
+	ra_id->mnc = osmo_ra_id->lac.plmn.mnc;
+	ra_id->mnc_3_digits = osmo_ra_id->lac.plmn.mnc_3_digits;
+
+	ra_id->lac = osmo_ra_id->lac.lac;
+	ra_id->rac = osmo_ra_id->rac;
+}
+
+void gprs_ra_id_to_osmo_ra_id(const struct gprs_ra_id *ra_id,
+			      struct osmo_routing_area_id *osmo_ra_id)
+{
+	OSMO_ASSERT(ra_id);
+	OSMO_ASSERT(osmo_ra_id);
+
+	osmo_ra_id->lac.plmn.mcc = ra_id->mcc;
+	osmo_ra_id->lac.plmn.mnc = ra_id->mnc;
+	osmo_ra_id->lac.plmn.mnc_3_digits = ra_id->mnc_3_digits;
+
+	osmo_ra_id->lac.lac = ra_id->lac;
+	osmo_ra_id->rac = ra_id->rac;
+}
+
+int bssgp_nm_bvc_reset_ind(struct osmo_bssgp_prim *bp)
+{
+	struct osmo_cell_global_id_ps cgi_ps = {};
+
+	if (!bp->tp)
+		return -EINVAL;
+
+	if (!TLVP_PRES_LEN(bp->tp, BSSGP_IE_CELL_ID, 2))
+		return -EINVAL;
+
+	cgi_ps.cell_identity = osmo_load16be(TLVP_VAL(bp->tp, BSSGP_IE_CELL_ID));
+
+	/* FIXME: remove gprs_ra_id from sgsn */
+	gprs_ra_id_to_osmo_ra_id(bp->ra_id, &cgi_ps.rai);
+	return sgsn_rau_bvc_reset_ind(bp->nsei, bp->bvci, &cgi_ps);
+}
 
 /* call-back function for the BSSGP protocol */
 int sgsn_bssgp_rx_prim(struct osmo_prim_hdr *oph)
@@ -54,6 +101,22 @@ int sgsn_bssgp_rx_prim(struct osmo_prim_hdr *oph)
 		}
 		break;
 	case SAP_BSSGP_NM:
+		switch (oph->primitive) {
+		case PRIM_NM_LLC_DISCARDED:
+			/* Inform the LLC layer */
+			break;
+		case PRIM_NM_BVC_RESET:
+			if (oph->operation == PRIM_OP_INDICATION)
+				bssgp_nm_bvc_reset_ind(bp);
+			break;
+		case PRIM_NM_BVC_BLOCK:
+			break;
+		case PRIM_NM_BVC_UNBLOCK:
+			break;
+		case PRIM_NM_STATUS:
+			break;
+		}
+
 		break;
 	case SAP_BSSGP_RIM:
 		return sgsn_rim_rx_from_gb(bp, oph->msg);

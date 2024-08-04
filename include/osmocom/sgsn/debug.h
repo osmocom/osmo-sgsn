@@ -27,6 +27,7 @@ enum {
 	DGTP,
 	DOBJ,
 	DRIM,
+	DRAU, /* Routing Area handling */
 	Debug_LastEntry,
 };
 
