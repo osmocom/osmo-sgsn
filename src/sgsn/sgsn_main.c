@@ -64,6 +64,7 @@
 #include <osmocom/sgsn/gprs_ranap.h>
 #include <osmocom/sgsn/gprs_ns.h>
 #include <osmocom/sgsn/gprs_bssgp.h>
+#include <osmocom/sgsn/gprs_routing_area.h>
 #include <osmocom/sgsn/gprs_subscriber.h>
 #include <osmocom/sgsn/gtp.h>
 
@@ -348,6 +349,11 @@ static struct log_info_cat gprs_categories[] = {
 		.description = "RAN Information Management (RIM)",
 		.enabled = 1, .loglevel = LOGL_NOTICE,
 	},
+	[DRA] = {
+		.name = "DRA",
+		.description = "Routing Area",
+		.enabled = 1, .loglevel = LOGL_NOTICE,
+	},
 };
 
 static const struct log_info gprs_log_info = {
@@ -412,6 +418,7 @@ int main(int argc, char **argv)
 	}
 	sgsn->cfg.nsi = sgsn_nsi;
 	bssgp_set_bssgp_callback(sgsn_bssgp_dispatch_ns_unitdata_req_cb, sgsn_nsi);
+	sgsn_ra_init();
 
 	gprs_ns2_vty_init(sgsn_nsi);
 	bssgp_vty_init();
