@@ -20,6 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 #include <osmocom/core/prim.h>
 #include <osmocom/core/rate_ctr.h>
 
@@ -30,8 +31,25 @@
 
 #include <osmocom/sgsn/gprs_llc.h>
 #include <osmocom/sgsn/gprs_gmm.h>
+#include <osmocom/sgsn/gprs_routing_area.h>
 #include <osmocom/sgsn/sgsn_rim.h>
 #include <osmocom/sgsn/mmctx.h>
+
+#include <osmocom/sgsn/debug.h>
+
+static int bssgp_nm_bvc_reset_ind(struct osmo_bssgp_prim *bp)
+{
+	struct osmo_cell_global_id_ps cgi_ps = {};
+
+	if (!bp->tp)
+		return -EINVAL;
+
+	if (!TLVP_PRES_LEN(bp->tp, BSSGP_IE_CELL_ID, 8))
+		return -EINVAL;
+
+	bssgp_parse_cell_id2(&cgi_ps.rai, &cgi_ps.cell_identity, TLVP_VAL(bp->tp, BSSGP_IE_CELL_ID), 8);
+	return sgsn_ra_bvc_reset_ind(bp->nsei, bp->bvci, &cgi_ps);
+}
 
 /* call-back function for the BSSGP protocol */
 int sgsn_bssgp_rx_prim(struct osmo_prim_hdr *oph)
@@ -58,6 +76,18 @@ int sgsn_bssgp_rx_prim(struct osmo_prim_hdr *oph)
 		}
 		break;
 	case SAP_BSSGP_NM:
+		switch (oph->primitive) {
+		case PRIM_NM_BVC_RESET:
+			if (oph->operation == PRIM_OP_INDICATION)
+				bssgp_nm_bvc_reset_ind(bp);
+			break;
+		case PRIM_NM_BVC_BLOCK:
+		case PRIM_NM_BVC_UNBLOCK:
+		case PRIM_NM_STATUS:
+		case PRIM_NM_LLC_DISCARDED:
+			break;
+		}
+
 		break;
 	case SAP_BSSGP_RIM:
 		return sgsn_rim_rx_from_gb(bp, oph->msg);

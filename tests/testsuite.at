@@ -14,6 +14,13 @@ cat $abs_srcdir/sgsn/sgsn_test.ok > expout
 AT_CHECK([$abs_top_builddir/tests/sgsn/sgsn_test], [], [expout], [ignore])
 AT_CLEANUP
 
+AT_SETUP([gprs_routing_area])
+AT_KEYWORDS([gprs_routing_area])
+AT_CHECK([test "$enable_gprs_routing_area_test" != no || exit 77])
+cat $abs_srcdir/gprs_routing_area/gprs_routing_area_test.ok > expout
+AT_CHECK([$abs_top_builddir/tests/gprs_routing_area/gprs_routing_area_test], [], [expout], [ignore])
+AT_CLEANUP
+
 AT_SETUP([gtphub])
 AT_KEYWORDS([gtphub])
 AT_CHECK([test "$enable_gtphub_test" != no || exit 77])

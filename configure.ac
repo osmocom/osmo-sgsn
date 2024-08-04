@@ -243,6 +243,7 @@ AC_OUTPUT(
     tests/Makefile
     tests/atlocal
     tests/gprs/Makefile
+    tests/gprs_routing_area/Makefile
     tests/sgsn/Makefile
     tests/gtphub/Makefile
     tests/xid/Makefile

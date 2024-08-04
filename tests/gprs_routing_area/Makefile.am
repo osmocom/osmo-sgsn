@@ -25,32 +25,18 @@ endif
 AM_LDFLAGS = -no-install
 
 EXTRA_DIST = \
-	sgsn_test.ok \
+	gprs_routing_area_test.ok \
 	$(NULL)
 
 check_PROGRAMS = \
-	sgsn_test \
+	gprs_routing_area_test \
 	$(NULL)
 
-noinst_HEADERS = \
-	gprs_gb_parse.h \
+gprs_routing_area_test_SOURCES = \
+	gprs_routing_area_test.c \
 	$(NULL)
 
-sgsn_test_SOURCES = \
-	sgsn_test.c \
-	gprs_gb_parse.c \
-	$(NULL)
-
-sgsn_test_LDFLAGS = \
-	-Wl,--wrap=osmo_get_rand_id \
-	-Wl,--wrap=sgsn_update_subscriber_data \
-	-Wl,--wrap=gprs_subscr_request_update_location \
-	-Wl,--wrap=gprs_subscr_request_auth_info \
-	-Wl,--wrap=osmo_gsup_client_send \
-	$(AM_LDFLAGS) \
-	$(NULL)
-
-sgsn_test_LDADD = \
+gprs_routing_area_test_LDADD = \
 	$(top_builddir)/src/sgsn/apn.o \
 	$(top_builddir)/src/sgsn/gprs_bssgp.o \
 	$(top_builddir)/src/sgsn/gprs_llc.o \
@@ -97,7 +83,7 @@ sgsn_test_LDADD = \
 	$(NULL)
 
 if BUILD_IU
-sgsn_test_LDADD += \
+gprs_routing_area_test_LDADD += \
 	$(top_builddir)/src/sgsn/gprs_ranap.o \
 	$(top_builddir)/src/sgsn/gprs_mm_state_iu_fsm.o \
 	$(LIBOSMORANAP_LIBS) \

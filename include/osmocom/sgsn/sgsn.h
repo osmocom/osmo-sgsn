@@ -152,6 +152,9 @@ struct sgsn_instance {
 	ares_channel ares_channel;
 	struct ares_addr_node *ares_servers;
 
+	/* Routing areas */
+	struct sgsn_ra_global *routing_area;
+
 	struct rate_ctr_group *rate_ctrs;
 
 	struct llist_head apn_list; /* list of struct sgsn_apn_ctx */

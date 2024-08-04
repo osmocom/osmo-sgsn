@@ -55,6 +55,7 @@
 #include <osmocom/sgsn/gtp_ggsn.h>
 #include <osmocom/sgsn/gtp.h>
 #include <osmocom/sgsn/pdpctx.h>
+#include <osmocom/sgsn/gprs_routing_area.h>
 
 #include <pdp.h>
 
@@ -189,6 +190,7 @@ struct sgsn_instance *sgsn_instance_alloc(void *talloc_ctx)
 	/* These are mostly setting up stuff not related to VTY cfg, so they can be set up here: */
 	sgsn_auth_init(inst);
 	sgsn_cdr_init(inst);
+	sgsn_ra_init(inst);
 	return inst;
 }
 

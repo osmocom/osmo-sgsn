@@ -64,6 +64,7 @@
 #include <osmocom/sgsn/gprs_ranap.h>
 #include <osmocom/sgsn/gprs_ns.h>
 #include <osmocom/sgsn/gprs_bssgp.h>
+#include <osmocom/sgsn/gprs_routing_area.h>
 #include <osmocom/sgsn/gprs_subscriber.h>
 #include <osmocom/sgsn/gtp.h>
 
@@ -346,6 +347,11 @@ static struct log_info_cat gprs_categories[] = {
 	[DRIM] = {
 		.name = "DRIM",
 		.description = "RAN Information Management (RIM)",
+		.enabled = 1, .loglevel = LOGL_NOTICE,
+	},
+	[DRA] = {
+		.name = "DRA",
+		.description = "Routing Area",
 		.enabled = 1, .loglevel = LOGL_NOTICE,
 	},
 };

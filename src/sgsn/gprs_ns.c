@@ -28,6 +28,7 @@
 #include <osmocom/gprs/gprs_ns2.h>
 #include <osmocom/gprs/gprs_bssgp_bss.h>
 #include <osmocom/sgsn/gprs_llc.h>
+#include <osmocom/sgsn/gprs_routing_area.h>
 
 #include "config.h"
 
@@ -52,6 +53,7 @@ void gprs_ns_prim_status_cb(struct osmo_gprs_ns2_prim *nsp)
 		break;
 	case GPRS_NS2_AFF_CAUSE_FAILURE:
 		LOGP(DGPRS, LOGL_NOTICE, "NS-E %d became unavailable\n", nsp->nsei);
+		sgsn_ra_nsei_failure_ind(nsp->nsei);
 		break;
 	default:
 		LOGP(DGPRS, LOGL_NOTICE, "NS: %s Unknown prim %d from NS\n",
