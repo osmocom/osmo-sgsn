@@ -22,7 +22,6 @@
  */
 
 #include <osmocom/core/prim.h>
-#include <osmocom/core/rate_ctr.h>
 
 #include <osmocom/gprs/gprs_bssgp.h>
 #include <osmocom/gprs/gprs_ns2.h>
@@ -95,26 +94,20 @@ int sgsn_bssgp_rx_prim(struct osmo_prim_hdr *oph)
 	return 0;
 }
 
-int sgsn_bssgp_page_ps_ra(struct sgsn_mm_ctx *mmctx)
+int sgsn_bssgp_page_ps_bvci(struct sgsn_mm_ctx *mmctx, uint16_t nsei, uint16_t bvci)
 {
 	struct bssgp_paging_info pinfo;
-	int rc;
-
-	/* FIXME: page whole routing area, not only the last known cell */
 
 	/* initiate PS PAGING procedure */
 	memset(&pinfo, 0, sizeof(pinfo));
 	pinfo.mode = BSSGP_PAGING_PS;
 	pinfo.scope = BSSGP_PAGING_BVCI;
-	pinfo.bvci = mmctx->gb.bvci;
+	pinfo.bvci = bvci;
 	pinfo.imsi = mmctx->imsi;
 	pinfo.ptmsi = &mmctx->p_tmsi;
 	pinfo.drx_params = mmctx->drx_parms;
 	pinfo.qos[0] = 0; // FIXME
-	rc = bssgp_tx_paging(mmctx->gb.nsei, 0, &pinfo);
-	rate_ctr_inc(rate_ctr_group_get_ctr(mmctx->ctrg, GMM_CTR_PAGING_PS));
-
-	return rc;
+	return bssgp_tx_paging(nsei, 0, &pinfo);
 }
 
 /* called by the bssgp layer to send NS PDUs */

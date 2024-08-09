@@ -47,6 +47,7 @@
 #include <osmocom/sgsn/sgsn.h>
 #include <osmocom/sgsn/gprs_ns.h>
 #include <osmocom/sgsn/gprs_llc.h>
+#include <osmocom/sgsn/gprs_routing_area.h>
 #include <osmocom/sgsn/mmctx.h>
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/gprs_sm.h>
@@ -864,7 +865,7 @@ static int cb_data_ind(struct pdp_t *lib, void *packet, unsigned int len)
 			LOGMMCTXP(LOGL_INFO, mm, "Paging MS in GMM state %s, MM state %s\n",
 				  osmo_fsm_inst_state_name(mm->gmm_fsm),
 				  osmo_fsm_inst_state_name(mm->gb.mm_state_fsm));
-			sgsn_bssgp_page_ps_ra(mm);
+			sgsn_ra_geran_page_ra(&mm->ra, mm);
 
 			/* FIXME: queue the packet we received from GTP */
 			break;

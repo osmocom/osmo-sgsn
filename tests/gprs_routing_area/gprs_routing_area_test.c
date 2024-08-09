@@ -44,6 +44,17 @@
 void *tall_sgsn_ctx;
 struct sgsn_instance *sgsn;
 
+struct paging_exp {
+	uint16_t nsei;
+	uint16_t bvci;
+	/* paged when we send one paging request */
+	bool paged;
+	/* valid when this entry contains valid data */
+	bool valid;
+};
+
+struct paging_exp g_paging[4];
+
 static void cleanup_test(void)
 {
 	TALLOC_FREE(sgsn);
@@ -326,6 +337,93 @@ void test_routing_area_nsei_free(void)
 	cleanup_test();
 }
 
+/* BSSGP Paging RA */
+int bssgp_tx_paging(uint16_t nsei, uint16_t _bvci,
+		    struct bssgp_paging_info *pinfo)
+{
+	bool found = false;
+
+	OSMO_ASSERT(pinfo);
+	fprintf(stderr, "Tx paging for nsei %05u / bvci %05u\n", nsei, pinfo->bvci);
+	/* match against list of expect pagings */
+	for (int i = 0; i < ARRAY_SIZE(g_paging); i++) {
+		struct paging_exp *exp = &g_paging[i];
+		if (exp->paged || !exp->valid)
+			continue;
+
+		if (exp->nsei == nsei && exp->bvci == pinfo->bvci) {
+			exp->paged = true;
+			found = true;
+			break;
+		}
+	}
+
+	OSMO_ASSERT(found);
+	return 0;
+}
+
+static void check_paging(void)
+{
+	for (int i = 0; i < ARRAY_SIZE(g_paging); i++) {
+		struct paging_exp *exp = &g_paging[i];
+		if (!exp->valid)
+			continue;
+		OSMO_ASSERT(exp->paged)
+	}
+}
+
+void test_routing_area_paging(void)
+{
+	struct sgsn_mm_ctx *mmctx;
+	struct osmo_routing_area_id ra_id = {
+		.lac = {
+			.plmn = { .mcc = 262, .mnc = 42, .mnc_3_digits = false },
+			.lac = 24
+		},
+		.rac = 43
+	};
+
+	uint16_t cell_id = 9999;
+	struct osmo_cell_global_id_ps cgi_ps = {
+		.rai = ra_id,
+		.cell_identity = cell_id,
+	};
+
+	uint16_t nsei = 2, bvci = 3;
+	int rc;
+
+	printf("Testing Routing Area paging\n");
+
+	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
+
+	memset(g_paging, 0, sizeof(g_paging));
+	g_paging[0].bvci = bvci;
+	g_paging[0].nsei = nsei;
+	g_paging[0].valid = true;
+	g_paging[0].paged = false;
+
+	rc = sgsn_ra_bvc_reset_ind(nsei, bvci, &cgi_ps);
+	OSMO_ASSERT(rc == 0);
+
+	cgi_ps.cell_identity++;
+	rc = sgsn_ra_bvc_reset_ind(nsei, bvci+1, &cgi_ps);
+	OSMO_ASSERT(rc == 0);
+
+	g_paging[1].bvci = bvci+1;
+	g_paging[1].nsei = nsei;
+	g_paging[1].valid = true;
+	g_paging[1].paged = false;
+
+	mmctx = sgsn_mm_ctx_alloc_gb(0xc0001234, &ra_id);
+
+	sgsn_ra_geran_page_ra(&ra_id, mmctx);
+	check_paging();
+
+	sgsn_mm_ctx_cleanup_free(mmctx);
+
+	cleanup_test();
+}
+
 static struct log_info_cat gprs_categories[] = {
 	[DMM] = {
 		.name = "DMM",
@@ -387,6 +485,7 @@ int main(int argc, char **argv)
 	test_routing_area_free_empty();
 	test_routing_area_reset_ind();
 	test_routing_area_nsei_free();
+	test_routing_area_paging();
 	printf("Done\n");
 
 	talloc_report_full(osmo_sgsn_ctx, stderr);

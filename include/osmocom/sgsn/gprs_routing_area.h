@@ -9,6 +9,7 @@
 #include <osmocom/gsm/gsm23003.h>
 
 struct sgsn_instance;
+struct sgsn_mm_ctx;
 
 struct sgsn_ra_global {
 	/* list of struct sgsn_ra */
@@ -86,3 +87,6 @@ struct sgsn_ra *sgsn_ra_get_ra(const struct osmo_routing_area_id *ra_id);
 typedef int (sgsn_ra_cb_t)(struct sgsn_ra_cell *ra_cell, void *cb_data);
 int sgsn_ra_foreach_cell(struct sgsn_ra *ra, sgsn_ra_cb_t *cb, void *cb_data);
 int sgsn_ra_foreach_cell2(struct osmo_routing_area_id *rai, sgsn_ra_cb_t *cb, void *cb_data);
+
+/* Page the whole routing area for this mmctx */
+int sgsn_ra_geran_page_ra(struct osmo_routing_area_id *ra_id, struct sgsn_mm_ctx *mmctx);

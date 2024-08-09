@@ -22,11 +22,11 @@
 
 #include <osmocom/core/linuxlist.h>
 #include <osmocom/core/logging.h>
-#include <osmocom/sgsn/debug.h>
-
-
+#include <osmocom/core/rate_ctr.h>
 #include <osmocom/gsm/gsm48.h>
-
+#include <osmocom/sgsn/debug.h>
+#include <osmocom/sgsn/gprs_bssgp.h>
+#include <osmocom/sgsn/mmctx.h>
 #include <osmocom/sgsn/sgsn.h>
 
 #include <osmocom/sgsn/gprs_routing_area.h>
@@ -330,6 +330,28 @@ int sgsn_ra_nsei_failure_ind(uint16_t nsei)
 	return found ? 0 : -ENOENT;
 }
 
+int sgsn_ra_geran_page_ra(struct osmo_routing_area_id *ra_id, struct sgsn_mm_ctx *mmctx)
+{
+	struct sgsn_ra *ra;
+	struct sgsn_ra_cell *cell;
+	int ret = -ENOENT;
+
+	rate_ctr_inc(rate_ctr_group_get_ctr(mmctx->ctrg, GMM_CTR_PAGING_PS));
+
+	ra = sgsn_ra_get_ra(ra_id);
+	if (!ra)
+		return -ENOENT;
+
+	llist_for_each_entry(cell, &ra->cells, list) {
+		if (cell->ran_type == RA_TYPE_GERAN_Gb) {
+			sgsn_bssgp_page_ps_bvci(mmctx, cell->u.geran.nsei, cell->u.geran.bvci);
+			ret = 0;
+		}
+	}
+
+
+	return ret;
+}
 
 void sgsn_ra_init(struct sgsn_instance *inst)
 {
