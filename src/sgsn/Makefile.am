@@ -79,7 +79,6 @@ osmo_sgsn_LDADD = \
 	$(top_builddir)/src/gprs/gprs_utils.o \
 	$(top_builddir)/src/gprs/sgsn_ares.o \
 	$(OSMO_LIBS) \
-	$(LIBOSMOABIS_LIBS) \
 	$(LIBOSMOGSUPCLIENT_LIBS) \
 	$(LIBCARES_LIBS) \
 	$(LIBGTP_LIBS) \

@@ -27,7 +27,6 @@ xid_test_SOURCES = \
 
 xid_test_LDADD = \
 	$(top_builddir)/src/sgsn/gprs_llc_xid.o \
-	$(LIBOSMOABIS_LIBS) \
 	$(LIBOSMOCORE_LIBS) \
 	$(LIBOSMOGSM_LIBS) \
 	$(LIBOSMOGB_LIBS) \

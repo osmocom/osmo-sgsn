@@ -10,7 +10,6 @@ sndcp_xid_test_SOURCES = sndcp_xid_test.c
 
 sndcp_xid_test_LDADD = \
 	$(top_builddir)/src/sgsn/gprs_sndcp_xid.o \
-	$(LIBOSMOABIS_LIBS) \
 	$(LIBOSMOCORE_LIBS) \
 	$(LIBOSMOGSM_LIBS) \
 	$(LIBOSMOGB_LIBS) \
