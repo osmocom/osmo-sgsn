@@ -32,6 +32,7 @@
 #include "config.h"
 
 #include <osmocom/sgsn/debug.h>
+#include <osmocom/sgsn/gprs_routing_area.h>
 
 void gprs_ns_prim_status_cb(struct osmo_gprs_ns2_prim *nsp)
 {
@@ -51,6 +52,7 @@ void gprs_ns_prim_status_cb(struct osmo_gprs_ns2_prim *nsp)
 		}
 		break;
 	case GPRS_NS2_AFF_CAUSE_FAILURE:
+		sgsn_ra_nsei_unavailable_ind(nsp->nsei);
 		LOGP(DGPRS, LOGL_NOTICE, "NS-E %d became unavailable\n", nsp->nsei);
 		break;
 	default:

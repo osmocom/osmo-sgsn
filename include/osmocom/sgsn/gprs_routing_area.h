@@ -49,6 +49,9 @@ struct sgsn_ra *sgsn_ra_alloc(const struct osmo_routing_area_id *rai);
 void sgsn_ra_free(struct sgsn_ra *ra);
 void sgsn_ra_cell_free(struct sgsn_ra_cell *cell, bool drop_empty_ra);
 
+/* Called by NS layer to inform about unavailable NSEI */
+void sgsn_ra_nsei_unavailable_ind(uint16_t nsei);
+
 /* Called by BSSGP layer to inform about a reset on a BVCI */
 int sgsn_ra_bvc_reset_ind(uint16_t nsei, uint16_t bvci, struct osmo_cell_global_id_ps *cgi_ps);
 

@@ -282,6 +282,30 @@ int sgsn_ra_bvc_reset_ind(uint16_t nsei, uint16_t bvci, struct osmo_cell_global_
 	return 0;
 }
 
+/* All Cells using this NSEI become unavailable */
+void sgsn_ra_nsei_unavailable_ind(uint16_t nsei)
+{
+	struct sgsn_ra *ra, *ra2;
+	struct sgsn_ra_cell *cell, *cell2;
+
+	llist_for_each_entry_safe(ra, ra2, &sgsn_ra_ctx->ras, list) {
+		llist_for_each_entry_safe(cell, cell2, &ra->cells, list) {
+			if (cell->ran_type == RA_TYPE_GERAN_Gb && cell->u.geran.nsei == nsei) {
+				/* TODO: we need to take care of all MS in this cell.
+				 * What happens if a MS has an active data connection?
+				 * Delete Bearer towards GGSN? */
+				LOGP(DRA, LOGL_INFO, "Rau %s: Cell %d went offline because NSE (%d) failed\n",
+				     osmo_rai_name2(&ra->ra), cell->cell_id, nsei);
+				sgsn_ra_cell_free(cell, false);
+			}
+		}
+		/* Check if RA is empty */
+		if (llist_empty(&ra->cells)) {
+			sgsn_ra_free(ra);
+		}
+	}
+}
+
 void sgsn_ra_init()
 {
 	sgsn_ra_ctx = talloc_zero(sgsn, struct sgsn_ra_global);
