@@ -2,11 +2,10 @@
 
 #include <osmocom/core/linuxlist.h>
 #include <osmocom/core/logging.h>
-#include <osmocom/sgsn/debug.h>
-
-
 #include <osmocom/gsm/gsm48.h>
-
+#include <osmocom/sgsn/debug.h>
+#include <osmocom/sgsn/gprs_bssgp.h>
+#include <osmocom/sgsn/mmctx.h>
 #include <osmocom/sgsn/sgsn.h>
 
 #include <osmocom/sgsn/gprs_routing_area.h>
@@ -304,6 +303,26 @@ void sgsn_ra_nsei_unavailable_ind(uint16_t nsei)
 			sgsn_ra_free(ra);
 		}
 	}
+}
+
+int sgsn_ra_geran_page_ra(struct osmo_routing_area_id *ra_id, struct sgsn_mm_ctx *mmctx)
+{
+	struct sgsn_ra *ra;
+	struct sgsn_ra_cell *cell;
+	int ret = -ENOENT;
+
+	ra = sgsn_ra_get_ra(ra_id);
+	if (!ra)
+		return -ENOENT;
+
+	llist_for_each_entry(cell, &ra->cells, list) {
+		if (cell->ran_type == RA_TYPE_GERAN_Gb) {
+			sgsn_bssgp_page_ps_bvci(mmctx, cell->u.geran.nsei, cell->u.geran.bvci);
+			ret = 0;
+		}
+	}
+
+	return ret;
 }
 
 void sgsn_ra_init()

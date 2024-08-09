@@ -41,6 +41,7 @@
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/gprs_bssgp.h>
 #include <osmocom/sgsn/mmctx.h>
+#include <osmocom/sgsn/gprs_routing_area.h>
 #include <osmocom/sgsn/gtp_ggsn.h>
 #include <osmocom/sgsn/gtp_mme.h>
 #include <osmocom/sgsn/vty.h>
@@ -1333,7 +1334,8 @@ DEFUN(page_subscr, page_subscr_info_cmd,
 		return CMD_WARNING;
 	}
 
-	sgsn_bssgp_page_ps_ra(mm);
+	sgsn_ra_geran_page_ra(&mm->ra, mm);
+	rate_ctr_inc(rate_ctr_group_get_ctr(mm->ctrg, GMM_CTR_PAGING_PS));
 	return CMD_SUCCESS;
 }
 
