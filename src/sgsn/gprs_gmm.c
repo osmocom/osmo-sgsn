@@ -1429,25 +1429,18 @@ static int gsm48_rx_gmm_att_compl(struct sgsn_mm_ctx *mmctx)
 	return 0;
 }
 
-/* Checks if two attach request contain the IEs and IE values
+/* Checks if two GMM are the same (required diffing Attach Requests/RAU Requests
  * return 0 if equal
- * return -1 if error
- * return 1 if unequal
- *
- * Only do a simple memcmp for now.
  */
-int gprs_gmm_attach_req_ies(struct msgb *a, struct msgb *b)
+int gprs_gmm_msg_cmp(struct msgb *a, struct msgb *b)
 {
 	struct gsm48_hdr *gh_a = (struct gsm48_hdr *) msgb_gmmh(a);
 	struct gsm48_hdr *gh_b = (struct gsm48_hdr *) msgb_gmmh(b);
 
-#define GMM_ATTACH_REQ_LEN 26
+	if (msgb_l3len(a) != msgb_l3len(b))
+		return 2;
 
-	/* there is the LLC FCS behind */
-	if (msgb_l3len(a) < GMM_ATTACH_REQ_LEN || msgb_l3len(b) < GMM_ATTACH_REQ_LEN)
-		return -1;
-
-	return !!memcmp(gh_a, gh_b, GMM_ATTACH_REQ_LEN);
+	return memcmp(gh_a, gh_b, msgb_l3len(a));
 }
 
 /* 3GPP TS 24.008 § 4.7.4.1 / 9.4.5.2 MO Detach request */
