@@ -146,6 +146,15 @@ struct sgsn_mm_ctx {
 		uint32_t id_type;
 		unsigned int auth_reattempt; /* tracking UMTS resync auth attempts */
 	} gmm_att_req;
+	struct {
+		struct osmo_fsm_inst *fsm;
+
+		/* when a second attach req arrives while in this procedure,
+		 * the fsm needs to compare it against old to decide what to do */
+		struct msgb *rau_req;
+		uint32_t id_type;
+		unsigned int auth_reattempt; /* tracking UMTS resync auth attempts */
+	} gmm_rau_req;
 	/* VLR number */
 	uint32_t		new_sgsn_addr;
 	/* Authentication Triplet */
