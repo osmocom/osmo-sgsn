@@ -45,7 +45,7 @@ int gsm48_tx_gmm_att_rej(struct sgsn_mm_ctx *mm,
 				uint8_t gmm_cause);
 int gsm48_tx_gmm_att_ack(struct sgsn_mm_ctx *mm);
 
-int gprs_gmm_attach_req_ies(struct msgb *a, struct msgb *b);
+int gprs_gmm_msg_cmp(struct msgb *a, struct msgb *b);
 
 int gsm48_gmm_authorize(struct sgsn_mm_ctx *ctx);
 /* TODO: move extract_subscr_* when gsm48_gmm_authorize() got removed */

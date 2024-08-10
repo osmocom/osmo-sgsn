@@ -385,7 +385,7 @@ void gmm_attach_allstate_action(struct osmo_fsm_inst *fi, uint32_t event, void *
 			/* 04.08 4.7.3.1.6 d) Abnormal Case
 			 * Only do action if Req IEs differs. */
 			if (ctx->gmm_att_req.attach_req &&
-					gprs_gmm_attach_req_ies(new_attach_req, ctx->gmm_att_req.attach_req)) {
+					gprs_gmm_msg_cmp(new_attach_req, ctx->gmm_att_req.attach_req)) {
 				osmo_fsm_inst_state_chg(fi, ST_INIT, 0, 0);
 				st_init(fi, event, data);
 			}
