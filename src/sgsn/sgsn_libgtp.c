@@ -793,7 +793,8 @@ static int gtp_mm_ctx(uint8_t *buf, unsigned int size, const struct sgsn_mm_ctx 
 		return -1;
 
 	for (int i = 0; i < 5; i++) {
-		if (mmctx->subscr->sgsn_data->auth_triplets[i].key_seq != GSM_KEY_SEQ_INVAL)
+		const struct gsm_auth_tuple *auth = &mmctx->subscr->sgsn_data->auth_triplets[i];
+		if (auth->key_seq != GSM_KEY_SEQ_INVAL && auth->use_count == 0)
 			no_vecs++;
 	}
 	*ptr++ = (sec_mode << 6) | (no_vecs << 3) | (mmctx->ciph_algo & 0x7);
@@ -811,15 +812,14 @@ static int gtp_mm_ctx(uint8_t *buf, unsigned int size, const struct sgsn_mm_ctx 
 
     /* 7.7.35 Authentication Triplet/Quintuplet */
 	if ((sec_mode & 1) == 1) {
-			/* Triplets */
+		/* Triplets */
 		for (int i = 0; i < 5; i++) {
-			const struct osmo_auth_vector *auth = &mmctx->subscr->sgsn_data->auth_triplets[i].vec;
-			if (mmctx->subscr->sgsn_data->auth_triplets[i].key_seq == GSM_KEY_SEQ_INVAL)
+			const struct gsm_auth_tuple *auth = &mmctx->subscr->sgsn_data->auth_triplets[i];
+			if (auth->key_seq != GSM_KEY_SEQ_INVAL && auth->use_count == 0)
 				continue;
-
-			MEMCPY_CHK(ptr, auth->rand, sizeof(auth->rand));
-			MEMCPY_CHK(ptr, auth->sres, 4);
-			MEMCPY_CHK(ptr, auth->kc, 8);
+			MEMCPY_CHK(ptr, auth->vec.rand, sizeof(auth->vec.rand));
+			MEMCPY_CHK(ptr, auth->vec.sres, 4);
+			MEMCPY_CHK(ptr, auth->vec.kc, 8);
 		}
 	} else {
 		/* Quintuplets */
@@ -828,18 +828,18 @@ static int gtp_mm_ctx(uint8_t *buf, unsigned int size, const struct sgsn_mm_ctx 
 		ptr += 2;
 
 		for (int i = 0; i < 5; i++) {
-			const struct osmo_auth_vector *auth = &mmctx->subscr->sgsn_data->auth_triplets[i].vec;
-			if (mmctx->subscr->sgsn_data->auth_triplets[i].key_seq == GSM_KEY_SEQ_INVAL)
+			const struct gsm_auth_tuple *auth = &mmctx->subscr->sgsn_data->auth_triplets[i];
+			if (auth->key_seq != GSM_KEY_SEQ_INVAL && auth->use_count == 0)
 				continue;
-			MEMCPY_CHK(ptr, auth->rand, sizeof(auth->rand));
-			*ptr++ = auth->res_len;
-			MEMCPY_CHK(ptr, auth->res, auth->res_len);
+			MEMCPY_CHK(ptr, auth->vec.rand, sizeof(auth->vec.rand));
+			*ptr++ = auth->vec.res_len;
+			MEMCPY_CHK(ptr, auth->vec.res, auth->vec.res_len);
 
-			MEMCPY_CHK(ptr, auth->ck, sizeof(auth->ck));
-			MEMCPY_CHK(ptr, auth->ik, sizeof(auth->ik));
+			MEMCPY_CHK(ptr, auth->vec.ck, sizeof(auth->vec.ck));
+			MEMCPY_CHK(ptr, auth->vec.ik, sizeof(auth->vec.ik));
 
-			*ptr++ = sizeof(auth->autn);
-			MEMCPY_CHK(ptr, auth->autn, sizeof(auth->autn));
+			*ptr++ = sizeof(auth->vec.autn);
+			MEMCPY_CHK(ptr, auth->vec.autn, sizeof(auth->vec.autn));
 		}
 		*len_ptr = htobe16(ptr - (((uint8_t *)len_ptr) + 2));
 	}
