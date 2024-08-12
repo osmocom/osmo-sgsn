@@ -776,7 +776,11 @@ static int gtp_mm_ctx(uint8_t *buf, unsigned int size, const struct sgsn_mm_ctx 
 	(dst) += (len);
 
 	// CKSN
-	OSMO_ASSERT(mmctx->ran_type == MM_CTX_T_GERAN_Gb);
+	if (mmctx->ran_type != MM_CTX_T_GERAN_Gb) {
+		LOGP(DGPRS, LOGL_ERROR, "SGSN Context Request: MM ctx doesn't support Iu/3G yet!"); \
+		return -1;
+	}
+
 	// FIXME: KSI/CKSN for Iu?;
 	*ptr++ = 0xf8 | (mmctx->auth_triplet.key_seq & 0x07);
 
