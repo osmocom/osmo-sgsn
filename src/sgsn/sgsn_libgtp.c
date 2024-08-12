@@ -786,7 +786,7 @@ static int gtp_mm_ctx(uint8_t *buf, unsigned int size, const struct sgsn_mm_ctx 
 
 	// Sec Mode | No Vecs | Used Cipher
 	if (mmctx->auth_triplet.vec.auth_types & OSMO_AUTH_TYPE_UMTS)
-		sec_mode = 2;
+		sec_mode = 0;
 	else if (mmctx->auth_triplet.vec.auth_types & OSMO_AUTH_TYPE_GSM)
 		sec_mode = 1;
 	else
