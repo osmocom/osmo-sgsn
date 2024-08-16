@@ -841,6 +841,8 @@ static int gsm48_tx_gmm_service_rej(struct sgsn_mm_ctx *mm,
 }
 #endif
 
+static int gsm48_tx_gmm_ra_upd_ack(struct sgsn_mm_ctx *mm);
+
 /* Check if we can already authorize a subscriber */
 int gsm48_gmm_authorize(struct sgsn_mm_ctx *ctx)
 {
@@ -1465,7 +1467,7 @@ static int gsm48_rx_gmm_det_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 }
 
 /* Chapter 9.4.15: Routing area update accept */
-int gsm48_tx_gmm_ra_upd_ack(struct sgsn_mm_ctx *mm)
+static int gsm48_tx_gmm_ra_upd_ack(struct sgsn_mm_ctx *mm)
 {
 	struct msgb *msg = gsm48_msgb_alloc_name("GSM 04.08 UPD ACK");
 	struct gsm48_hdr *gh;
@@ -1527,7 +1529,7 @@ int gsm48_tx_gmm_ra_upd_ack(struct sgsn_mm_ctx *mm)
 }
 
 /* Chapter 9.4.17: Routing area update reject */
-int gsm48_tx_gmm_ra_upd_rej_msg(struct msgb *old_msg, uint8_t cause)
+int gsm48_tx_gmm_ra_upd_rej(struct msgb *old_msg, uint8_t cause)
 {
 	struct msgb *msg = gsm48_msgb_alloc_name("GSM 04.08 RA UPD REJ");
 	struct gsm48_hdr *gh;
@@ -1536,26 +1538,6 @@ int gsm48_tx_gmm_ra_upd_rej_msg(struct msgb *old_msg, uint8_t cause)
 	rate_ctr_inc(rate_ctr_group_get_ctr(sgsn->rate_ctrs, CTR_GPRS_ROUTING_AREA_REJECT));
 
 	gmm_copy_id(msg, old_msg);
-
-	gh = (struct gsm48_hdr *) msgb_put(msg, sizeof(*gh) + 2);
-	gh->proto_discr = GSM48_PDISC_MM_GPRS;
-	gh->msg_type = GSM48_MT_GMM_RA_UPD_REJ;
-	gh->data[0] = cause;
-	gh->data[1] = 0; /* ? */
-
-	/* Option: P-TMSI signature, allocated P-TMSI, MS ID, ... */
-	return gsm48_gmm_sendmsg(msg, 0, NULL, false);
-}
-
-int gsm48_tx_gmm_ra_upd_rej(struct sgsn_mm_ctx *mm, uint8_t cause)
-{
-	struct msgb *msg = gsm48_msgb_alloc_name("GSM 04.08 RA UPD REJ");
-	struct gsm48_hdr *gh;
-
-	LOGP(DMM, LOGL_NOTICE, "<- ROUTING AREA UPDATE REJECT\n");
-	rate_ctr_inc(rate_ctr_group_get_ctr(sgsn->rate_ctrs, CTR_GPRS_ROUTING_AREA_REJECT));
-
-	mmctx2msgid(msg, mm);
 
 	gh = (struct gsm48_hdr *) msgb_put(msg, sizeof(*gh) + 2);
 	gh->proto_discr = GSM48_PDISC_MM_GPRS;
@@ -1799,7 +1781,7 @@ rejected:
 	LOGMMCTXP(LOGL_NOTICE, mmctx,
 		  "Rejecting RA Update Request with cause '%s' (%d)\n",
 		  get_value_string(gsm48_gmm_cause_names, reject_cause), reject_cause);
-	rc = gsm48_tx_gmm_ra_upd_rej_msg(msg, reject_cause);
+	rc = gsm48_tx_gmm_ra_upd_rej(msg, reject_cause);
 	if (mmctx)
 		mm_ctx_cleanup_free(mmctx, "GMM RA UPDATE REJ");
 	else if (llme)

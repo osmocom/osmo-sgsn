@@ -44,10 +44,6 @@ int gsm48_tx_gmm_id_req(struct sgsn_mm_ctx *mm, uint8_t id_type);
 int gsm48_tx_gmm_att_rej(struct sgsn_mm_ctx *mm,
 				uint8_t gmm_cause);
 int gsm48_tx_gmm_att_ack(struct sgsn_mm_ctx *mm);
-int gsm48_tx_gmm_ra_upd_ack(struct sgsn_mm_ctx *mm);
-int gsm48_tx_gmm_ra_upd_rej(struct sgsn_mm_ctx *mm, uint8_t cause);
-int gsm48_tx_gmm_ra_upd_rej_msg(struct msgb *old_msg, uint8_t cause);
-
 
 int gprs_gmm_msg_cmp(struct msgb *a, struct msgb *b);
 
