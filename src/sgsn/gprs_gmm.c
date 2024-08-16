@@ -63,30 +63,12 @@
 #include <osmocom/sgsn/gprs_sm.h>
 #include <osmocom/sgsn/gtp.h>
 #include <osmocom/sgsn/pdpctx.h>
+#include <osmocom/sgsn/gprs_gmm_util.h>
 
 #include <pdp.h>
 
 #define PTMSI_ALLOC
 
-static const struct tlv_definition gsm48_gmm_att_tlvdef = {
-	.def = {
-		[GSM48_IE_GMM_CIPH_CKSN]	= { TLV_TYPE_SINGLE_TV, 1 },
-		[GSM48_IE_GMM_TIMER_READY]	= { TLV_TYPE_TV, 1 },
-		[GSM48_IE_GMM_ALLOC_PTMSI]	= { TLV_TYPE_TLV, 0 },
-		[GSM48_IE_GMM_PTMSI_SIG]	= { TLV_TYPE_FIXED, 3 },
-		[GSM48_IE_GMM_AUTH_RAND]	= { TLV_TYPE_FIXED, 16 },
-		[GSM48_IE_GMM_AUTH_SRES]	= { TLV_TYPE_FIXED, 4 },
-		[GSM48_IE_GMM_AUTH_RES_EXT]	= { TLV_TYPE_TLV, 0 },
-		[GSM48_IE_GMM_AUTH_FAIL_PAR]	= { TLV_TYPE_TLV, 0 },
-		[GSM48_IE_GMM_IMEISV]		= { TLV_TYPE_TLV, 0 },
-		[GSM48_IE_GMM_RX_NPDU_NUM_LIST] = { TLV_TYPE_TLV, 0 },
-		[GSM48_IE_GMM_DRX_PARAM]	= { TLV_TYPE_FIXED, 2 },
-		[GSM48_IE_GMM_MS_NET_CAPA]	= { TLV_TYPE_TLV, 0 },
-		[GSM48_IE_GMM_PDP_CTX_STATUS]	= { TLV_TYPE_TLV, 0 },
-		[GSM48_IE_GMM_PS_LCS_CAPA]	= { TLV_TYPE_TLV, 0 },
-		[GSM48_IE_GMM_GMM_MBMS_CTX_ST]	= { TLV_TYPE_TLV, 0 },
-	},
-};
 
 /* Our implementation, should be kept in SGSN */
 
@@ -635,7 +617,7 @@ static int gsm48_rx_gmm_auth_ciph_resp(struct sgsn_mm_ctx *ctx,
 	/* Stop T3360 */
 	mmctx_timer_stop(ctx, 3360);
 
-	tlv_parse(&tp, &gsm48_gmm_att_tlvdef, acr->data,
+	tlv_parse(&tp, &gsm48_gmm_ie_tlvdef, acr->data,
 			(msg->data + msg->len) - acr->data, 0, 0);
 
 	if (!TLVP_PRESENT(&tp, GSM48_IE_GMM_AUTH_SRES) ||
@@ -694,7 +676,7 @@ static int gsm48_rx_gmm_auth_ciph_fail(struct sgsn_mm_ctx *ctx,
 	LOGMMCTXP(LOGL_INFO, ctx, "-> GMM AUTH AND CIPH FAILURE (cause = %s)\n",
 		  get_value_string(gsm48_gmm_cause_names, gmm_cause));
 
-	tlv_parse(&tp, &gsm48_gmm_att_tlvdef, gh->data+1, msg->len - 1, 0, 0);
+	tlv_parse(&tp, &gsm48_gmm_ie_tlvdef, gh->data+1, msg->len - 1, 0, 0);
 
 	/* Only if GMM cause is present and the AUTS is provided, we can
 	 * start re-sync procedure */
@@ -1651,7 +1633,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 
 	/* Optional: Old P-TMSI Signature, Requested READY timer, TMSI Status,
 	 * DRX parameter, MS network capability */
-	tlv_parse(&tp, &gsm48_gmm_att_tlvdef, cur,
+	tlv_parse(&tp, &gsm48_gmm_ie_tlvdef, cur,
 			(msg->data + msg->len) - cur, 0, 0);
 
 	switch (upd_type) {
@@ -1937,7 +1919,7 @@ static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 	LOGPC(DMM, LOGL_INFO, "\n");
 
 	/* Optional: PDP context status, MBMS context status, Uplink data status, Device properties */
-	tlv_parse(&tp, &gsm48_gmm_att_tlvdef, cur, (msg->data + msg->len) - cur, 0, 0);
+	tlv_parse(&tp, &gsm48_gmm_ie_tlvdef, cur, (msg->data + msg->len) - cur, 0, 0);
 
 	switch (mi.type) {
 	case GSM_MI_TYPE_IMSI:
