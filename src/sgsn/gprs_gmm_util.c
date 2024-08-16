@@ -23,9 +23,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <osmocom/core/msgb.h>
+#include <osmocom/gprs/gprs_msgb.h>
 #include <osmocom/gsm/gsm48.h>
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 #include <osmocom/gsm/tlv.h>
+
+#include <osmocom/sgsn/gprs_gmm_util.h>
 
 const struct tlv_definition gsm48_gmm_ie_tlvdef = {
 	.def = {
@@ -47,3 +51,61 @@ const struct tlv_definition gsm48_gmm_ie_tlvdef = {
 	},
 };
 
+/*! Parse 24.008 9.4.14 RAU Request
+ * \param[in] msg l3 pointers must point to gmm.
+ * \param[out] rau_req parsed RA update request
+ * \returns 0 on success or GMM cause
+ */
+int gprs_gmm_parse_ra_upd_req(struct msgb *msg, struct gprs_gmm_ra_upd_req *rau_req)
+{
+	uint8_t *cur, len;
+	size_t mandatory_fields_len;
+	struct gsm48_hdr *gh;
+	int ret;
+
+	OSMO_ASSERT(msg);
+	OSMO_ASSERT(rau_req);
+
+	memset(rau_req, 0, sizeof(struct gprs_gmm_ra_upd_req));
+
+	/* all mandatory fields + variable length MS Radio Cap (min value) */
+	if (msgb_l3len(msg) < 16)
+		return GMM_CAUSE_PROTO_ERR_UNSPEC;
+
+	gh = (struct gsm48_hdr *) msgb_gmmh(msg);
+	cur = gh->data;
+
+	rau_req->skip_ind = gh->proto_discr >> 4;
+
+	/* V: Update Type 10.5.5.18 */
+	rau_req->update_type = *cur & 0x07;
+	rau_req->follow_up_req = !!(*cur & 0x08);
+	/* V: GPRS Ciphering Key Sequence 10.5.1.2 */
+	rau_req->cksq = *cur >> 4;
+	cur++;
+
+	/* V: Old routing area identification 10.5.5.15 */
+	osmo_routing_area_id_decode(&rau_req->old_rai, cur, 6);
+	cur += 6;
+
+	/* LV: MS radio cap 10.5.5.12a */
+	len = *cur++;
+	if (msgb_l3len(msg) < (len + (cur - msgb_gmmh(msg))))
+		return GMM_CAUSE_PROTO_ERR_UNSPEC;
+
+	rau_req->ms_radio_cap = cur;
+	rau_req->ms_radio_cap_len = len;
+	cur += len;
+
+	mandatory_fields_len = (cur - msgb_gmmh(msg));
+	if (msgb_l3len(msg) == mandatory_fields_len)
+		return 0;
+
+	ret = tlv_parse(&rau_req->tlv, &gsm48_gmm_ie_tlvdef,
+		  cur, msgb_l3len(msg) - mandatory_fields_len, 0, 0);
+
+	if (ret < 0)
+		return GMM_CAUSE_COND_IE_ERR;
+
+	return 0;
+}

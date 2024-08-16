@@ -1594,14 +1594,15 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 #ifndef PTMSI_ALLOC
 	struct sgsn_signal_data sig_data;
 #endif
-	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
-	uint8_t *cur = gh->data;
-	uint8_t ms_ra_acc_cap_len;
-	struct osmo_routing_area_id old_ra_id;
-	struct tlv_parsed tp;
-	uint8_t upd_type;
 	enum gsm48_gmm_cause reject_cause = GMM_CAUSE_PROTO_ERR_UNSPEC;
+	struct gprs_gmm_ra_upd_req req;
 	int rc;
+
+	rc = gprs_gmm_parse_ra_upd_req(msg, &req);
+	if (rc) {
+		reject_cause = rc;
+		goto rejected;
+	}
 
 	/* TODO: In iu mode - handle follow-on request.
 	 * The follow-on request can be signaled in an Attach Request on IuPS.
@@ -1609,37 +1610,14 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	 * after the Attach Request succeed.
 	 * The SGSN can decide if it close the connection or not. Both are spec conform. */
 
-	/* Update Type 10.5.5.18 */
-	upd_type = *cur++ & 0x07;
-
 	rate_ctr_inc(rate_ctr_group_get_ctr(sgsn->rate_ctrs, CTR_GPRS_ROUTING_AREA_REQUEST));
 	LOGMMCTXP(LOGL_INFO, mmctx, "-> GMM RA UPDATE REQUEST type=\"%s\"\n",
-		get_value_string(gprs_upd_t_strs, upd_type));
+		get_value_string(gprs_upd_t_strs, req.update_type));
 
-	/* Old routing area identification 10.5.5.15 */
-	osmo_routing_area_id_decode(&old_ra_id, cur, msgb_l3len(msg) - (cur - msgb_gmmh(msg)));
-	cur += 6;
-
-	/* MS Radio Access Capability 10.5.5.12a */
-	ms_ra_acc_cap_len = *cur++;
-	if (ms_ra_acc_cap_len > 52) {
-		LOGMMCTXP(LOGL_ERROR, mmctx,
-		     "Rejecting GMM RA Update Request: MS Radio Access Capability too long"
-		     " (ms_ra_acc_cap_len = %u > 52)\n", ms_ra_acc_cap_len);
-		reject_cause = GMM_CAUSE_PROTO_ERR_UNSPEC;
-		goto rejected;
-	}
-	cur += ms_ra_acc_cap_len;
-
-	/* Optional: Old P-TMSI Signature, Requested READY timer, TMSI Status,
-	 * DRX parameter, MS network capability */
-	tlv_parse(&tp, &gsm48_gmm_ie_tlvdef, cur,
-			(msg->data + msg->len) - cur, 0, 0);
-
-	switch (upd_type) {
+	switch (req.update_type) {
 	case GPRS_UPD_T_RA_LA:
 	case GPRS_UPD_T_RA_LA_IMSI_ATT:
-		LOGMMCTXP(LOGL_NOTICE, mmctx, "Update type %i unsupported in Mode III, is your SI13 corrupt?\n", upd_type);
+		LOGMMCTXP(LOGL_NOTICE, mmctx, "Update type %d unsupported in Mode III, is your SI13 corrupt?\n", req.update_type);
 		reject_cause = GMM_CAUSE_PROTO_ERR_UNSPEC;
 		goto rejected;
 	case GPRS_UPD_T_RA:
@@ -1658,13 +1636,13 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		/* Look-up the MM context based on old RA-ID and TLLI */
 		if (!MSG_IU_UE_CTX(msg)) {
 			/* Gb */
-			mmctx = sgsn_mm_ctx_by_tlli_and_ptmsi(msgb_tlli(msg), &old_ra_id);
-		} else if (TLVP_PRESENT(&tp, GSM48_IE_GMM_ALLOC_PTMSI)) {
+			mmctx = sgsn_mm_ctx_by_tlli_and_ptmsi(msgb_tlli(msg), &req.old_rai);
+		} else if (TLVP_PRESENT(&req.tlv, GSM48_IE_GMM_ALLOC_PTMSI)) {
 #ifdef BUILD_IU
 			/* In Iu mode search only for ptmsi */
 			struct osmo_mobile_identity mi;
-			if (osmo_mobile_identity_decode(&mi, TLVP_VAL(&tp, GSM48_IE_GMM_ALLOC_PTMSI),
-							TLVP_LEN(&tp, GSM48_IE_GMM_ALLOC_PTMSI), false)
+			if (osmo_mobile_identity_decode(&mi, TLVP_VAL(&req.tlv, GSM48_IE_GMM_ALLOC_PTMSI),
+							TLVP_LEN(&req.tlv, GSM48_IE_GMM_ALLOC_PTMSI), false)
 			    || mi.type != GSM_MI_TYPE_TMSI) {
 				LOGIUP(MSG_IU_UE_CTX(msg), LOGL_ERROR, "Cannot decode P-TMSI\n");
 				goto rejected;
@@ -1692,7 +1670,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 				osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_GMM_COMMON_PROC_INIT_REQ, NULL);
 
 		}
-	} else if (osmo_rai_cmp(&mmctx->ra, &old_ra_id) ||
+	} else if (osmo_rai_cmp(&mmctx->ra, &req.old_rai) ||
 		mmctx->gmm_fsm->state == ST_GMM_DEREGISTERED)
 	{
 		/* We've received either a RAU for a MS which isn't registered
@@ -1707,11 +1685,11 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		if (mmctx->gmm_fsm->state == ST_GMM_DEREGISTERED)
 			LOGMMCTXP(LOGL_INFO, mmctx,
 				  "Rejecting RAU - GMM state is deregistered. Old RA: %s New RA: %s\n",
-				  osmo_rai_name2(&old_ra_id), new_ra);
+				  osmo_rai_name2(&req.old_rai), new_ra);
 		else
 			LOGMMCTXP(LOGL_INFO, mmctx,
 				  "Rejecting RAU - Old RA doesn't match MM. Old RA: %s New RA: %s\n",
-				  osmo_rai_name2(&old_ra_id), new_ra);
+				  osmo_rai_name2(&req.old_rai), new_ra);
 
 		reject_cause = GMM_CAUSE_IMPL_DETACHED;
 		goto rejected;
@@ -1732,7 +1710,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 			mmctx = sgsn_mm_ctx_by_llme(llme);
 			if (mmctx) {
 				char old_ra_id_name[32];
-				osmo_rai_name2_buf(old_ra_id_name, sizeof(old_ra_id_name), &old_ra_id);
+				osmo_rai_name2_buf(old_ra_id_name, sizeof(old_ra_id_name), &req.old_rai);
 				LOGMMCTXP(LOGL_NOTICE, mmctx,
 					  "Rx RA Update Request with unexpected TLLI=%08x Old RA=%s (expected Old RA: %s)!\n",
 					  msgb_tlli(msg), old_ra_id_name, osmo_rai_name2(&mmctx->ra));
@@ -1764,8 +1742,8 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		mmctx->gb.tlli = msgb_tlli(msg);
 	}
 	/* Update the MM context with the new DRX params */
-	if (TLVP_PRESENT(&tp, GSM48_IE_GMM_DRX_PARAM))
-		memcpy(&mmctx->drx_parms, TLVP_VAL(&tp, GSM48_IE_GMM_DRX_PARAM), sizeof(mmctx->drx_parms));
+	if (TLVP_PRESENT(&req.tlv, GSM48_IE_GMM_DRX_PARAM))
+		memcpy(&mmctx->drx_parms, TLVP_VAL(&req.tlv, GSM48_IE_GMM_DRX_PARAM), sizeof(mmctx->drx_parms));
 
 	/* FIXME: Update the MM context with the MS radio acc capabilities */
 	/* FIXME: Update the MM context with the MS network capabilities */
@@ -1798,8 +1776,8 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 
 	/* Look at PDP Context Status IE and see if MS's view of
 	 * activated/deactivated NSAPIs agrees with our view */
-	if (TLVP_PRESENT(&tp, GSM48_IE_GMM_PDP_CTX_STATUS)) {
-		const uint8_t *pdp_status = TLVP_VAL(&tp, GSM48_IE_GMM_PDP_CTX_STATUS);
+	if (TLVP_PRESENT(&req.tlv, GSM48_IE_GMM_PDP_CTX_STATUS)) {
+		const uint8_t *pdp_status = TLVP_VAL(&req.tlv, GSM48_IE_GMM_PDP_CTX_STATUS);
 		process_ms_ctx_status(mmctx, pdp_status);
 	}
 
