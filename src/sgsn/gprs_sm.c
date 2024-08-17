@@ -114,9 +114,14 @@ static void pdpctx_timer_start(struct sgsn_pdp_ctx *pdp, unsigned int T)
 
 static void pdpctx_timer_stop(struct sgsn_pdp_ctx *pdp, unsigned int T)
 {
-	if (pdp->T != T)
+	if (!osmo_timer_pending(&pdp->timer)) {
+		LOGPDPCTXP(LOGL_NOTICE, pdp, "Stopping *inactive* PDP timer %u\n", T);
+		return;
+	}
+	if (pdp->T != T) {
 		LOGPDPCTXP(LOGL_ERROR, pdp, "Stopping PDP timer %u but "
 			"%u is running\n", T, pdp->T);
+	}
 	osmo_timer_del(&pdp->timer);
 }
 
