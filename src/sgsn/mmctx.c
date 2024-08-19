@@ -105,6 +105,21 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_by_ue_ctx(const void *uectx)
 	return NULL;
 }
 
+
+/* look-up an SGSN MM context based on Gb LLME context (struct gprs_llc_llme)*/
+struct sgsn_mm_ctx *sgsn_mm_ctx_by_llme(const struct gprs_llc_llme *llme)
+{
+	struct sgsn_mm_ctx *ctx;
+
+	llist_for_each_entry (ctx, &sgsn->mm_list, list) {
+		if (ctx->ran_type == MM_CTX_T_GERAN_Gb
+		    && llme == ctx->gb.llme)
+			return ctx;
+	}
+
+	return NULL;
+}
+
 /* look-up a SGSN MM context based on TLLI + RAI */
 struct sgsn_mm_ctx *sgsn_mm_ctx_by_tlli(uint32_t tlli,
 					const struct gprs_ra_id *raid)
