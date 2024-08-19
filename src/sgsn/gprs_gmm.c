@@ -1748,6 +1748,21 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 			 * in the MS */
 			LOGGBP(llme, DMM, LOGL_NOTICE, "LLC XID RESET\n");
 			gprs_llgmm_reset_oldmsg(msg, GPRS_SAPI_GMM, llme);
+
+			/* The RAU didn't come from expected TLLI+RAI, so it's for sure bad and should be rejected.
+			 * In any case, before unassigning (freeing) the LLME during the REJECT below, make sure
+			 * beforehand that if there's an mmctx relating to that llme it is also freed.
+			 * Otherwise it would be kept pointining at a dangling freed llme object.
+			 */
+			mmctx = sgsn_mm_ctx_by_llme(llme);
+			if (mmctx) {
+				char old_ra_id_name[32];
+				osmo_rai_name_buf(old_ra_id_name, sizeof(old_ra_id_name), &old_ra_id);
+				LOGMMCTXP(LOGL_NOTICE, mmctx,
+					  "Rx RA Update Request with unexpected TLLI=%08x Old RA=%s (expected Old RA: %s)!\n",
+					  msgb_tlli(msg), old_ra_id_name, osmo_rai_name(&mmctx->ra));
+				/* mmctx will be released (and its llme un assigned) after REJECT below. */
+			}
 		}
 		/* The MS has to perform GPRS attach */
 		/* Device is still IMSI attached for CS but initiate GPRS ATTACH,
