@@ -1112,7 +1112,7 @@ int gprs_llgmm_assign(struct gprs_llc_llme *llme,
 		llme->state = GPRS_LLMS_ASSIGNED;
 	} else if (old_tlli != TLLI_UNASSIGNED && new_tlli == TLLI_UNASSIGNED) {
 		/* TLLI Unassignment 8.3.3) */
-		llme->tlli = llme->old_tlli = 0;
+		llme->tlli = llme->old_tlli = TLLI_UNASSIGNED;
 		llme->state = GPRS_LLMS_UNASSIGNED;
 		for (i = 0; i < ARRAY_SIZE(llme->lle); i++) {
 			struct gprs_llc_lle *l = &llme->lle[i];
