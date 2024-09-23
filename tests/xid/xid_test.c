@@ -73,8 +73,8 @@ static void test_xid_encode(const void *ctx)
 	/* Encode data */
 	rc = gprs_llc_compile_xid(xid, sizeof(xid), &xid_fields);
 	OSMO_ASSERT(rc == 14);
-	printf("Encoded:  %s (%i bytes)\n", osmo_hexdump_nospc(xid, rc), rc);
-	printf("Expected: %s (%i bytes)\n",
+	printf("Encoded:  %s (%d bytes)\n", osmo_hexdump_nospc(xid, rc), rc);
+	printf("Expected: %s (%d bytes)\n",
 	       osmo_hexdump_nospc(xid_expected, sizeof(xid_expected)),
 	       (int)sizeof(xid_expected));
 
@@ -112,7 +112,7 @@ static void test_xid_decode(const void *ctx)
 
 	/* Encode xid-fields again */
 	rc = gprs_llc_compile_xid(xid_r, sizeof(xid_r), xid_fields);
-	printf("Result length=%i\n",rc);
+	printf("Result length=%d\n", rc);
 	printf("Encoded:  %s\n", osmo_hexdump_nospc(xid, sizeof(xid)));
 	printf("Rencoded: %s\n", osmo_hexdump_nospc(xid_r, rc));
 

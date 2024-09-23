@@ -55,7 +55,7 @@ static void test_xid_decode_realworld(const void *ctx)
 	/* Encode comp-fields again */
 	rc = gprs_sndcp_compile_xid(xid_r,sizeof(xid_r), comp_fields,
 				    DEFAULT_SNDCP_VERSION);
-	printf("Result length=%i\n",rc);
+	printf("Result length=%d\n", rc);
 	printf("Encoded:  %s\n", osmo_hexdump_nospc(xid, sizeof(xid)));
 	printf("Rencoded: %s\n", osmo_hexdump_nospc(xid_r, rc));
 
@@ -231,7 +231,7 @@ static void test_xid_encode_decode(const void *ctx)
 				    DEFAULT_SNDCP_VERSION);
 	OSMO_ASSERT(rc > 0);
 
-	printf("Encoded:  %s (%i bytes)\n", osmo_hexdump_nospc(xid, rc), rc);
+	printf("Encoded:  %s (%d bytes)\n", osmo_hexdump_nospc(xid, rc), rc);
 
 	/* Parse and show contained comp fields */
 	comp_fields_dec = gprs_sndcp_parse_xid(NULL, ctx, xid, rc, NULL);

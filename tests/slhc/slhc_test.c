@@ -209,12 +209,12 @@ static void test_slhc(const void *ctx)
 			packet_len = DISP_MAX_BYTES;
 		if (packet_decompr_len > DISP_MAX_BYTES)
 			packet_decompr_len = DISP_MAX_BYTES;
-		printf("Original Packet:    (%i bytes) %s\n", packet_len,
+		printf("Original Packet:    (%d bytes) %s\n", packet_len,
 		       osmo_hexdump_nospc(packet, packet_len));
-		printf("DecompressedPacket: (%i bytes) %s\n",
+		printf("DecompressedPacket: (%d bytes) %s\n",
 		       packet_decompr_len, osmo_hexdump_nospc(packet_decompr,
 							      packet_decompr_len));
-		printf("CompressedPacket:   (%i bytes) %s\n", packet_compr_len,
+		printf("CompressedPacket:   (%d bytes) %s\n", packet_compr_len,
 		       osmo_hexdump_nospc(packet_compr, packet_compr_len));
 		slhc_o_status(comp);
 		slhc_o_status(comp);

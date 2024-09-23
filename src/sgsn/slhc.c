@@ -388,7 +388,7 @@ found:
 		DEBUGP(DSLHC, "slhc_compress(): Unexpected change: th->doff != cs->cs_tcp.doff\n");
 	if(ip->ihl > 5 && memcmp(ip+1,cs->cs_ipopt,((ip->ihl)-5)*4) != 0) {
 		DEBUGP(DSLHC, "slhc_compress(): Unexpected change: (ip->ihl > 5 && memcmp(ip+1,cs->cs_ipopt,((ip->ihl)-5)*4) != 0)\n");
-		DEBUGP(DSLHC, "slhc_compress(): ip->ihl = %i\n", ip->ihl);
+		DEBUGP(DSLHC, "slhc_compress(): ip->ihl = %d\n", ip->ihl);
 		DEBUGP(DSLHC, "slhc_compress(): ip+1 =          %s\n",
 		       osmo_hexdump_nospc((uint8_t*)(ip+1),((ip->ihl)-5)*4));
 		DEBUGP(DSLHC, "slhc_compress(): Unexpected change: cs->cs_ipopt =  %s\n",
@@ -396,7 +396,7 @@ found:
 	}
 	if(th->doff > 5 && memcmp(th+1,cs->cs_tcpopt,((th->doff)-5)*4) != 0) {
 		DEBUGP(DSLHC, "slhc_compress(): Unexpected change: (th->doff > 5 && memcmp(th+1,cs->cs_tcpopt,((th->doff)-5)*4) != 0)\n");
-		DEBUGP(DSLHC, "slhc_compress(): th->doff = %i\n", th->doff);
+		DEBUGP(DSLHC, "slhc_compress(): th->doff = %d\n", th->doff);
 		DEBUGP(DSLHC, "slhc_compress(): th+1 =          %s\n",
 		       osmo_hexdump_nospc((uint8_t*)(th+1),((th->doff)-5)*4));
 		DEBUGP(DSLHC, "slhc_compress(): cs->cs_tcpopt = %s\n",
@@ -538,8 +538,8 @@ found:
 	cp += 2;
 /* deltaS is now the size of the change section of the compressed header */
 
-	DEBUGP(DSLHC, "slhc_compress(): Delta-list length (deltaS) = %li\n",deltaS);
-	DEBUGP(DSLHC, "slhc_compress(): Original header len (hlen) = %i\n",hlen);
+	DEBUGP(DSLHC, "slhc_compress(): Delta-list length (deltaS) = %ld\n", deltaS);
+	DEBUGP(DSLHC, "slhc_compress(): Original header len (hlen) = %d\n", hlen);
 
 	memcpy(cp,new_seq,deltaS);	/* Write list of deltas */
 	memcpy(cp+deltaS,icp+hlen,isize-hlen);

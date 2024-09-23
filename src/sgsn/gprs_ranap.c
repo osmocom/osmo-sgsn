@@ -186,7 +186,7 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 		rc = 0;
 		break;
 	default:
-		LOGMMCTXP(LOGL_NOTICE, mm, "Unknown event received: %i\n", type);
+		LOGMMCTXP(LOGL_NOTICE, mm, "Unknown event received: %d\n", type);
 		rc = -1;
 		break;
 	}

@@ -268,7 +268,7 @@ static void v42bis(const void *ctx, int mode, uint8_t *testvec, int len)
 	rc_sum += rc;
 
 	/* Check results */
-	printf("Mode: %i\n", mode);
+	printf("Mode: %d\n", mode);
 
 	printf("uncompressed_original= %s ASCII:",
 	       osmo_hexdump_nospc(uncompressed_original, len));
@@ -314,7 +314,7 @@ static void test_v42bis_tcpip(const void *ctx, int packet_id)
 	int len;
 	printf
 	    ("Testing compression/decompression with realistic TCP/IP packets:\n");
-	printf("Packet No.: %i\n", packet_id);
+	printf("Packet No.: %d\n", packet_id);
 	len = strlen(uncompr_packets[packet_id]);
 	testvec = talloc_zero_size(ctx, len);
 	len = osmo_hexparse(uncompr_packets[packet_id], testvec, len);
@@ -339,7 +339,7 @@ static void test_v42bis_tcpip_decompress(const void *ctx, int packet_id)
 
 	printf
 	    ("Testing decompression with sniffed compressed TCP/IP packets:\n");
-	printf("Packet No.: %i\n", packet_id);
+	printf("Packet No.: %d\n", packet_id);
 	len = strlen(compr_packets[packet_id]);
 
 	uncompressed = talloc_zero_size(ctx, len);
