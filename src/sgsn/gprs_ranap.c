@@ -29,6 +29,7 @@
 #include <osmocom/gprs/gprs_msgb.h>
 
 #include <osmocom/ranap/ranap_common.h>
+#include <osmocom/ranap/iu_helpers.h>
 
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/gprs_sm.h>
@@ -60,6 +61,7 @@ static int sgsn_ranap_rab_ass_resp(struct sgsn_mm_ctx *ctx, RANAP_RAB_SetupOrMod
 	bool require_pdp_update = false;
 	struct sgsn_pdp_ctx *pdp = NULL;
 	RANAP_RAB_SetupOrModifiedItem_t *item = &setup_ies->raB_SetupOrModifiedItem;
+	int rc;
 
 	rab_id = item->rAB_ID.buf[0];
 
@@ -70,25 +72,31 @@ static int sgsn_ranap_rab_ass_resp(struct sgsn_mm_ctx *ctx, RANAP_RAB_SetupOrMod
 	}
 
 	if (item->transportLayerAddress) {
+		struct osmo_sockaddr addr;
 		LOGPC(DRANAP, LOGL_INFO, " Setup: (%u/%s)", rab_id, osmo_hexdump(item->transportLayerAddress->buf,
 								     item->transportLayerAddress->size));
-		switch (item->transportLayerAddress->size) {
-		case 7:
-			/* It must be IPv4 inside a X213 NSAP */
-			memcpy(pdp->lib->gsnlu.v, &item->transportLayerAddress->buf[3], 4);
+		rc = ranap_transp_layer_addr_decode2(&addr, NULL, item->transportLayerAddress);
+		if (rc < 0) {
+			LOGP(DRANAP, LOGL_ERROR,
+			     "RAB Assignment Resp: Unknown Transport Layer Address (size %u): %s\n",
+			     item->transportLayerAddress->size,
+			     osmo_hexdump(item->transportLayerAddress->buf, item->transportLayerAddress->size));
+			return -1;
+		}
+
+		switch (addr.u.sa.sa_family) {
+		case AF_INET:
+			memcpy(pdp->lib->gsnlu.v, (uint8_t *)&addr.u.sin.sin_addr.s_addr, 4);
 			break;
-		case 4:
-			/* It must be a raw IPv4 address */
-			memcpy(pdp->lib->gsnlu.v, item->transportLayerAddress->buf, 4);
-			break;
-		case 16:
-			/* TODO: It must be a raw IPv6 address */
-		case 19:
-			/* TODO: It must be IPv6 inside a X213 NSAP */
+		case AF_INET6:
+			/* TODO: Support IPv6 address */
+			LOGP(DRANAP, LOGL_ERROR,
+			     "RAB Assignment Resp: IPv6 transport layer address not supported!\n");
+			return -1;
 		default:
-			LOGP(DRANAP, LOGL_ERROR, "RAB Assignment Resp: Unknown "
-				"transport layer address size %u\n",
-				item->transportLayerAddress->size);
+			LOGP(DRANAP, LOGL_ERROR,
+			     "RAB Assignment Resp: Unexpected transport layer address size %u\n",
+			     item->transportLayerAddress->size);
 			return -1;
 		}
 		require_pdp_update = true;
