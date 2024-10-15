@@ -68,6 +68,7 @@ static int sgsn_ranap_rab_ass_resp(struct sgsn_mm_ctx *ctx, RANAP_RAB_SetupOrMod
 	pdp = sgsn_pdp_ctx_by_nsapi(ctx, rab_id);
 	if (!pdp) {
 		LOGP(DRANAP, LOGL_ERROR, "RAB Assignment Response for unknown RAB/NSAPI=%u\n", rab_id);
+		sgsn_ranap_iu_release_free(ctx, NULL);
 		return -1;
 	}
 
@@ -81,7 +82,7 @@ static int sgsn_ranap_rab_ass_resp(struct sgsn_mm_ctx *ctx, RANAP_RAB_SetupOrMod
 			     "RAB Assignment Resp: Unknown Transport Layer Address (size %u): %s\n",
 			     item->transportLayerAddress->size,
 			     osmo_hexdump(item->transportLayerAddress->buf, item->transportLayerAddress->size));
-			return -1;
+			goto ret_error;
 		}
 
 		switch (addr.u.sa.sa_family) {
@@ -92,12 +93,12 @@ static int sgsn_ranap_rab_ass_resp(struct sgsn_mm_ctx *ctx, RANAP_RAB_SetupOrMod
 			/* TODO: Support IPv6 address */
 			LOGP(DRANAP, LOGL_ERROR,
 			     "RAB Assignment Resp: IPv6 transport layer address not supported!\n");
-			return -1;
+			goto ret_error;
 		default:
 			LOGP(DRANAP, LOGL_ERROR,
 			     "RAB Assignment Resp: Unexpected transport layer address size %u\n",
 			     item->transportLayerAddress->size);
-			return -1;
+			goto ret_error;
 		}
 		require_pdp_update = true;
 	}
@@ -125,6 +126,15 @@ static int sgsn_ranap_rab_ass_resp(struct sgsn_mm_ctx *ctx, RANAP_RAB_SetupOrMod
 	}
 	return 0;
 
+ret_error:
+	if (pdp->state != PDP_STATE_CR_CONF) {
+		gsm48_tx_gsm_act_pdp_rej(ctx, pdp->ti, GSM_CAUSE_NET_FAIL,
+					 0, NULL);
+		sgsn_delete_pdp_ctx(pdp);
+	} else {
+		gsm48_tx_gsm_deact_pdp_req(pdp, GSM_CAUSE_NET_FAIL, true);
+	}
+	return -1;
 }
 
 int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type type, void *data)
