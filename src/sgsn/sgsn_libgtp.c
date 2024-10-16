@@ -300,11 +300,14 @@ struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
 		break;
 	}
 
-	/* include the IMEI(SV) */
-	pdp->imeisv_given = 1;
-	gsm48_encode_bcd_number(&pdp->imeisv.v[0], 8, 0, mmctx->imei);
-	pdp->imeisv.l = pdp->imeisv.v[0];
-	memmove(&pdp->imeisv.v[0], &pdp->imeisv.v[1], 8);
+	/* optional include the IMEI(SV) */
+	if (mmctx->imei[0] != '\0') {
+		memset(&pdp->imeisv.v[0], 0, 8);
+		pdp->imeisv_given = 1;
+		gsm48_encode_bcd_number(&pdp->imeisv.v[0], 8, 0, mmctx->imei);
+		pdp->imeisv.l = 8;
+		memmove(&pdp->imeisv.v[0], &pdp->imeisv.v[1], 8);
+	}
 
 	/* change pdp state to 'requested' */
 	pctx->state = PDP_STATE_CR_REQ;
