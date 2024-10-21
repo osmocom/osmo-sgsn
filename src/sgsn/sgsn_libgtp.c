@@ -54,7 +54,6 @@
 #include <osmocom/sgsn/mmctx.h>
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/gprs_sm.h>
-#include <osmocom/sgsn/gprs_subscriber.h>
 #include <osmocom/sgsn/gprs_sndcp.h>
 #include <osmocom/sgsn/gprs_ranap.h>
 #include <osmocom/sgsn/gprs_gmm_fsm.h>
@@ -65,6 +64,8 @@
 #include <osmocom/sgsn/sgsn_rim.h>
 #include <osmocom/sgsn/gprs_bssgp.h>
 #include <osmocom/sgsn/pdpctx.h>
+
+#include <osmocom/vlr/vlr.h>
 
 /* TS 23.003: The MSISDN shall take the dummy MSISDN value composed of
  * 15 digits set to 0 (encoded as an E.164 international number) when
@@ -186,9 +187,9 @@ struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
 	LOGPDPCTXP(LOGL_NOTICE, pctx, "Create PDP Context\n");
 
 	/* Put the MSISDN in case we have it */
-	if (mmctx->subscr && mmctx->subscr->sgsn_data->msisdn_len) {
-		pdp->msisdn.l = OSMO_MIN(mmctx->subscr->sgsn_data->msisdn_len, sizeof(pdp->msisdn.v));
-		memcpy(pdp->msisdn.v, mmctx->subscr->sgsn_data->msisdn,
+	if (mmctx->vsub && strlen(mmctx->vsub->msisdn)) {
+		pdp->msisdn.l = OSMO_MIN(strlen(mmctx->vsub->msisdn), sizeof(pdp->msisdn.v));
+		memcpy(pdp->msisdn.v, mmctx->vsub->msisdn,
 			pdp->msisdn.l);
 	} else {
 		/* use the dummy 15-digits-zero MSISDN value */
