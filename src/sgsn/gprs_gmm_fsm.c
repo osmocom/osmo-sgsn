@@ -22,6 +22,7 @@
  */
 #include <osmocom/core/tdef.h>
 
+#include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/gprs_gmm_fsm.h>
 #include <osmocom/sgsn/gprs_mm_state_gb_fsm.h>
 #include <osmocom/sgsn/gprs_mm_state_iu_fsm.h>
@@ -42,6 +43,14 @@ static const struct osmo_tdef_state_timeout gmm_fsm_timeouts[32] = {
 #define gmm_fsm_state_chg(fi, NEXT_STATE) \
 	osmo_tdef_fsm_inst_state_chg(fi, NEXT_STATE, gmm_fsm_timeouts, sgsn->cfg.T_defs, -1)
 
+
+void st_gmm_deregistered_onenter(struct osmo_fsm_inst *fi, uint32_t prev_state)
+{
+	struct sgsn_mm_ctx *mmctx = fi->priv;
+
+	mmctx->gmm_priv.common_proc_to_registered = false;
+}
+
 static void st_gmm_deregistered(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	switch(event) {
@@ -54,28 +63,51 @@ static void st_gmm_deregistered(struct osmo_fsm_inst *fi, uint32_t event, void *
 	}
 }
 
-static void st_gmm_common_proc_init(struct osmo_fsm_inst *fi, uint32_t event, void *data)
+static void st_gmm_common_proc_init(struct osmo_fsm_inst *fi, uint32_t event, void *_data)
 {
+	struct sgsn_mm_ctx *mmctx = fi->priv;
+
 	switch(event) {
 	case E_GMM_COMMON_PROC_INIT_REQ:
 		/* MS may retransmit GPRS Attach Request if for some reason
 		 * CommonProcedure didn't go forward correctly */
 		break;
 	/* TODO: events not used
-	case E_GMM_LOWER_LAYER_FAILED:
+	case E_GMM_LOWER_LAYER_FAILED: */
 	case E_GMM_COMMON_PROC_FAILED:
 		gmm_fsm_state_chg(fi, ST_GMM_DEREGISTERED);
 		break;
-	*/
-	case E_GMM_COMMON_PROC_SUCCESS:
+	case E_GMM_COMMON_PROC_SUCCESS: /* FIXME: a Common Proc Success shouldn't result in getting to Attach *if* this is part of an attach request */
+		/* ignore if a RAU or Attach is in progress */
+		if (mmctx->attach_rau.rau_fsm)
+			break;
+
+		gmm_fsm_state_chg(fi, ST_GMM_REGISTERED_NORMAL);
+		break;
+	case E_GMM_ATTACH_FAILED:
+	case E_GMM_RAU_FAILED:
+		gmm_fsm_state_chg(fi, ST_GMM_DEREGISTERED);
+		break;
 	case E_GMM_ATTACH_SUCCESS:
+	case E_GMM_RAU_SUCCESS:
 		gmm_fsm_state_chg(fi, ST_GMM_REGISTERED_NORMAL);
 		break;
 	}
 }
 
-static void st_gmm_registered_normal(struct osmo_fsm_inst *fi, uint32_t event, void *data)
+void st_gmm_registered_normal_onenter(struct osmo_fsm_inst *fi, uint32_t prev_state)
 {
+	struct sgsn_mm_ctx *mmctx = fi->priv;
+
+	mmctx->gmm_priv.common_proc_to_registered = true;
+}
+
+static void st_gmm_registered_normal(struct osmo_fsm_inst *fi, uint32_t event, void *_data)
+{
+	struct sgsn_mm_ctx *mmctx = fi->priv;
+	long *data = (long *) _data;
+	bool poweroff;
+
 	switch(event) {
 	case E_GMM_COMMON_PROC_INIT_REQ:
 		gmm_fsm_state_chg(fi, ST_GMM_COMMON_PROC_INIT);
@@ -85,12 +117,22 @@ static void st_gmm_registered_normal(struct osmo_fsm_inst *fi, uint32_t event, v
 		 *  E_GMM_ATTACH_SUCCESS instead of E_GMM_COMMON_PROC_SUCCESS then we'll receive the latter here:
 		 *  we should simply ignore it */
 		break;
-	/* case E_GMM_NET_INIT_DETACH_REQ:
+	case E_GMM_NET_INIT_DETACH_REQ:
+		OSMO_ASSERT(data);
+		/* data contains the gsm48 reject cause */
+		gsm48_tx_gmm_detach_req(mmctx, GPRS_DET_T_MT_IMSI, (uint8_t) (*data & 0xff));
 		gmm_fsm_state_chg(fi, ST_GMM_DEREGISTERED_INIT);
-		break; */
-	/* case E_GMM_MS_INIT_DETACH_REQ:
+		break;
+	case E_GMM_MS_INIT_DETACH_REQ:
+		if (!data)
+			poweroff = false;
+		else
+			poweroff = !!(*data);
+
+		if (!poweroff)
+			gsm48_tx_gmm_det_ack(mmctx, false);
 		gmm_fsm_state_chg(fi, ST_GMM_DEREGISTERED);
-		break; */
+		break;
 	case E_GMM_SUSPEND:
 		gmm_fsm_state_chg(fi, ST_GMM_REGISTERED_SUSPENDED);
 		break;
@@ -112,8 +154,10 @@ static void st_gmm_registered_suspended(struct osmo_fsm_inst *fi, uint32_t event
 static void st_gmm_deregistered_init(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	switch(event) {
-	/* TODO: events not used in osmo-sgsn code
 	case E_GMM_DETACH_ACCEPTED:
+		gmm_fsm_state_chg(fi, ST_GMM_DEREGISTERED);
+		break;
+	/* TODO: events not used in osmo-sgsn code
 	case E_GMM_LOWER_LAYER_FAILED:
 		gmm_fsm_state_chg(fi, ST_GMM_DEREGISTERED);
 		break;
@@ -125,7 +169,8 @@ static struct osmo_fsm_state gmm_fsm_states[] = {
 	[ST_GMM_DEREGISTERED] = {
 		.in_event_mask =
 			X(E_GMM_COMMON_PROC_INIT_REQ) |
-			X(E_GMM_ATTACH_SUCCESS),
+			X(E_GMM_ATTACH_SUCCESS) |
+			X(E_GMM_ATTACH_FAILED),
 		.out_state_mask = X(ST_GMM_COMMON_PROC_INIT),
 		.name = "Deregistered",
 		.action = st_gmm_deregistered,
@@ -133,9 +178,12 @@ static struct osmo_fsm_state gmm_fsm_states[] = {
 	[ST_GMM_COMMON_PROC_INIT] = {
 		.in_event_mask =
 			/* X(E_GMM_LOWER_LAYER_FAILED) | */
-			/* X(E_GMM_COMMON_PROC_FAILED) | */
+			X(E_GMM_COMMON_PROC_FAILED) |
 			X(E_GMM_COMMON_PROC_SUCCESS) |
 			X(E_GMM_ATTACH_SUCCESS) |
+			X(E_GMM_ATTACH_FAILED) |
+			X(E_GMM_RAU_SUCCESS) |
+			X(E_GMM_RAU_FAILED) |
 			X(E_GMM_COMMON_PROC_INIT_REQ),
 		.out_state_mask =
 			X(ST_GMM_DEREGISTERED) |
@@ -147,8 +195,8 @@ static struct osmo_fsm_state gmm_fsm_states[] = {
 		.in_event_mask =
 			X(E_GMM_COMMON_PROC_INIT_REQ) |
 			X(E_GMM_COMMON_PROC_SUCCESS) |
-			/* X(E_GMM_NET_INIT_DETACH_REQ) | */
-			/* X(E_GMM_MS_INIT_DETACH_REQ) | */
+			X(E_GMM_NET_INIT_DETACH_REQ) |
+			X(E_GMM_MS_INIT_DETACH_REQ) |
 			X(E_GMM_SUSPEND),
 		.out_state_mask =
 			X(ST_GMM_DEREGISTERED) |
@@ -157,10 +205,13 @@ static struct osmo_fsm_state gmm_fsm_states[] = {
 			X(ST_GMM_REGISTERED_SUSPENDED),
 		.name = "Registered.NORMAL",
 		.action = st_gmm_registered_normal,
+		.onenter = st_gmm_registered_normal_onenter,
 	},
 	[ST_GMM_REGISTERED_SUSPENDED] = {
 		.in_event_mask = X(E_GMM_RESUME) |
-				 X(E_GMM_COMMON_PROC_INIT_REQ),
+				 X(E_GMM_COMMON_PROC_INIT_REQ) |
+				 X(E_GMM_RAU_FAILED) |
+				 X(E_GMM_RAU_SUCCESS),
 		.out_state_mask =
 			X(ST_GMM_DEREGISTERED) |
 			X(ST_GMM_REGISTERED_NORMAL) |
@@ -175,21 +226,27 @@ static struct osmo_fsm_state gmm_fsm_states[] = {
 		.out_state_mask = X(ST_GMM_DEREGISTERED),
 		.name = "DeregisteredInitiated",
 		.action = st_gmm_deregistered_init,
+		.onenter = st_gmm_deregistered_onenter,
 	},
 };
 
 const struct value_string gmm_fsm_event_names[] = {
 	OSMO_VALUE_STRING(E_GMM_COMMON_PROC_INIT_REQ),
-	/* OSMO_VALUE_STRING(E_GMM_COMMON_PROC_FAILED), */
+	OSMO_VALUE_STRING(E_GMM_COMMON_PROC_FAILED),
 	/*  OSMO_VALUE_STRING(E_GMM_LOWER_LAYER_FAILED),  */
 	OSMO_VALUE_STRING(E_GMM_COMMON_PROC_SUCCESS),
 	OSMO_VALUE_STRING(E_GMM_ATTACH_SUCCESS),
-	/*  OSMO_VALUE_STRING(E_GMM_NET_INIT_DETACH_REQ), */
-	/*  OSMO_VALUE_STRING(E_GMM_MS_INIT_DETACH_REQ), */
+	OSMO_VALUE_STRING(E_GMM_ATTACH_FAILED),
+	OSMO_VALUE_STRING(E_GMM_RAU_SUCCESS),
+	OSMO_VALUE_STRING(E_GMM_RAU_FAILED),
+	OSMO_VALUE_STRING(E_GMM_NET_INIT_DETACH_REQ),
+	OSMO_VALUE_STRING(E_GMM_MS_INIT_DETACH_REQ),
 	/* OSMO_VALUE_STRING(E_GMM_DETACH_ACCEPTED), */
 	OSMO_VALUE_STRING(E_GMM_SUSPEND),
 	OSMO_VALUE_STRING(E_GMM_CLEANUP),
 	OSMO_VALUE_STRING(E_GMM_RAT_CHANGE),
+	OSMO_VALUE_STRING(E_GMM_SERVICE_ACCEPT),
+	OSMO_VALUE_STRING(E_GMM_SERVICE_REJECT),
 	{ 0, NULL }
 };
 
@@ -202,6 +259,7 @@ void gmm_fsm_allstate_action(struct osmo_fsm_inst *fi, uint32_t event, void *dat
 
 		switch (fi->state) {
 		case ST_GMM_COMMON_PROC_INIT:
+			/* fixme: this state seems to be wrong. When in COMMON_PROC_INIT, we shouldn't go into deregistered. */
 			gmm_fsm_state_chg(fi, ST_GMM_DEREGISTERED);
 		default:
 			if (mmctx->ran_type == MM_CTX_T_GERAN_Gb)
@@ -216,6 +274,9 @@ void gmm_fsm_allstate_action(struct osmo_fsm_inst *fi, uint32_t event, void *dat
 		}
 
 	case E_GMM_CLEANUP:
+		if (mmctx->attach_rau.rau_fsm)
+			osmo_fsm_inst_term(mmctx->attach_rau.rau_fsm, OSMO_FSM_TERM_REQUEST, NULL);
+
 		switch (fi->state) {
 		case ST_GMM_DEREGISTERED:
 			break;
@@ -223,6 +284,13 @@ void gmm_fsm_allstate_action(struct osmo_fsm_inst *fi, uint32_t event, void *dat
 			gmm_fsm_state_chg(fi, ST_GMM_DEREGISTERED);
 			break;
 		}
+	case E_GMM_SERVICE_ACCEPT:
+		switch (fi->state) {
+		case ST_GMM_REGISTERED_NORMAL:
+			gprs_gmm_service_accepted(mmctx);
+			break;
+		}
+		break;
 	}
 }
 
@@ -236,7 +304,7 @@ struct osmo_fsm gmm_fsm = {
 	.states = gmm_fsm_states,
 	.num_states = ARRAY_SIZE(gmm_fsm_states),
 	.event_names = gmm_fsm_event_names,
-	.allstate_event_mask = X(E_GMM_CLEANUP) | X(E_GMM_RAT_CHANGE),
+	.allstate_event_mask = X(E_GMM_CLEANUP) | X(E_GMM_RAT_CHANGE) | X(E_GMM_SERVICE_ACCEPT) | X(E_GMM_SERVICE_REJECT),
 	.allstate_action = gmm_fsm_allstate_action,
 	.log_subsys = DMM,
 	.timer_cb = gmm_fsm_timer_cb,

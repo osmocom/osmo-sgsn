@@ -70,6 +70,8 @@
 #include <osmocom/sgsn/gprs_subscriber.h>
 #include <osmocom/sgsn/gtp.h>
 
+#include <osmocom/vlr/vlr.h>
+
 #include <osmocom/sgsn/sgsn_rim.h>
 
 #include "../../config.h"
@@ -355,6 +357,11 @@ static struct log_info_cat gprs_categories[] = {
 		.description = "Routing Area",
 		.enabled = 1, .loglevel = LOGL_NOTICE,
 	},
+    [DVLR] = {
+		.name = "VLR",
+		.description = "VLR",
+		.enabled = 1, .loglevel = LOGL_NOTICE,
+    },
 };
 
 static const struct log_info gprs_log_info = {
@@ -375,6 +382,8 @@ int main(int argc, char **argv)
 #if BUILD_IU
 	struct osmo_sccp_instance *sccp;
 #endif
+
+	osmo_fsm_term_safely(true);
 
 	srand(time(NULL));
 	tall_sgsn_ctx = talloc_named_const(NULL, 0, "osmo_sgsn");
