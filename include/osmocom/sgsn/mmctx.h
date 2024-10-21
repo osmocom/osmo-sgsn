@@ -16,6 +16,7 @@
 #include <osmocom/sgsn/apn.h>
 #include <osmocom/sgsn/auth.h>
 #include <osmocom/sgsn/gprs_subscriber.h>
+#include <osmocom/vlr/vlr.h>
 
 #define GSM_EXTENSION_LENGTH 15
 
@@ -99,9 +100,14 @@ struct sgsn_mm_ctx {
 
 	char 			imsi[GSM23003_IMSI_MAX_DIGITS+1];
 	struct osmo_fsm_inst	*gmm_fsm;
+	struct {
+		/* When a Common Procedure Succeeds, to which state do we change? */
+		bool common_proc_to_registered;
+	} gmm_priv;
+
 	uint32_t 		p_tmsi;
 	uint32_t 		p_tmsi_old;	/* old P-TMSI before new is confirmed */
-	uint32_t 		p_tmsi_sig;
+	char			p_tmsi_sig[3];
 	char 			imei[GSM23003_IMEISV_NUM_DIGITS+1];
 	/* Opt: Software Version Numbber / TS 23.195 */
 	char 			msisdn[GSM_EXTENSION_LENGTH];
@@ -142,10 +148,25 @@ struct sgsn_mm_ctx {
 
 		/* when a second attach req arrives while in this procedure,
 		 * the fsm needs to compare it against old to decide what to do */
-		struct msgb *attach_req;
 		uint32_t id_type;
 		unsigned int auth_reattempt; /* tracking UMTS resync auth attempts */
 	} gmm_att_req;
+
+	struct {
+		/* when a second attach req arrives while in this procedure,
+		 * the fsm needs to compare it against old to decide what to do */
+		struct msgb *req;
+		char p_tmsi_sig[3];
+		bool p_tmsi_sig_valid;
+		struct osmo_routing_area_id old_rai;
+		struct osmo_routing_area_id new_rai;
+		struct osmo_fsm_inst *rau_fsm;
+		enum vlr_lu_type rau_type;
+		uint8_t cksq;
+		uint16_t pdp_status;
+		bool pdp_status_valid;
+		bool foreign;
+	} attach_rau;
 	/* VLR number */
 	uint32_t		new_sgsn_addr;
 	/* Authentication Triplet */
@@ -212,6 +233,9 @@ struct sgsn_mm_ctx {
 	struct sgsn_ggsn_lookup *ggsn_lookup;
 
 	struct gprs_subscr	*subscr;
+	struct vlr_subscr	*vsub;
+	/* to know if subscriber is doing an attach or location update */
+	bool attached;
 };
 
 static inline bool sgsn_mm_ctx_is_authenticated(struct sgsn_mm_ctx *ctx)
@@ -281,6 +305,9 @@ struct sgsn_pdp_ctx *sgsn_pdp_ctx_by_nsapi(const struct sgsn_mm_ctx *mm,
 /* look up PDP context by MM context and transaction ID */
 struct sgsn_pdp_ctx *sgsn_pdp_ctx_by_tid(const struct sgsn_mm_ctx *mm,
 					 uint8_t tid);
+
+/* lookup vsub by imsi or ptmsi */
+int sgsn_mm_ctx_bind_vsub(struct sgsn_mm_ctx *mm, const char *imsi, uint32_t ptmsi);
 
 bool sgsn_mm_ctx_is_r99(const struct sgsn_mm_ctx *mm);
 
