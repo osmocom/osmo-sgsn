@@ -771,6 +771,7 @@ struct lu_fsm_priv {
 	bool is_r99;
 	bool is_utran;
 	bool assign_tmsi;
+	bool hlr_update_req;
 
 	/*! count times timer T timed out */
 	int N;
@@ -883,7 +884,7 @@ static void vlr_loc_upd_node_4(struct osmo_fsm_inst *fi)
 		/* FIXME: Delete subscriber record */
 		/* LU REJ: Roaming not allowed */
 		lu_fsm_failure(fi, GSM48_REJECT_ROAMING_NOT_ALLOWED);
-	} else {
+	} else { /* Correct would be if (lfp->lu_type == VLR_LU_TYPE_IMSI_ATTACH || lfp->hlr_update_req) */
 		/* Update_HLR_VLR */
 		osmo_fsm_inst_state_chg(fi, VLR_ULA_S_WAIT_HLR_UPD,
 					LU_TIMEOUT_LONG, 0);
@@ -1209,16 +1210,35 @@ static void lu_fsm_wait_imeisv(struct osmo_fsm_inst *fi, uint32_t event,
 	}
 }
 
+static void lu_fsm_wait_pvlr_onenter(struct osmo_fsm_inst *fi, uint32_t prev_state)
+{
+	struct lu_fsm_priv *lfp = lu_fsm_fi_priv(fi);
+	struct vlr_instance *vlr = lfp->vlr;
+
+	lfp->hlr_update_req = true;
+	vlr->ops.tx_pvlr_request(lfp->msc_conn_ref, &lfp->old_rai);
+}
+
 /* Wait for response from Send_Identification to PVLR */
 static void lu_fsm_wait_pvlr(struct osmo_fsm_inst *fi, uint32_t event,
 			     void *data)
 {
+	struct lu_fsm_priv *lfp = lu_fsm_fi_priv(fi);
+
 	switch (event) {
 	case VLR_ULA_E_SEND_ID_ACK:
 		vlr_loc_upd_node1_pre(fi);
 		break;
 	case VLR_ULA_E_SEND_ID_NACK:
-		vlr_loc_upd_want_imsi(fi);
+		if (vlr_is_cs(lfp->vlr)) {
+			vlr_loc_upd_want_imsi(fi);
+			break;
+		}
+		/* PS */
+		if (lfp->lu_type == VLR_LU_TYPE_IMSI_ATTACH)
+			vlr_loc_upd_want_imsi(fi);
+		else
+			lu_fsm_failure(fi, GSM48_REJECT_MS_IDENTITY_NOT_DERVIVABLE);
 		break;
 	default:
 		OSMO_ASSERT(0);
@@ -1476,6 +1496,7 @@ static const struct osmo_fsm_state vlr_lu_fsm_states[] = {
 				  S(VLR_ULA_S_WAIT_HLR_CHECK_IMEI_EARLY) |
 				  S(VLR_ULA_S_DONE),
 		.name = OSMO_STRINGIFY(VLR_ULA_S_WAIT_PVLR),
+		.onenter = lu_fsm_wait_pvlr_onenter,
 		.action = lu_fsm_wait_pvlr,
 	},
 	[VLR_ULA_S_WAIT_AUTH] = {
