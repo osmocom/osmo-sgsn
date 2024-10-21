@@ -28,6 +28,8 @@ enum {
 	DOBJ,
 	DRIM,
 	DRA, /* Routing Area handling */
+	DVLR,
+	DSGS, /* FIXME: do we need this? */
 	Debug_LastEntry,
 };
 
