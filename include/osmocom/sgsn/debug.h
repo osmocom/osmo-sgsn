@@ -27,6 +27,8 @@ enum {
 	DOBJ,
 	DRIM,
 	DRA, /* Routing Area handling */
+	DVLR,
+	DSGS, /* only as placeholder, SGS isn't used by the SGSN */
 	Debug_LastEntry,
 };
 
