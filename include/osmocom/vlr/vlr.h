@@ -244,6 +244,8 @@ struct vlr_ops {
 
 	int (*tx_mm_info)(void *msc_conn_ref);
 
+	int (*tx_pvlr_request)(void *msc_conn_ref, const struct osmo_routing_area_id *old_rai);
+
 	/* notify MSC/SGSN that the subscriber data in VLR has been updated */
 	void (*subscr_update)(struct vlr_subscr *vsub);
 	/* notify MSC/SGSN that the given subscriber has been associated
@@ -254,6 +256,9 @@ struct vlr_ops {
 	 */
 	void (*subscr_inval)(void *msc_conn_ref, struct vlr_subscr *vsub,
 			     enum gsm48_reject_value cause, bool cancel_by_update);
+
+	/* decide if the location/routing area id is within the VLR or not */
+	bool (*location_served)(struct vlr_subscr *vsub, const struct osmo_routing_area_id *rai);
 };
 
 /* An instance of the VLR codebase */
@@ -304,6 +309,22 @@ vlr_loc_update(struct osmo_fsm_inst *parent,
 	       bool is_r99, bool is_utran,
 	       bool assign_tmsi);
 
+struct osmo_fsm_inst *
+vlr_ra_update(struct osmo_fsm_inst *parent,
+	       uint32_t parent_event_success,
+	       uint32_t parent_event_failure,
+	       void *parent_event_data,
+	       struct vlr_instance *vlr, void *msc_conn_ref,
+	       enum vlr_lu_type type, uint32_t tmsi, const char *imsi,
+	       const struct osmo_routing_area_id *old_lai,
+	       const struct osmo_routing_area_id *new_lai,
+	       bool authentication_required,
+	       bool is_ciphering_to_be_attempted,
+	       bool is_ciphering_required,
+	       uint8_t key_seq,
+	       bool is_r99, bool is_utran,
+	       bool assign_tmsi);
+
 void vlr_loc_update_cancel(struct osmo_fsm_inst *fi,
 			   enum osmo_fsm_term_cause fsm_cause,
 			   uint8_t gsm48_cause);
@@ -319,6 +340,9 @@ int vlr_subscr_tx_auth_fail_rep(const struct vlr_subscr *vsub) __attribute__((wa
 void vlr_subscr_rx_ciph_res(struct vlr_subscr *vsub, enum vlr_ciph_result_cause result);
 int vlr_subscr_rx_tmsi_reall_compl(struct vlr_subscr *vsub);
 int vlr_subscr_rx_imsi_detach(struct vlr_subscr *vsub);
+int vlr_subscr_rx_rau_complete(struct vlr_subscr *vsub);
+void vlr_subscr_rx_pvlr_id_ack(struct vlr_subscr *vsub);
+void vlr_subscr_rx_pvlr_id_nack(struct vlr_subscr *vsub);
 
 struct vlr_instance *vlr_alloc(void *ctx, const struct vlr_ops *ops, bool is_ps);
 int vlr_start(struct vlr_instance *vlr, struct gsup_client_mux *gcm);
