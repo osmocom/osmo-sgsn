@@ -195,9 +195,8 @@ static int sgsn_ranap_iu_event_mmctx(struct ranap_ue_conn_ctx *ctx, enum ranap_i
 		if (rc < 0)
 			sgsn_mm_ctx_iu_ranap_free(mm);
 
-		/* TODO: move this into FSM */
-		if (mm->ran_type == MM_CTX_T_UTRAN_Iu && mm->gmm_att_req.fsm->state != ST_INIT)
-			osmo_fsm_inst_dispatch(mm->gmm_att_req.fsm, E_REJECT, (void *) GMM_DISCARD_MS_WITHOUT_REJECT);
+		if (mm->vsub)
+			vlr_subscr_disconnected(mm->vsub);
 		rc = 0;
 		break;
 	case RANAP_IU_EVENT_SECURITY_MODE_COMPLETE:
@@ -208,13 +207,10 @@ static int sgsn_ranap_iu_event_mmctx(struct ranap_ue_conn_ctx *ctx, enum ranap_i
 		 */
 		/* Continue authentication here */
 		mm->iu.ue_ctx->integrity_active = 1;
-		sgsn_ranap_iu_tx_common_id(mm->iu.ue_ctx, mm->imsi);
 
-		/* FIXME: remove gmm_authorize */
-		if (mm->pending_req != GSM48_MT_GMM_ATTACH_REQ)
-			gsm48_gmm_authorize(mm);
-		else
-			osmo_fsm_inst_dispatch(mm->gmm_att_req.fsm, E_IU_SECURITY_CMD_COMPLETE, NULL);
+		if (mm->vsub)
+			vlr_subscr_rx_ciph_res(mm->vsub, VLR_CIPH_COMPL);
+
 		rc = 0;
 		break;
 	default:

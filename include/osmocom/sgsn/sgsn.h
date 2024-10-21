@@ -136,6 +136,9 @@ struct sgsn_config {
 	char *sgsn_ipa_name;
 };
 
+struct gsup_client_mux;
+struct vlr_instance;
+
 struct sgsn_instance {
 	char *config_file;
 	struct sgsn_config cfg;
@@ -147,6 +150,8 @@ struct sgsn_instance {
 	struct gsn_t *gsn;
 	/* Subscriber */
 	struct osmo_gsup_client *gsup_client;
+	struct gsup_client_mux *gcm;
+	struct vlr_instance *vlr;
 	/* LLME inactivity timer */
 	struct osmo_timer_list llme_timer;
 
