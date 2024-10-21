@@ -46,6 +46,7 @@ osmo_sgsn_SOURCES = \
 	gprs_gmm.c \
 	gprs_gmm_fsm.c \
 	gprs_gmm_util.c \
+	gprs_rau_fsm.c \
 	gprs_mm_state_gb_fsm.c \
 	gprs_ns.c \
 	gprs_routing_area.c \
@@ -75,6 +76,7 @@ osmo_sgsn_SOURCES = \
 	gprs_llc_xid.c \
 	v42bis.c \
 	$(NULL)
+
 osmo_sgsn_LDADD = \
 	$(top_builddir)/src/gprs/gprs_llc_parse.o \
 	$(top_builddir)/src/gprs/crc24.o \

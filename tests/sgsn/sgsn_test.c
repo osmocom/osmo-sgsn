@@ -438,13 +438,17 @@ static void test_auth_triplets(void)
 static int rx_gsup_message(const uint8_t *data, size_t data_len)
 {
 	struct msgb *msg;
+	struct osmo_gsup_message gsup_msg = {};
 	int rc;
 
 	msg = msgb_alloc(1024, __func__);
 	msg->l2h = msgb_put(msg, data_len);
 	OSMO_ASSERT(msg->l2h != NULL);
 	memcpy(msg->l2h, data, data_len);
-	rc = gprs_subscr_rx_gsup_message(msg);
+	rc = osmo_gsup_decode(data, data_len, &gsup_msg);
+	OSMO_ASSERT(!rc);
+
+	rc = gprs_subscr_rx_gsup_message(&gsup_msg);
 	msgb_free(msg);
 
 	return rc;
@@ -1040,7 +1044,6 @@ int my_gsup_client_send(struct osmo_gsup_client *gsupc, struct msgb *msg)
 {
 	struct osmo_gsup_message to_peer = {0};
 	struct osmo_gsup_message from_peer = {0};
-	struct msgb *reply_msg;
 	int rc;
 
 	/* Simulate the GSUP peer */
@@ -1078,11 +1081,7 @@ int my_gsup_client_send(struct osmo_gsup_client *gsupc, struct msgb *msg)
 		return 0;
 	}
 
-	reply_msg = osmo_gsup_client_msgb_alloc();
-	reply_msg->l2h = reply_msg->data;
-	osmo_gsup_encode(reply_msg, &from_peer);
-	gprs_subscr_rx_gsup_message(reply_msg);
-	msgb_free(reply_msg);
+	gprs_subscr_rx_gsup_message(&from_peer);
 
 	return 0;
 };

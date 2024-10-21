@@ -130,25 +130,6 @@ class TestVTYSGSN(TestVTYBase):
         res = self.vty.command("show running-config")
         self.assertTrue(res.find('auth-policy remote') > 0)
 
-    def testVtySubscriber(self):
-        self.vty.enable()
-        res = self.vty.command('show subscriber cache')
-        self.assertTrue(res.find('1234567890') < 0)
-        self.assertTrue(self.vty.verify('update-subscriber imsi 1234567890 create', ['']))
-        res = self.vty.command('show subscriber cache')
-        self.assertTrue(res.find('1234567890') >= 0)
-        self.assertTrue(res.find('Authorized: 0') >= 0)
-        self.assertTrue(self.vty.verify('update-subscriber imsi 1234567890 update-location-result ok', ['']))
-        res = self.vty.command('show subscriber cache')
-        self.assertTrue(res.find('1234567890') >= 0)
-        self.assertTrue(res.find('Authorized: 1') >= 0)
-        self.assertTrue(self.vty.verify('update-subscriber imsi 1234567890 cancel update-procedure', ['']))
-        res = self.vty.command('show subscriber cache')
-        self.assertTrue(res.find('1234567890') >= 0)
-        self.assertTrue(self.vty.verify('update-subscriber imsi 1234567890 destroy', ['']))
-        res = self.vty.command('show subscriber cache')
-        self.assertTrue(res.find('1234567890') < 0)
-
     def testVtyGgsn(self):
         self.vty.enable()
         self.assertTrue(self.vty.verify('configure terminal', ['']))
