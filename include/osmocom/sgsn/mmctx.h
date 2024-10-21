@@ -99,6 +99,11 @@ struct sgsn_mm_ctx {
 
 	char 			imsi[GSM23003_IMSI_MAX_DIGITS+1];
 	struct osmo_fsm_inst	*gmm_fsm;
+	struct {
+		/* When a Common Procedure Succeeds, to which state do we change? */
+		bool common_proc_to_registered;
+	} gmm_priv;
+
 	uint32_t 		p_tmsi;
 	uint32_t 		p_tmsi_old;	/* old P-TMSI before new is confirmed */
 	uint32_t 		p_tmsi_sig;
@@ -212,6 +217,9 @@ struct sgsn_mm_ctx {
 	struct sgsn_ggsn_lookup *ggsn_lookup;
 
 	struct gprs_subscr	*subscr;
+	struct vlr_subscr	*vsub;
+	/* to know if subscriber is doing an attach or location update */
+	bool attached;
 };
 
 static inline bool sgsn_mm_ctx_is_authenticated(struct sgsn_mm_ctx *ctx)

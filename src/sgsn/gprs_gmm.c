@@ -65,6 +65,9 @@
 #include <osmocom/sgsn/pdpctx.h>
 #include <osmocom/sgsn/gprs_gmm_util.h>
 
+#include <osmocom/gsupclient/gsup_client_mux.h>
+#include <osmocom/vlr/vlr.h>
+
 #include <pdp.h>
 
 #define PTMSI_ALLOC
@@ -196,6 +199,25 @@ static void mm_ctx_cleanup_free(struct sgsn_mm_ctx *ctx, const char *log_text)
 	sgsn_mm_ctx_cleanup_free(ctx);
 }
 
+/* IU only: When a MO Service Request has been accepted, handle
+ * all the required state changes */
+void gprs_gmm_service_accepted(struct sgsn_mm_ctx *ctx)
+{
+	ctx->pending_req = 0;
+	if (ctx->ran_type != MM_CTX_T_UTRAN_Iu) {
+		LOGMMCTXP(LOGL_ERROR, ctx, "GMM handling Service Accepted, but MM ran is not Iu");
+		return;
+	}
+
+	osmo_fsm_inst_dispatch(ctx->iu.mm_state_fsm, E_PMM_PS_CONN_ESTABLISH, NULL);
+
+	if (ctx->iu.service.type != GPRS_SERVICE_T_SIGNALLING)
+		activate_pdp_rabs(ctx);
+
+#ifdef BUILD_IU
+#endif /* BUILD_IU */
+}
+
 /* Chapter 9.4.18 */
 static int _tx_status(struct msgb *msg, uint8_t cause,
 		      struct sgsn_mm_ctx *mmctx)
@@ -245,7 +267,7 @@ static int _tx_detach_req(struct msgb *msg, uint8_t detach_type, uint8_t cause,
 	return gsm48_gmm_sendmsg(msg, 0, mmctx, true);
 }
 
-static int gsm48_tx_gmm_detach_req(struct sgsn_mm_ctx *mmctx,
+int gsm48_tx_gmm_detach_req(struct sgsn_mm_ctx *mmctx,
 				   uint8_t detach_type, uint8_t cause)
 {
 	struct msgb *msg = gsm48_msgb_alloc_name("GSM 04.08 DET REQ");
@@ -388,7 +410,7 @@ static int _tx_detach_ack(struct msgb *msg, uint8_t force_stby,
 	return gsm48_gmm_sendmsg(msg, 0, mm, true);
 }
 
-static int gsm48_tx_gmm_det_ack(struct sgsn_mm_ctx *mm, uint8_t force_stby)
+int gsm48_tx_gmm_det_ack(struct sgsn_mm_ctx *mm, uint8_t force_stby)
 {
 	struct msgb *msg = gsm48_msgb_alloc_name("GSM 04.08 DET ACK");
 
@@ -514,7 +536,7 @@ int gsm48_tx_gmm_auth_ciph_req(struct sgsn_mm_ctx *mm,
 }
 
 /* 3GPP TS 24.008 § 9.4.11: Authentication and Ciphering Reject */
-static int gsm48_tx_gmm_auth_ciph_rej(struct sgsn_mm_ctx *mm)
+int gsm48_tx_gmm_auth_ciph_rej(struct sgsn_mm_ctx *mm)
 {
 	struct msgb *msg = gsm48_msgb_alloc_name("GSM 04.08 AUTH CIPH REJ");
 	struct gsm48_hdr *gh;
@@ -592,6 +614,7 @@ static int gsm48_rx_gmm_auth_ciph_resp(struct sgsn_mm_ctx *ctx,
 {
 	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
 	struct gsm48_auth_ciph_resp *acr = (struct gsm48_auth_ciph_resp *)gh->data;
+	struct osmo_mobile_identity mi;
 	struct tlv_parsed tp;
 	struct gsm_auth_tuple *at;
 	const char *res_name = "(no response)";
@@ -628,6 +651,30 @@ static int gsm48_rx_gmm_auth_ciph_resp(struct sgsn_mm_ctx *ctx,
 		return -EINVAL;
 	}
 
+	/* IMEI SV parsing */
+	if (TLVP_LEN(&tp, GSM48_IE_GMM_IMEISV) != 9) {
+		LOGMMCTXP(LOGL_ERROR, ctx, "-> GMM AUTH AND CIPH RESPONSE: Invalid IMEISV\n");
+		return -EINVAL;
+	}
+
+	/* FIXME: should we allow invalid IMEI SV? Are there phones which has broken SV in hex? */
+	if (osmo_mobile_identity_decode(&mi,
+					TLVP_VAL(&tp, GSM48_IE_GMM_IMEISV),
+					TLVP_LEN(&tp, GSM48_IE_GMM_IMEISV),
+					false)) {
+		LOGMMCTXP(LOGL_ERROR, ctx, "-> GMM AUTH AND CIPH RESPONSE: Cannot decode IMEISV\n");
+		return -EINVAL;
+	}
+
+	if (mi.type != GSM_MI_TYPE_IMEISV) {
+		LOGMMCTXP(LOGL_ERROR, ctx, "-> GMM AUTH AND CIPH RESPONSE: Invalid MI type found in IMEISV %d\n", mi.type);
+		return -EINVAL;
+	}
+
+	memcpy(&ctx->imei, mi.imeisv, ARRAY_SIZE(ctx->imei));
+	if (ctx->vsub)
+		vlr_subscr_set_imeisv(ctx->vsub, mi.imeisv);
+
 	/* Start with the good old 4-byte SRES */
 	memcpy(res, TLVP_VAL(&tp, GSM48_IE_GMM_AUTH_SRES), 4);
 	res_len = 4;
@@ -645,6 +692,7 @@ static int gsm48_rx_gmm_auth_ciph_resp(struct sgsn_mm_ctx *ctx,
 
 	at = &ctx->auth_triplet;
 
+	/* FIXME: the VLR should check the auth and not here a second time! */
 	LOGMMCTXP(LOGL_DEBUG, ctx, "checking auth: received %s = %s\n",
 		  res_name, osmo_hexdump(res, res_len));
 	ctx->sec_ctx = check_auth_resp(ctx, false, &at->vec, res, res_len);
@@ -659,8 +707,10 @@ static int gsm48_rx_gmm_auth_ciph_resp(struct sgsn_mm_ctx *ctx,
 
 	/* FIXME: enable LLC cipheirng */
 
-	/* Check if we can let the mobile station enter */
-	return osmo_fsm_inst_dispatch(ctx->gmm_att_req.fsm, E_AUTH_RESP_RECV_SUCCESS, NULL);
+	/* FIXME: This should _not_ trigger a FSM success */
+	osmo_fsm_inst_dispatch(ctx->gmm_fsm, E_GMM_COMMON_PROC_SUCCESS, NULL);
+
+	return vlr_subscr_rx_auth_resp(ctx->vsub, mmctx_is_r99(ctx), ctx->ran_type == MM_CTX_T_UTRAN_Iu, res, res_len);
 }
 
 /* 3GPP TS 24.008 § 9.4.10: Authentication and Ciphering Failure */
@@ -670,11 +720,14 @@ static int gsm48_rx_gmm_auth_ciph_fail(struct sgsn_mm_ctx *ctx,
 	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
 	struct tlv_parsed tp;
 	const uint8_t gmm_cause = gh->data[0];
-	const uint8_t *auts;
-	int rc;
+	const uint8_t *auts = NULL;
+	int rc = 0;
 
 	LOGMMCTXP(LOGL_INFO, ctx, "-> GMM AUTH AND CIPH FAILURE (cause = %s)\n",
 		  get_value_string(gsm48_gmm_cause_names, gmm_cause));
+
+	if (!ctx->vsub)
+		return -EINVAL;
 
 	tlv_parse(&tp, &gsm48_gmm_ie_tlvdef, gh->data+1, msg->len - 1, 0, 0);
 
@@ -700,70 +753,41 @@ static int gsm48_rx_gmm_auth_ciph_fail(struct sgsn_mm_ctx *ctx,
 
 		/* make sure we'll retry authentication after the resync */
 		ctx->auth_state = SGSN_AUTH_UMTS_RESYNC;
-
-		/* Send AUTS to HLR and wait for new Auth Info Result */
-		rc = gprs_subscr_request_auth_info(ctx, auts,
-						   ctx->auth_triplet.vec.rand);
-		if (!rc)
-			return osmo_fsm_inst_dispatch(ctx->gmm_att_req.fsm, E_AUTH_RESP_RECV_RESYNC, NULL);
-		/* on error, fall through to send a reject */
-		LOGMMCTXP(LOGL_ERROR, ctx,
-			  "Sending AUTS to HLR failed (rc = %d)\n", rc);
 	}
 
+	/* VLR doesn't accept Auth Ciph Fail */
+	vlr_subscr_rx_auth_fail(ctx->vsub, auts);
+
 	LOGMMCTXP(LOGL_NOTICE, ctx, "Authentication failed\n");
-	rc = gsm48_tx_gmm_auth_ciph_rej(ctx);
-	mm_ctx_cleanup_free(ctx, "GMM AUTH FAILURE");
 	return rc;
 }
 
+/* FIXME: extract from vsub */
 void extract_subscr_msisdn(struct sgsn_mm_ctx *ctx)
 {
-	struct gsm_mncc_number called;
-	uint8_t msisdn[sizeof(ctx->subscr->sgsn_data->msisdn) + 1];
-
-	/* Convert MSISDN from encoded to string.. */
-	if (!ctx->subscr)
-		return;
-
-	if (ctx->subscr->sgsn_data->msisdn_len < 1)
-		return;
-
-	/* prepare the data for the decoder */
-	memset(&called, 0, sizeof(called));
-	msisdn[0] = ctx->subscr->sgsn_data->msisdn_len;
-	memcpy(&msisdn[1], ctx->subscr->sgsn_data->msisdn,
-		ctx->subscr->sgsn_data->msisdn_len);
-
-	/* decode the string now */
-	gsm48_decode_called(&called, msisdn);
-
-	/* Prepend a '+' for international numbers */
-	if (called.plan == 1 && called.type == 1) {
-		ctx->msisdn[0] = '+';
-		osmo_strlcpy(&ctx->msisdn[1], called.number,
-			     sizeof(ctx->msisdn));
-	} else {
-		osmo_strlcpy(ctx->msisdn, called.number, sizeof(ctx->msisdn));
-	}
+	/* FIXME: do we use static assert? */
+	OSMO_ASSERT(GSM_EXTENSION_LENGTH != GSM23003_MSISDN_MAX_DIGITS)
+	if (ctx->vsub)
+		memcpy(ctx->msisdn, ctx->vsub->msisdn, GSM_EXTENSION_LENGTH);
 }
 
+/* FIXME: extract from vsub */
 void extract_subscr_hlr(struct sgsn_mm_ctx *ctx)
 {
 	struct gsm_mncc_number called;
-	uint8_t hlr_number[sizeof(ctx->subscr->sgsn_data->hlr) + 1];
+	uint8_t hlr_number[sizeof(ctx->vsub->hlr.buf) + 1];
 
-	if (!ctx->subscr)
+	if (!ctx->vsub)
 		return;
 
-	if (ctx->subscr->sgsn_data->hlr_len < 1)
+	if (ctx->vsub->hlr.len == 0 || ctx->vsub->hlr.len > sizeof(ctx->vsub->hlr.buf))
 		return;
 
 	/* prepare the data for the decoder */
 	memset(&called, 0, sizeof(called));
-	hlr_number[0] = ctx->subscr->sgsn_data->hlr_len;
-	memcpy(&hlr_number[1], ctx->subscr->sgsn_data->hlr,
-		ctx->subscr->sgsn_data->hlr_len);
+	hlr_number[0] = ctx->vsub->hlr.len & 0xff;
+	memcpy(&hlr_number[1], ctx->vsub->hlr.buf,
+		ctx->vsub->hlr.len);
 
 	/* decode the string now */
 	gsm48_decode_called(&called, hlr_number);
@@ -841,158 +865,6 @@ static int gsm48_tx_gmm_service_rej(struct sgsn_mm_ctx *mm,
 }
 #endif
 
-static int gsm48_tx_gmm_ra_upd_ack(struct sgsn_mm_ctx *mm);
-
-/* Check if we can already authorize a subscriber */
-int gsm48_gmm_authorize(struct sgsn_mm_ctx *ctx)
-{
-#ifdef BUILD_IU
-	int rc;
-#endif
-#ifndef PTMSI_ALLOC
-	struct sgsn_signal_data sig_data;
-#endif
-
-	/* Request IMSI and IMEI from the MS if they are unknown */
-	if (!strlen(ctx->imei)) {
-		ctx->t3370_id_type = GSM_MI_TYPE_IMEI;
-		mmctx_timer_start(ctx, 3370);
-		return gsm48_tx_gmm_id_req(ctx, GSM_MI_TYPE_IMEI);
-	}
-	if (!strlen(ctx->imsi)) {
-		ctx->t3370_id_type = GSM_MI_TYPE_IMSI;
-		mmctx_timer_start(ctx, 3370);
-		return gsm48_tx_gmm_id_req(ctx, GSM_MI_TYPE_IMSI);
-	}
-
-	/* All information required for authentication is available */
-	ctx->t3370_id_type = GSM_MI_TYPE_NONE;
-
-	if (ctx->auth_state == SGSN_AUTH_UNKNOWN) {
-		/* Request authorization, this leads to a call to
-		 * sgsn_auth_update which in turn calls
-		 * gsm0408_gprs_access_granted or gsm0408_gprs_access_denied */
-
-		sgsn_auth_request(ctx);
-		/* Note that gsm48_gmm_authorize can be called recursively via
-		 * sgsn_auth_request iff ctx->auth_info changes to AUTH_ACCEPTED
-		 */
-		return 0;
-	}
-
-	if (ctx->auth_state == SGSN_AUTH_AUTHENTICATE
-	    && !sgsn_mm_ctx_is_authenticated(ctx)) {
-		struct gsm_auth_tuple *at = &ctx->auth_triplet;
-
-		mmctx_timer_start(ctx, 3360);
-		return gsm48_tx_gmm_auth_ciph_req(ctx, &at->vec, at->key_seq,
-						  false);
-	}
-
-	if (ctx->auth_state == SGSN_AUTH_AUTHENTICATE && sgsn_mm_ctx_is_authenticated(ctx) &&
-	    ctx->auth_triplet.key_seq != GSM_KEY_SEQ_INVAL) {
-		/* Check again for authorization */
-		sgsn_auth_request(ctx);
-		return 0;
-	}
-
-	if (ctx->auth_state != SGSN_AUTH_ACCEPTED) {
-		LOGMMCTXP(LOGL_NOTICE, ctx,
-			  "authorization is denied, aborting procedure\n");
-		return -EACCES;
-	}
-
-	/* The MS is authorized */
-#ifdef BUILD_IU
-	if (ctx->ran_type == MM_CTX_T_UTRAN_Iu && !ctx->iu.ue_ctx->integrity_active) {
-		/* Is any encryption above UEA0 enabled? */
-		bool send_ck = sgsn->cfg.uea_encryption_mask > (1 << OSMO_UTRAN_UEA0);
-		LOGMMCTXP(LOGL_DEBUG, ctx, "Iu Security Mode Command: %s encryption key (UEA encryption mask = 0x%x)\n",
-			  send_ck ? "sending" : "not sending", sgsn->cfg.uea_encryption_mask);
-		/* FIXME: we should send the set of allowed UEA, as in ranap_new_msg_sec_mod_cmd2(). However, this
-		 * is not possible in the iu_client API. See OS#5487. */
-		rc = ranap_iu_tx_sec_mode_cmd(ctx->iu.ue_ctx, &ctx->auth_triplet.vec, send_ck, ctx->iu.new_key);
-		ctx->iu.new_key = 0;
-		return rc;
-	}
-#endif
-
-	switch (ctx->pending_req) {
-	case 0:
-		LOGMMCTXP(LOGL_INFO, ctx,
-			  "no pending request, authorization completed\n");
-		break;
-	case GSM48_MT_GMM_ATTACH_REQ:
-		ctx->pending_req = 0;
-
-		extract_subscr_msisdn(ctx);
-		extract_subscr_hlr(ctx);
-#ifdef PTMSI_ALLOC
-		/* Start T3350 and re-transmit up to 5 times until ATTACH COMPLETE */
-		mmctx_timer_start(ctx, 3350);
-		ctx->t3350_mode = GMM_T3350_MODE_ATT;
-#else
-		memset(&sig_data, 0, sizeof(sig_data));
-		sig_data.mm = ctx;
-		osmo_signal_dispatch(SS_SGSN, S_SGSN_ATTACH, &sig_data);
-		osmo_fsm_inst_dispatch(ctx->gmm_fsm, E_GMM_ATTACH_SUCCESS, NULL);
-#endif
-
-		return gsm48_tx_gmm_att_ack(ctx);
-#ifdef BUILD_IU
-	case GSM48_MT_GMM_SERVICE_REQ:
-		ctx->pending_req = 0;
-		osmo_fsm_inst_dispatch(ctx->iu.mm_state_fsm, E_PMM_PS_CONN_ESTABLISH, NULL);
-		rc = gsm48_tx_gmm_service_ack(ctx);
-
-		if (ctx->iu.service.type != GPRS_SERVICE_T_SIGNALLING)
-			activate_pdp_rabs(ctx);
-
-		return rc;
-#endif
-	case GSM48_MT_GMM_RA_UPD_REQ:
-		ctx->pending_req = 0;
-		/* Send RA UPDATE ACCEPT */
-		return gsm48_tx_gmm_ra_upd_ack(ctx);
-
-	default:
-		LOGMMCTXP(LOGL_ERROR, ctx,
-			  "only Attach Request is supported yet, "
-			  "got request type %u\n", ctx->pending_req);
-		break;
-	}
-
-	return 0;
-}
-
-void gsm0408_gprs_authenticate(struct sgsn_mm_ctx *ctx)
-{
-	ctx->sec_ctx = OSMO_AUTH_TYPE_NONE;
-
-	if (ctx->gmm_att_req.fsm->state != ST_INIT)
-		osmo_fsm_inst_dispatch(ctx->gmm_att_req.fsm, E_VLR_ANSWERED, (void *) 0);
-	else
-		gsm48_gmm_authorize(ctx);
-}
-
-void gsm0408_gprs_access_granted(struct sgsn_mm_ctx *ctx)
-{
-	switch (ctx->gmm_fsm->state) {
-	case ST_GMM_COMMON_PROC_INIT:
-		LOGMMCTXP(LOGL_NOTICE, ctx,
-		     "Authorized, continuing procedure, IMSI=%s\n",
-		     ctx->imsi);
-		/* Continue with the authorization */
-		if (ctx->gmm_att_req.fsm->state != ST_INIT)
-			osmo_fsm_inst_dispatch(ctx->gmm_att_req.fsm, E_VLR_ANSWERED, (void *) 0);
-		break;
-	default:
-		LOGMMCTXP(LOGL_INFO, ctx,
-		     "Authorized, ignored, IMSI=%s\n",
-		     ctx->imsi);
-	}
-}
-
 void gsm0408_gprs_access_denied(struct sgsn_mm_ctx *ctx, int gmm_cause)
 {
 	if (gmm_cause == SGSN_ERROR_CAUSE_NONE)
@@ -1005,8 +877,6 @@ void gsm0408_gprs_access_denied(struct sgsn_mm_ctx *ctx, int gmm_cause)
 			  "with cause '%s' (%d)\n",
 			  get_value_string(gsm48_gmm_cause_names, gmm_cause),
 			  gmm_cause);
-		if (ctx->gmm_att_req.fsm->state != ST_INIT)
-			osmo_fsm_inst_dispatch(ctx->gmm_att_req.fsm, E_REJECT, (void *) (long) gmm_cause);
 		break;
 	case ST_GMM_REGISTERED_NORMAL:
 	case ST_GMM_REGISTERED_SUSPENDED:
@@ -1048,7 +918,6 @@ void gsm0408_gprs_access_cancelled(struct sgsn_mm_ctx *ctx, int gmm_cause)
 static int gsm48_rx_gmm_id_resp(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 {
 	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
-	long mi_typel;
 	char mi_log_string[32];
 	struct osmo_mobile_identity mi;
 
@@ -1064,17 +933,6 @@ static int gsm48_rx_gmm_id_resp(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 	osmo_mobile_identity_to_str_buf(mi_log_string, sizeof(mi_log_string), &mi);
 
 	LOGMMCTXP(LOGL_DEBUG, ctx, "-> GMM IDENTITY RESPONSE: MI=%s\n", mi_log_string);
-
-	if (ctx->t3370_id_type == GSM_MI_TYPE_NONE) {
-		LOGMMCTXP(LOGL_NOTICE, ctx,
-			  "Got unexpected IDENTITY RESPONSE: MI=%s, "
-			  "ignoring message\n",
-			  mi_log_string);
-		return -EINVAL;
-	}
-
-	if (mi.type == ctx->t3370_id_type)
-		mmctx_timer_stop(ctx, 3370);
 
 	switch (mi.type) {
 	case GSM_MI_TYPE_IMSI:
@@ -1105,9 +963,7 @@ static int gsm48_rx_gmm_id_resp(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 		break;
 	}
 
-	/* Check if we can let the mobile station enter */
-	mi_typel = mi.type;
-	return osmo_fsm_inst_dispatch(ctx->gmm_att_req.fsm, E_IDEN_RESP_RECV, (void *)mi_typel);
+	return vlr_subscr_rx_id_resp(ctx->vsub, &mi);
 }
 
 /* Allocate a new P-TMSI and change context state */
@@ -1174,14 +1030,15 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 {
 	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
 	uint8_t *cur = gh->data, *msnc, *mi_data, *ms_ra_acc_cap;
-	uint8_t msnc_len, att_type, mi_len, ms_ra_acc_cap_len;
+	uint8_t msnc_len, att_type, mi_len, ms_ra_acc_cap_len, key_seq;
 	uint16_t drx_par;
 	char mi_log_string[32];
-	struct osmo_routing_area_id ra_id;
+	struct osmo_routing_area_id ra_id, old_ra_id;
 	uint16_t cid = 0;
 	enum gsm48_gmm_cause reject_cause;
 	struct osmo_mobile_identity mi;
 	int rc;
+	bool created = false;
 
 	LOGMMCTXP(LOGL_INFO, ctx, "-> GMM ATTACH REQUEST ");
 	rate_ctr_inc(rate_ctr_group_get_ctr(sgsn->rate_ctrs, CTR_GPRS_ATTACH_REQUEST));
@@ -1215,8 +1072,10 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 	 * after the Attach Request succeed.
 	 * The SGSN can decide if it close the connection or not. Both are spec conform. */
 
-	/* aTTACH Type 10.5.5.2 */
-	att_type = *cur++ & 0x07;
+	/* ATTACH Type 10.5.5.2 */
+	att_type = *cur & 0x07;
+	key_seq = *cur & 0xf0;
+	cur++;
 
 	/* DRX parameter 10.5.5.6 */
 	drx_par = *cur++ << 8;
@@ -1235,7 +1094,8 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 	DEBUGPC(DMM, "MI(%s) type=\"%s\" ", mi_log_string,
 		get_value_string(gprs_att_t_strs, att_type));
 
-	/* Old routing area identification 10.5.5.15. Skip it */
+	/* Old routing area identification 10.5.5.15. */
+	osmo_routing_area_id_decode(&old_ra_id, cur, 6);
 	cur += 6;
 
 	/* MS Radio Access Capability 10.5.5.12a */
@@ -1332,24 +1192,51 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 
 	ctx->ciph_algo = gprs_ms_net_select_best_gea(ctx->ue_cipher_mask, sgsn->cfg.gea_encryption_mask);
 
-#ifdef PTMSI_ALLOC
-	/* Allocate a new P-TMSI (+ P-TMSI signature) and update TLLI */
-	ptmsi_update(ctx);
-#endif
+	// if (ctx->ran_type == MM_CTX_T_GERAN_Gb) {
+	// 	/* Even if there is no P-TMSI allocated, the MS will
+	// 	 * switch from foreign TLLI to local TLLI */
+	// 	ctx->gb.tlli_new = gprs_tmsi2tlli(ctx->p_tmsi, TLLI_LOCAL);
 
-	if (ctx->ran_type == MM_CTX_T_GERAN_Gb) {
-		/* Even if there is no P-TMSI allocated, the MS will
-		 * switch from foreign TLLI to local TLLI */
-		ctx->gb.tlli_new = gprs_tmsi2tlli(ctx->p_tmsi, TLLI_LOCAL);
+	// 	/* Inform LLC layer about new TLLI but keep old active */
+	// 	if (sgsn_mm_ctx_is_authenticated(ctx))
+	// 		gprs_llme_copy_key(ctx, ctx->gb.llme);
 
-		/* Inform LLC layer about new TLLI but keep old active */
-		if (sgsn_mm_ctx_is_authenticated(ctx))
-			gprs_llme_copy_key(ctx, ctx->gb.llme);
+	// 	gprs_llgmm_assign(ctx->gb.llme, ctx->gb.tlli, ctx->gb.tlli_new);
+	// }
 
-		gprs_llgmm_assign(ctx->gb.llme, ctx->gb.tlli, ctx->gb.tlli_new);
+	if (!ctx->vsub) {
+		if (mi.type == GSM_MI_TYPE_TMSI)
+			ctx->vsub = vlr_subscr_find_or_create_by_tmsi(sgsn->vlr, ctx->p_tmsi, "mmctx", &created);
+		else if (mi.type == GSM_MI_TYPE_IMSI)
+			ctx->vsub = vlr_subscr_find_or_create_by_imsi(sgsn->vlr, ctx->imsi, "mmctx", &created);
 	}
 
-	osmo_fsm_inst_dispatch(ctx->gmm_att_req.fsm, E_ATTACH_REQ_RECV, msg);
+	if (!ctx->vsub) {
+		reject_cause = GMM_CAUSE_NET_FAIL;
+		goto rejected;
+	}
+
+	/* FIXME: how do we want to implement re-sending PDUs for GMM? */
+	if (ctx->vsub->lu_fsm)
+	{
+		osmo_fsm_inst_free(ctx->vsub->lu_fsm);
+	}
+	ctx->vsub->lu_fsm = vlr_ra_update(
+	    ctx->gmm_fsm, E_GMM_ATTACH_SUCCESS, E_GMM_ATTACH_FAILED, NULL,
+	    sgsn->vlr,
+	    ctx,
+	    VLR_LU_TYPE_IMSI_ATTACH,
+	    ctx->p_tmsi,
+	    ctx->imsi,
+	    &old_ra_id,
+	    &ra_id,
+	    sgsn->cfg.auth_policy == SGSN_AUTH_POLICY_REMOTE,
+	    ctx->ciph_algo != GPRS_ALGO_GEA0,
+	    ctx->ciph_algo != GPRS_ALGO_GEA0,
+	    key_seq,
+	    mmctx_is_r99(ctx),
+	    ctx->ran_type == MM_CTX_T_UTRAN_Iu,
+	    true);
 	return 0;
 
 err_inval:
@@ -1375,20 +1262,31 @@ rejected:
 static int gsm48_rx_gmm_att_compl(struct sgsn_mm_ctx *mmctx)
 {
 	struct sgsn_signal_data sig_data;
+	int rc;
 	/* only in case SGSN offered new P-TMSI */
 	LOGMMCTXP(LOGL_INFO, mmctx, "-> GMM ATTACH COMPLETE\n");
 
 #ifdef BUILD_IU
+	/* TODO: check follow-on request */
 	if (mmctx->iu.ue_ctx) {
 		ranap_iu_tx_release(mmctx->iu.ue_ctx, NULL);
 	}
 #endif
 
+	/* If the mmctx doesn't contain a VLR subscriber, ignore this message */
+	if (!mmctx->vsub)
+		return 0;
+
+	/* VSUB doesn't accept Att/Rau Complete */
+	rc = vlr_subscr_rx_rau_complete(mmctx->vsub);
+	if (rc < 0)
+		return rc;
+
 	mmctx_timer_stop(mmctx, 3350);
 	mmctx->t3350_mode = GMM_T3350_MODE_NONE;
 	mmctx->p_tmsi_old = 0;
 	mmctx->pending_req = 0;
-	osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_GMM_ATTACH_SUCCESS, NULL);
+
 	switch(mmctx->ran_type) {
 	case MM_CTX_T_UTRAN_Iu:
 		osmo_fsm_inst_dispatch(mmctx->iu.mm_state_fsm, E_PMM_PS_ATTACH, NULL);
@@ -1402,8 +1300,6 @@ static int gsm48_rx_gmm_att_compl(struct sgsn_mm_ctx *mmctx)
 		osmo_fsm_inst_dispatch(mmctx->gb.mm_state_fsm, E_MM_GPRS_ATTACH, NULL);
 		break;
 	}
-
-	osmo_fsm_inst_dispatch(mmctx->gmm_att_req.fsm, E_ATTACH_COMPLETE_RECV, 0);
 	memset(&sig_data, 0, sizeof(sig_data));
 	sig_data.mm = mmctx;
 	osmo_signal_dispatch(SS_SGSN, S_SGSN_ATTACH, &sig_data);
@@ -1429,7 +1325,9 @@ int gprs_gmm_msg_cmp(struct msgb *a, struct msgb *b)
 static int gsm48_rx_gmm_det_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 {
 	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
+	struct sgsn_signal_data sig_data;
 	uint8_t detach_type, power_off;
+	long data;
 	int rc = 0;
 
 	detach_type = gh->data[0] & 0x7;
@@ -1441,29 +1339,39 @@ static int gsm48_rx_gmm_det_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 		msgb_tlli(msg), get_value_string(gprs_det_t_mo_strs, detach_type),
 		power_off ? "Power-off" : "");
 
+
 	/* Only send the Detach Accept (MO) if power off isn't indicated,
 	 * see 04.08, 4.7.4.1.2/3 for details */
-	if (!power_off) {
-		/* force_stby = 0 */
-		if (ctx)
-			rc = gsm48_tx_gmm_det_ack(ctx, 0);
-		else
+	if (!ctx) {
+		if (!power_off)
 			rc = gsm48_tx_gmm_det_ack_oldmsg(msg, 0);
+		return rc;
 	}
 
-	if (ctx) {
-		struct sgsn_signal_data sig_data;
-		memset(&sig_data, 0, sizeof(sig_data));
-		sig_data.mm = ctx;
-		osmo_signal_dispatch(SS_SGSN, S_SGSN_DETACH, &sig_data);
-		mm_ctx_cleanup_free(ctx, "GMM DETACH REQUEST");
-	}
+	memset(&sig_data, 0, sizeof(sig_data));
+	sig_data.mm = ctx;
+	/* FIXME: in theory there shouldn't be a MMCTX without VLR sub */
+	if (ctx->vsub)
+		vlr_subscr_rx_imsi_detach(ctx->vsub);
+
+	data = power_off;
+	osmo_fsm_inst_dispatch(ctx->gmm_fsm, E_GMM_MS_INIT_DETACH_REQ, &data);
+	osmo_signal_dispatch(SS_SGSN, S_SGSN_DETACH, &sig_data);
+	mm_ctx_cleanup_free(ctx, "GMM DETACH REQUEST");
 
 	return rc;
 }
 
+/* CHapter 9.4.6: MT Detach Ack */
+static int gsm48_rx_gmm_det_accept(struct sgsn_mm_ctx *ctx, struct msgb *msg)
+{
+	LOGMMCTXP(LOGL_INFO, ctx, "-> DETACH ACK\n");
+	osmo_fsm_inst_dispatch(ctx->gmm_fsm, E_GMM_DETACH_ACCEPTED, NULL);
+	return 0;
+}
+
 /* Chapter 9.4.15: Routing area update accept */
-static int gsm48_tx_gmm_ra_upd_ack(struct sgsn_mm_ctx *mm)
+int gsm48_tx_gmm_ra_upd_ack(struct sgsn_mm_ctx *mm)
 {
 	struct msgb *msg = gsm48_msgb_alloc_name("GSM 04.08 UPD ACK");
 	struct gsm48_hdr *gh;
@@ -1525,7 +1433,25 @@ static int gsm48_tx_gmm_ra_upd_ack(struct sgsn_mm_ctx *mm)
 }
 
 /* Chapter 9.4.17: Routing area update reject */
-int gsm48_tx_gmm_ra_upd_rej(struct msgb *old_msg, uint8_t cause)
+int gsm48_tx_gmm_ra_upd_rej(struct sgsn_mm_ctx *mm, uint8_t cause)
+{
+	struct msgb *msg = gsm48_msgb_alloc_name("GSM 04.08 RA UPD REJ");
+	struct gsm48_hdr *gh;
+
+	LOGP(DMM, LOGL_NOTICE, "<- ROUTING AREA UPDATE REJECT\n");
+	rate_ctr_inc(rate_ctr_group_get_ctr(sgsn->rate_ctrs, CTR_GPRS_ROUTING_AREA_REJECT));
+
+	gh = (struct gsm48_hdr *) msgb_put(msg, sizeof(*gh) + 2);
+	gh->proto_discr = GSM48_PDISC_MM_GPRS;
+	gh->msg_type = GSM48_MT_GMM_RA_UPD_REJ;
+	gh->data[0] = cause;
+	gh->data[1] = 0; /* ? */
+
+	return gsm48_gmm_sendmsg(msg, 0, NULL, false);
+}
+
+/* Chapter 9.4.17: Routing area update reject */
+int gsm48_tx_gmm_ra_upd_rej_oldmsg(struct msgb *old_msg, uint8_t cause)
 {
 	struct msgb *msg = gsm48_msgb_alloc_name("GSM 04.08 RA UPD REJ");
 	struct gsm48_hdr *gh;
@@ -1596,6 +1522,8 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 #endif
 	enum gsm48_gmm_cause reject_cause = GMM_CAUSE_PROTO_ERR_UNSPEC;
 	struct gprs_gmm_ra_upd_req req;
+	struct osmo_routing_area_id new_ra_id = {};
+	enum vlr_lu_type vlr_rau_type;
 	int rc;
 
 	rc = gprs_gmm_parse_ra_upd_req(msg, &req);
@@ -1621,8 +1549,25 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		reject_cause = GMM_CAUSE_PROTO_ERR_UNSPEC;
 		goto rejected;
 	case GPRS_UPD_T_RA:
-	case GPRS_UPD_T_PERIODIC:
+		vlr_rau_type = VLR_LU_TYPE_REGULAR;
 		break;
+	case GPRS_UPD_T_PERIODIC:
+		vlr_rau_type = VLR_LU_TYPE_PERIODIC;
+		break;
+	}
+
+	/* GERAN via Gb */
+	if (msgb_bcid(msg)) {
+		bssgp_parse_cell_id2(&new_ra_id, NULL, msgb_bcid(msg), 8);
+	}
+#ifdef BUILD_IU
+	/* UTRAN via Iu */
+	else if (MSG_IU_UE_CTX(msg)) {
+		gprs_rai_to_osmo(&new_ra_id, &MSG_IU_UE_CTX(msg)->ra_id);
+	}
+#endif /* BUILD_IU */
+	else {
+		OSMO_ASSERT(0);
 	}
 
 	if (!mmctx) {
@@ -1676,10 +1621,8 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		/* We've received either a RAU for a MS which isn't registered
 		 * or a RAU with an unknown RA ID. As long the SGSN doesn't support
 		 * PS handover we treat this as invalid RAU */
-		struct osmo_routing_area_id new_ra_id = {};
 		char new_ra[32];
 
-		bssgp_parse_cell_id2(&new_ra_id, NULL, msgb_bcid(msg), 8);
 		osmo_rai_name2_buf(new_ra, sizeof(new_ra), &new_ra_id);
 
 		if (mmctx->gmm_fsm->state == ST_GMM_DEREGISTERED)
@@ -1751,14 +1694,12 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	rate_ctr_inc(rate_ctr_group_get_ctr(mmctx->ctrg, GMM_CTR_RA_UPDATE));
 
 #ifdef PTMSI_ALLOC
-	ptmsi_update(mmctx);
-
 	/* Start T3350 and re-transmit up to 5 times until ATTACH COMPLETE */
 	mmctx->t3350_mode = GMM_T3350_MODE_RAU;
 	mmctx_timer_start(mmctx, 3350);
 #else
 	/* Make sure we are NORMAL (i.e. not SUSPENDED anymore) */
-	osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_GMM_ATTACH_SUCCESS, NULL);
+	osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_CH_SUCCESS, NULL);
 
 	memset(&sig_data, 0, sizeof(sig_data));
 	sig_data.mm = mmctx;
@@ -1768,10 +1709,6 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		/* Even if there is no P-TMSI allocated, the MS will switch from
 	 	* foreign TLLI to local TLLI */
 		mmctx->gb.tlli_new = gprs_tmsi2tlli(mmctx->p_tmsi, TLLI_LOCAL);
-
-		/* Inform LLC layer about new TLLI but keep accepting the old one during Rx */
-		gprs_llgmm_assign(mmctx->gb.llme, mmctx->gb.tlli,
-				  mmctx->gb.tlli_new);
 	}
 
 	/* Look at PDP Context Status IE and see if MS's view of
@@ -1785,14 +1722,32 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	 * a new Iu connection, so we might need to re-authenticate the
 	 * connection as well as turn on integrity protection. */
 	mmctx->pending_req = GSM48_MT_GMM_RA_UPD_REQ;
-	return gsm48_gmm_authorize(mmctx);
+
+	mmctx->vsub->lu_fsm = vlr_ra_update(
+	    mmctx->gmm_fsm, E_GMM_ATTACH_SUCCESS, E_GMM_ATTACH_FAILED, NULL,
+	    sgsn->vlr,
+	    mmctx,
+	    vlr_rau_type,
+	    mmctx->p_tmsi,
+	    mmctx->imsi,
+	    &req.old_rai,
+	    &mmctx->ra,
+	    sgsn->cfg.auth_policy == SGSN_AUTH_POLICY_REMOTE,
+	    mmctx->ciph_algo != GPRS_ALGO_GEA0,
+	    mmctx->ciph_algo != GPRS_ALGO_GEA0,
+	    req.cksq,
+	    mmctx_is_r99(mmctx),
+	    mmctx->ran_type == MM_CTX_T_UTRAN_Iu,
+	    true);
+
+	return 0;
 
 rejected:
 	/* Send RA UPDATE REJECT */
 	LOGMMCTXP(LOGL_NOTICE, mmctx,
 		  "Rejecting RA Update Request with cause '%s' (%d)\n",
 		  get_value_string(gsm48_gmm_cause_names, reject_cause), reject_cause);
-	rc = gsm48_tx_gmm_ra_upd_rej(msg, reject_cause);
+	rc = gsm48_tx_gmm_ra_upd_rej_oldmsg(msg, reject_cause);
 	if (mmctx)
 		mm_ctx_cleanup_free(mmctx, "GMM RA UPDATE REJ");
 	else if (llme)
@@ -1811,12 +1766,19 @@ rejected:
 static int gsm48_rx_gmm_ra_upd_compl(struct sgsn_mm_ctx *mmctx)
 {
 	struct sgsn_signal_data sig_data;
+	int rc;
 	/* only in case SGSN offered new P-TMSI */
 	LOGMMCTXP(LOGL_INFO, mmctx, "-> ROUTING AREA UPDATE COMPLETE\n");
 	mmctx_timer_stop(mmctx, 3350);
 	mmctx->t3350_mode = GMM_T3350_MODE_NONE;
 	mmctx->p_tmsi_old = 0;
 	mmctx->pending_req = 0;
+
+	/* VLR doesn't accept Att/Rau Complete */
+	rc = vlr_subscr_rx_rau_complete(mmctx->vsub);
+	if (rc < 0)
+		return rc;
+
 	osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_GMM_COMMON_PROC_SUCCESS, NULL);
 	switch(mmctx->ran_type) {
 	case MM_CTX_T_UTRAN_Iu:
@@ -1864,6 +1826,7 @@ static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 	uint8_t service_type, mi_len;
 	struct tlv_parsed tp;
 	struct osmo_mobile_identity mi;
+	struct osmo_routing_area_id ra_id;
 	char mi_log_string[32];
 	enum gsm48_gmm_cause reject_cause;
 	int rc;
@@ -1876,8 +1839,10 @@ static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 		return -1;
 	}
 
-	/* Skip Ciphering key sequence number 10.5.1.2 */
-	/* uint8_t ciph_seq_nr = *cur & 0x07; */
+	gprs_rai_to_osmo(&ra_id, &MSG_IU_UE_CTX(msg)->ra_id);
+
+	/* Ciphering key sequence number 10.5.1.2 */
+	uint8_t key_seq = *cur & 0x07;
 
 	/* Service type 10.5.5.20 */
 	service_type = (*cur++ >> 4) & 0x07;
@@ -1929,7 +1894,6 @@ static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 		goto rejected;
 	}
 
-	osmo_fsm_inst_dispatch(ctx->gmm_fsm, E_GMM_COMMON_PROC_INIT_REQ, NULL);
 
 	ctx->iu.service.type = service_type;
 
@@ -1938,6 +1902,8 @@ static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 	if (TLVP_PRESENT(&tp, GSM48_IE_GMM_PDP_CTX_STATUS)) {
 		const uint8_t *pdp_status = TLVP_VAL(&tp, GSM48_IE_GMM_PDP_CTX_STATUS);
 		const size_t pdp_status_len = TLVP_LEN(&tp, GSM48_IE_GMM_PDP_CTX_STATUS);
+
+		/* FIXME: this should be done after the connection has been authenticated! */
 
 		process_ms_ctx_status(ctx, pdp_status);
 
@@ -1952,9 +1918,34 @@ static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 		}
 	}
 
+	/* FIXME: validate the information *before* requesting the vlr proc acc,
+	 * because if the information can't be served, we don't need/have to
+	 * respond here. E.g. PDP session doesn't exist any more */
 
 	ctx->pending_req = GSM48_MT_GMM_SERVICE_REQ;
-	return gsm48_gmm_authorize(ctx);
+
+	/* FIXME: we should validate this RA_ID is correct for the UE */
+	if (ctx->vsub) {
+		vlr_proc_acc_req(ctx->gmm_fsm, // FIXME: struct osmo_fsm_inst *parent,
+				 E_GMM_SERVICE_ACCEPT, // FIXME: parent_event_success,
+				 E_GMM_SERVICE_REJECT, // FIXME: parent_event_failure,
+				 NULL,
+				 sgsn->vlr, ctx,
+				 VLR_PR_ARQ_T_CM_SERV_REQ, GSM48_CMSERV_MO_CALL_PACKET,
+				 &mi,
+				 &ra_id.lac,
+				 false, // auth is not required when we still got a valid auth key
+				 true, // FIXME: is_ciphering_to_be_attempted
+				 true, // FIXME: is_ciphering_required
+				 key_seq,
+				 mmctx_is_r99(ctx), true);
+		/* FIXME: check PMM_IDLE / PMM CONNECT for ciphering complete as implicit */
+		return 0;
+	} else {
+		reject_cause = GMM_CAUSE_NET_FAIL;
+		goto rejected;
+	}
+
 
 err_inval:
 	LOGPC(DMM, LOGL_INFO, "\n");
@@ -1970,7 +1961,6 @@ rejected:
 	return rc;
 
 }
-
 
 static int gsm48_rx_gmm_status(struct sgsn_mm_ctx *mmctx, struct msgb *msg)
 {
@@ -2094,9 +2084,7 @@ int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	case GSM48_MT_GMM_DETACH_ACK:
 		if (!mmctx)
 			goto null_mmctx;
-		LOGMMCTXP(LOGL_INFO, mmctx, "-> DETACH ACK\n");
-		mm_ctx_cleanup_free(mmctx, "GMM DETACH ACK");
-		rc = 0;
+		rc = gsm48_rx_gmm_det_accept(mmctx, msg);
 		break;
 	case GSM48_MT_GMM_ATTACH_COMPL:
 		if (!mmctx)
@@ -2151,67 +2139,6 @@ static void mmctx_timer_cb(void *_mm)
 	mm->num_T_exp++;
 
 	switch (mm->T) {
-	case 3350:	/* waiting for ATTACH COMPLETE */
-		if (mm->num_T_exp >= 5) {
-			LOGMMCTXP(LOGL_NOTICE, mm, "T3350 expired >= 5 times\n");
-			mm_ctx_cleanup_free(mm, "T3350");
-			/* FIXME: should we return some error? */
-			break;
-		}
-		/* re-transmit the respective msg and re-start timer */
-		switch (mm->t3350_mode) {
-		case GMM_T3350_MODE_ATT:
-			gsm48_tx_gmm_att_ack(mm);
-			break;
-		case GMM_T3350_MODE_RAU:
-			gsm48_tx_gmm_ra_upd_ack(mm);
-			break;
-		case GMM_T3350_MODE_PTMSI_REALL:
-			/* FIXME */
-			break;
-		case GMM_T3350_MODE_NONE:
-			LOGMMCTXP(LOGL_NOTICE, mm,
-				  "T3350 mode wasn't set, ignoring timeout\n");
-			break;
-		}
-		seconds = osmo_tdef_get(sgsn->cfg.T_defs, 3350, OSMO_TDEF_S, -1);
-		osmo_timer_schedule(&mm->timer, seconds, 0);
-		break;
-	case 3360:	/* waiting for AUTH AND CIPH RESP */
-		if (mm->num_T_exp >= 5) {
-			LOGMMCTXP(LOGL_NOTICE, mm, "T3360 expired >= 5 times\n");
-			mm_ctx_cleanup_free(mm, "T3360");
-			break;
-		}
-		/* Re-transmit the respective msg and re-start timer */
-		if (mm->auth_triplet.key_seq == GSM_KEY_SEQ_INVAL) {
-			LOGMMCTXP(LOGL_ERROR, mm,
-				  "timeout: invalid auth triplet reference\n");
-			mm_ctx_cleanup_free(mm, "T3360");
-			break;
-		}
-		at = &mm->auth_triplet;
-
-		rc = gsm48_tx_gmm_auth_ciph_req(mm, &at->vec, at->key_seq, false);
-		if (rc < 0) {
-			LOGMMCTXP(LOGL_ERROR, mm, "failed sending Auth. & Ciph. Request: %s \n", strerror(-rc));
-		} else {
-			seconds = osmo_tdef_get(sgsn->cfg.T_defs, 3360, OSMO_TDEF_S, -1);
-			osmo_timer_schedule(&mm->timer, seconds, 0);
-		}
-		break;
-	case 3370:	/* waiting for IDENTITY RESPONSE */
-		if (mm->num_T_exp >= 5) {
-			LOGMMCTXP(LOGL_NOTICE, mm, "T3370 expired >= 5 times\n");
-			gsm48_tx_gmm_att_rej(mm, GMM_CAUSE_MS_ID_NOT_DERIVED);
-			mm_ctx_cleanup_free(mm, "GMM ATTACH REJECT (T3370)");
-			break;
-		}
-		/* re-tranmit IDENTITY REQUEST and re-start timer */
-		gsm48_tx_gmm_id_req(mm, mm->t3370_id_type);
-		seconds = osmo_tdef_get(sgsn->cfg.T_defs, 3370, OSMO_TDEF_S, -1);
-		osmo_timer_schedule(&mm->timer, seconds, 0);
-		break;
 	default:
 		LOGMMCTXP(LOGL_ERROR, mm, "timer expired in unknown mode %u\n",
 			mm->T);
@@ -2339,4 +2266,271 @@ int gsm0408_gprs_rcvmsg_gb(struct msgb *msg, struct gprs_llc_llme *llme,
 	/* MMCTX can be invalid */
 
 	return rc;
+}
+
+static int vlr_tx_auth_req_cb(void *ref, struct vlr_auth_tuple *at, bool send_autn)
+{
+	struct sgsn_mm_ctx *mmctx = ref;
+	if (!mmctx)
+		return -EINVAL;
+
+	mmctx->auth_triplet.key_seq = at->key_seq;
+	mmctx->auth_triplet.vec = at->vec;
+	osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_GMM_COMMON_PROC_INIT_REQ, NULL);
+	return gsm48_tx_gmm_auth_ciph_req(mmctx, &at->vec, at->key_seq, false);
+}
+
+static int vlr_tx_auth_rej_cb(void *ref)
+{
+	struct sgsn_mm_ctx *mmctx = ref;
+	int rc;
+	if (!mmctx)
+		return -EINVAL;
+
+	rc = gsm48_tx_gmm_auth_ciph_rej(mmctx);
+	osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_GMM_COMMON_PROC_FAILED, NULL);
+
+	return rc;
+}
+
+static int vlr_subscr_assoc_cb(void *ref, struct vlr_subscr *vsub)
+{
+	struct sgsn_mm_ctx *mmctx = ref;
+	if (!mmctx)
+		return -EINVAL;
+
+	vlr_subscr_get(vsub, "mmctx");
+	mmctx->vsub = vsub;
+	return 0;
+}
+
+static void vlr_subscr_inval_cb(void *ref, struct vlr_subscr *vsub, enum gsm48_reject_value cause, bool is_update_procedure)
+{
+	struct sgsn_mm_ctx *mmctx = ref;
+	long data = cause;
+
+	if (!mmctx)
+		return;
+
+	if (!mmctx->vsub)
+		return;
+
+	if (!mmctx->gmm_fsm)
+		return;
+
+	if (gmm_fsm_is_registered(mmctx->gmm_fsm))
+		osmo_fsm_inst_dispatch(mmctx->gmm_fsm, is_update_procedure ? E_GMM_CLEANUP : E_GMM_NET_INIT_DETACH_REQ, &data);
+
+	/* FIXME: when loosing the VLR subscriber, we should ensure the GMM is in IDLE (same for PMM) */
+	vlr_subscr_put(vsub, "mmctx");
+	mmctx->vsub = NULL;
+}
+
+static void vlr_subscr_update_cb(struct vlr_subscr *vsub)
+{
+	/* FIXME: update the subscriber, MSISDN, APN related infos */
+}
+
+static int vlr_tx_id_req_cb(void *ref, uint8_t mi_type)
+{
+	struct sgsn_mm_ctx *ctx = ref;
+	if (!ctx)
+		return -EINVAL;
+
+	osmo_fsm_inst_dispatch(ctx->gmm_fsm, E_GMM_COMMON_PROC_INIT_REQ, NULL);
+	return gsm48_tx_gmm_id_req(ctx, mi_type);
+}
+
+static int vlr_tx_lu_acc_cb(void *ref, uint32_t send_tmsi, enum vlr_lu_type lu_type)
+{
+	struct sgsn_mm_ctx *ctx = ref;
+	if (!ctx)
+		return -EINVAL;
+
+	/* FIXME: rethink p-tmsi relocation */
+	if (ctx->p_tmsi != send_tmsi && ctx->p_tmsi != GSM_RESERVED_TMSI && send_tmsi != GSM_RESERVED_TMSI)
+	{
+		ctx->p_tmsi_old = ctx->p_tmsi;
+		ctx->p_tmsi = send_tmsi;
+		ctx->gb.tlli_new = gprs_tmsi2tlli(ctx->p_tmsi, TLLI_LOCAL);
+
+		if (ctx->ran_type == MM_CTX_T_GERAN_Gb) {
+			/* Inform LLC layer about new TLLI but keep old active */
+			if (sgsn_mm_ctx_is_authenticated(ctx))
+				gprs_llme_copy_key(ctx, ctx->gb.llme);
+
+			gprs_llgmm_assign(ctx->gb.llme, ctx->gb.tlli, ctx->gb.tlli_new);
+		}
+	}
+
+	// inform LLC layer
+
+	/* FIXME: kick GMM FSM - only on Complete, right? */
+	/* TODO: check here if we need to send a Attach Accept or Routing Area Accept (use update type?) */
+	switch (lu_type) {
+	case VLR_LU_TYPE_PERIODIC:
+	case VLR_LU_TYPE_REGULAR:
+		gsm48_tx_gmm_ra_upd_ack(ctx);
+		break;
+	case VLR_LU_TYPE_IMSI_ATTACH:
+		gsm48_tx_gmm_att_ack(ctx);
+		break;
+	}
+
+	return 0;
+}
+
+static int vlr_tx_lu_rej_cb(void *ref, enum gsm48_reject_value cause, enum vlr_lu_type lu_type)
+{
+	struct sgsn_mm_ctx *ctx = ref;
+	if (!ctx)
+		return -EINVAL;
+
+	/* FIXME: kick GMM FSM */
+	// maybe remove attached again?
+
+	switch (lu_type) {
+	case VLR_LU_TYPE_PERIODIC:
+	case VLR_LU_TYPE_REGULAR:
+		gsm48_tx_gmm_ra_upd_rej(ctx, cause);
+		break;
+	case VLR_LU_TYPE_IMSI_ATTACH:
+		gsm48_tx_gmm_att_rej(ctx, cause);
+		break;
+	default:
+		OSMO_ASSERT(0);
+	}
+
+	osmo_fsm_inst_dispatch(ctx->gmm_fsm, E_GMM_COMMON_PROC_FAILED, NULL);
+
+	return 0;
+}
+
+static int vlr_tx_cm_serv_acc_cb(void *ref, enum osmo_cm_service_type cm_service_type)
+{
+	struct sgsn_mm_ctx *ctx = ref;
+	if (!ctx)
+		return -EINVAL;
+
+	return 0;
+}
+
+static int vlr_tx_cm_serv_rej_cb(void *ref, enum osmo_cm_service_type cm_service_type, enum gsm48_reject_value cause)
+{
+	struct sgsn_mm_ctx *ctx = ref;
+	if (!ctx)
+		return -EINVAL;
+
+	return 0;
+}
+
+static int vlr_set_ciph_mode_cb(void *ref, bool umts_aka, bool retrieve_imeisv)
+{
+	struct sgsn_mm_ctx *ctx = ref;
+	struct vlr_subscr *vsub;
+	bool send_ck;
+
+	if (!ctx)
+		return -EINVAL;
+
+	// FIXME: decide if we want the VLR code to decide which ciphering
+
+	/* for geran, we do nothing right now */
+	if (ctx->ran_type == MM_CTX_T_GERAN_Gb)
+		return 0;
+
+	vsub = ctx->vsub;
+	if (!vsub || !vsub->last_tuple) {
+		LOGMMCTXP(LOGL_ERROR, ctx, "Set cipher mode callback failed with NULL vsub or empty tuple");
+		return -EINVAL;
+	}
+
+	send_ck = sgsn->cfg.uea_encryption_mask > (1 << OSMO_UTRAN_UEA0);
+	ranap_iu_tx_sec_mode_cmd(ctx->iu.ue_ctx, &ctx->auth_triplet.vec, send_ck, ctx->iu.new_key);
+
+	return 0;
+}
+
+static int vlr_tx_common_id_cb(void *ref)
+{
+	struct sgsn_mm_ctx *ctx = ref;
+	if (!ctx)
+		return -EINVAL;
+
+	if (ctx->ran_type == MM_CTX_T_UTRAN_Iu)
+		return ranap_iu_tx_common_id(ctx->iu.ue_ctx, ctx->imsi);
+
+	return 0;
+}
+
+static int vlr_tx_mm_info_cb(void *ref)
+{
+	return 0;
+}
+
+
+/* Fixme: rename into gsup .client mux init */
+int gmm_vlr_init(struct sgsn_instance *sgi)
+{
+	const char *addr_str;
+	struct ipaccess_unit *ipa_dev;
+	int rc;
+
+	osmo_vlr_set_log_cat(OSMO_VLR_LOGC_VLR, DVLR);
+
+	struct vlr_ops vlr_ops = {
+	    .subscr_assoc = vlr_subscr_assoc_cb,
+	    .subscr_inval = vlr_subscr_inval_cb,
+	    .subscr_update = vlr_subscr_update_cb,
+
+	    .set_ciph_mode = vlr_set_ciph_mode_cb,
+
+	    .tx_id_req = vlr_tx_id_req_cb,
+	    .tx_auth_req = vlr_tx_auth_req_cb,
+	    .tx_auth_rej = vlr_tx_auth_rej_cb,
+
+	    .tx_cm_serv_acc = vlr_tx_cm_serv_acc_cb,
+	    .tx_cm_serv_rej = vlr_tx_cm_serv_rej_cb,
+	    .tx_mm_info = vlr_tx_mm_info_cb,
+	    .tx_lu_acc = vlr_tx_lu_acc_cb,
+	    .tx_lu_rej = vlr_tx_lu_rej_cb,
+
+	    .tx_common_id = vlr_tx_common_id_cb,
+	};
+
+	addr_str = inet_ntoa(sgi->cfg.gsup_server_addr.sin_addr);
+
+	sgi->gcm = gsup_client_mux_alloc(sgi);
+	OSMO_ASSERT(sgi->gcm);
+
+	ipa_dev = talloc_zero(sgi, struct ipaccess_unit);
+	ipa_dev->unit_name = "SGSN";
+	ipa_dev->serno = sgi->cfg.sgsn_ipa_name; /* NULL unless configured via VTY */
+	ipa_dev->swversion = PACKAGE_NAME "-" PACKAGE_VERSION;
+
+	sgi->gcm->rx_cb[OSMO_GSUP_MESSAGE_CLASS_SUBSCRIBER_MANAGEMENT] = (struct gsup_client_mux_rx_cb){
+	    .func = vlr_gsup_rx,
+	    .data = sgsn->vlr,
+	};
+
+	rc = gsup_client_mux_start(sgi->gcm, addr_str, sgi->cfg.gsup_server_port, ipa_dev);
+	if (rc)
+		return rc;
+
+	sgi->vlr = vlr_alloc(sgi, &vlr_ops, true);
+	if (!sgi->vlr)
+		return -1;
+
+	sgsn->vlr->cfg.assign_tmsi = true;
+	sgsn->vlr->cfg.auth_reuse_old_sets_on_error = false;
+	sgsn->vlr->cfg.auth_tuple_max_reuse_count = 0;
+	sgsn->vlr->cfg.is_ps = true;
+
+	rc = vlr_start(sgsn->vlr, sgsn->gcm);
+	if (rc < 0) {
+		LOGP(DGPRS, LOGL_FATAL, "Cannot set up VLR\n");
+		return rc;
+	}
+
+	return 0;
 }

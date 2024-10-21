@@ -54,6 +54,9 @@
 #include <osmocom/sgsn/gtp.h>
 #include <osmocom/sgsn/pdpctx.h>
 
+#include <osmocom/vlr/vlr.h>
+#include <osmocom/gsupclient/gsup_client_mux.h>
+
 #include <pdp.h>
 
 #include <time.h>
@@ -204,9 +207,6 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_alloc(uint32_t rate_ctr_id)
 	ctx->gmm_fsm = osmo_fsm_inst_alloc(&gmm_fsm, ctx, ctx, LOGL_DEBUG, "gmm_fsm");
 	if (!ctx->gmm_fsm)
 		goto out;
-	ctx->gmm_att_req.fsm = osmo_fsm_inst_alloc(&gmm_attach_req_fsm, ctx, ctx, LOGL_DEBUG, "gb_gmm_req");
-	if (!ctx->gmm_att_req.fsm)
-		goto out;
 	ctx->gb.mm_state_fsm = osmo_fsm_inst_alloc(&mm_state_gb_fsm, ctx, ctx, LOGL_DEBUG, NULL);
 	if (!ctx->gb.mm_state_fsm)
 		goto out;
@@ -306,6 +306,11 @@ void sgsn_mm_ctx_cleanup_free(struct sgsn_mm_ctx *mm)
 	struct sgsn_pdp_ctx *pdp, *pdp2;
 	struct sgsn_signal_data sig_data;
 
+	if (mm->vsub) {
+		vlr_subscr_put(mm->vsub, "mmctx");
+		mm->vsub = NULL;
+	}
+
 	if (mm->ran_type == MM_CTX_T_GERAN_Gb)
 		llme = mm->gb.llme;
 	else
@@ -334,23 +339,19 @@ void sgsn_mm_ctx_cleanup_free(struct sgsn_mm_ctx *mm)
 	memset(&sig_data, 0, sizeof(sig_data));
 	sig_data.mm = mm;
 	osmo_signal_dispatch(SS_SGSN, S_SGSN_MM_FREE, &sig_data);
-
-
-	/* Detach from subscriber which is possibly freed then */
-	if (mm->subscr) {
-		struct gprs_subscr *subscr = gprs_subscr_get(mm->subscr);
-		gprs_subscr_cleanup(subscr);
-		gprs_subscr_put(subscr);
+	if (mm->vsub) {
+		vlr_subscr_expire(mm->vsub);
+		vlr_subscr_disconnected(mm->vsub);
+		vlr_subscr_put(mm->vsub, "mmctx");
+		mm->vsub = NULL;
 	}
 
-	if (mm->gmm_att_req.fsm)
-		gmm_att_req_free(mm);
 	if (mm->gb.mm_state_fsm)
 		osmo_fsm_inst_free(mm->gb.mm_state_fsm);
 	if (mm->iu.mm_state_fsm)
 		osmo_fsm_inst_free(mm->iu.mm_state_fsm);
 	if (mm->gmm_fsm)
-		osmo_fsm_inst_free(mm->gmm_fsm);
+		osmo_fsm_inst_term(mm->gmm_fsm, OSMO_FSM_TERM_REGULAR, NULL);
 
 	sgsn_mm_ctx_free(mm);
 	mm = NULL;
@@ -439,14 +440,6 @@ failed:
 	return GSM_RESERVED_TMSI;
 }
 
-void sgsn_update_subscriber_data(struct sgsn_mm_ctx *mmctx)
-{
-	OSMO_ASSERT(mmctx != NULL);
-	LOGMMCTXP(LOGL_INFO, mmctx, "Subscriber data update\n");
-
-	sgsn_auth_update(mmctx);
-}
-
 static void insert_extra(struct tlv_parsed *tp,
 			struct sgsn_subscriber_data *data,
 			struct sgsn_subscriber_pdp_data *pdp)
@@ -498,6 +491,7 @@ struct sgsn_ggsn_ctx *sgsn_mm_ctx_find_ggsn_ctx(struct sgsn_mm_ctx *mmctx,
 			req_apn_str[0] = 0;
 	}
 
+	/* FIXME: why should the vsub ever NULL? */
 	if (mmctx->subscr == NULL)
 		allow_any_apn = 1;
 

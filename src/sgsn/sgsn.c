@@ -57,6 +57,8 @@
 #include <osmocom/sgsn/pdpctx.h>
 #include <osmocom/sgsn/gprs_routing_area.h>
 
+#include <osmocom/vlr/vlr.h>
+
 #include <pdp.h>
 
 #include <time.h>
@@ -188,9 +190,9 @@ struct sgsn_instance *sgsn_instance_alloc(void *talloc_ctx)
 	osmo_timer_setup(&inst->llme_timer, sgsn_llme_check_cb, NULL);
 	osmo_timer_schedule(&inst->llme_timer, GPRS_LLME_CHECK_TICK, 0);
 	/* These are mostly setting up stuff not related to VTY cfg, so they can be set up here: */
-	sgsn_auth_init(inst);
 	sgsn_cdr_init(inst);
 	sgsn_ra_init(inst);
+	sgsn_auth_init(inst);
 	return inst;
 }
 
@@ -213,10 +215,11 @@ int sgsn_inst_init(struct sgsn_instance *sgsn)
 		return -EFAULT;
 	}
 
-	rc = gprs_subscr_init(sgsn);
+	rc = gmm_vlr_init(sgsn);
 	if (rc < 0) {
-		LOGP(DGPRS, LOGL_FATAL, "Cannot set up SGSN\n");
+		LOGP(DGPRS, LOGL_FATAL, "Cannot set up MM/VLR/GSUP\n");
 		return rc;
 	}
+
 	return 0;
 }

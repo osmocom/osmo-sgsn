@@ -7,6 +7,7 @@
 #include <osmocom/gsm/gsm48.h>
 #include <osmocom/crypt/auth.h>
 
+struct sgsn_instance;
 struct sgsn_mm_ctx;
 struct gprs_llc_llme;
 struct osmo_routing_area_id;
@@ -14,6 +15,11 @@ struct osmo_routing_area_id;
 int gsm48_tx_gmm_auth_ciph_req(struct sgsn_mm_ctx *mm,
 				      const struct osmo_auth_vector *vec,
 				      uint8_t key_seq, bool force_standby);
+int gsm48_tx_gmm_auth_ciph_rej(struct sgsn_mm_ctx *mm);
+
+int gsm48_tx_gmm_ra_upd_ack(struct sgsn_mm_ctx *mm);
+int gsm48_tx_gmm_ra_upd_rej_oldmsg(struct msgb *old_msg, uint8_t reject_cause);
+int gsm48_tx_gmm_ra_upd_rej(struct sgsn_mm_ctx *mm, uint8_t cause);
 
 int gsm0408_gprs_rcvmsg_gb(struct msgb *msg, struct gprs_llc_llme *llme,
 			   bool drop_cipherable);
@@ -27,7 +33,8 @@ int gsm0408_gprs_force_reattach_oldmsg(struct msgb *msg,
 void gsm0408_gprs_access_granted(struct sgsn_mm_ctx *mmctx);
 void gsm0408_gprs_access_denied(struct sgsn_mm_ctx *mmctx, int gmm_cause);
 void gsm0408_gprs_access_cancelled(struct sgsn_mm_ctx *mmctx, int gmm_cause);
-void gsm0408_gprs_authenticate(struct sgsn_mm_ctx *mmctx);
+
+void gprs_gmm_service_accepted(struct sgsn_mm_ctx *ctx);
 
 int gprs_gmm_rx_suspend(struct osmo_routing_area_id *raid, uint32_t tlli);
 int gprs_gmm_rx_resume(struct osmo_routing_area_id *raid, uint32_t tlli,
@@ -44,6 +51,8 @@ int gsm48_tx_gmm_id_req(struct sgsn_mm_ctx *mm, uint8_t id_type);
 int gsm48_tx_gmm_att_rej(struct sgsn_mm_ctx *mm,
 				uint8_t gmm_cause);
 int gsm48_tx_gmm_att_ack(struct sgsn_mm_ctx *mm);
+int gsm48_tx_gmm_detach_req(struct sgsn_mm_ctx *mmctx, uint8_t detach_type, uint8_t cause);
+int gsm48_tx_gmm_det_ack(struct sgsn_mm_ctx *mm, uint8_t force_stby);
 
 int gprs_gmm_msg_cmp(struct msgb *a, struct msgb *b);
 
@@ -54,4 +63,6 @@ void extract_subscr_hlr(struct sgsn_mm_ctx *ctx);
 
 void msgid2mmctx(struct sgsn_mm_ctx *mm, const struct msgb *msg);
 void mmctx2msgid(struct msgb *msg, const struct sgsn_mm_ctx *mm);
+
+int gmm_vlr_init(struct sgsn_instance *sgi);
 #endif /* _GPRS_GMM_H */
