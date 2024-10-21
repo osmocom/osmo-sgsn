@@ -752,8 +752,6 @@ struct lu_fsm_priv {
 	bool lu_by_tmsi;
 	char imsi[16];
 	uint32_t tmsi;
-	struct osmo_location_area_id old_lai;
-	struct osmo_location_area_id new_lai;
 	struct osmo_routing_area_id old_rai;
 	struct osmo_routing_area_id new_rai;
 	bool authentication_required;
@@ -767,19 +765,11 @@ struct lu_fsm_priv {
 	bool is_r99;
 	bool is_utran;
 	bool assign_tmsi;
+	bool hlr_update_req;
 
 	/*! count times timer T timed out */
 	int N;
 };
-
-
-/* Determine if given location area is served by this VLR */
-static bool lai_in_this_vlr(struct vlr_instance *vlr,
-			    const struct osmo_location_area_id *lai)
-{
-	/* TODO: VLR needs to keep a locally configured list of LAIs */
-	return true;
-}
 
 /* Return true when authentication should be attempted. */
 static bool try_auth(struct lu_fsm_priv *lfp)
@@ -882,7 +872,7 @@ static void vlr_loc_upd_node_4(struct osmo_fsm_inst *fi)
 		return;
 	}
 
-	if (lfp->lu_type == VLR_LU_TYPE_IMSI_ATTACH) {
+	if (lfp->lu_type == VLR_LU_TYPE_IMSI_ATTACH || lfp->hlr_update_req) {
 		/* Update_HLR_VLR */
 		osmo_fsm_inst_state_chg(fi, VLR_ULA_S_WAIT_HLR_UPD,
 					LU_TIMEOUT_LONG, 0);
@@ -931,7 +921,7 @@ static void vlr_loc_upd_post_ciph(struct osmo_fsm_inst *fi)
 
 	vsub->conf_by_radio_contact_ind = true;
 	/* Update LAI */
-	vsub->cgi.lai = lfp->new_lai;
+	vsub->cgi.lai = lfp->new_rai.lac;
 	vsub->dormant_ind = false;
 	vsub->cancel_loc_rx = false;
 	if (hlr_update_needed(vsub)) {
@@ -1084,7 +1074,7 @@ static int assoc_lfp_with_sub(struct osmo_fsm_inst *fi, struct vlr_subscr *vsub)
 	vsub->lu_fsm = fi;
 	vsub->msc_conn_ref = lfp->msc_conn_ref;
 	/* FIXME: send new LAC to HLR? */
-	vsub->cgi.lai.lac = lfp->new_lai.lac;
+	vsub->cgi.lai = lfp->new_rai.lac;
 	lfp->vsub = vsub;
 	/* Tell MSC to associate this subscriber with the given
 	 * connection */
@@ -1152,17 +1142,11 @@ static void _start_lu_main(struct osmo_fsm_inst *fi)
 
 	/* TODO: PUESBINE related handling */
 
-	/* Is previous LAI in this VLR? */
-	if (!lai_in_this_vlr(vlr, &lfp->old_lai)) {
-#if 0
-		/* FIXME: check previous VLR, (3) */
+	/* Is previous LAI/RAI in this VLR? */
+	if (!vlr->ops.location_served(lfp->vsub, &lfp->old_rai)) {
 		osmo_fsm_inst_state_chg(fi, VLR_ULA_S_WAIT_PVLR,
 					LU_TIMEOUT_LONG, 0);
 		return;
-#endif
-		LOGPFSML(fi, LOGL_NOTICE, "LAI change from %s,"
-			 " but checking previous VLR not implemented\n",
-			 osmo_lai_name(&lfp->old_lai));
 	}
 
 	/* If this is a TMSI based LU, we may not have the IMSI. Make sure that
@@ -1217,16 +1201,35 @@ static void lu_fsm_wait_imeisv(struct osmo_fsm_inst *fi, uint32_t event,
 	}
 }
 
+static void lu_fsm_wait_pvlr_onenter(struct osmo_fsm_inst *fi, uint32_t prev_state)
+{
+	struct lu_fsm_priv *lfp = lu_fsm_fi_priv(fi);
+	struct vlr_instance *vlr = lfp->vlr;
+
+	lfp->hlr_update_req = true;
+	vlr->ops.tx_pvlr_request(lfp->msc_conn_ref, &lfp->old_rai);
+}
+
 /* Wait for response from Send_Identification to PVLR */
 static void lu_fsm_wait_pvlr(struct osmo_fsm_inst *fi, uint32_t event,
 			     void *data)
 {
+	struct lu_fsm_priv *lfp = lu_fsm_fi_priv(fi);
+
 	switch (event) {
 	case VLR_ULA_E_SEND_ID_ACK:
 		vlr_loc_upd_node1_pre(fi);
 		break;
 	case VLR_ULA_E_SEND_ID_NACK:
-		vlr_loc_upd_want_imsi(fi);
+		if (vlr_is_cs(lfp->vlr)) {
+			vlr_loc_upd_want_imsi(fi);
+			break;
+		}
+		/* PS */
+		if (lfp->lu_type == VLR_LU_TYPE_IMSI_ATTACH)
+			vlr_loc_upd_want_imsi(fi);
+		else
+			lu_fsm_failure(fi, GSM48_REJECT_MS_IDENTITY_NOT_DERVIVABLE);
 		break;
 	default:
 		OSMO_ASSERT(0);
@@ -1484,6 +1487,7 @@ static const struct osmo_fsm_state vlr_lu_fsm_states[] = {
 				  S(VLR_ULA_S_WAIT_HLR_CHECK_IMEI_EARLY) |
 				  S(VLR_ULA_S_DONE),
 		.name = OSMO_STRINGIFY(VLR_ULA_S_WAIT_PVLR),
+		.onenter = lu_fsm_wait_pvlr_onenter,
 		.action = lu_fsm_wait_pvlr,
 	},
 	[VLR_ULA_S_WAIT_AUTH] = {
@@ -1674,8 +1678,8 @@ _vlr_loc_update(struct osmo_fsm_inst *parent,
 	lfp->msc_conn_ref = msc_conn_ref;
 	lfp->tmsi = tmsi;
 	lfp->lu_type = type;
-	lfp->old_lai = *old_lai;
-	lfp->new_lai = *new_lai;
+	lfp->old_rai.lac = *old_lai;
+	lfp->new_rai.lac = *new_lai;
 	lfp->lu_by_tmsi = true;
 	lfp->parent_event_success = parent_event_success;
 	lfp->parent_event_failure = parent_event_failure;
@@ -1688,8 +1692,7 @@ _vlr_loc_update(struct osmo_fsm_inst *parent,
 	lfp->is_utran = is_utran;
 	lfp->assign_tmsi = assign_tmsi;
 	if (imsi) {
-		strncpy(lfp->imsi, imsi, sizeof(lfp->imsi)-1);
-		lfp->imsi[sizeof(lfp->imsi)-1] = '\0';
+		osmo_strlcpy(lfp->imsi, imsi, sizeof(lfp->imsi));
 		lfp->lu_by_tmsi = false;
 	}
 	fi->priv = lfp;

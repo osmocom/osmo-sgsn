@@ -574,6 +574,7 @@ struct vlr_subscr *_vlr_subscr_find_or_create_by_tmsi(struct vlr_instance *vlr,
 						      const char *file,
 						      int line)
 {
+	/* FIXME: we need to add a type to the tmsi (local, foreign) so overlaps doesn't matter */
 	struct vlr_subscr *vsub;
 	vsub = _vlr_subscr_find_by_tmsi(vlr, tmsi, use, file, line);
 	if (vsub) {
@@ -598,10 +599,13 @@ static void dedup_vsub(struct vlr_subscr *exists, struct vlr_subscr *vsub)
 	struct vlr_instance *vlr = exists->vlr;
 	int i;
 	int j;
-	LOGVSUBP(LOGL_NOTICE, vsub,
-	     "There is an existing subscriber for IMSI %s used by %s, replacing with this VLR subscr, used by %s\n",
-	     exists->imsi, osmo_use_count_to_str_c(OTC_SELECT, &exists->use_count),
-	     osmo_use_count_to_str_c(OTC_SELECT, &vsub->use_count));
+	void *tmp = talloc_zero_size(vsub, 4);
+	LOGVLR(LOGL_NOTICE,
+	     "There is an existing subscriber for IMSI %s used by %s, replacing with new VLR subscr: %s used by %s\n",
+	     exists->imsi, osmo_use_count_to_str_c(tmp, &exists->use_count),
+	     vlr_subscr_name(vsub),
+	     osmo_use_count_to_str_c(tmp, &vsub->use_count));
+	talloc_free(tmp);
 
 	if (!vsub->msisdn[0])
 		OSMO_STRLCPY_ARRAY(vsub->msisdn, exists->msisdn);
@@ -1533,6 +1537,23 @@ int vlr_subscr_rx_imsi_detach(struct vlr_subscr *vsub)
 	return rc;
 }
 
+void vlr_subscr_rx_pvlr_id_ack(struct vlr_subscr *vsub)
+{
+	if (!vsub->lu_fsm)
+		return;
+
+	osmo_fsm_inst_dispatch(vsub->lu_fsm, VLR_ULA_E_SEND_ID_ACK, NULL);
+}
+
+void vlr_subscr_rx_pvlr_id_nack(struct vlr_subscr *vsub)
+{
+	if (!vsub->lu_fsm)
+		return;
+
+	osmo_fsm_inst_dispatch(vsub->lu_fsm, VLR_ULA_E_SEND_ID_NACK, NULL);
+}
+
+
 /* Tear down any running FSMs due to MSC connection timeout.
  * Visit all vsub->*_fsm pointers and give them a queue to send a final reject
  * message before the entire connection is torn down.
@@ -1561,6 +1582,7 @@ struct vlr_instance *vlr_alloc(void *ctx, const struct vlr_ops *ops, bool is_ps)
 	OSMO_ASSERT(ops->tx_common_id);
 	OSMO_ASSERT(ops->subscr_update);
 	OSMO_ASSERT(ops->subscr_assoc);
+	OSMO_ASSERT(ops->location_served);
 
 	INIT_LLIST_HEAD(&vlr->subscribers);
 	INIT_LLIST_HEAD(&vlr->operations);
