@@ -776,15 +776,6 @@ struct lu_fsm_priv {
 	int N;
 };
 
-
-/* Determine if given location area is served by this VLR */
-static bool lai_in_this_vlr(struct vlr_instance *vlr,
-			    const struct osmo_location_area_id *lai)
-{
-	/* TODO: VLR needs to keep a locally configured list of LAIs */
-	return true;
-}
-
 /* Return true when authentication should be attempted. */
 static bool try_auth(struct lu_fsm_priv *lfp)
 {
@@ -1145,16 +1136,11 @@ static void _start_lu_main(struct osmo_fsm_inst *fi)
 	/* TODO: PUESBINE related handling */
 
 	/* Is previous LAI in this VLR? */
-	if (!lai_in_this_vlr(vlr, &lfp->old_lai)) {
-#if 0
+	if (!vlr->ops.location_served(lfp->vsub, &lfp->old_rai)) {
 		/* FIXME: check previous VLR, (3) */
 		osmo_fsm_inst_state_chg(fi, VLR_ULA_S_WAIT_PVLR,
 					LU_TIMEOUT_LONG, 0);
 		return;
-#endif
-		LOGPFSML(fi, LOGL_NOTICE, "LAI change from %s,"
-			 " but checking previous VLR not implemented\n",
-			 osmo_lai_name(&lfp->old_lai));
 	}
 
 	/* If this is a TMSI based LU, we may not have the IMSI. Make sure that
@@ -1209,16 +1195,34 @@ static void lu_fsm_wait_imeisv(struct osmo_fsm_inst *fi, uint32_t event,
 	}
 }
 
+static void lu_fsm_wait_pvlr_onenter(struct osmo_fsm_inst *fi, uint32_t prev_state)
+{
+	struct lu_fsm_priv *lfp = lu_fsm_fi_priv(fi);
+	struct vlr_instance *vlr = lfp->vlr;
+
+	vlr->ops.tx_pvlr_request(lfp->msc_conn_ref, &lfp->old_rai);
+}
+
 /* Wait for response from Send_Identification to PVLR */
 static void lu_fsm_wait_pvlr(struct osmo_fsm_inst *fi, uint32_t event,
 			     void *data)
 {
+	struct lu_fsm_priv *lfp = lu_fsm_fi_priv(fi);
+
 	switch (event) {
 	case VLR_ULA_E_SEND_ID_ACK:
 		vlr_loc_upd_node1_pre(fi);
 		break;
 	case VLR_ULA_E_SEND_ID_NACK:
-		vlr_loc_upd_want_imsi(fi);
+		if (vlr_is_cs(lfp->vlr)) {
+			vlr_loc_upd_want_imsi(fi);
+			break;
+		}
+		/* PS */
+		if (lfp->lu_type == VLR_LU_TYPE_IMSI_ATTACH)
+			vlr_loc_upd_want_imsi(fi);
+		else
+			lu_fsm_failure(fi, GSM48_REJECT_MS_IDENTITY_NOT_DERVIVABLE);
 		break;
 	default:
 		OSMO_ASSERT(0);
@@ -1476,6 +1480,7 @@ static const struct osmo_fsm_state vlr_lu_fsm_states[] = {
 				  S(VLR_ULA_S_WAIT_HLR_CHECK_IMEI_EARLY) |
 				  S(VLR_ULA_S_DONE),
 		.name = OSMO_STRINGIFY(VLR_ULA_S_WAIT_PVLR),
+		.onenter = lu_fsm_wait_pvlr_onenter,
 		.action = lu_fsm_wait_pvlr,
 	},
 	[VLR_ULA_S_WAIT_AUTH] = {
