@@ -20,6 +20,9 @@
 
 #include <osmocom/ctrl/control_if.h>
 
+#include <osmocom/gtp/gtp.h>
+#include <osmocom/gtp/pdp.h>
+
 #include <osmocom/sgsn/sgsn.h>
 #include <osmocom/sgsn/signal.h>
 #include <osmocom/sgsn/gprs_utils.h>
@@ -30,9 +33,6 @@
 #include <osmocom/sgsn/gtp_ggsn.h>
 #include <osmocom/sgsn/pdpctx.h>
 #include <osmocom/sgsn/mmctx.h>
-
-#include <gtp.h>
-#include <pdp.h>
 
 #include <arpa/inet.h>
 

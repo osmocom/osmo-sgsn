@@ -21,12 +21,14 @@
 
 #include <osmocom/ctrl/control_if.h>
 #include <osmocom/ctrl/control_cmd.h>
+
+#include <osmocom/gtp/pdp.h>
+
 #include <osmocom/sgsn/mmctx.h>
 #include <osmocom/sgsn/pdpctx.h>
 #include <osmocom/sgsn/sgsn.h>
 #include <osmocom/sgsn/debug.h>
 
-#include <pdp.h>
 
 static int get_subscriber_list(struct ctrl_cmd *cmd, void *d)
 {

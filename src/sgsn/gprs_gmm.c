@@ -44,6 +44,8 @@
 #include <osmocom/crypt/utran_cipher.h>
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 
+#include <osmocom/gtp/pdp.h>
+
 #include <osmocom/gprs/gprs_bssgp.h>
 
 #include <osmocom/sgsn/debug.h>
@@ -64,8 +66,6 @@
 #include <osmocom/sgsn/gtp.h>
 #include <osmocom/sgsn/pdpctx.h>
 #include <osmocom/sgsn/gprs_gmm_util.h>
-
-#include <pdp.h>
 
 #define PTMSI_ALLOC
 
