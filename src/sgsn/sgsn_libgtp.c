@@ -42,6 +42,9 @@
 #include <osmocom/gprs/gprs_bssgp.h>
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 
+#include <osmocom/gtp/gtp.h>
+#include <osmocom/gtp/pdp.h>
+
 #include <osmocom/sgsn/signal.h>
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/sgsn.h>
@@ -62,9 +65,6 @@
 #include <osmocom/sgsn/sgsn_rim.h>
 #include <osmocom/sgsn/gprs_bssgp.h>
 #include <osmocom/sgsn/pdpctx.h>
-
-#include <gtp.h>
-#include <pdp.h>
 
 /* TS 23.003: The MSISDN shall take the dummy MSISDN value composed of
  * 15 digits set to 0 (encoded as an E.164 international number) when

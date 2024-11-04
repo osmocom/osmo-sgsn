@@ -29,11 +29,12 @@
 #include <osmocom/core/application.h>
 #include <osmocom/gsm/protocol/gsm_23_003.h>
 
+#include <osmocom/gtp/gtp.h>
+#include <osmocom/gtp/gtpie.h>
+
 #include <osmocom/sgsn/debug.h>
 
 #include <osmocom/gtphub/gtphub.h>
-#include <gtp.h>
-#include <gtpie.h>
 
 #define ZERO_STRUCT(struct_pointer) memset(struct_pointer, '\0', \
 					   sizeof(*(struct_pointer)))

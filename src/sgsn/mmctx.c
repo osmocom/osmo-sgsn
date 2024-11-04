@@ -36,6 +36,8 @@
 #include <osmocom/gsm/gsm_utils.h>
 #include <osmocom/gsm/gsup.h>
 
+#include <osmocom/gtp/pdp.h>
+
 #include <osmocom/sgsn/gprs_subscriber.h>
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/mmctx.h>
@@ -53,8 +55,6 @@
 #include <osmocom/sgsn/gtp_ggsn.h>
 #include <osmocom/sgsn/gtp.h>
 #include <osmocom/sgsn/pdpctx.h>
-
-#include <pdp.h>
 
 #include <time.h>
 

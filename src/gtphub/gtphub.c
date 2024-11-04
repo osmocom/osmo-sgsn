@@ -29,8 +29,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <gtp.h>
-#include <gtpie.h>
+#include <osmocom/gtp/gtp.h>
+#include <osmocom/gtp/gtpie.h>
 
 #include <osmocom/gtphub/gtphub.h>
 #include <osmocom/sgsn/debug.h>

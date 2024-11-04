@@ -34,6 +34,9 @@
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 #include <osmocom/gsm/apn.h>
 
+#include <osmocom/gtp/gtp.h>
+#include <osmocom/gtp/pdp.h>
+
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/sgsn.h>
 #include <osmocom/gprs/gprs_ns2.h>
@@ -56,9 +59,6 @@
 #include <osmocom/crypt/utran_cipher.h>
 
 #include <osmocom/gprs/gprs_bssgp.h>
-
-#include <pdp.h>
-#include <gtp.h>
 
 #include "../../config.h"
 
