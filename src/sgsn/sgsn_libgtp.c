@@ -35,7 +35,7 @@
 #include <arpa/inet.h>
 
 #include "config.h"
-#include "gtpie.h"
+
 #include <osmocom/core/byteswap.h>
 #include <osmocom/core/linuxlist.h>
 #include <osmocom/core/logging.h>
@@ -49,6 +49,10 @@
 #include <osmocom/core/rate_ctr.h>
 #include <osmocom/gprs/gprs_bssgp.h>
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
+
+#include <osmocom/gtp/gsn.h>
+#include <osmocom/gtp/gtp.h>
+#include <osmocom/gtp/gtpie.h>
 
 #include <osmocom/sgsn/signal.h>
 #include <osmocom/sgsn/debug.h>
@@ -810,6 +814,7 @@ ret_error:
 	return -EINVAL;
 }
 
+/* TS 29.060: Encode the MM Ctx TLV (7.7.28) of a SGSN Context Response (7.5.4) */
 static int gtp_mm_ctx(uint8_t *buf, unsigned int size, const struct sgsn_mm_ctx *mmctx)
 {
 	uint8_t length = 0, sec_mode = 0, no_vecs = 0;
@@ -919,46 +924,373 @@ static int gtp_mm_ctx(uint8_t *buf, unsigned int size, const struct sgsn_mm_ctx 
 #undef MEMCPY_CHK
 }
 
-static int cb_gtp_sgsn_context_request_ind(struct gsn_t *gsn, struct sockaddr_in *peer, uint16_t seq, const struct osmo_routing_area_id *rai, uint32_t teic, struct osmo_mobile_identity *mi, union gtpie_member **ie)
+#define GSM_MI_TYPE_TLLI 126
+#define RESP_MAX_IES 10
+
+static int cb_gtp_sgsn_context_request_ind(struct gsn_t *gsn, struct sockaddr_in *peer, uint32_t local_ref, union gtpie_member **ie, unsigned int ie_size)
 {
 	struct sgsn_mm_ctx *mmctx = NULL;
 	struct sgsn_pdp_ctx *pdp;
-	uint8_t mm[512];
-	int mm_len;
+	struct osmo_mobile_identity mi = {};
+	struct osmo_routing_area_id rai = {};
+	uint8_t raiv[6];
+	uint8_t buf[512];
+	int buf_len;
+
 	char mi_str[40];
 	char rai_str[40];
 	uint64_t imsi;
+	unsigned int length = 0;
+	union gtpie_member *resp_ie[RESP_MAX_IES] = {};
+	union gtpie_member resp_ie_elem[RESP_MAX_IES] = {};
+	unsigned resp_it = 0;
+	int rc;
 
-	/* FIXME: Open5gs uses the wrong byte-order in TMSI */
-	//if (mi->type == GSM_MI_TYPE_TMSI)
-	//	mi->tmsi = osmo_htonl(mi->tmsi);
-
-	osmo_mobile_identity_to_str_buf(mi_str, sizeof(mi_str), mi);
-	osmo_rai_name2_buf(rai_str, sizeof(rai_str), rai);
-
-	LOGP(DGPRS, LOGL_NOTICE, "RAI: %s MI: %s\n", rai_str, mi_str);
-	if (mi->type == GSM_MI_TYPE_IMSI)
-		mmctx = sgsn_mm_ctx_by_imsi(mi->imsi);
-	else if (mi->type == GSM_MI_TYPE_TMSI) {
-		mmctx = sgsn_mm_ctx_by_ptmsi(mi->tmsi);
+	if (gtpie_gettv0(ie, GTPIE_RAI, 0, &raiv, 6)) {
+		//goto missing_ie;
+		return -1;
 	}
+
+	if (osmo_routing_area_id_decode(&rai, raiv, 6) < 0) {
+		rate_ctr_inc2(gsn->ctrg, GSN_CTR_PKT_INVALID);
+		//GTP_LOGPKG(LOGL_ERROR, peer, pack, len,
+		//	   "Invalid RAI\n");
+	}
+
+	/* parse get the TMSI, IMSI, TMSI_SIG */
+	if (!gtpie_gettv4(ie, GTPIE_P_TMSI, 0, &mi.tmsi)) {
+		mi.type = GSM_MI_TYPE_TMSI;
+	} else if (!gtpie_gettv8(ie, GTPIE_IMSI, 0, &imsi)) {
+		mi.type = GSM_MI_TYPE_IMSI;
+		/* NOTE: gtpie_gettv8 already converts to host byte order, but imsi_gtp2str seems to prefer big endian */
+		imsi = ntoh64(imsi);
+		const char *imsi_str = imsi_gtp2str(&imsi);
+		memcpy(mi.imsi, imsi_str, sizeof(mi.imsi));
+	} else if (!gtpie_gettv4(ie, GTPIE_TLLI, 0, &mi.tmsi)) {
+		mi.type = GSM_MI_TYPE_TLLI;
+	}
+
+	osmo_mobile_identity_to_str_buf(mi_str, sizeof(mi_str), &mi);
+	osmo_rai_name2_buf(rai_str, sizeof(rai_str), &rai);
+
+	/* check if the subscribe is known to us */
+	LOGP(DGPRS, LOGL_NOTICE, "RAI: %s MI: %s\n", rai_str, mi_str);
+	if (mi.type == GSM_MI_TYPE_IMSI)
+		mmctx = sgsn_mm_ctx_by_imsi(mi.imsi);
+	else if (mi.type == GSM_MI_TYPE_TMSI)
+		mmctx = sgsn_mm_ctx_by_ptmsi(mi.tmsi);
+	else if (mi.type == GSM_MI_TYPE_TLLI)
+		mmctx = sgsn_mm_ctx_by_tlli(mi.tmsi, &rai);
 
 	if (!mmctx) {
 		LOGP(DGPRS, LOGL_NOTICE, "No context found\n");
-		return gtp_sgsn_context_conf(gsn, peer, seq, teic, GTPCAUSE_CONTEXT_NOT_FOUND, 0, &gsn->gsnc, NULL, 0, NULL, 0, NULL);
+		return gtp_sgsn_context_resp_error(gsn, local_ref, GTPCAUSE_IMSI_NOT_KNOWN);
 	}
 
-	LOGMMCTXP(LOGL_INFO, mmctx, "Found context\n");
+	LOGMMCTXP(LOGL_INFO, mmctx, "Ctx will be transfered to another SGSN/MME\n");
 
+	mmctx->gtp_local_ref = local_ref;
+	mmctx->gtp_local_ref_valid = true;
+
+	/* 7.7.1: Cause Code */
+	resp_ie_elem[resp_it].tv1.t = GTPIE_CAUSE;
+	resp_ie_elem[resp_it].tv1.v = GTPCAUSE_ACC_REQ;
+	resp_ie[resp_it] = &resp_ie_elem[resp_it];
+	resp_it++;
+
+	/* 7.7.2: IMSI */
 	imsi = imsi_str2gtp(mmctx->imsi);
-	/* NOTE: gtpie_gettv8 already converts to host byte order, but imsi_gtp2str seems to prefer big endian */
+	resp_ie_elem[resp_it].tv8.t = GTPIE_IMSI;
+	resp_ie_elem[resp_it].tv8.v = imsi;
+	resp_ie[resp_it] = &resp_ie_elem[resp_it];
+	resp_it++;
+
+	/* 7.7.28: MM Context */
+	buf_len = gtp_mm_ctx(buf, sizeof(buf), mmctx);
+	if (buf_len <= 0)
+		return gtp_sgsn_context_resp_error(gsn, local_ref, GTPCAUSE_SYS_FAIL);
+
+	resp_ie_elem[resp_it].tlv.t = GTPIE_MM_CONTEXT;
+	resp_ie_elem[resp_it].tlv.l = buf_len;
+	memcpy(&resp_ie_elem[resp_it].tlv.v[0], buf, buf_len);
+	resp_ie[resp_it] = &resp_ie_elem[resp_it];
+	resp_it++;
+
+	/* 7.7.99: UE network capability */
+	resp_ie_elem[resp_it].tlv.t = GTPIE_UE_NET_CAPA;
+	resp_ie_elem[resp_it].tlv.l = sizeof(mmctx->ms_network_capa.len);
+	memcpy(&resp_ie_elem[resp_it].tlv.v[0], mmctx->ms_network_capa.buf, mmctx->ms_network_capa.len);
+	resp_ie[resp_it] = &resp_ie_elem[resp_it];
+	resp_it++;
+
+	/* 7.7.29: PDP Context */
+	llist_for_each_entry(pdp, &mmctx->pdp_list, list) {
+		// use talloc here?
+		buf_len = gtp_encode_pdp_ctx(buf, sizeof(buf), pdp->lib, pdp->sapi);
+		if (buf_len <= 0) {
+			return gtp_sgsn_context_resp_error(gsn, local_ref, GTPCAUSE_SYS_FAIL);
+		}
+
+		resp_ie_elem[resp_it].tlv.t = GTPIE_PDP_CONTEXT;
+		resp_ie_elem[resp_it].tlv.l = buf_len;
+		resp_ie[resp_it] = &resp_ie_elem[resp_it];
+		memcpy(&resp_ie_elem[resp_it].tlv.v[0], buf, buf_len);
+
+		resp_it++;
+		if (resp_it >= RESP_MAX_IES)
+			break;
+	}
+
+	return gtp_sgsn_context_resp(gsn, local_ref, ie, resp_it);
+}
+
+#define GTP_SEC_MODE_GSM_TRIPLETS 1
+#define GTP_SEC_MODE_GSM_QUINTLETS 3
+#define GTP_SEC_MODE_UMTS_QUINTLETS 2
+#define GTP_SEC_MODE_CIPHER_UMTS_QUINTLETS 0
+
+/*! validate the length of the quintlets, because of the variable AUTS */
+static int validate_quintlets(uint8_t *buf, unsigned int buf_len)
+{
+	uint8_t xres_len, autn_len;
+	unsigned int i = 0;
+	/* buf = Rand, XRes length, XRes, CK, IK, AUTN length, AUTN */
+
+	/* RAND */
+	i += 16;
+
+	if (buf_len <= i)
+		return -ENOMEM;
+
+	xres_len = buf[i];
+	i++;
+
+	/* XRES */
+	i += xres_len;
+
+	/* CK */
+	i += 16;
+
+	/* IK */
+	i += 16;
+
+	if (buf_len <= i)
+		return -ENOMEM;
+
+	autn_len = buf[i];
+	i++;
+
+	/* AUTN */
+	i += autn_len;
+
+	if (i != buf_len)
+		return -EINVAL;
+
+	return 0;
+}
+
+/*! parse the GTP IE MM Context IE and save it into the local MM Ctx. TS 29.060 7.7.28
+ *  @param[inout] mmctx The MM Context to save the GTP values into
+ *  @param[in] buf A pointer to the GTP IE value octet 4 TS 29.060 7.7.28
+ *  @param[in] buf_len The length of \a buf
+ *  @return 0 on success, -ENOMEM when to short, -EINVAL for invalid encoding */
+static int gtp_mmctx_ie_to_mmctx(struct sgsn_mm_ctx *mmctx, uint8_t *buf, unsigned int buf_len)
+{
+	/* octet 4 */
+	uint8_t cksn_more;
+	/* octet 5 */
+	uint8_t sec_mode, no_vec, used_cipher;
+	/* octet 6.. */
+	uint8_t *kc, *ck, *ik ;
+	uint8_t *quintlet, *triplet;
+	uint16_t quintlet_len;
+
+	uint8_t *ms_net_cap = NULL;
+	uint8_t ms_net_cap_len;
+
+	uint8_t *container = NULL;
+	uint16_t container_len;
+	uint16_t length_access_restr;
+	unsigned int i, j;
+
+	if (buf_len <= 5)
+		return -ENOMEM;
+
+	/* validate length of mm ctx */
+	cksn_more = buf[0];
+	sec_mode = buf[1] >> 6;
+	no_vec = (buf[1] >> 3) & 0x7;
+	used_cipher = buf[1] & 0x7;
+	i = 2;
+
+	if (no_vec > 5)
+		return -EINVAL;
+
+	switch (sec_mode) {
+	case GTP_SEC_MODE_GSM_TRIPLETS:
+		/* Kc */
+		kc = &buf[i];
+		i += 8;
+		if (buf_len <= i)
+			return -ENOMEM;
+
+		/* triplet length is: 28 = 16 rand + 4 sres + 8 kc */
+		triplet = &buf[i];
+		i += 28 * no_vec;
+		if (buf_len <= i)
+			return -ENOMEM;
+		break;
+	case GTP_SEC_MODE_GSM_QUINTLETS:
+		/* Kc */
+		kc = &buf[i];
+		i += 8;
+		if (buf_len <= i)
+			return -ENOMEM;
+
+		quintlet_len = osmo_load16be(&buf[i]);
+		i += 2;
+		if (quintlet_len) {
+			quintlet = &buf[i];
+			i += quintlet_len;
+		}
+
+		if (buf_len <= i)
+			return -ENOMEM;
+		break;
+	case GTP_SEC_MODE_CIPHER_UMTS_QUINTLETS:
+	case GTP_SEC_MODE_UMTS_QUINTLETS:
+		/* CK, IK */
+		ck = &buf[i];
+		i += 16;
+		ik = &buf[i];
+		i += 16;
+
+		if (buf_len <= i)
+			return -ENOMEM;
+
+		quintlet_len = osmo_load16be(&buf[i]);
+		i += 2;
+		if (quintlet_len) {
+			quintlet = &buf[i];
+			i += quintlet_len;
+		}
+
+		if (buf_len <= i)
+			return -ENOMEM;
+
+		break;
+	}
+
+	/* DRX */
+	i += 2;
+	if (buf_len <= i)
+		return -ENOMEM;
+
+	/* MS Network Capability */
+	ms_net_cap_len = buf[i];
+	i++;
+	i += ms_net_cap_len;
+	if (buf_len <= i)
+		return -ENOMEM;
+
+	/* Container */
+	container_len = osmo_load16be(&buf[i]);
+	i += 2;
+
+	i += container_len;
+	if (buf_len <= i)
+		return -ENOMEM;
+
+	switch (sec_mode) {
+	case GTP_SEC_MODE_GSM_QUINTLETS:
+	case GTP_SEC_MODE_UMTS_QUINTLETS:
+	case GTP_SEC_MODE_CIPHER_UMTS_QUINTLETS:
+		if (validate_quintlets(quintlet, quintlet_len)) {
+			LOGMMCTXP(LOGL_ERROR, mmctx, "SGSN Context resp: invalid quintlets length\n");
+			return -EINVAL;
+		}
+		break;
+	case GTP_SEC_MODE_GSM_TRIPLETS:
+		break;
+	}
+
+	/* TODO: parse Length of Access Restriction Data + following field */
+
+	/* Save data into the mmctx */
+	// save cksn/triplets/quintlets in the VLR
+	// save Kc/CK/IK
+	// save used cipher?
+
+	return 0;
+}
+
+static int cb_gtp_sgsn_context_response_ind(struct gsn_t *gsn, struct sockaddr_in *peer, uint32_t local_ref, union gtpie_member **ie, unsigned int ie_size)
+{
+	struct sgsn_mm_ctx *mmctx = NULL;
+	uint64_t imsi;
+	uint8_t buf[512];
+	unsigned int buf_len;
+	uint8_t cause;
+
+
+
+	mmctx = sgsn_mm_ctx_by_gtp_local_ref(local_ref);
+	if (!mmctx) {
+		/* How can we loose the local reference? Most likely only when we release the whole subscriber. */
+		return gtp_sgsn_context_ack_error(gsn, local_ref, GTPCAUSE_NO_RESOURCES);
+	}
+
+	/* Check cause */
+	if (!gtpie_gettv1(ie, GTPIE_CAUSE, 0, &cause)) {
+		LOGMMCTXP(LOGL_ERROR, mmctx, "SGSN Context resp: Mandatory Cause IE not found\n");
+		return gtp_sgsn_context_ack_error(gsn, local_ref, GTPCAUSE_MAN_IE_MISSING);
+	}
+
+	if (cause != GTPCAUSE_ACC_REQ) {
+		mmctx->gtp_local_ref_valid = false;
+		LOGMMCTXP(LOGL_ERROR, mmctx, "SGSN Context resp: Cause %d\n", cause);
+		/* FIXME: inform FSM */
+		return -1;
+	}
+
+	if (!gtpie_gettv8(ie, GTPIE_IMSI, 0, &imsi)) {
+		LOGMMCTXP(LOGL_ERROR, mmctx, "SGSN Context resp: Mandatory IMSI IE not found\n");
+		return gtp_sgsn_context_ack_error(gsn, local_ref, GTPCAUSE_MAN_IE_MISSING);
+	}
 	imsi = ntoh64(imsi);
+	const char *imsi_str = imsi_gtp2str(&imsi);
+	strncpy(mmctx->imsi, imsi_str, sizeof(mmctx->imsi));
 
-	mm_len = gtp_mm_ctx(mm, sizeof(mm), mmctx);
-	//FIXME: Set mmctx->new_sgsn_addr =
+	if (!gtpie_gettlv(ie, GTPIE_MM_CONTEXT, 0, &buf_len, buf, sizeof(buf))) {
+		LOGMMCTXP(LOGL_ERROR, mmctx, "SGSN Context resp: Mandatory MM context IE not found\n");
+		return gtp_sgsn_context_ack_error(gsn, local_ref, GTPCAUSE_MAN_IE_MISSING);
+	}
 
-	pdp = llist_first_entry(&mmctx->pdp_list, struct sgsn_pdp_ctx, list);
-	return gtp_sgsn_context_conf(gsn, peer, seq, teic, GTPCAUSE_ACC_REQ, imsi, &gsn->gsnc, pdp->lib, pdp->sapi, mm, mm_len, NULL);
+	return gtp_sgsn_context_ack(gsn, local_ref, NULL, 0);
+}
+
+static int cb_gtp_sgsn_context_ack_ind(struct gsn_t *gsn, struct sockaddr_in *peer, uint32_t local_ref, union gtpie_member **ie, unsigned int ie_size)
+{
+	/* The remote peer has verified/established a connection to the UE,
+	 * Release local GGSN connection */
+
+	struct sgsn_mm_ctx *mmctx = NULL;
+	struct sgsn_pdp_ctx *pdp, *pdp2;
+
+	mmctx = sgsn_mm_ctx_by_gtp_local_ref(local_ref);
+	if (!mmctx) {
+		/* Can't do anything here. The Ack is the last message anyway. */
+		return 0;
+	}
+	mmctx->gtp_local_ref_valid = false;
+	/* FIXME: drop HLR relation? */
+	/* FIXME: drop local VLR relation? */
+	/* FIXME: Parse Tunnel Endpoint Identifier Data II IE */
+	llist_for_each_entry_safe(pdp, pdp2, &mmctx->pdp_list, list) {
+		sgsn_pdp_ctx_free(pdp);
+	}
+
+	return 0;
 }
 
 /* Called whenever we receive a DATA packet */
@@ -1052,6 +1384,7 @@ static int cb_data_ind(struct pdp_t *lib, void *packet, unsigned int len)
 	return sndcp_sn_unitdata_req(msg, &mm->gb.llme->lle[pdp->sapi],
 				  pdp->nsapi, mm);
 }
+
 
 /* Called by SNDCP when it has received/re-assembled a N-PDU */
 int sgsn_gtp_data_req(struct osmo_routing_area_id *ra_id, int32_t tlli, uint8_t nsapi,
@@ -1164,6 +1497,8 @@ int sgsn_gtp_init(struct sgsn_instance *sgi)
 	gtp_set_cb_extheader_ind(gsn, cb_extheader_ind);
 	gtp_set_cb_ran_info_relay_ind(gsn, cb_gtp_ran_info_relay_ind);
 	gtp_set_cb_sgsn_context_request_ind(gsn, cb_gtp_sgsn_context_request_ind);
+	gtp_set_cb_sgsn_context_response_ind(gsn, cb_gtp_sgsn_context_response_ind);
+	gtp_set_cb_sgsn_context_ack_ind(gsn, cb_gtp_sgsn_context_ack_ind);
 
 	return 0;
 }
