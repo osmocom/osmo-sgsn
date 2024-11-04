@@ -1101,17 +1101,17 @@ static int gtp_mmctx_ie_to_mmctx(struct sgsn_mm_ctx *mmctx, uint8_t *buf, unsign
 	/* octet 5 */
 	uint8_t sec_mode, no_vec, used_cipher;
 	/* octet 6.. */
-	uint8_t *kc, *ck, *ik ;
-	uint8_t *quintlet, *triplet;
-	uint16_t quintlet_len;
+	uint8_t *kc = NULL, *ck = NULL, *ik = NULL;
+	uint8_t *quintlet = NULL, *triplet = NULL;
+	uint16_t quintlet_len = 0;
 
 	uint8_t *ms_net_cap = NULL;
-	uint8_t ms_net_cap_len;
+	uint8_t ms_net_cap_len = 0;
 
 	uint8_t *container = NULL;
-	uint16_t container_len;
-	uint16_t length_access_restr;
-	unsigned int i, j;
+	uint16_t container_len = 0;
+	uint16_t length_access_restr = 0;
+	unsigned int i;
 
 	if (buf_len <= 5)
 		return -ENOMEM;
@@ -1217,9 +1217,23 @@ static int gtp_mmctx_ie_to_mmctx(struct sgsn_mm_ctx *mmctx, uint8_t *buf, unsign
 	/* TODO: parse Length of Access Restriction Data + following field */
 
 	/* Save data into the mmctx */
-	// save cksn/triplets/quintlets in the VLR
-	// save Kc/CK/IK
-	// save used cipher?
+	memset(&mmctx->auth_triplet, 0, sizeof(mmctx->auth_triplet));
+	mmctx->auth_triplet.key_seq = cksn_more & 0x7;
+	switch (sec_mode) {
+	case GTP_SEC_MODE_GSM_QUINTLETS:
+	case GTP_SEC_MODE_GSM_TRIPLETS:
+		memcpy(&mmctx->auth_triplet.vec.kc, kc, 8);
+		break;
+	case GTP_SEC_MODE_UMTS_QUINTLETS:
+	case GTP_SEC_MODE_CIPHER_UMTS_QUINTLETS:
+		memcpy(&mmctx->auth_triplet.vec.ck, ck, 16);
+		memcpy(&mmctx->auth_triplet.vec.ik, ik, 16);
+		break;
+	}
+
+	// check for vsub
+	/* TODO: optional: pass triplets + quintlets to the VLR. */
+	// collect gtp sessions + Update PDP Context Request
 
 	return 0;
 }
