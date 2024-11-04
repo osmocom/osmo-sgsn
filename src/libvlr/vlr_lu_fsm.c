@@ -752,8 +752,6 @@ struct lu_fsm_priv {
 	bool lu_by_tmsi;
 	char imsi[16];
 	uint32_t tmsi;
-	struct osmo_location_area_id old_lai;
-	struct osmo_location_area_id new_lai;
 	struct osmo_routing_area_id old_rai;
 	struct osmo_routing_area_id new_rai;
 	bool authentication_required;
@@ -774,8 +772,8 @@ struct lu_fsm_priv {
 
 
 /* Determine if given location area is served by this VLR */
-static bool lai_in_this_vlr(struct vlr_instance *vlr,
-			    const struct osmo_location_area_id *lai)
+static bool rai_in_this_vlr(struct vlr_instance *vlr,
+			    const struct osmo_routing_area_id *lai)
 {
 	/* TODO: VLR needs to keep a locally configured list of LAIs */
 	return true;
@@ -931,7 +929,7 @@ static void vlr_loc_upd_post_ciph(struct osmo_fsm_inst *fi)
 
 	vsub->conf_by_radio_contact_ind = true;
 	/* Update LAI */
-	vsub->cgi.lai = lfp->new_lai;
+	vsub->cgi.lai = lfp->new_rai.lac;
 	vsub->dormant_ind = false;
 	vsub->cancel_loc_rx = false;
 	if (hlr_update_needed(vsub)) {
@@ -1084,7 +1082,7 @@ static int assoc_lfp_with_sub(struct osmo_fsm_inst *fi, struct vlr_subscr *vsub)
 	vsub->lu_fsm = fi;
 	vsub->msc_conn_ref = lfp->msc_conn_ref;
 	/* FIXME: send new LAC to HLR? */
-	vsub->cgi.lai.lac = lfp->new_lai.lac;
+	vsub->cgi.lai = lfp->new_rai.lac;
 	lfp->vsub = vsub;
 	/* Tell MSC to associate this subscriber with the given
 	 * connection */
@@ -1152,17 +1150,17 @@ static void _start_lu_main(struct osmo_fsm_inst *fi)
 
 	/* TODO: PUESBINE related handling */
 
-	/* Is previous LAI in this VLR? */
-	if (!lai_in_this_vlr(vlr, &lfp->old_lai)) {
+	/* Is previous LAI/RAI in this VLR? */
+	if (!rai_in_this_vlr(vlr, &lfp->old_rai)) {
 #if 0
 		/* FIXME: check previous VLR, (3) */
 		osmo_fsm_inst_state_chg(fi, VLR_ULA_S_WAIT_PVLR,
 					LU_TIMEOUT_LONG, 0);
 		return;
 #endif
-		LOGPFSML(fi, LOGL_NOTICE, "LAI change from %s,"
+		LOGPFSML(fi, LOGL_NOTICE, "RAI/LAI change from %s,"
 			 " but checking previous VLR not implemented\n",
-			 osmo_lai_name(&lfp->old_lai));
+			 osmo_rai_name2(&lfp->old_rai));
 	}
 
 	/* If this is a TMSI based LU, we may not have the IMSI. Make sure that
@@ -1673,8 +1671,8 @@ _vlr_loc_update(struct osmo_fsm_inst *parent,
 	lfp->msc_conn_ref = msc_conn_ref;
 	lfp->tmsi = tmsi;
 	lfp->lu_type = type;
-	lfp->old_lai = *old_lai;
-	lfp->new_lai = *new_lai;
+	lfp->old_rai.lac = *old_lai;
+	lfp->new_rai.lac = *new_lai;
 	lfp->lu_by_tmsi = true;
 	lfp->parent_event_success = parent_event_success;
 	lfp->parent_event_failure = parent_event_failure;
