@@ -819,6 +819,8 @@ static int gtp_mm_ctx(uint8_t *buf, unsigned int size, const struct sgsn_mm_ctx 
 	uint32_t tmp32;
 	uint16_t tmp16, *len_ptr;
 	uint8_t *ptr = buf;
+	uint32_t required_auth_type;
+
 #define CHECK_SPACE_ERR(bytes) \
 	if (ptr - buf + (bytes) > size) { \
 		LOGP(DGPRS, LOGL_ERROR, "Ran out of space encoding mm ctx: %lu, %lu\n", (ptr - buf), (unsigned long) bytes); \
@@ -839,18 +841,24 @@ static int gtp_mm_ctx(uint8_t *buf, unsigned int size, const struct sgsn_mm_ctx 
 	*ptr++ = 0xf8 | (mmctx->auth_triplet.key_seq & 0x07);
 
 	// Sec Mode | No Vecs | Used Cipher
-	if (mmctx->auth_triplet.vec.auth_types & OSMO_AUTH_TYPE_UMTS)
+	if (mmctx->auth_triplet.vec.auth_types & OSMO_AUTH_TYPE_UMTS) {
 		sec_mode = 0;
-	else if (mmctx->auth_triplet.vec.auth_types & OSMO_AUTH_TYPE_GSM)
+		required_auth_type = OSMO_AUTH_TYPE_UMTS;
+	} else if (mmctx->auth_triplet.vec.auth_types & OSMO_AUTH_TYPE_GSM) {
 		sec_mode = 1;
-	else
+		required_auth_type = OSMO_AUTH_TYPE_GSM;
+	} else {
 		return -1;
-
-	for (int i = 0; i < 5; i++) {
-		const struct gsm_auth_tuple *auth = &mmctx->subscr->sgsn_data->auth_triplets[i];
-		if (auth->key_seq != GSM_KEY_SEQ_INVAL && auth->use_count == 0)
-			no_vecs++;
 	}
+
+	if (mmctx->vsub) {
+		for (int i = 0; i < 5; i++) {
+			const struct vlr_auth_tuple *auth = &mmctx->vsub->auth_tuples[i];
+			if (auth->use_count == 0 && auth->vec.auth_types & required_auth_type)
+				no_vecs++;
+		}
+	}
+
 	*ptr++ = (sec_mode << 6) | (no_vecs << 3) | (mmctx->ciph_algo & 0x7);
 	// Kc or CK/IK
 	switch (sec_mode & 0x01) {
@@ -864,38 +872,40 @@ static int gtp_mm_ctx(uint8_t *buf, unsigned int size, const struct sgsn_mm_ctx 
 		MEMCPY_CHK(ptr, mmctx->auth_triplet.vec.kc, sizeof(mmctx->auth_triplet.vec.kc));
 	}
 
-    /* 7.7.35 Authentication Triplet/Quintuplet */
-	if ((sec_mode & 1) == 1) {
-		/* Triplets */
-		for (int i = 0; i < 5; i++) {
-			const struct gsm_auth_tuple *auth = &mmctx->subscr->sgsn_data->auth_triplets[i];
-			if (auth->key_seq != GSM_KEY_SEQ_INVAL && auth->use_count == 0)
-				continue;
-			MEMCPY_CHK(ptr, auth->vec.rand, sizeof(auth->vec.rand));
-			MEMCPY_CHK(ptr, auth->vec.sres, 4);
-			MEMCPY_CHK(ptr, auth->vec.kc, 8);
+	/* 7.7.35 Authentication Triplet/Quintuplet */
+	if (mmctx->vsub) {
+		if ((sec_mode & 1) == 1) {
+			/* Triplets */
+			for (int i = 0; i < 5; i++) {
+				const struct vlr_auth_tuple *auth = &mmctx->vsub->auth_tuples[i];
+				if (!(auth->use_count == 0 && auth->vec.auth_types & required_auth_type))
+					continue;
+				MEMCPY_CHK(ptr, auth->vec.rand, sizeof(auth->vec.rand));
+				MEMCPY_CHK(ptr, auth->vec.sres, 4);
+				MEMCPY_CHK(ptr, auth->vec.kc, 8);
+			}
+		} else {
+			/* Quintuplets */
+			CHECK_SPACE_ERR(2);
+			len_ptr = (uint16_t *)ptr; /* size will be filled later */
+			ptr += 2;
+
+			for (int i = 0; i < 5; i++) {
+				const struct vlr_auth_tuple *auth = &mmctx->vsub->auth_tuples[i];
+				if (!(auth->use_count == 0 && auth->vec.auth_types & required_auth_type))
+					continue;
+				MEMCPY_CHK(ptr, auth->vec.rand, sizeof(auth->vec.rand));
+				*ptr++ = auth->vec.res_len;
+				MEMCPY_CHK(ptr, auth->vec.res, (unsigned long) auth->vec.res_len);
+
+				MEMCPY_CHK(ptr, auth->vec.ck, sizeof(auth->vec.ck));
+				MEMCPY_CHK(ptr, auth->vec.ik, sizeof(auth->vec.ik));
+
+				*ptr++ = sizeof(auth->vec.autn);
+				MEMCPY_CHK(ptr, auth->vec.autn, sizeof(auth->vec.autn));
+			}
+			*len_ptr = htobe16(ptr - (((uint8_t *)len_ptr) + 2));
 		}
-	} else {
-		/* Quintuplets */
-		CHECK_SPACE_ERR(2);
-		len_ptr = (uint16_t *)ptr; /* size will be filled later */
-		ptr += 2;
-
-		for (int i = 0; i < 5; i++) {
-			const struct gsm_auth_tuple *auth = &mmctx->subscr->sgsn_data->auth_triplets[i];
-			if (auth->key_seq != GSM_KEY_SEQ_INVAL && auth->use_count == 0)
-				continue;
-			MEMCPY_CHK(ptr, auth->vec.rand, sizeof(auth->vec.rand));
-			*ptr++ = auth->vec.res_len;
-			MEMCPY_CHK(ptr, auth->vec.res, (unsigned long) auth->vec.res_len);
-
-			MEMCPY_CHK(ptr, auth->vec.ck, sizeof(auth->vec.ck));
-			MEMCPY_CHK(ptr, auth->vec.ik, sizeof(auth->vec.ik));
-
-			*ptr++ = sizeof(auth->vec.autn);
-			MEMCPY_CHK(ptr, auth->vec.autn, sizeof(auth->vec.autn));
-		}
-		*len_ptr = htobe16(ptr - (((uint8_t *)len_ptr) + 2));
 	}
 
 
@@ -939,7 +949,7 @@ static int cb_gtp_sgsn_context_request_ind(struct gsn_t *gsn, struct sockaddr_in
 	char rai_str[40];
 	uint64_t imsi;
 	unsigned int length = 0;
-	union gtpie_member *resp_ie[RESP_MAX_IES] = {};
+	union gtpie_member *resp_ie[GTPIE_SIZE] = {};
 	union gtpie_member resp_ie_elem[RESP_MAX_IES] = {};
 	unsigned resp_it = 0;
 	int rc;
@@ -993,14 +1003,14 @@ static int cb_gtp_sgsn_context_request_ind(struct gsn_t *gsn, struct sockaddr_in
 	/* 7.7.1: Cause Code */
 	resp_ie_elem[resp_it].tv1.t = GTPIE_CAUSE;
 	resp_ie_elem[resp_it].tv1.v = GTPCAUSE_ACC_REQ;
-	resp_ie[resp_it] = &resp_ie_elem[resp_it];
+	resp_ie[GTPIE_CAUSE] = &resp_ie_elem[resp_it];
 	resp_it++;
 
 	/* 7.7.2: IMSI */
 	imsi = imsi_str2gtp(mmctx->imsi);
 	resp_ie_elem[resp_it].tv8.t = GTPIE_IMSI;
 	resp_ie_elem[resp_it].tv8.v = imsi;
-	resp_ie[resp_it] = &resp_ie_elem[resp_it];
+	resp_ie[GTPIE_IMSI] = &resp_ie_elem[resp_it];
 	resp_it++;
 
 	/* 7.7.28: MM Context */
@@ -1009,17 +1019,17 @@ static int cb_gtp_sgsn_context_request_ind(struct gsn_t *gsn, struct sockaddr_in
 		return gtp_sgsn_context_resp_error(gsn, local_ref, GTPCAUSE_SYS_FAIL);
 
 	resp_ie_elem[resp_it].tlv.t = GTPIE_MM_CONTEXT;
-	resp_ie_elem[resp_it].tlv.l = buf_len;
+	resp_ie_elem[resp_it].tlv.l = htons(buf_len);
 	memcpy(&resp_ie_elem[resp_it].tlv.v[0], buf, buf_len);
-	resp_ie[resp_it] = &resp_ie_elem[resp_it];
+	resp_ie[GTPIE_MM_CONTEXT] = &resp_ie_elem[resp_it];
 	resp_it++;
 
-	/* 7.7.99: UE network capability */
-	resp_ie_elem[resp_it].tlv.t = GTPIE_UE_NET_CAPA;
-	resp_ie_elem[resp_it].tlv.l = sizeof(mmctx->ms_network_capa.len);
-	memcpy(&resp_ie_elem[resp_it].tlv.v[0], mmctx->ms_network_capa.buf, mmctx->ms_network_capa.len);
-	resp_ie[resp_it] = &resp_ie_elem[resp_it];
-	resp_it++;
+	// /* 7.7.99: UE network capability */
+	// resp_ie_elem[resp_it].tlv.t = GTPIE_UE_NET_CAPA;
+	// resp_ie_elem[resp_it].tlv.l = htons(sizeof(mmctx->ms_network_capa.len));
+	// memcpy(&resp_ie_elem[resp_it].tlv.v[0], mmctx->ms_network_capa.buf, mmctx->ms_network_capa.len);
+	// resp_ie[resp_it] = &resp_ie_elem[resp_it];
+	// resp_it++;
 
 	/* 7.7.29: PDP Context */
 	llist_for_each_entry(pdp, &mmctx->pdp_list, list) {
@@ -1030,16 +1040,19 @@ static int cb_gtp_sgsn_context_request_ind(struct gsn_t *gsn, struct sockaddr_in
 		}
 
 		resp_ie_elem[resp_it].tlv.t = GTPIE_PDP_CONTEXT;
-		resp_ie_elem[resp_it].tlv.l = buf_len;
-		resp_ie[resp_it] = &resp_ie_elem[resp_it];
+		resp_ie_elem[resp_it].tlv.l = htons(buf_len);
+		resp_ie[GTPIE_PDP_CONTEXT] = &resp_ie_elem[resp_it];
 		memcpy(&resp_ie_elem[resp_it].tlv.v[0], buf, buf_len);
 
 		resp_it++;
-		if (resp_it >= RESP_MAX_IES)
-			break;
+		/* TODO: fix the duplicated PDP Context */
+		break;
+
+		// if (resp_it >= RESP_MAX_IES)
+		// 	break;
 	}
 
-	return gtp_sgsn_context_resp(gsn, local_ref, ie, resp_it);
+	return gtp_sgsn_context_resp(gsn, local_ref, resp_ie, GTPIE_SIZE);
 }
 
 #define GTP_SEC_MODE_GSM_TRIPLETS 1
@@ -1099,17 +1112,17 @@ static int gtp_mmctx_ie_to_mmctx(struct sgsn_mm_ctx *mmctx, uint8_t *buf, unsign
 	/* octet 5 */
 	uint8_t sec_mode, no_vec, used_cipher;
 	/* octet 6.. */
-	uint8_t *kc, *ck, *ik ;
-	uint8_t *quintlet, *triplet;
-	uint16_t quintlet_len;
+	uint8_t *kc = NULL, *ck = NULL, *ik = NULL;
+	uint8_t *quintlet = NULL, *triplet = NULL;
+	uint16_t quintlet_len = 0;
 
 	uint8_t *ms_net_cap = NULL;
-	uint8_t ms_net_cap_len;
+	uint8_t ms_net_cap_len = 0;
 
 	uint8_t *container = NULL;
-	uint16_t container_len;
-	uint16_t length_access_restr;
-	unsigned int i, j;
+	uint16_t container_len = 0;
+	uint16_t length_access_restr = 0;
+	unsigned int i;
 
 	if (buf_len <= 5)
 		return -ENOMEM;
@@ -1215,9 +1228,23 @@ static int gtp_mmctx_ie_to_mmctx(struct sgsn_mm_ctx *mmctx, uint8_t *buf, unsign
 	/* TODO: parse Length of Access Restriction Data + following field */
 
 	/* Save data into the mmctx */
-	// save cksn/triplets/quintlets in the VLR
-	// save Kc/CK/IK
-	// save used cipher?
+	memset(&mmctx->auth_triplet, 0, sizeof(mmctx->auth_triplet));
+	mmctx->auth_triplet.key_seq = cksn_more & 0x7;
+	switch (sec_mode) {
+	case GTP_SEC_MODE_GSM_QUINTLETS:
+	case GTP_SEC_MODE_GSM_TRIPLETS:
+		memcpy(&mmctx->auth_triplet.vec.kc, kc, 8);
+		break;
+	case GTP_SEC_MODE_UMTS_QUINTLETS:
+	case GTP_SEC_MODE_CIPHER_UMTS_QUINTLETS:
+		memcpy(&mmctx->auth_triplet.vec.ck, ck, 16);
+		memcpy(&mmctx->auth_triplet.vec.ik, ik, 16);
+		break;
+	}
+
+	// check for vsub
+	/* TODO: optional: pass triplets + quintlets to the VLR. */
+	// collect gtp sessions + Update PDP Context Request
 
 	return 0;
 }
