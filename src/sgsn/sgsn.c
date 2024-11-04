@@ -39,6 +39,8 @@
 #include <osmocom/crypt/gprs_cipher.h>
 #include <osmocom/crypt/utran_cipher.h>
 
+#include <osmocom/gtp/pdp.h>
+
 #include <osmocom/sgsn/gprs_subscriber.h>
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/sgsn.h>
@@ -56,8 +58,6 @@
 #include <osmocom/sgsn/gtp.h>
 #include <osmocom/sgsn/pdpctx.h>
 #include <osmocom/sgsn/gprs_routing_area.h>
-
-#include <pdp.h>
 
 #include <time.h>
 

@@ -45,6 +45,8 @@
 #include <osmocom/gprs/gprs_bssgp.h>
 #include <osmocom/gprs/gprs_bssgp_bss.h>
 
+#include <osmocom/gtp/gtp.h>
+
 #include <osmocom/vty/telnet_interface.h>
 #include <osmocom/vty/logging.h>
 #include <osmocom/vty/stats.h>
@@ -68,7 +70,6 @@
 #include <osmocom/sgsn/gprs_subscriber.h>
 #include <osmocom/sgsn/gtp.h>
 
-#include <gtp.h>
 #include <osmocom/sgsn/sgsn_rim.h>
 
 #include "../../config.h"
