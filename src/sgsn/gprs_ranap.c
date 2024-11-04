@@ -22,7 +22,7 @@
  */
 
 #include "config.h"
-#include <gtp.h>
+#include <osmocom/gtp/gtp.h>
 
 #include <osmocom/core/rate_ctr.h>
 #include <osmocom/core/tdef.h>
