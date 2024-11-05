@@ -220,6 +220,10 @@ struct sgsn_mm_ctx {
 	uint32_t gtp_local_ref;
 	bool gtp_local_ref_valid;
 
+	/* GUTI will be used when a inter RAT from EUTRAN happens */
+	struct osmo_guti guti;
+	uint8_t eutran_nri;
+
 	struct gprs_subscr	*subscr;
 	struct vlr_subscr	*vsub;
 	/* to know if subscriber is doing an attach or location update */
