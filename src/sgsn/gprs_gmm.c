@@ -1723,7 +1723,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	/* Check for EUTRAN to GERAN/UTRAN */
 	if (TLVP_PRESENT(&req.tlv, GSM48_IE_GMM_PTMSI_TYPE)) {
 		const uint8_t *ptmsi_type = TLVP_VAL(&req.tlv, GSM48_IE_GMM_PTMSI_TYPE);
-		if (*ptmsi_type == GSM48_PTMSI_TYPE_MAPPED) {
+		if (*ptmsi_type == PTMSI_TYPE_MAPPED) {
 			/* this is a mapped GUTI, override the old_rai to set it to a special VLR */
 			req.old_rai.rac = 0xfe;
 			req.old_rai.lac.lac = 0xfe;
