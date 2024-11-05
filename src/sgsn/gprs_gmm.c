@@ -2513,6 +2513,13 @@ static int vlr_tx_mm_info_cb(void *ref)
 	return 0;
 }
 
+/* decide if the location/routing area id is within the VLR or not */
+static bool vlr_location_served_cb(const struct osmo_routing_area_id *rai)
+{
+	/* EUTRAN Loc/Rac */
+	return !(rai->rac == 0xfe && rai->lac.lac == 0xfe);
+}
+
 
 /* Fixme: rename into gsup .client mux init */
 int gmm_vlr_init(struct sgsn_instance *sgi)
@@ -2527,6 +2534,7 @@ int gmm_vlr_init(struct sgsn_instance *sgi)
 	    .subscr_assoc = vlr_subscr_assoc_cb,
 	    .subscr_inval = vlr_subscr_inval_cb,
 	    .subscr_update = vlr_subscr_update_cb,
+	    .location_served = vlr_location_served_cb,
 
 	    .set_ciph_mode = vlr_set_ciph_mode_cb,
 
