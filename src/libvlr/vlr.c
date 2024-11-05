@@ -1533,6 +1533,23 @@ int vlr_subscr_rx_imsi_detach(struct vlr_subscr *vsub)
 	return rc;
 }
 
+void vlr_subscr_rx_pvlr_id_ack(struct vlr_subscr *vsub)
+{
+	if (!vsub->lu_fsm)
+		return;
+
+	osmo_fsm_inst_dispatch(vsub->lu_fsm, VLR_ULA_E_SEND_ID_ACK, NULL);
+}
+
+void vlr_subscr_rx_pvlr_id_nack(struct vlr_subscr *vsub)
+{
+	if (!vsub->lu_fsm)
+		return;
+
+	osmo_fsm_inst_dispatch(vsub->lu_fsm, VLR_ULA_E_SEND_ID_NACK, NULL);
+}
+
+
 /* Tear down any running FSMs due to MSC connection timeout.
  * Visit all vsub->*_fsm pointers and give them a queue to send a final reject
  * message before the entire connection is torn down.
@@ -1561,6 +1578,7 @@ struct vlr_instance *vlr_alloc(void *ctx, const struct vlr_ops *ops, bool is_ps)
 	OSMO_ASSERT(ops->tx_common_id);
 	OSMO_ASSERT(ops->subscr_update);
 	OSMO_ASSERT(ops->subscr_assoc);
+	OSMO_ASSERT(ops->location_served);
 
 	INIT_LLIST_HEAD(&vlr->subscribers);
 	INIT_LLIST_HEAD(&vlr->operations);
