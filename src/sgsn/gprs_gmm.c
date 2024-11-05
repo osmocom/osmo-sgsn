@@ -1523,6 +1523,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	enum gsm48_gmm_cause reject_cause = GMM_CAUSE_PROTO_ERR_UNSPEC;
 	struct gprs_gmm_ra_upd_req req;
 	struct osmo_routing_area_id new_ra_id = {};
+	struct osmo_guti guti = {};
 	enum vlr_lu_type vlr_rau_type;
 	int rc;
 
@@ -1716,6 +1717,50 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	if (TLVP_PRESENT(&req.tlv, GSM48_IE_GMM_PDP_CTX_STATUS)) {
 		const uint8_t *pdp_status = TLVP_VAL(&req.tlv, GSM48_IE_GMM_PDP_CTX_STATUS);
 		process_ms_ctx_status(mmctx, pdp_status);
+	}
+
+
+	/* Check for EUTRAN to GERAN/UTRAN */
+	if (TLVP_PRESENT(&req.tlv, GSM48_IE_GMM_PTMSI_TYPE)) {
+		const uint8_t *ptmsi_type = TLVP_VAL(&req.tlv, GSM48_IE_GMM_PTMSI_TYPE);
+		if (*ptmsi_type == GSM48_PTMSI_TYPE_MAPPED) {
+			/* this is a mapped GUTI, override the old_rai to set it to a special VLR */
+			req.old_rai.rac = 0xfe;
+			req.old_rai.lac.lac = 0xfe;
+
+			/* Convert mapped GUTI, P-TMSI, P-TMSI Sig into a MME */
+			struct osmo_mobile_identity mi = {};
+			uint32_t ptmsi2;
+			uint16_t nas_token;
+			uint8_t ptmsi_mtmsi;
+			struct osmo_routing_area_id old_rai2;
+
+			if (!TLVP_PRES_LEN(&req.tlv, GSM48_IE_GMM_PTMSI_SIG, 3) ||
+			    !TLVP_PRES_LEN(&req.tlv, GSM48_IE_GMM_ADD_IDENTITY, 5) ||
+			    !TLVP_PRES_LEN(&req.tlv, GSM48_IE_GMM_RAI2, 6)) {
+				;
+			} else {
+				ptmsi_mtmsi = tlvp_val8(&req.tlv, GSM48_IE_GMM_PTMSI_SIG, 0);
+				nas_token = osmo_load16be(TLVP_VAL(&req.tlv, GSM48_IE_GMM_PTMSI_SIG) + 1);
+
+				if (osmo_mobile_identity_decode(&mi, TLVP_VAL(&req.tlv, GSM48_IE_GMM_ADD_IDENTITY),
+								TLVP_LEN(&req.tlv, GSM48_IE_GMM_ADD_IDENTITY), false)) {
+					;
+				}
+				if (mi.type != GSM_MI_TYPE_TMSI)
+					;
+
+				osmo_routing_area_id_decode(&old_rai2, TLVP_VAL(&req.tlv, GSM48_IE_GMM_RAI2), 6);
+				mmctx->guti.gummei.plmn = old_rai2.lac.plmn;
+				mmctx->guti.gummei.mme.group_id = old_rai2.lac.lac;
+				mmctx->guti.gummei.mme.code = old_rai2.rac;
+				/* bits 31 to 30 are always 11; P-TMSI  bits29 to 24, 15 to 0 */
+				mmctx->guti.mtmsi |= (1 << 31) | (1 << 30) | (mi.tmsi & 0x3f00ffff);
+				mmctx->guti.mtmsi |= (ptmsi_mtmsi << 16);
+				/* bits 23 to 16 is the NRI */
+				mmctx->eutran_nri = (mi.tmsi >> 16) & 0xff;
+			}
+		}
 	}
 
 	/* Send RA UPDATE ACCEPT. In Iu, the RA upd request can be called from
