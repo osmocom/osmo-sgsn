@@ -223,6 +223,7 @@ struct sgsn_mm_ctx {
 	/* GUTI will be used when a inter RAT from EUTRAN happens */
 	struct osmo_guti guti;
 	uint8_t eutran_nri;
+	bool guti_valid;
 
 	struct gprs_subscr	*subscr;
 	struct vlr_subscr	*vsub;
