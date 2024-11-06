@@ -2540,14 +2540,53 @@ int vlr_pvlr_request_cb(void *ref, const struct osmo_routing_area_id *old_rai)
 	int rc;
 	uint32_t local_ref;
 	struct sockaddr_in *peer;
-	union gtpie_member **ie;
+	struct sgsn_mme_ctx *mme = NULL;
+	struct osmo_gummei gummei = {};
+	struct sockaddr_in remote = {};
+
+	union gtpie_member *ie[GTPIE_SIZE] = {};
+	union gtpie_member ie_elem[3] = {};
+	unsigned int i = 0;
 
 	if (!ctx)
 		return -EINVAL;
 
+	/* Is there another way to determ if a RAI is connected to an MME? */
+	if (old_rai->rac == 0xfe && old_rai->lac.lac == 0xfe) {
+		return -EINVAL;
+	}
+
+	if (!ctx->guti_valid)
+		return -EINVAL;
+
+	mme = sgsn_mme_ctx_by_gummei(sgsn, &ctx->guti.gummei);
+	if (!mme) {
+		return -EINVAL;
+	}
+
 	/* ask */
-	rc = gtp_sgsn_context_req(sgsn->gsn, &local_ref,
-				  peer, ie, GTPIE_SIZE);
+	remote.sin_family = AF_INET;
+	remote.sin_addr = mme->remote_addr;
+
+	switch (ctx->attach_rau.mi.type) {
+	case GSM_MI_TYPE_IMSI:
+		ie_elem[i].tv4.t = GTPIE_IMSI;
+		ie_elem[i].tv4.v = ctx->p_tmsi;
+		ie[GTPIE_IMSI] = &ie_elem[i];
+		i++;
+		break;
+	case GSM_MI_TYPE_TMSI:
+		ie_elem[i].tv4.t = GTPIE_P_TMSI;
+		ie_elem[i].tv4.v = ctx->p_tmsi;
+		ie[GTPIE_P_TMSI] = &ie_elem[i];
+		i++;
+		break;
+	default:
+		return -EINVAL;
+		break;
+	}
+
+	rc = gtp_sgsn_context_req(sgsn->gsn, &local_ref, &remote, ie, sizeof(ie));
 
 	return -1;
 }
