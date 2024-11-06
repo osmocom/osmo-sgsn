@@ -1759,6 +1759,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 				mmctx->guti.mtmsi |= (ptmsi_mtmsi << 16);
 				/* bits 23 to 16 is the NRI */
 				mmctx->eutran_nri = (mi.tmsi >> 16) & 0xff;
+				mmctx->guti_valid = true;
 			}
 		}
 	}
