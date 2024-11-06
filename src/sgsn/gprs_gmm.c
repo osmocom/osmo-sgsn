@@ -2520,6 +2520,24 @@ static bool vlr_location_served_cb(const struct osmo_routing_area_id *rai)
 	return !(rai->rac == 0xfe && rai->lac.lac == 0xfe);
 }
 
+int vlr_pvlr_request_cb(void *ref, const struct osmo_routing_area_id *old_rai)
+{
+	struct sgsn_mm_ctx *ctx = ref;
+	int rc;
+	uint32_t local_ref;
+	struct sockaddr_in *peer;
+	union gtpie_member **ie;
+
+	if (!ctx)
+		return -EINVAL;
+
+	/* ask */
+	rc = gtp_sgsn_context_req(sgsn->gsn, &local_ref,
+				  peer, ie, GTPIE_SIZE);
+
+	return -1;
+}
+
 
 /* Fixme: rename into gsup .client mux init */
 int gmm_vlr_init(struct sgsn_instance *sgi)
@@ -2549,6 +2567,8 @@ int gmm_vlr_init(struct sgsn_instance *sgi)
 	    .tx_lu_rej = vlr_tx_lu_rej_cb,
 
 	    .tx_common_id = vlr_tx_common_id_cb,
+
+	    .tx_pvlr_request = vlr_pvlr_request_cb,
 	};
 
 	addr_str = inet_ntoa(sgi->cfg.gsup_server_addr.sin_addr);
