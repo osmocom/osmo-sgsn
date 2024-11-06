@@ -131,6 +131,16 @@ struct sgsn_mme_ctx *sgsn_mme_ctx_by_route(const struct sgsn_instance *sgsn, con
 	return NULL;
 }
 
+struct sgsn_mme_ctx *sgsn_mme_ctx_by_gummei(const struct sgsn_instance *sgsn, const struct osmo_gummei *gummei)
+{
+	struct sgsn_mme_ctx *mme;
+	llist_for_each_entry(mme, &sgsn->mme_list, list) {
+		if (mme->gummei_valid && !osmo_gummei_cmp(&mme->gummei, gummei))
+			return mme;
+	}
+	return NULL;
+}
+
 struct sgsn_mme_ctx *sgsn_mme_ctx_by_default_route(const struct sgsn_instance *sgsn)
 {
 	struct sgsn_mme_ctx *mme;
