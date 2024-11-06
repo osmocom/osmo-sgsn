@@ -5,6 +5,7 @@
 #include <osmocom/core/linuxlist.h>
 #include <osmocom/core/timer.h>
 #include <osmocom/gprs/protocol/gsm_24_301.h>
+#include <osmocom/gsm/gsm23003.h>
 
 struct gsn_t;
 
@@ -20,6 +21,9 @@ struct sgsn_mme_ctx {
 	char *name;
 	struct in_addr remote_addr;
 
+	struct osmo_gummei gummei;
+	bool gummei_valid;
+
 	/* is it the default route for outgoing message? are all incoming messages accepted? */
 	bool default_route;
 };
@@ -30,6 +34,7 @@ void sgsn_mme_ctx_free(struct sgsn_mme_ctx *mme);
 struct sgsn_mme_ctx *sgsn_mme_ctx_by_name(const struct sgsn_instance *sgsn, const char *name);
 struct sgsn_mme_ctx *sgsn_mme_ctx_by_addr(const struct sgsn_instance *sgsn, const struct in_addr *addr);
 struct sgsn_mme_ctx *sgsn_mme_ctx_by_route(const struct sgsn_instance *sgsn, const struct osmo_eutran_tai *tai);
+struct sgsn_mme_ctx *sgsn_mme_ctx_by_gummei(const struct sgsn_instance *sgsn, const struct osmo_gummei *gummei);
 struct sgsn_mme_ctx *sgsn_mme_ctx_by_default_route(const struct sgsn_instance *sgsn);
 
 void sgsn_mme_ctx_route_add(struct sgsn_mme_ctx *mme, const struct osmo_eutran_tai *tai);

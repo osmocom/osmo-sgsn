@@ -235,6 +235,12 @@ static void config_write_mme(struct vty *vty, const struct sgsn_mme_ctx *mme, co
 			osmo_mcc_name(rt->tai.mcc), osmo_mnc_name(rt->tai.mnc, rt->tai.mnc_3_digits),
 			rt->tai.tac, VTY_NEWLINE);
 	}
+	if (mme->gummei_valid)
+		vty_out(vty, "%s gummei %s %s %d %d%s",
+			prefix,
+			osmo_mcc_name(mme->gummei.plmn.mcc),
+			osmo_mnc_name(mme->gummei.plmn.mnc, mme->gummei.plmn.mnc_3_digits),
+			mme->gummei.mme.group_id, mme->gummei.mme.code, VTY_NEWLINE);
 }
 
 static int config_write_sgsn(struct vty *vty)
@@ -1781,6 +1787,44 @@ DEFUN(cfg_mme_no_ran_info_relay_default, cfg_mme_no_ran_info_relay_default_cmd,
 	return CMD_SUCCESS;
 }
 
+DEFUN(cfg_mme_mmei, cfg_mme_mmei_cmd,
+      "gummei <0-999> <0-999> <0-65535> <0-254>",
+      "Configure the mme" "MCC" "MNC" "MME GroupId" "MME Code")
+{
+	struct sgsn_mme_ctx *mme = (struct sgsn_mme_ctx *) vty->index;
+
+	const char *mcc = argv[0];
+	const char *mnc = argv[1];
+	const char *group_id = argv[2];
+	const char *code = argv[3];
+
+	if (osmo_mcc_from_str(mcc, &mme->gummei.plmn.mcc)) {
+		vty_out(vty, "%% Error decoding MCC: %s%s", mcc, VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+
+	if (osmo_mnc_from_str(mnc, &mme->gummei.plmn.mnc, &mme->gummei.plmn.mnc_3_digits)) {
+		vty_out(vty, "%% Error decoding MNC: %s%s", mnc, VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+
+	mme->gummei.mme.code = atoi(code);
+	mme->gummei.mme.group_id = atoi(group_id);
+	mme->gummei_valid = true;
+
+	return CMD_SUCCESS;
+}
+
+DEFUN(cfg_no_mme_mmei, cfg_no_mme_mmei_cmd,
+      "no gummei",
+      NO_STR "Remove gummei")
+{
+	struct sgsn_mme_ctx *mme = (struct sgsn_mme_ctx *) vty->index;
+	mme->gummei_valid = false;
+
+	return CMD_SUCCESS;
+}
+
 int sgsn_vty_init(struct sgsn_config *cfg)
 {
 	g_cfg = cfg;
@@ -1857,6 +1901,8 @@ int sgsn_vty_init(struct sgsn_config *cfg)
 	install_element(MME_NODE, &cfg_mme_remote_ip_cmd);
 	install_element(MME_NODE, &cfg_mme_ran_info_relay_default_cmd);
 	install_element(MME_NODE, &cfg_mme_no_ran_info_relay_default_cmd);
+	install_element(MME_NODE, &cfg_mme_mmei_cmd);
+	install_element(MME_NODE, &cfg_no_mme_mmei_cmd);
 	install_element(MME_NODE, &cfg_mme_ran_info_relay_tai_cmd);
 	install_element(MME_NODE, &cfg_mme_no_ran_info_relay_tai_cmd);
 
