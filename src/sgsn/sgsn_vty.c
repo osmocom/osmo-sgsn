@@ -1500,6 +1500,44 @@ DEFUN(cfg_mme_no_ran_info_relay_default, cfg_mme_no_ran_info_relay_default_cmd,
 	return CMD_SUCCESS;
 }
 
+DEFUN(cfg_mme_mmei, cfg_mme_mmei_cmd,
+      "gummei <0-999> <0-999> <0-65535> <0-254>",
+      "Configure the mme" "MCC" "MNC" "MME GroupId" "MME Code")
+{
+	struct sgsn_mme_ctx *mme = (struct sgsn_mme_ctx *) vty->index;
+
+	const char *mcc = argv[0];
+	const char *mnc = argv[1];
+	const char *group_id = argv[2];
+	const char *code = argv[3];
+
+	if (osmo_mcc_from_str(mcc, &mme->gummei.plmn.mcc)) {
+		vty_out(vty, "%% Error decoding MCC: %s%s", mcc, VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+
+	if (osmo_mnc_from_str(mnc, &mme->gummei.plmn.mnc, &mme->gummei.plmn.mnc_3_digits)) {
+		vty_out(vty, "%% Error decoding MNC: %s%s", mnc, VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+
+	mme->gummei.mme.code = atoi(code);
+	mme->gummei.mme.group_id = atoi(group_id);
+	mme->gummei_valid = true;
+
+	return CMD_SUCCESS;
+}
+
+DEFUN(cfg_no_mme_mmei, cfg_no_mme_mmei_cmd,
+      "no gummei",
+      NO_STR "Remove gummei")
+{
+	struct sgsn_mme_ctx *mme = (struct sgsn_mme_ctx *) vty->index;
+	mme->gummei_valid = false;
+
+	return CMD_SUCCESS;
+}
+
 int sgsn_vty_init(struct sgsn_config *cfg)
 {
 	g_cfg = cfg;
@@ -1572,6 +1610,8 @@ int sgsn_vty_init(struct sgsn_config *cfg)
 	install_element(MME_NODE, &cfg_mme_remote_ip_cmd);
 	install_element(MME_NODE, &cfg_mme_ran_info_relay_default_cmd);
 	install_element(MME_NODE, &cfg_mme_no_ran_info_relay_default_cmd);
+	install_element(MME_NODE, &cfg_mme_mmei_cmd);
+	install_element(MME_NODE, &cfg_no_mme_mmei_cmd);
 	install_element(MME_NODE, &cfg_mme_ran_info_relay_tai_cmd);
 	install_element(MME_NODE, &cfg_mme_no_ran_info_relay_tai_cmd);
 
