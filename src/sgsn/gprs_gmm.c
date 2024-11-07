@@ -2587,6 +2587,8 @@ int vlr_pvlr_request_cb(void *ref, const struct osmo_routing_area_id *old_rai)
 	}
 
 	rc = gtp_sgsn_context_req(sgsn->gsn, &local_ref, &remote, ie, sizeof(ie));
+	ctx->gtp_local_ref = local_ref;
+	ctx->gtp_local_ref_valid = true;
 
 	return -1;
 }

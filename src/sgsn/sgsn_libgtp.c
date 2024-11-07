@@ -1267,19 +1267,28 @@ static int cb_gtp_sgsn_context_response_ind(struct gsn_t *gsn, struct sockaddr_i
 
 	/* Check cause */
 	if (!gtpie_gettv1(ie, GTPIE_CAUSE, 0, &cause)) {
+		mmctx->gtp_local_ref_valid = false;
 		LOGMMCTXP(LOGL_ERROR, mmctx, "SGSN Context resp: Mandatory Cause IE not found\n");
 		return gtp_sgsn_context_ack_error(gsn, local_ref, GTPCAUSE_MAN_IE_MISSING);
+	}
+
+	if (!mmctx->vsub) {
+		LOGMMCTXP(LOGL_ERROR, mmctx, "SGSN Context resp: Mandatory Cause IE not found\n");
+		/* TODO: check if need to inform the other SGSN/MME with a different cause code */
+		return gtp_sgsn_context_ack_error(gsn, local_ref, GTPCAUSE_MS_NOT_RESP);
 	}
 
 	if (cause != GTPCAUSE_ACC_REQ) {
 		mmctx->gtp_local_ref_valid = false;
 		LOGMMCTXP(LOGL_ERROR, mmctx, "SGSN Context resp: Cause %d\n", cause);
+		vlr_subscr_rx_pvlr_id_nack(mmctx->vsub);
 		/* FIXME: inform FSM */
 		return -1;
 	}
 
 	if (!gtpie_gettv8(ie, GTPIE_IMSI, 0, &imsi)) {
 		LOGMMCTXP(LOGL_ERROR, mmctx, "SGSN Context resp: Mandatory IMSI IE not found\n");
+		vlr_subscr_rx_pvlr_id_nack(mmctx->vsub);
 		return gtp_sgsn_context_ack_error(gsn, local_ref, GTPCAUSE_MAN_IE_MISSING);
 	}
 	imsi = ntoh64(imsi);
@@ -1291,6 +1300,12 @@ static int cb_gtp_sgsn_context_response_ind(struct gsn_t *gsn, struct sockaddr_i
 		return gtp_sgsn_context_ack_error(gsn, local_ref, GTPCAUSE_MAN_IE_MISSING);
 	}
 
+	// parse MMCTX
+	// what do we need?
+	// keys
+	vlr_subscr_rx_pvlr_id_ack(mmctx->vsub);
+
+	/* FIXME: ack after the UE has been authenticated */
 	return gtp_sgsn_context_ack(gsn, local_ref, NULL, 0);
 }
 

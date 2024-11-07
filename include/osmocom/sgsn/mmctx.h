@@ -151,6 +151,11 @@ struct sgsn_mm_ctx {
 		uint32_t id_type;
 		unsigned int auth_reattempt; /* tracking UMTS resync auth attempts */
 	} gmm_att_req;
+
+	struct {
+		struct osmo_mobile_identity mi;
+		char p_tmsi_sig[3];
+	} attach_rau;
 	/* VLR number */
 	uint32_t		new_sgsn_addr;
 	/* Authentication Triplet */
