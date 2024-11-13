@@ -1257,8 +1257,6 @@ static int cb_gtp_sgsn_context_response_ind(struct gsn_t *gsn, struct sockaddr_i
 	unsigned int buf_len;
 	uint8_t cause;
 
-
-
 	mmctx = sgsn_mm_ctx_by_gtp_local_ref(local_ref);
 	if (!mmctx) {
 		/* How can we loose the local reference? Most likely only when we release the whole subscriber. */
@@ -1266,7 +1264,7 @@ static int cb_gtp_sgsn_context_response_ind(struct gsn_t *gsn, struct sockaddr_i
 	}
 
 	/* Check cause */
-	if (!gtpie_gettv1(ie, GTPIE_CAUSE, 0, &cause)) {
+	if (gtpie_gettv1(ie, GTPIE_CAUSE, 0, &cause)) {
 		mmctx->gtp_local_ref_valid = false;
 		LOGMMCTXP(LOGL_ERROR, mmctx, "SGSN Context resp: Mandatory Cause IE not found\n");
 		return gtp_sgsn_context_ack_error(gsn, local_ref, GTPCAUSE_MAN_IE_MISSING);
@@ -1286,7 +1284,7 @@ static int cb_gtp_sgsn_context_response_ind(struct gsn_t *gsn, struct sockaddr_i
 		return -1;
 	}
 
-	if (!gtpie_gettv8(ie, GTPIE_IMSI, 0, &imsi)) {
+	if (gtpie_gettv8(ie, GTPIE_IMSI, 0, &imsi)) {
 		LOGMMCTXP(LOGL_ERROR, mmctx, "SGSN Context resp: Mandatory IMSI IE not found\n");
 		vlr_subscr_rx_pvlr_id_nack(mmctx->vsub);
 		return gtp_sgsn_context_ack_error(gsn, local_ref, GTPCAUSE_MAN_IE_MISSING);
@@ -1295,7 +1293,7 @@ static int cb_gtp_sgsn_context_response_ind(struct gsn_t *gsn, struct sockaddr_i
 	const char *imsi_str = imsi_gtp2str(&imsi);
 	strncpy(mmctx->imsi, imsi_str, sizeof(mmctx->imsi));
 
-	if (!gtpie_gettlv(ie, GTPIE_MM_CONTEXT, 0, &buf_len, buf, sizeof(buf))) {
+	if (gtpie_gettlv(ie, GTPIE_MM_CONTEXT, 0, &buf_len, buf, sizeof(buf))) {
 		LOGMMCTXP(LOGL_ERROR, mmctx, "SGSN Context resp: Mandatory MM context IE not found\n");
 		return gtp_sgsn_context_ack_error(gsn, local_ref, GTPCAUSE_MAN_IE_MISSING);
 	}
@@ -1306,7 +1304,7 @@ static int cb_gtp_sgsn_context_response_ind(struct gsn_t *gsn, struct sockaddr_i
 	vlr_subscr_rx_pvlr_id_ack(mmctx->vsub);
 
 	/* FIXME: ack after the UE has been authenticated */
-	return gtp_sgsn_context_ack(gsn, local_ref, NULL, 0);
+	return gtp_sgsn_context_ack_error(gsn, local_ref, GTPCAUSE_ACC_REQ);
 }
 
 static int cb_gtp_sgsn_context_ack_ind(struct gsn_t *gsn, struct sockaddr_in *peer, uint32_t local_ref, union gtpie_member **ie, unsigned int ie_size)

@@ -6,6 +6,7 @@
 #include <osmocom/gsm/gsm23003.h>
 #include <osmocom/gsm/gsm48.h>
 #include <osmocom/gsm/tlv.h>
+#include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 
 struct msgb;
 
@@ -20,6 +21,8 @@ struct gprs_gmm_ra_upd_req {
 	struct osmo_routing_area_id old_rai; /* 10.5.5.15 */
 	uint8_t *ms_radio_cap; /* 10.5.5.12a */
 	uint8_t ms_radio_cap_len;
+	enum gsm48_ptsmi_type ptmsi_type;
+	uint32_t ptmsi;
 	struct tlv_parsed tlv;
 };
 

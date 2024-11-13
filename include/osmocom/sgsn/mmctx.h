@@ -106,7 +106,7 @@ struct sgsn_mm_ctx {
 
 	uint32_t 		p_tmsi;
 	uint32_t 		p_tmsi_old;	/* old P-TMSI before new is confirmed */
-	uint32_t 		p_tmsi_sig;
+	char			p_tmsi_sig[3];
 	char 			imei[GSM23003_IMEISV_NUM_DIGITS+1];
 	/* Opt: Software Version Numbber / TS 23.195 */
 	char 			msisdn[GSM_EXTENSION_LENGTH];
@@ -153,8 +153,9 @@ struct sgsn_mm_ctx {
 	} gmm_att_req;
 
 	struct {
-		struct osmo_mobile_identity mi;
 		char p_tmsi_sig[3];
+		bool p_tmsi_sig_valid;
+		struct osmo_routing_area_id old_rai;
 	} attach_rau;
 	/* VLR number */
 	uint32_t		new_sgsn_addr;

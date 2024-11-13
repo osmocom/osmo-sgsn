@@ -60,6 +60,7 @@
 #include <osmocom/sgsn/gprs_mm_state_iu_fsm.h>
 #include <osmocom/sgsn/gprs_gmm_fsm.h>
 #include <osmocom/sgsn/signal.h>
+#include <osmocom/sgsn/gprs_routing_area.h>
 #include <osmocom/sgsn/gprs_sndcp.h>
 #include <osmocom/sgsn/gprs_ranap.h>
 #include <osmocom/sgsn/gprs_sm.h>
@@ -1527,6 +1528,50 @@ int gsm48_tx_gmm_ra_upd_rej_oldmsg(struct msgb *old_msg, uint8_t cause)
 	return gsm48_gmm_sendmsg(msg, 0, NULL, false);
 }
 
+/* Chapter 9.4.14: Routing area update request, UE doing mobility from EUTRAN */
+static int gsm48_rx_gmm_ra_upd_req_eutran(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
+					  struct gprs_llc_llme *llme, struct gprs_gmm_ra_upd_req *req,
+					  struct osmo_routing_area_id *new_ra_id)
+{
+
+	return -1;
+}
+
+/*! Calculate the GUTI from a Routing Area Update Request, P-TMSI, P-TMSI signature
+ *
+ * \param[in] msg
+ * \param[in] req
+ * \param[in] new_ra_id
+ * \param[out] guti
+ * \param[out] nas_token
+ * \return 0 on success
+ */
+static int get_guti(struct msgb *msg, struct gprs_gmm_ra_upd_req *req, uint32_t ptmsi, struct osmo_guti *guti, uint16_t *nas_token)
+{
+	/* uint16_t nas_token; */
+	uint8_t ptmsi_mtmsi;
+
+	OSMO_ASSERT(guti);
+
+	if (!TLVP_PRES_LEN(&req->tlv, GSM48_IE_GMM_PTMSI_SIG, 3))
+		return GMM_CAUSE_IE_NOTEXIST_NOTIMPL;
+
+	ptmsi_mtmsi = tlvp_val8(&req->tlv, GSM48_IE_GMM_PTMSI_SIG, 0);
+	/* nas_token only valid for UTRAN */
+	*nas_token = osmo_load16be(TLVP_VAL(&req->tlv, GSM48_IE_GMM_PTMSI_SIG) + 1);
+
+	guti->gummei.plmn = req->old_rai.lac.plmn;
+	guti->gummei.mme.group_id = req->old_rai.lac.lac;
+	guti->gummei.mme.code = req->old_rai.rac;
+	/* bits 31 to 30 are always 11; P-TMSI  bits29 to 24, 15 to 0 */
+	guti->mtmsi |= (1 << 31) | (1 << 30) | (ptmsi & 0x3f00ffff);
+	guti->mtmsi |= (ptmsi_mtmsi << 16);
+	/* bits 23 to 16 is the NRI */
+	/* eutran_nri = (ptmsi >> 16) & 0xff; */
+
+	return 0;
+}
+
 /* Chapter 9.4.14: Routing area update request */
 static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 				   struct gprs_llc_llme *llme)
@@ -1539,7 +1584,14 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	struct osmo_routing_area_id new_ra_id = {};
 	struct osmo_guti guti = {};
 	enum vlr_lu_type vlr_rau_type;
+	bool foreign_ra = false, from_eutran = false;
+	enum gsm48_ptsmi_type ptmsi_type = PTMSI_TYPE_NATIVE;
 	int rc;
+	uint8_t ptmsi_sig[3];
+	uint16_t nas_token;
+	uint32_t ptmsi = 0xffffffff;
+	uint32_t tlli = 0xffffffff;
+	struct sgsn_mme_ctx *mme;
 
 	rc = gprs_gmm_parse_ra_upd_req(msg, &req);
 	if (rc) {
@@ -1574,83 +1626,122 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	/* GERAN via Gb */
 	if (msgb_bcid(msg)) {
 		bssgp_parse_cell_id2(&new_ra_id, NULL, msgb_bcid(msg), 8);
+		tlli = msgb_tlli(msg);
+		ptmsi = gprs_tlli2tmsi(tlli);
 	}
 #ifdef BUILD_IU
 	/* UTRAN via Iu */
 	else if (MSG_IU_UE_CTX(msg)) {
+		struct osmo_mobile_identity mi;
 		gprs_rai_to_osmo(&new_ra_id, &MSG_IU_UE_CTX(msg)->ra_id);
+
+		if (!TLVP_PRESENT(&req.tlv, GSM48_IE_GMM_ALLOC_PTMSI)) {
+			reject_cause = GMM_CAUSE_IE_NOTEXIST_NOTIMPL;
+			goto rejected;
+		}
+
+		if (osmo_mobile_identity_decode(&mi, TLVP_VAL(&req.tlv, GSM48_IE_GMM_ALLOC_PTMSI),
+						TLVP_LEN(&req.tlv, GSM48_IE_GMM_ALLOC_PTMSI), false)
+		    || mi.type != GSM_MI_TYPE_TMSI) {
+			LOGIUP(MSG_IU_UE_CTX(msg), LOGL_ERROR, "Cannot decode P-TMSI\n");
+			reject_cause = GMM_CAUSE_IE_NOTEXIST_NOTIMPL;
+			goto rejected;
+		}
 	}
 #endif /* BUILD_IU */
 	else {
 		OSMO_ASSERT(0);
 	}
 
-	if (!mmctx) {
-		/* BSSGP doesn't give us an mmctx */
+	if (TLVP_PRESENT(&req.tlv, GSM48_IE_GMM_PTMSI_TYPE)) {
+		ptmsi_type = (*TLVP_VAL(&req.tlv, GSM48_IE_GMM_PTMSI_TYPE)) & 0x1;
+	}
 
-		/* TODO: Check if there is an MM CTX with old_ra_id and
-		 * the P-TMSI (if given, reguired for UMTS) or as last resort
-		 * if the TLLI matches foreign_tlli (P-TMSI). Note that this
-		 * is an optimization to avoid the RA reject (impl detached)
-		 * below, which will cause a new attach cycle. */
-		/* Look-up the MM context based on old RA-ID and TLLI */
-		if (!MSG_IU_UE_CTX(msg)) {
-			/* Gb */
-			mmctx = sgsn_mm_ctx_by_tlli_and_ptmsi(msgb_tlli(msg), &req.old_rai);
-		} else if (TLVP_PRESENT(&req.tlv, GSM48_IE_GMM_ALLOC_PTMSI)) {
-#ifdef BUILD_IU
-			/* In Iu mode search only for ptmsi */
-			struct osmo_mobile_identity mi;
-			if (osmo_mobile_identity_decode(&mi, TLVP_VAL(&req.tlv, GSM48_IE_GMM_ALLOC_PTMSI),
-							TLVP_LEN(&req.tlv, GSM48_IE_GMM_ALLOC_PTMSI), false)
-			    || mi.type != GSM_MI_TYPE_TMSI) {
-				LOGIUP(MSG_IU_UE_CTX(msg), LOGL_ERROR, "Cannot decode P-TMSI\n");
-				goto rejected;
-			}
-			mmctx = sgsn_mm_ctx_by_ptmsi(mi.tmsi);
-#else
-			LOGIUP(MSG_IU_UE_CTX(msg), LOGL_ERROR,
-			       "Rejecting GMM RA Update Request: No Iu support\n");
+	if (ptmsi_type == PTMSI_TYPE_MAPPED) {
+		/* the UE is transitioning from EUTRAN to GERAN/UTRAN */
+		from_eutran = true;
+		foreign_ra = true;
+
+		rc = get_guti(msg, &req, ptmsi, &guti, &nas_token);
+		if (rc) {
+			reject_cause = rc;
 			goto rejected;
+		}
+
+		mme = sgsn_mme_ctx_by_gummei(sgsn, &guti.gummei);
+		if (!mme) {
+			// unroutable
+			/* FIXME: check for additional RAI + PTMSI */
+			goto rejected;
+		}
+
+		if (!mmctx) {
+			/* create a new MMCtx and ask for the context */
+			if (msgb_bcid(msg)) {
+				mmctx = sgsn_mm_ctx_alloc_gb(tlli, &req.old_rai);
+			} else {
+				mmctx = sgsn_mm_ctx_alloc_iu(MSG_IU_UE_CTX(msg));
+			}
+
+			if (!mmctx)
+				goto rejected;
+
+			mmctx->p_tmsi = ptmsi;
+		}
+		mmctx->guti = guti;
+		mmctx->guti_valid = true;
+	} else { /* (ptmsi_type == PTMSI_TYPE_NATIVE) - 2G/3G PTMSI */
+		/* Check if this a local RA or a foreign */
+		struct sgsn_ra *ra;
+
+		ra = sgsn_ra_get_ra(&req.old_rai);
+		if (!ra) {
+			/* FIXME: implement SGSN to SGSN routing */
+			foreign_ra = true;
+			reject_cause = GMM_CAUSE_NET_FAIL;
+			goto rejected;
+		}
+
+		/* GERAN / UTRAN with local RA */
+		if (!mmctx) {
+			/* BSSGP doesn't give us an mmctx, old RAI is GERAN or UTRAN */
+
+			/* TODO: Check if there is an MM CTX with old_ra_id and
+			 * the P-TMSI (if given, reguired for UMTS) or as last resort
+			 * if the TLLI matches foreign_tlli (P-TMSI). Note that this
+			 * is an optimization to avoid the RA reject (impl detached)
+			 * below, which will cause a new attach cycle. */
+			/* Look-up the MM context based on old RA-ID and TLLI */
+			if (!MSG_IU_UE_CTX(msg)) {
+				/* Gb */
+				mmctx = sgsn_mm_ctx_by_tlli_and_ptmsi(tlli, &req.old_rai);
+			} else if (TLVP_PRESENT(&req.tlv, GSM48_IE_GMM_ALLOC_PTMSI)) {
+#ifdef BUILD_IU
+				/* In Iu mode search only for ptmsi */
+				mmctx = sgsn_mm_ctx_by_ptmsi(ptmsi);
+#else
+				LOGIUP(MSG_IU_UE_CTX(msg), LOGL_ERROR,
+				       "Rejecting GMM RA Update Request: No Iu support\n");
+				goto rejected;
 #endif
+			}
+
+			if (mmctx) {
+				LOGMMCTXP(LOGL_INFO, mmctx,
+					  "Looked up by matching TLLI and P_TMSI. "
+					  "BSSGP TLLI: %08x, P-TMSI: %08x (%08x), "
+					  "TLLI: %08x (%08x), RA: %s\n",
+					  msgb_tlli(msg),
+					  mmctx->p_tmsi, mmctx->p_tmsi_old,
+					  mmctx->gb.tlli, mmctx->gb.tlli_new,
+					  osmo_rai_name2(&mmctx->ra));
+				/* A RAT change will trigger the common procedure
+				 * below after handling the RAT change. Protect it
+				 * here from being called twice */
+				if (!mmctx_did_rat_change(mmctx, msg))
+					osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_GMM_COMMON_PROC_INIT_REQ, NULL);
+			}
 		}
-		if (mmctx) {
-			LOGMMCTXP(LOGL_INFO, mmctx,
-				"Looked up by matching TLLI and P_TMSI. "
-				"BSSGP TLLI: %08x, P-TMSI: %08x (%08x), "
-				"TLLI: %08x (%08x), RA: %s\n",
-				msgb_tlli(msg),
-				mmctx->p_tmsi, mmctx->p_tmsi_old,
-				mmctx->gb.tlli, mmctx->gb.tlli_new,
-				osmo_rai_name2(&mmctx->ra));
-			/* A RAT change will trigger the common procedure
-			 * below after handling the RAT change. Protect it
-			 * here from being called twice */
-			if (!mmctx_did_rat_change(mmctx, msg))
-				osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_GMM_COMMON_PROC_INIT_REQ, NULL);
-
-		}
-	} else if (osmo_rai_cmp(&mmctx->ra, &req.old_rai) ||
-		mmctx->gmm_fsm->state == ST_GMM_DEREGISTERED)
-	{
-		/* We've received either a RAU for a MS which isn't registered
-		 * or a RAU with an unknown RA ID. As long the SGSN doesn't support
-		 * PS handover we treat this as invalid RAU */
-		char new_ra[32];
-
-		osmo_rai_name2_buf(new_ra, sizeof(new_ra), &new_ra_id);
-
-		if (mmctx->gmm_fsm->state == ST_GMM_DEREGISTERED)
-			LOGMMCTXP(LOGL_INFO, mmctx,
-				  "Rejecting RAU - GMM state is deregistered. Old RA: %s New RA: %s\n",
-				  osmo_rai_name2(&req.old_rai), new_ra);
-		else
-			LOGMMCTXP(LOGL_INFO, mmctx,
-				  "Rejecting RAU - Old RA doesn't match MM. Old RA: %s New RA: %s\n",
-				  osmo_rai_name2(&req.old_rai), new_ra);
-
-		reject_cause = GMM_CAUSE_IMPL_DETACHED;
-		goto rejected;
 	}
 
 	if (!mmctx) {
@@ -1683,6 +1774,50 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		goto rejected;
 	}
 
+	/* MS Radio Capability */
+	mmctx->ms_radio_access_capa.len = OSMO_MIN(req.ms_radio_cap_len, sizeof(mmctx->ms_radio_access_capa.buf));
+	memcpy(&mmctx->ms_radio_access_capa, req.ms_radio_cap, req.ms_radio_cap_len);
+
+	/* MS Network Capability */
+	if (TLVP_PRES_LEN(&req.tlv, GSM48_IE_GMM_MS_NET_CAPA, 1)) {
+		mmctx->ms_network_capa.len = OSMO_MIN(TLVP_LEN(&req.tlv, GSM48_IE_GMM_MS_NET_CAPA), sizeof(mmctx->ms_network_capa.buf));
+		memcpy(&mmctx->ms_network_capa, TLVP_VAL(&req.tlv, GSM48_IE_GMM_MS_NET_CAPA), mmctx->ms_network_capa.len);
+	} else {
+		mmctx->ms_network_capa.len = 0;
+	}
+
+	if (TLVP_PRES_LEN(&req.tlv, GSM48_IE_GMM_PTMSI_SIG, 3)) {
+		memcpy(mmctx->attach_rau.p_tmsi_sig, TLVP_VAL(&req.tlv, GSM48_IE_GMM_PTMSI_SIG), sizeof(mmctx->attach_rau.p_tmsi_sig));
+		mmctx->attach_rau.p_tmsi_sig_valid = true;
+	} else {
+		mmctx->attach_rau.p_tmsi_sig_valid = false;
+	}
+
+	/* check state for local UE */
+	if (!foreign_ra &&
+		(osmo_rai_cmp(&mmctx->ra, &req.old_rai) ||
+					    mmctx->gmm_fsm->state == ST_GMM_DEREGISTERED))
+	{
+		/* We've received either a RAU for a MS which isn't registered
+		 * or a RAU with an unknown RA ID. As long the SGSN doesn't support
+		 * PS handover we treat this as invalid RAU */
+		char new_ra[32];
+
+		osmo_rai_name2_buf(new_ra, sizeof(new_ra), &new_ra_id);
+
+		if (mmctx->gmm_fsm->state == ST_GMM_DEREGISTERED)
+			LOGMMCTXP(LOGL_INFO, mmctx,
+				  "Rejecting RAU - GMM state is deregistered. Old RA: %s New RA: %s\n",
+				  osmo_rai_name2(&req.old_rai), new_ra);
+		else
+			LOGMMCTXP(LOGL_INFO, mmctx,
+				  "Rejecting RAU - Old RA doesn't match MM. Old RA: %s New RA: %s\n",
+				  osmo_rai_name2(&req.old_rai), new_ra);
+
+		reject_cause = GMM_CAUSE_IMPL_DETACHED;
+		goto rejected;
+	}
+
 	if (mmctx_did_rat_change(mmctx, msg)) {
 		mmctx_handle_rat_change(mmctx, msg, llme);
 		osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_GMM_COMMON_PROC_INIT_REQ, NULL);
@@ -1702,9 +1837,6 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	/* Update the MM context with the new DRX params */
 	if (TLVP_PRESENT(&req.tlv, GSM48_IE_GMM_DRX_PARAM))
 		memcpy(&mmctx->drx_parms, TLVP_VAL(&req.tlv, GSM48_IE_GMM_DRX_PARAM), sizeof(mmctx->drx_parms));
-
-	/* FIXME: Update the MM context with the MS radio acc capabilities */
-	/* FIXME: Update the MM context with the MS network capabilities */
 
 	rate_ctr_inc(rate_ctr_group_get_ctr(mmctx->ctrg, GMM_CTR_RA_UPDATE));
 
@@ -1733,55 +1865,24 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		process_ms_ctx_status(mmctx, pdp_status);
 	}
 
-
-	/* Check for EUTRAN to GERAN/UTRAN */
-	if (TLVP_PRESENT(&req.tlv, GSM48_IE_GMM_PTMSI_TYPE)) {
-		const uint8_t *ptmsi_type = TLVP_VAL(&req.tlv, GSM48_IE_GMM_PTMSI_TYPE);
-		if (*ptmsi_type == PTMSI_TYPE_MAPPED) {
-			/* this is a mapped GUTI, override the old_rai to set it to a special VLR */
-			req.old_rai.rac = 0xfe;
-			req.old_rai.lac.lac = 0xfe;
-
-			/* Convert mapped GUTI, P-TMSI, P-TMSI Sig into a MME */
-			struct osmo_mobile_identity mi = {};
-			uint32_t ptmsi2;
-			uint16_t nas_token;
-			uint8_t ptmsi_mtmsi;
-			struct osmo_routing_area_id old_rai2;
-
-			if (!TLVP_PRES_LEN(&req.tlv, GSM48_IE_GMM_PTMSI_SIG, 3) ||
-			    !TLVP_PRES_LEN(&req.tlv, GSM48_IE_GMM_ADD_IDENTITY, 5) ||
-			    !TLVP_PRES_LEN(&req.tlv, GSM48_IE_GMM_RAI2, 6)) {
-				;
-			} else {
-				ptmsi_mtmsi = tlvp_val8(&req.tlv, GSM48_IE_GMM_PTMSI_SIG, 0);
-				nas_token = osmo_load16be(TLVP_VAL(&req.tlv, GSM48_IE_GMM_PTMSI_SIG) + 1);
-
-				if (osmo_mobile_identity_decode(&mi, TLVP_VAL(&req.tlv, GSM48_IE_GMM_ADD_IDENTITY),
-								TLVP_LEN(&req.tlv, GSM48_IE_GMM_ADD_IDENTITY), false)) {
-					;
-				}
-				if (mi.type != GSM_MI_TYPE_TMSI)
-					;
-
-				osmo_routing_area_id_decode(&old_rai2, TLVP_VAL(&req.tlv, GSM48_IE_GMM_RAI2), 6);
-				mmctx->guti.gummei.plmn = old_rai2.lac.plmn;
-				mmctx->guti.gummei.mme.group_id = old_rai2.lac.lac;
-				mmctx->guti.gummei.mme.code = old_rai2.rac;
-				/* bits 31 to 30 are always 11; P-TMSI  bits29 to 24, 15 to 0 */
-				mmctx->guti.mtmsi |= (1 << 31) | (1 << 30) | (mi.tmsi & 0x3f00ffff);
-				mmctx->guti.mtmsi |= (ptmsi_mtmsi << 16);
-				/* bits 23 to 16 is the NRI */
-				mmctx->eutran_nri = (mi.tmsi >> 16) & 0xff;
-				mmctx->guti_valid = true;
-			}
-		}
-	}
-
 	/* Send RA UPDATE ACCEPT. In Iu, the RA upd request can be called from
 	 * a new Iu connection, so we might need to re-authenticate the
 	 * connection as well as turn on integrity protection. */
 	mmctx->pending_req = GSM48_MT_GMM_RA_UPD_REQ;
+
+	if (!mmctx->vsub) {
+		mmctx->vsub = vlr_subscr_find_or_create_by_tmsi(sgsn->vlr, ptmsi, "foreign RAU", NULL);
+		if (!mmctx->vsub)
+			goto rejected;
+	}
+
+	mmctx->attach_rau.old_rai = req.old_rai;
+
+	/* FIXME: we set here the Rai to a special value to ensure the VLR to fail later */
+	if (from_eutran) {
+		req.old_rai.lac.lac = 0xfffe;
+		req.old_rai.rac = 0xfe;
+	}
 
 	mmctx->vsub->lu_fsm = vlr_ra_update(
 	    mmctx->gmm_fsm, E_GMM_ATTACH_SUCCESS, E_GMM_ATTACH_FAILED, NULL,
@@ -2531,7 +2632,7 @@ static int vlr_tx_mm_info_cb(void *ref)
 static bool vlr_location_served_cb(const struct osmo_routing_area_id *rai)
 {
 	/* EUTRAN Loc/Rac */
-	return !(rai->rac == 0xfe && rai->lac.lac == 0xfe);
+	return !(rai->rac == 0xfe && rai->lac.lac == 0xfffe);
 }
 
 int vlr_pvlr_request_cb(void *ref, const struct osmo_routing_area_id *old_rai)
@@ -2552,7 +2653,7 @@ int vlr_pvlr_request_cb(void *ref, const struct osmo_routing_area_id *old_rai)
 		return -EINVAL;
 
 	/* Is there another way to determ if a RAI is connected to an MME? */
-	if (old_rai->rac == 0xfe && old_rai->lac.lac == 0xfe) {
+	if (!(old_rai->rac == 0xfe && old_rai->lac.lac == 0xfffe)) {
 		return -EINVAL;
 	}
 
@@ -2568,29 +2669,31 @@ int vlr_pvlr_request_cb(void *ref, const struct osmo_routing_area_id *old_rai)
 	remote.sin_family = AF_INET;
 	remote.sin_addr = mme->remote_addr;
 
-	switch (ctx->attach_rau.mi.type) {
-	case GSM_MI_TYPE_IMSI:
-		ie_elem[i].tv4.t = GTPIE_IMSI;
-		ie_elem[i].tv4.v = ctx->p_tmsi;
-		ie[GTPIE_IMSI] = &ie_elem[i];
-		i++;
-		break;
-	case GSM_MI_TYPE_TMSI:
+	if (ctx->p_tmsi != 0x0 && ctx->p_tmsi != 0xffffffff) {
 		ie_elem[i].tv4.t = GTPIE_P_TMSI;
 		ie_elem[i].tv4.v = ctx->p_tmsi;
 		ie[GTPIE_P_TMSI] = &ie_elem[i];
 		i++;
-		break;
-	default:
-		return -EINVAL;
-		break;
 	}
 
-	rc = gtp_sgsn_context_req(sgsn->gsn, &local_ref, &remote, ie, sizeof(ie));
+	if (ctx->attach_rau.p_tmsi_sig_valid) {
+		ie_elem[i].tv0.t = GTPIE_P_TMSI_S;
+		memcpy(ie_elem[i].tv0.v, ctx->attach_rau.p_tmsi_sig, sizeof(ctx->attach_rau.p_tmsi_sig));
+		ie[GTPIE_P_TMSI] = &ie_elem[i];
+		i++;
+	}
+
+
+	ie_elem[i].tv0.t = GTPIE_RAI;
+	osmo_routing_area_id_encode_buf(ie_elem[i].tv0.v, 6, &ctx->attach_rau.old_rai);
+	ie[GTPIE_RAI] = &ie_elem[i];
+	i++;
+
+	rc = gtp_sgsn_context_req(sgsn->gsn, &local_ref, &remote, ie, GTPIE_SIZE);
 	ctx->gtp_local_ref = local_ref;
 	ctx->gtp_local_ref_valid = true;
 
-	return -1;
+	return 0;
 }
 
 
