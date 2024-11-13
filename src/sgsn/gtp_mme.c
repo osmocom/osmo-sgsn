@@ -141,6 +141,7 @@ struct sgsn_mme_ctx *sgsn_mme_ctx_by_gummei(const struct sgsn_instance *sgsn, co
 	return NULL;
 }
 
+
 struct sgsn_mme_ctx *sgsn_mme_ctx_by_default_route(const struct sgsn_instance *sgsn)
 {
 	struct sgsn_mme_ctx *mme;

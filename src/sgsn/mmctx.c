@@ -295,7 +295,6 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_alloc_iu(void *uectx)
 #endif
 }
 
-
 /* this is a hard _free_ function, it doesn't clean up the PDP contexts
  * in libgtp! */
 static void sgsn_mm_ctx_free(struct sgsn_mm_ctx *mm)
