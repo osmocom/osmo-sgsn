@@ -1293,7 +1293,10 @@ static int cb_gtp_sgsn_context_response_ind(struct gsn_t *gsn, struct sockaddr_i
 	}
 	imsi = ntoh64(imsi);
 	const char *imsi_str = imsi_gtp2str(&imsi);
+	/* move this into a different function? */
 	strncpy(mmctx->imsi, imsi_str, sizeof(mmctx->imsi));
+	if (mmctx->vsub)
+		vlr_subscr_set_imsi(mmctx->vsub, imsi_str);
 
 	if (gtpie_gettlv(ie, GTPIE_MM_CONTEXT, 0, &buf_len, buf, sizeof(buf))) {
 		LOGMMCTXP(LOGL_ERROR, mmctx, "SGSN Context resp: Mandatory MM context IE not found\n");
@@ -1306,7 +1309,23 @@ static int cb_gtp_sgsn_context_response_ind(struct gsn_t *gsn, struct sockaddr_i
 	vlr_subscr_rx_pvlr_id_ack(mmctx->vsub);
 
 	/* FIXME: ack after the UE has been authenticated */
-	return gtp_sgsn_context_ack_error(gsn, local_ref, GTPCAUSE_ACC_REQ);
+	return 0;
+}
+
+int sgsn_context_ack(struct gsn_t *gsn, struct sgsn_mm_ctx *mmctx, uint8_t cause)
+{
+	int rc;
+
+	if (!mmctx->gtp_local_ref_valid)
+		return -EINVAL;
+
+	if (!mmctx->gtp_local_ref)
+		return -EINVAL;
+
+	rc = gtp_sgsn_context_ack_error(gsn, mmctx->gtp_local_ref, cause);
+	mmctx->gtp_local_ref_valid = false;
+
+	return rc;
 }
 
 static int cb_gtp_sgsn_context_ack_ind(struct gsn_t *gsn, struct sockaddr_in *peer, uint32_t local_ref, union gtpie_member **ie, unsigned int ie_size)
