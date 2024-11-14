@@ -749,6 +749,10 @@ static int gsm48_rx_gmm_auth_ciph_resp(struct sgsn_mm_ctx *ctx,
 	if (ctx->ran_type == MM_CTX_T_UTRAN_Iu)
 		ctx->iu.new_key = 1;
 
+	/* Gn: SGSN Context Req/Resp/Ack procedure */
+	if (ctx->gtp_local_ref_valid)
+		sgsn_context_ack(sgsn->gsn, ctx, GTPCAUSE_ACC_REQ);
+
 	/* FIXME: enable LLC cipheirng */
 
 	/* FIXME: This should _not_ trigger a FSM success */
@@ -1776,12 +1780,12 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 
 	/* MS Radio Capability */
 	mmctx->ms_radio_access_capa.len = OSMO_MIN(req.ms_radio_cap_len, sizeof(mmctx->ms_radio_access_capa.buf));
-	memcpy(&mmctx->ms_radio_access_capa, req.ms_radio_cap, req.ms_radio_cap_len);
+	memcpy(&mmctx->ms_radio_access_capa.buf, req.ms_radio_cap, req.ms_radio_cap_len);
 
 	/* MS Network Capability */
 	if (TLVP_PRES_LEN(&req.tlv, GSM48_IE_GMM_MS_NET_CAPA, 1)) {
 		mmctx->ms_network_capa.len = OSMO_MIN(TLVP_LEN(&req.tlv, GSM48_IE_GMM_MS_NET_CAPA), sizeof(mmctx->ms_network_capa.buf));
-		memcpy(&mmctx->ms_network_capa, TLVP_VAL(&req.tlv, GSM48_IE_GMM_MS_NET_CAPA), mmctx->ms_network_capa.len);
+		memcpy(&mmctx->ms_network_capa.buf, TLVP_VAL(&req.tlv, GSM48_IE_GMM_MS_NET_CAPA), mmctx->ms_network_capa.len);
 	} else {
 		mmctx->ms_network_capa.len = 0;
 	}
