@@ -150,6 +150,91 @@ static uint64_t imsi_str2gtp(char *str)
 	return imsi64;
 }
 
+/* Import PDP Context which sent to the SGSN via SGSN Context Response */
+struct sgsn_pdp_ctx *sgsn_import_pdp_ctx(
+					struct sgsn_mm_ctx *mmctx,
+					uint16_t sapi,
+					struct pdp_t *pdp)
+{
+	struct sgsn_pdp_ctx *pctx;
+	struct pdp_t *lib_pdp;
+	uint64_t imsi_ui64;
+	int rc;
+	struct sgsn_ggsn_ctx *ggsn = NULL;
+	bool ggsn_created = false;
+	struct osmo_sockaddr addr = {};
+
+	rc = osmo_sockaddr_from_octets(&addr, pdp->gsnrc.v, pdp->gsnrc.l);
+	if (rc < 0 || rc != pdp->gsnrc.l) {
+		LOGP(DGPRS, LOGL_ERROR, "Invalid GSN address\n");
+		return NULL;
+	}
+
+	if (addr.u.sin.sin_family != AF_INET) {
+		LOGP(DGPRS, LOGL_ERROR, "SGSN only supports IPv4 towards GGSN\n");
+		return NULL;
+	}
+
+	ggsn = sgsn_ggsn_ctx_by_addr(sgsn, &addr.u.sin.sin_addr);
+	if (!ggsn) {
+		/* the ares code is also using UINT32_MAX, which results into multiple GGSN have uint max */
+		ggsn = sgsn_ggsn_ctx_alloc(sgsn, UINT32_MAX);
+		if (!ggsn) {
+			LOGP(DGPRS, LOGL_ERROR, "Couldn't allocate GGSN Ctx\n");
+			return NULL;
+		}
+		ggsn_created = true;
+		ggsn->remote_addr = addr.u.sin.sin_addr;
+	}
+
+	/* FIXME: why can this NULL for an via vty configured GGSN? */
+	if (!ggsn->gsn) {
+		ggsn->gsn = sgsn->gsn;
+	}
+
+	pctx = sgsn_pdp_ctx_alloc(mmctx, ggsn, pdp->nsapi);
+	if (!pctx) {
+		LOGP(DGPRS, LOGL_ERROR, "Couldn't allocate PDP Ctx\n");
+		goto out;
+	}
+
+	imsi_ui64 = imsi_str2gtp(mmctx->imsi);
+	rc = gtp_pdp_newpdp(ggsn->gsn, &lib_pdp, imsi_ui64, pdp->nsapi, pdp);
+	if (rc) {
+		LOGP(DGPRS, LOGL_ERROR, "Out of libgtp PDP Contexts\n");
+		return NULL;
+	}
+	pdp->priv = pctx;
+	pctx->nsapi = pdp->nsapi;
+	pctx->sapi = sapi;
+	pctx->lib = lib_pdp;
+	/* FIXME: should the ue pdp active here or not? */
+	pctx->ue_pdp_active = true;
+	pctx->ti = pdp->ti;
+	lib_pdp->priv = pctx;
+
+	/* SGSN address for control plane */
+	lib_pdp->gsnlc.l = sizeof(sgsn->cfg.gtp_listenaddr.sin_addr);
+	memcpy(lib_pdp->gsnlc.v, &sgsn->cfg.gtp_listenaddr.sin_addr,
+	       sizeof(sgsn->cfg.gtp_listenaddr.sin_addr));
+
+	/* SGSN address for user plane */
+	lib_pdp->gsnlu.l = sizeof(sgsn->cfg.gtp_listenaddr.sin_addr);
+	memcpy(lib_pdp->gsnlu.v, &sgsn->cfg.gtp_listenaddr.sin_addr,
+	       sizeof(sgsn->cfg.gtp_listenaddr.sin_addr));
+
+
+
+	pctx->state = PDP_STATE_NEED_UPDATE_GSN;
+
+	return pctx;
+out:
+	if (ggsn && ggsn_created)
+		sgsn_ggsn_ctx_free(ggsn);
+
+	return NULL;
+}
+
 /* generate a PDP context based on the IE's from the 04.08 message,
  * and send the GTP create pdp context request to the GGSN */
 struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
@@ -1258,6 +1343,7 @@ static int cb_gtp_sgsn_context_response_ind(struct gsn_t *gsn, struct sockaddr_i
 	uint8_t buf[512];
 	unsigned int buf_len;
 	uint8_t cause;
+	int rc;
 
 	mmctx = sgsn_mm_ctx_by_gtp_local_ref(local_ref);
 	if (!mmctx) {
@@ -1306,9 +1392,32 @@ static int cb_gtp_sgsn_context_response_ind(struct gsn_t *gsn, struct sockaddr_i
 	// parse MMCTX
 	// what do we need?
 	// keys
+	rc = gtpie_gettlv(ie, GTPIE_PDP_CONTEXT, 0, &buf_len, buf, sizeof(buf));
+	if (rc) {
+		LOGMMCTXP(LOGL_ERROR, mmctx, "PDP Context resp: Mandatory MM context IE not found\n");
+		return gtp_sgsn_context_ack_error(gsn, local_ref, GTPCAUSE_MAN_IE_MISSING);
+	}
+
+	uint16_t sapi;
+	struct pdp_t new_pdp;
+
+	rc = gtp_decode_pdp_ctx(buf, buf_len, &new_pdp, &sapi);
+	if (rc) {
+		/* Ignore the failure and continue to work without taken the PDP context over.
+		 * This way we communicate an Ack towards the SGSN/MME. The remote is responsible to close the PDP context not
+		 * mentioned in the ack */
+	}
+
+	/* we save the pdps into the mmctx and inform the GGSN after we authenticated the client */
+	struct sgsn_pdp_ctx *pctx = sgsn_import_pdp_ctx(mmctx, sapi, &new_pdp);
+	if (!pctx) {
+		/* Ignore the failure and continue to work without taken the PDP context over.
+		 * This way we communicate an Ack towards the SGSN/MME. The remote is responsible to close the PDP context not
+		 * mentioned in the ack */
+	}
+
 	vlr_subscr_rx_pvlr_id_ack(mmctx->vsub);
 
-	/* FIXME: ack after the UE has been authenticated */
 	return 0;
 }
 
