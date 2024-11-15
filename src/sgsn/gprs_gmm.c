@@ -749,12 +749,18 @@ static int gsm48_rx_gmm_auth_ciph_resp(struct sgsn_mm_ctx *ctx,
 	if (ctx->ran_type == MM_CTX_T_UTRAN_Iu)
 		ctx->iu.new_key = 1;
 
+	/* FIXIME: move Gn into a FSM and wait for a response before sending out the RAU Accept */
 	/* Gn: SGSN Context Req/Resp/Ack procedure */
-	if (ctx->gtp_local_ref_valid)
+	if (ctx->gtp_local_ref_valid) {
 		sgsn_context_ack(sgsn->gsn, ctx, GTPCAUSE_ACC_REQ);
+		/* update the PDP Request should be done now */
+		struct sgsn_pdp_ctx *pctx;
+		llist_for_each_entry(pctx, &ctx->pdp_list, list) {
+			sgsn_pdp_ctx_gn_update(pctx);
+		}
+	}
 
 	/* FIXME: enable LLC cipheirng */
-
 	/* FIXME: This should _not_ trigger a FSM success */
 	osmo_fsm_inst_dispatch(ctx->gmm_fsm, E_GMM_COMMON_PROC_SUCCESS, NULL);
 
