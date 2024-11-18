@@ -1682,7 +1682,8 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 
 		mme = sgsn_mme_ctx_by_gummei(sgsn, &guti.gummei);
 		if (!mme) {
-			// unroutable
+			reject_cause = GMM_CAUSE_IMPL_DETACHED;
+			LOGP(DGPRS, LOGL_ERROR, "No MME found for Gummei %s", osmo_gummei_name(&guti.gummei));
 			/* FIXME: check for additional RAI + PTMSI */
 			goto rejected;
 		}
