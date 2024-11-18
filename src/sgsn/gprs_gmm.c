@@ -2684,7 +2684,7 @@ int vlr_pvlr_request_cb(void *ref, const struct osmo_routing_area_id *old_rai)
 
 	if (ctx->p_tmsi != 0x0 && ctx->p_tmsi != 0xffffffff) {
 		ie_elem[i].tv4.t = GTPIE_P_TMSI;
-		ie_elem[i].tv4.v = ctx->p_tmsi;
+		ie_elem[i].tv4.v = osmo_htonl(ctx->p_tmsi);
 		ie[GTPIE_P_TMSI] = &ie_elem[i];
 		i++;
 	}
