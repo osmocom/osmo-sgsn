@@ -2692,7 +2692,7 @@ int vlr_pvlr_request_cb(void *ref, const struct osmo_routing_area_id *old_rai)
 	if (ctx->attach_rau.p_tmsi_sig_valid) {
 		ie_elem[i].tv0.t = GTPIE_P_TMSI_S;
 		memcpy(ie_elem[i].tv0.v, ctx->attach_rau.p_tmsi_sig, sizeof(ctx->attach_rau.p_tmsi_sig));
-		ie[GTPIE_P_TMSI] = &ie_elem[i];
+		ie[GTPIE_P_TMSI_S] = &ie_elem[i];
 		i++;
 	}
 
