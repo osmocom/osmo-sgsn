@@ -320,6 +320,7 @@ void sgsn_mm_ctx_cleanup_free(struct sgsn_mm_ctx *mm)
 	struct sgsn_signal_data sig_data;
 
 	if (mm->vsub) {
+		vlr_subscr_disconnected(mm->vsub);
 		vlr_subscr_put(mm->vsub, "mmctx");
 		mm->vsub = NULL;
 	}
