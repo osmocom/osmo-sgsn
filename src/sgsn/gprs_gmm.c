@@ -1914,6 +1914,8 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	    mmctx->ran_type == MM_CTX_T_UTRAN_Iu,
 	    true);
 
+	vlr_subscr_put(mmctx->vsub, "foreign RAU")
+
 	return 0;
 
 rejected:
