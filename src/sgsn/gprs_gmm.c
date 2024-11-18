@@ -1643,6 +1643,8 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 			reject_cause = GMM_CAUSE_IE_NOTEXIST_NOTIMPL;
 			goto rejected;
 		}
+
+		ptmsi = mi.tmsi;
 	}
 #endif /* BUILD_IU */
 	else {
