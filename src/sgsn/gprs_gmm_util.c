@@ -29,6 +29,7 @@
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 #include <osmocom/gsm/tlv.h>
 
+#include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/gprs_gmm_util.h>
 
 const struct tlv_definition gsm48_gmm_ie_tlvdef = {
@@ -193,10 +194,13 @@ int gprs_gmm_parse_ra_upd_req(struct msgb *msg, struct gprs_gmm_ra_upd_req *rau_
 		return 0;
 
 	ret = tlv_parse(&rau_req->tlv, &gsm48_gmm_ie_tlvdef,
-		  cur, msgb_l3len(msg) - mandatory_fields_len, 0, 0);
-
-	if (ret < 0)
-		return GMM_CAUSE_COND_IE_ERR;
+			cur, msgb_l3len(msg) - mandatory_fields_len, 0, 0);
+	if (ret < 0) {
+		LOGP(DMM, LOGL_NOTICE, "%s(): tlv_parse() failed (%d)\n", __func__, ret);
+		/* gracefully handle unknown IEs (partial parsing) */
+		if (ret != OSMO_TLVP_ERR_UNKNOWN_TLV_TYPE)
+			return GMM_CAUSE_COND_IE_ERR;
+	}
 
 	return 0;
 }
