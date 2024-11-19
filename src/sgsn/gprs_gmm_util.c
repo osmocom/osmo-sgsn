@@ -79,8 +79,9 @@ int gprs_gmm_parse_ra_upd_req(struct msgb *msg, struct gprs_gmm_ra_upd_req *rau_
 
 	memset(rau_req, 0, sizeof(struct gprs_gmm_ra_upd_req));
 
-	/* all mandatory fields + variable length MS Radio Cap (min value) */
-	if (msgb_l3len(msg) < 16)
+	/* all mandatory fields + variable length MS Radio Cap (min value) would be 15 bytes.
+	 * But even short radio capabilities we should handle with 14 bytes */
+	if (msgb_l3len(msg) < 14)
 		return GMM_CAUSE_PROTO_ERR_UNSPEC;
 
 	gh = (struct gsm48_hdr *) msgb_gmmh(msg);
