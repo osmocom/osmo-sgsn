@@ -57,6 +57,7 @@ static void st_mm_idle(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	switch(event) {
 	case E_MM_GPRS_ATTACH:
+	case E_MM_RA_UPDATE:
 		mm_state_gb_fsm_state_chg(fi, ST_MM_READY);
 		break;
 	case E_MM_PDU_RECEPTION:
@@ -99,7 +100,7 @@ static void st_mm_standby(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 
 static struct osmo_fsm_state mm_state_gb_fsm_states[] = {
 	[ST_MM_IDLE] = {
-		.in_event_mask = X(E_MM_GPRS_ATTACH) | X(E_MM_PDU_RECEPTION),
+		.in_event_mask = X(E_MM_GPRS_ATTACH) | X(E_MM_PDU_RECEPTION) | X(E_MM_RA_UPDATE),
 		.out_state_mask = X(ST_MM_READY),
 		.onenter = st_mm_idle_on_enter,
 		.name = "Idle",
