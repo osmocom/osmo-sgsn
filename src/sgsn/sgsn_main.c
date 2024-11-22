@@ -511,7 +511,7 @@ int main(int argc, char **argv)
 	}
 
 	while (1) {
-		rc = osmo_select_main(0);
+		rc = osmo_select_main_ctx(0);
 		if (rc < 0)
 			exit(3);
 	}
