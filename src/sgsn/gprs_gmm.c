@@ -1486,6 +1486,9 @@ int gsm48_tx_gmm_ra_upd_ack(struct sgsn_mm_ctx *mm)
 	/* MS identity */
 	/* List of Received N-PDU */
 
+	/* MS identity */
+	/* List of Received N-PDU */
+
 	/* Optional: Negotiated READY timer value */
 	t = osmo_tdef_get(sgsn->cfg.T_defs, 3314, OSMO_TDEF_S, -1);
 	msgb_tv_put(msg, GSM48_IE_GMM_TIMER_READY, gprs_secs_to_tmr_floor(t));
@@ -2081,7 +2084,6 @@ static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 	 * activated/deactivated NSAPIs agrees with our view */
 	if (TLVP_PRESENT(&tp, GSM48_IE_GMM_PDP_CTX_STATUS)) {
 		uint16_t pdp_status =  tlvp_val16be(&tp, GSM48_IE_GMM_PDP_CTX_STATUS);
-
 		/* FIXME: this should be done after the connection has been authenticated! */
 
 		process_ms_ctx_status(ctx, pdp_status);
