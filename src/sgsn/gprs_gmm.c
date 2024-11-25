@@ -1793,7 +1793,9 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	if (TLVP_PRES_LEN(&req.tlv, GSM48_IE_GMM_MS_NET_CAPA, 1)) {
 		mmctx->ms_network_capa.len = OSMO_MIN(TLVP_LEN(&req.tlv, GSM48_IE_GMM_MS_NET_CAPA), sizeof(mmctx->ms_network_capa.buf));
 		memcpy(&mmctx->ms_network_capa.buf, TLVP_VAL(&req.tlv, GSM48_IE_GMM_MS_NET_CAPA), mmctx->ms_network_capa.len);
-	} else {
+	} else if (foreign_ra) {
+		/* If this isn't a foreign RA, we can continue to use the old network capability,
+		 * the UE should have sent us its current network capability anyways */
 		mmctx->ms_network_capa.len = 0;
 	}
 
