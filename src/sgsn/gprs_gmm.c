@@ -1545,15 +1545,6 @@ int gsm48_tx_gmm_ra_upd_rej_oldmsg(struct msgb *old_msg, uint8_t cause)
 	return gsm48_gmm_sendmsg(msg, 0, NULL, false);
 }
 
-/* Chapter 9.4.14: Routing area update request, UE doing mobility from EUTRAN */
-static int gsm48_rx_gmm_ra_upd_req_eutran(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
-					  struct gprs_llc_llme *llme, struct gprs_gmm_ra_upd_req *req,
-					  struct osmo_routing_area_id *new_ra_id)
-{
-
-	return -1;
-}
-
 /*! Calculate the GUTI from a Routing Area Update Request, P-TMSI, P-TMSI signature
  *
  * \param[in] msg
