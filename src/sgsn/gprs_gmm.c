@@ -1419,6 +1419,9 @@ int gsm48_tx_gmm_ra_upd_ack(struct sgsn_mm_ctx *mm)
 	/* MS identity */
 	/* List of Received N-PDU */
 
+	/* MS identity */
+	/* List of Received N-PDU */
+
 	/* Optional: Negotiated READY timer value */
 	t = osmo_tdef_get(sgsn->cfg.T_defs, 3314, OSMO_TDEF_S, -1);
 	msgb_tv_put(msg, GSM48_IE_GMM_TIMER_READY, gprs_secs_to_tmr_floor(t));
