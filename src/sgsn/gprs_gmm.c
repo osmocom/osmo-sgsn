@@ -1883,10 +1883,13 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	 * connection as well as turn on integrity protection. */
 	mmctx->pending_req = GSM48_MT_GMM_RA_UPD_REQ;
 
+	bool vlr_created = false;
 	if (!mmctx->vsub) {
 		mmctx->vsub = vlr_subscr_find_or_create_by_tmsi(sgsn->vlr, ptmsi, "foreign RAU", NULL);
 		if (!mmctx->vsub)
 			goto rejected;
+
+		vlr_created = true;
 	}
 
 	mmctx->attach_rau.old_rai = req.old_rai;
@@ -1914,7 +1917,8 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	    mmctx->ran_type == MM_CTX_T_UTRAN_Iu,
 	    true);
 
-	vlr_subscr_put(mmctx->vsub, "foreign RAU")
+	if (vlr_created)
+		vlr_subscr_put(mmctx->vsub, "foreign RAU")
 
 	return 0;
 
