@@ -764,7 +764,7 @@ static int gsm48_rx_gmm_auth_ciph_resp(struct sgsn_mm_ctx *ctx,
 	/* FIXME: This should _not_ trigger a FSM success */
 	osmo_fsm_inst_dispatch(ctx->gmm_fsm, E_GMM_COMMON_PROC_SUCCESS, NULL);
 
-	return vlr_subscr_rx_auth_resp(ctx->vsub, mmctx_is_r99(ctx), ctx->ran_type == MM_CTX_T_UTRAN_Iu, res, res_len);
+	return vlr_subscr_rx_auth_resp(ctx->vsub, sgsn_mm_ctx_is_r99(ctx), ctx->ran_type == MM_CTX_T_UTRAN_Iu, res, res_len);
 }
 
 /* 3GPP TS 24.008 § 9.4.10: Authentication and Ciphering Failure */
@@ -2112,7 +2112,7 @@ static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 				 true, // FIXME: is_ciphering_to_be_attempted
 				 true, // FIXME: is_ciphering_required
 				 key_seq,
-				 mmctx_is_r99(ctx), true);
+				 sgsn_mm_ctx_is_r99(ctx), true);
 		/* FIXME: check PMM_IDLE / PMM CONNECT for ciphering complete as implicit */
 		return 0;
 	} else {
