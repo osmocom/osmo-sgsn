@@ -605,3 +605,14 @@ struct sgsn_ggsn_ctx *sgsn_mm_ctx_find_ggsn_ctx(struct sgsn_mm_ctx *mmctx,
 
 	return ggsn;
 }
+
+
+/* determine if the MS/UE supports R99 or later */
+bool sgsn_mm_ctx_is_r99(const struct sgsn_mm_ctx *mm)
+{
+	if (mm->ms_network_capa.len < 1)
+		return false;
+	if (mm->ms_network_capa.buf[0] & 0x01)
+		return true;
+	return false;
+}

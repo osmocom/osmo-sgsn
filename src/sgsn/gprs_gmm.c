@@ -447,16 +447,6 @@ int gsm48_tx_gmm_id_req(struct sgsn_mm_ctx *mm, uint8_t id_type)
 	return gsm48_gmm_sendmsg(msg, 1, mm, false);
 }
 
-/* determine if the MS/UE supports R99 or later */
-static bool mmctx_is_r99(const struct sgsn_mm_ctx *mm)
-{
-	if (mm->ms_network_capa.len < 1)
-		return false;
-	if (mm->ms_network_capa.buf[0] & 0x01)
-		return true;
-	return false;
-}
-
 static enum gprs_ciph_algo gprs_ms_net_select_best_gea(uint8_t net_mask, uint8_t ms_mask) {
 	uint8_t common_mask = net_mask & ms_mask;
 	uint8_t r = 0;
