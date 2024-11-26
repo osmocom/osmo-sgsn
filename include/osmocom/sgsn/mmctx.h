@@ -282,6 +282,8 @@ struct sgsn_pdp_ctx *sgsn_pdp_ctx_by_nsapi(const struct sgsn_mm_ctx *mm,
 struct sgsn_pdp_ctx *sgsn_pdp_ctx_by_tid(const struct sgsn_mm_ctx *mm,
 					 uint8_t tid);
 
+bool sgsn_mm_ctx_is_r99(const struct sgsn_mm_ctx *mm);
+
 uint32_t sgsn_alloc_ptmsi(void);
 
 /* Called on subscriber data updates */
