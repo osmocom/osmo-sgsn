@@ -479,16 +479,6 @@ int gsm48_tx_gmm_id_req(struct sgsn_mm_ctx *mm, uint8_t id_type)
 	return gsm48_gmm_sendmsg(msg, 1, mm, false);
 }
 
-/* determine if the MS/UE supports R99 or later */
-static bool mmctx_is_r99(const struct sgsn_mm_ctx *mm)
-{
-	if (mm->ms_network_capa.len < 1)
-		return false;
-	if (mm->ms_network_capa.buf[0] & 0x01)
-		return true;
-	return false;
-}
-
 static enum gprs_ciph_algo gprs_ms_net_select_best_gea(uint8_t net_mask, uint8_t ms_mask) {
 	uint8_t common_mask = net_mask & ms_mask;
 	uint8_t r = 0;
@@ -514,8 +504,8 @@ int gsm48_tx_gmm_auth_ciph_req(struct sgsn_mm_ctx *mm,
 	LOGMMCTXP(LOGL_INFO, mm, "<- GMM AUTH AND CIPHERING REQ (rand = %s,"
 		  " mmctx_is_r99=%d, vec->auth_types=0x%x",
 		  osmo_hexdump(vec->rand, sizeof(vec->rand)),
-		  mmctx_is_r99(mm), vec->auth_types);
-	if (mmctx_is_r99(mm) && vec
+		  sgsn_mm_ctx_is_r99(mm), vec->auth_types);
+	if (sgsn_mm_ctx_is_r99(mm) && vec
 	    && (vec->auth_types & OSMO_AUTH_TYPE_UMTS)) {
 		LOGPC(DMM, LOGL_INFO, ", autn = %s)\n",
 		      osmo_hexdump(vec->autn, sizeof(vec->autn)));
@@ -558,7 +548,7 @@ int gsm48_tx_gmm_auth_ciph_req(struct sgsn_mm_ctx *mm,
 		 * the optional AUTN IE.  If a classic GSM SIM is
 		 * inserted, it will simply ignore AUTN and just use
 		 * RAND */
-		if (mmctx_is_r99(mm) &&
+		if (sgsn_mm_ctx_is_r99(mm) &&
 		    (vec->auth_types & OSMO_AUTH_TYPE_UMTS)) {
 			msgb_tlv_put(msg, GSM48_IE_GMM_AUTN,
 				     sizeof(vec->autn), vec->autn);
@@ -602,7 +592,7 @@ static enum osmo_sub_auth_type check_auth_resp(struct sgsn_mm_ctx *ctx,
 	 * However, on GERAN, even if we sent a UMTS AKA Authentication Request, the MS may decide to
 	 * instead reply with a GSM AKA SRES response. */
 	if (is_utran
-	    || (mmctx_is_r99(ctx) && (vec->auth_types & OSMO_AUTH_TYPE_UMTS)
+	    || (sgsn_mm_ctx_is_r99(ctx) && (vec->auth_types & OSMO_AUTH_TYPE_UMTS)
 		&& (res_len > sizeof(vec->sres)))) {
 		expect_type = OSMO_AUTH_TYPE_UMTS;
 		expect_str = "UMTS RES";
