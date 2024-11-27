@@ -73,6 +73,7 @@
 #include <osmocom/sgsn/sgsn_rim.h>
 #include <osmocom/sgsn/gprs_bssgp.h>
 #include <osmocom/sgsn/pdpctx.h>
+#include <osmocom/sgsn/gprs_rau_fsm.h>
 
 #include <osmocom/vlr/vlr.h>
 
@@ -630,13 +631,17 @@ static int update_pdp_conf(struct pdp_t *pdp, void *cbp, int cause)
 	 * "If the SGSN receives an Update PDP Context Response with
 	 * a Cause value "Non-existent", it shall delete the PDP Context."
 	 */
-	if (cause != GTPCAUSE_NON_EXIST)
-		 return 0; /* Nothing to do */
+	if (cause != GTPCAUSE_NON_EXIST) {
+		if (pctx->mm->attach_rau.rau_fsm)
+			osmo_fsm_inst_dispatch(pctx->mm->attach_rau.rau_fsm, GMM_RAU_E_GGSN_UPD_RESP, pctx);
+		return 0; /* Nothing to do */
+	}
 
 	LOGPDPCTXP(LOGL_INFO, pctx, "PDP CTX we tried to update doesn't exist in "
 		   "the GGSN anymore, deleting it locally.\n");
 
 	rc = gtp_freepdp(pctx->ggsn->gsn, pctx->lib);
+	osmo_fsm_inst_dispatch(pctx->mm->attach_rau.rau_fsm, GMM_RAU_E_GGSN_UPD_RESP, NULL);
 	/* related mmctx is torn down in cb_delete_context called by gtp_freepdp() */
 	return rc;
 }

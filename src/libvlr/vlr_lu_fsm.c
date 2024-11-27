@@ -765,6 +765,7 @@ struct lu_fsm_priv {
 	bool is_r99;
 	bool is_utran;
 	bool assign_tmsi;
+	bool hlr_update_req;
 
 	/*! count times timer T timed out */
 	int N;
@@ -871,7 +872,7 @@ static void vlr_loc_upd_node_4(struct osmo_fsm_inst *fi)
 		return;
 	}
 
-	if (lfp->lu_type == VLR_LU_TYPE_IMSI_ATTACH) {
+	if (lfp->lu_type == VLR_LU_TYPE_IMSI_ATTACH || lfp->hlr_update_req) {
 		/* Update_HLR_VLR */
 		osmo_fsm_inst_state_chg(fi, VLR_ULA_S_WAIT_HLR_UPD,
 					LU_TIMEOUT_LONG, 0);
@@ -1142,7 +1143,7 @@ static void _start_lu_main(struct osmo_fsm_inst *fi)
 	/* TODO: PUESBINE related handling */
 
 	/* Is previous LAI/RAI in this VLR? */
-	if (!vlr->ops.location_served(&lfp->old_rai)) {
+	if (!vlr->ops.location_served(lfp->vsub, &lfp->old_rai)) {
 		osmo_fsm_inst_state_chg(fi, VLR_ULA_S_WAIT_PVLR,
 					LU_TIMEOUT_LONG, 0);
 		return;
@@ -1205,6 +1206,7 @@ static void lu_fsm_wait_pvlr_onenter(struct osmo_fsm_inst *fi, uint32_t prev_sta
 	struct lu_fsm_priv *lfp = lu_fsm_fi_priv(fi);
 	struct vlr_instance *vlr = lfp->vlr;
 
+	lfp->hlr_update_req = true;
 	vlr->ops.tx_pvlr_request(lfp->msc_conn_ref, &lfp->old_rai);
 }
 

@@ -16,6 +16,7 @@
 #include <osmocom/sgsn/apn.h>
 #include <osmocom/sgsn/auth.h>
 #include <osmocom/sgsn/gprs_subscriber.h>
+#include <osmocom/vlr/vlr.h>
 
 #define GSM_EXTENSION_LENGTH 15
 
@@ -156,6 +157,11 @@ struct sgsn_mm_ctx {
 		char p_tmsi_sig[3];
 		bool p_tmsi_sig_valid;
 		struct osmo_routing_area_id old_rai;
+		struct osmo_routing_area_id new_rai;
+		struct osmo_fsm_inst *rau_fsm;
+		enum vlr_lu_type rau_type;
+		uint8_t cksq;
+		bool foreign;
 	} attach_rau;
 	/* VLR number */
 	uint32_t		new_sgsn_addr;
