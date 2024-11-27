@@ -472,8 +472,8 @@ int gsm48_tx_gmm_auth_ciph_req(struct sgsn_mm_ctx *mm,
 	LOGMMCTXP(LOGL_INFO, mm, "<- GMM AUTH AND CIPHERING REQ (rand = %s,"
 		  " mmctx_is_r99=%d, vec->auth_types=0x%x",
 		  osmo_hexdump(vec->rand, sizeof(vec->rand)),
-		  mmctx_is_r99(mm), vec->auth_types);
-	if (mmctx_is_r99(mm) && vec
+		  sgsn_mm_ctx_is_r99(mm), vec->auth_types);
+	if (sgsn_mm_ctx_is_r99(mm) && vec
 	    && (vec->auth_types & OSMO_AUTH_TYPE_UMTS)) {
 		LOGPC(DMM, LOGL_INFO, ", autn = %s)\n",
 		      osmo_hexdump(vec->autn, sizeof(vec->autn)));
@@ -516,7 +516,7 @@ int gsm48_tx_gmm_auth_ciph_req(struct sgsn_mm_ctx *mm,
 		 * the optional AUTN IE.  If a classic GSM SIM is
 		 * inserted, it will simply ignore AUTN and just use
 		 * RAND */
-		if (mmctx_is_r99(mm) &&
+		if (sgsn_mm_ctx_is_r99(mm) &&
 		    (vec->auth_types & OSMO_AUTH_TYPE_UMTS)) {
 			msgb_tlv_put(msg, GSM48_IE_GMM_AUTN,
 				     sizeof(vec->autn), vec->autn);
@@ -560,7 +560,7 @@ static enum osmo_sub_auth_type check_auth_resp(struct sgsn_mm_ctx *ctx,
 	 * However, on GERAN, even if we sent a UMTS AKA Authentication Request, the MS may decide to
 	 * instead reply with a GSM AKA SRES response. */
 	if (is_utran
-	    || (mmctx_is_r99(ctx) && (vec->auth_types & OSMO_AUTH_TYPE_UMTS)
+	    || (sgsn_mm_ctx_is_r99(ctx) && (vec->auth_types & OSMO_AUTH_TYPE_UMTS)
 		&& (res_len > sizeof(vec->sres)))) {
 		expect_type = OSMO_AUTH_TYPE_UMTS;
 		expect_str = "UMTS RES";
@@ -711,7 +711,7 @@ static int gsm48_rx_gmm_auth_ciph_resp(struct sgsn_mm_ctx *ctx,
 	/* FIXME: This should _not_ trigger a FSM success */
 	osmo_fsm_inst_dispatch(ctx->gmm_fsm, E_GMM_COMMON_PROC_SUCCESS, NULL);
 
-	return vlr_subscr_rx_auth_resp(ctx->vsub, mmctx_is_r99(ctx), ctx->ran_type == MM_CTX_T_UTRAN_Iu, res, res_len);
+	return vlr_subscr_rx_auth_resp(ctx->vsub, sgsn_mm_ctx_is_r99(ctx), ctx->ran_type == MM_CTX_T_UTRAN_Iu, res, res_len);
 }
 
 /* 3GPP TS 24.008 § 9.4.10: Authentication and Ciphering Failure */
@@ -2106,7 +2106,7 @@ static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 				 true, // FIXME: is_ciphering_to_be_attempted
 				 true, // FIXME: is_ciphering_required
 				 key_seq,
-				 mmctx_is_r99(ctx), true);
+				 sgsn_mm_ctx_is_r99(ctx), true);
 		/* FIXME: check PMM_IDLE / PMM CONNECT for ciphering complete as implicit */
 		return 0;
 	} else {
