@@ -29,6 +29,7 @@
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 #include <osmocom/gsm/tlv.h>
 
+#include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/gprs_gmm_util.h>
 
 const struct tlv_definition gsm48_gmm_ie_tlvdef = {
@@ -62,6 +63,121 @@ const struct tlv_definition gsm48_gmm_ie_tlvdef = {
 		[GSM48_IE_GMM_NET_FEAT_SUPPORT] = { TLV_TYPE_SINGLE_TV, 1 },
 	},
 };
+
+const struct tlv_definition gsm48_gmm_att_ie_tlvdef = {
+	.def = {
+		[GSM48_IE_GMM_PTMSI_SIG]	= { TLV_TYPE_FIXED, 3 },
+		[GSM48_IE_GMM_TIMER_READY]	= { TLV_TYPE_TV, 1 },
+		[GSM48_IE_GMM_TMSI_STATUS]	= { TLV_TYPE_SINGLE_TV, 1 },
+		[GSM48_IE_GMM_PS_LCS_CAPA]	= { TLV_TYPE_TLV, 0 },
+		[GSM48_IE_GMM_MS_CLASSMARK2]	= { TLV_TYPE_TLV, 3 },
+		[GSM48_IE_GMM_MS_CLASSMARK3]	= { TLV_TYPE_TLV, 0 },
+		[GSM48_IE_GMM_SUPP_CODEC_LIST]	= { TLV_TYPE_TLV, 3 },
+		[GSM48_IE_GMM_UE_NET_CAP]	= { TLV_TYPE_TLV, 2 },
+		[GSM48_IE_GMM_ADD_IDENTITY]	= { TLV_TYPE_TLV, 0 },
+		[GSM48_IE_GMM_RAI2]		= { TLV_TYPE_TLV, 0 },
+		[GSM48_IE_GMM_VD_PREF_UE_USAGE]	= { TLV_TYPE_TLV, 1 },
+		[GSM48_IE_GMM_DEVICE_PROP]	= { TLV_TYPE_SINGLE_TV, 1 },
+		[GSM48_IE_GMM_PTMSI_TYPE]	= { TLV_TYPE_SINGLE_TV, 1 },
+		[GSM48_IE_GMM_MS_NET_FEAT_SUP]	= { TLV_TYPE_SINGLE_TV, 1 },
+		[GSM48_IE_GMM_ADD_UPDATE_TYPE]	= { TLV_TYPE_SINGLE_TV, 1 },
+		[GSM48_IE_GMM_TMSI_BASED_NRI_C]	= { TLV_TYPE_TLV, 4 },
+		[GMM48_IE_GMM_TIMER_T3324]	= { TLV_TYPE_TLV, 3 },
+		[GSM48_IE_GMM_TIMER_T3312_EXT]	= { TLV_TYPE_TLV, 3 },
+		[GSM48_IE_GMM_EXT_DRX_PARAMS]	= { TLV_TYPE_TLV, 3 },
+	}
+};
+
+
+/*! Parse 24.008 9.4.1 Attach Request
+ * \param[in] msg l3 pointers must point to gmm.
+ * \param[out] rau_req parsed RA update request
+ * \returns 0 on success or GMM cause
+ */
+int gprs_gmm_parse_att_req(struct msgb *msg, struct gprs_gmm_att_req *att_req)
+{
+	uint8_t *cur, len;
+	size_t mandatory_fields_len;
+	struct gsm48_hdr *gh;
+	int ret;
+
+	OSMO_ASSERT(msg);
+	OSMO_ASSERT(att_req);
+
+	memset(att_req, 0, sizeof(struct gprs_gmm_att_req));
+	/* all mandatory fields */
+	if (msgb_l3len(msg) < 25)
+		return GMM_CAUSE_PROTO_ERR_UNSPEC;
+
+	gh = (struct gsm48_hdr *) msgb_gmmh(msg);
+	cur = gh->data;
+
+	att_req->skip_ind = gh->proto_discr >> 4;
+
+	/* LV: MS network cap 10.5.5.12 */
+	len = *cur++;
+	if (msgb_l3len(msg) < (len + 21 + (cur - msgb_gmmh(msg))))
+		return GMM_CAUSE_PROTO_ERR_UNSPEC;
+	/* MS network cap must be at least 2 bytes long */
+	if (len == 0)
+		return GMM_CAUSE_INV_MAND_INFO;
+
+	att_req->ms_network_cap = cur;
+	att_req->ms_network_cap_len = len;
+	cur += len;
+
+	/* V: Update Type 10.5.5.18 */
+	att_req->attach_type = *cur & 0x07;
+	att_req->follow_up_req = !!(*cur & 0x08);
+
+	/* V: GPRS Ciphering Key Sequence 10.5.1.2 */
+	att_req->cksq = *cur >> 4;
+	cur++;
+
+	/* V: DRX parameter 10.5.5.6 */
+	att_req->drx_parms = osmo_load16le(cur);
+	cur += 2;
+
+	/* LV: Mobile identity 10.5.1.4 */
+	len = *cur++;
+	if (msgb_l3len(msg) < (len + 12 + (cur - msgb_gmmh(msg))))
+		return GMM_CAUSE_PROTO_ERR_UNSPEC;
+	ret = osmo_mobile_identity_decode(&att_req->mi, cur, len, false);
+	if (ret)
+		return GMM_CAUSE_PROTO_ERR_UNSPEC;
+	cur += len;
+
+	/* V: Old routing area identification 10.5.5.15 */
+	osmo_routing_area_id_decode(&att_req->old_rai, cur, 6);
+	cur += 6;
+
+	/* LV: MS radio cap 10.5.5.12a */
+	len = *cur++;
+	if (msgb_l3len(msg) < (len + (cur - msgb_gmmh(msg))))
+		return GMM_CAUSE_PROTO_ERR_UNSPEC;
+	/* 24.008 Rel 17 specifies min 5, but SGSN will still work with 4 */
+	if (len < 4)
+		return GMM_CAUSE_INV_MAND_INFO;
+
+	att_req->ms_radio_cap = cur;
+	att_req->ms_radio_cap_len = len;
+	cur += len;
+
+	mandatory_fields_len = (cur - msgb_gmmh(msg));
+	if (msgb_l3len(msg) == mandatory_fields_len)
+		return 0;
+
+	ret = tlv_parse(&att_req->tlv, &gsm48_gmm_att_ie_tlvdef,
+			cur, msgb_l3len(msg) - mandatory_fields_len, 0, 0);
+
+	/* gracefully handle unknown IEs (partial parsing) */
+	if (ret < 0 && ret != OSMO_TLVP_ERR_UNKNOWN_TLV_TYPE) {
+		LOGP(DMM, LOGL_NOTICE, "%s(): tlv_parse() failed (%d)\n", __func__, ret);
+		return GMM_CAUSE_COND_IE_ERR;
+	}
+
+	return 0;
+}
 
 /*! Parse 24.008 9.4.14 RAU Request
  * \param[in] msg l3 pointers must point to gmm.
