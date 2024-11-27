@@ -54,6 +54,85 @@ const struct tlv_definition gsm48_gmm_ie_tlvdef = {
 	},
 };
 
+
+/*! Parse 24.008 9.4.1 Attach Request
+ * \param[in] msg l3 pointers must point to gmm.
+ * \param[out] rau_req parsed RA update request
+ * \returns 0 on success or GMM cause
+ */
+int gprs_gmm_parse_att_req(struct msgb *msg, struct gprs_gmm_att_req *att_req)
+{
+	uint8_t *cur, len;
+	size_t mandatory_fields_len;
+	struct gsm48_hdr *gh;
+	int ret;
+
+	OSMO_ASSERT(msg);
+	OSMO_ASSERT(att_req);
+
+	memset(att_req, 0, sizeof(struct gprs_gmm_att_req));
+	/* all mandatory fields */
+	if (msgb_l3len(msg) < 26)
+		return GMM_CAUSE_PROTO_ERR_UNSPEC;
+
+	gh = (struct gsm48_hdr *) msgb_gmmh(msg);
+	cur = gh->data;
+
+	att_req->skip_ind = gh->proto_discr >> 4;
+
+	/* LV: MS network cap 10.5.5.12 */
+	len = *cur++;
+	if (msgb_l3len(msg) < (len + 21 + (cur - msgb_gmmh(msg))))
+		return GMM_CAUSE_PROTO_ERR_UNSPEC;
+	att_req->ms_network_cap = cur;
+	att_req->ms_network_cap_len = len;
+	cur += len;
+
+	/* V: Update Type 10.5.5.18 */
+	att_req->attach_type = *cur & 0x07;
+	att_req->follow_up_req = !!(*cur & 0x08);
+
+	/* V: GPRS Ciphering Key Sequence 10.5.1.2 */
+	att_req->cksq = *cur >> 4;
+	cur++;
+
+	/* V: DRX parameter 10.5.5.6 */
+	att_req->drx = osmo_load16le(cur);
+	cur += 2;
+
+	/* LV: Mobile identity 10.5.1.4 */
+	len = *cur++;
+	if (msgb_l3len(msg) < (len + 12 + (cur - msgb_gmmh(msg))))
+		return GMM_CAUSE_PROTO_ERR_UNSPEC;
+	ret = osmo_mobile_identity_decode(&att_req->mi, cur, len, false);
+	if (ret)
+		return GMM_CAUSE_PROTO_ERR_UNSPEC;
+
+	/* V: Old routing area identification 10.5.5.15 */
+	osmo_routing_area_id_decode(&att_req->old_rai, cur, 6);
+	cur += 6;
+
+	/* LV: MS radio cap 10.5.5.12a */
+	len = *cur++;
+	if (msgb_l3len(msg) < (len + (cur - msgb_gmmh(msg))))
+		return GMM_CAUSE_PROTO_ERR_UNSPEC;
+	att_req->ms_radio_cap = cur;
+	att_req->ms_radio_cap_len = len;
+	cur += len;
+
+	mandatory_fields_len = (cur - msgb_gmmh(msg));
+	if (msgb_l3len(msg) == mandatory_fields_len)
+		return 0;
+
+	ret = tlv_parse(&att_req->tlv, &gsm48_gmm_ie_tlvdef,
+			cur, msgb_l3len(msg) - mandatory_fields_len, 0, 0);
+
+	if (ret < 0)
+		return GMM_CAUSE_COND_IE_ERR;
+
+	return 0;
+}
+
 /*! Parse 24.008 9.4.14 RAU Request
  * \param[in] msg l3 pointers must point to gmm.
  * \param[out] rau_req parsed RA update request
