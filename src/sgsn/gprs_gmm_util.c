@@ -72,7 +72,7 @@ int gprs_gmm_parse_att_req(struct msgb *msg, struct gprs_gmm_att_req *att_req)
 
 	memset(att_req, 0, sizeof(struct gprs_gmm_att_req));
 	/* all mandatory fields */
-	if (msgb_l3len(msg) < 26)
+	if (msgb_l3len(msg) < 25)
 		return GMM_CAUSE_PROTO_ERR_UNSPEC;
 
 	gh = (struct gsm48_hdr *) msgb_gmmh(msg);
@@ -84,6 +84,10 @@ int gprs_gmm_parse_att_req(struct msgb *msg, struct gprs_gmm_att_req *att_req)
 	len = *cur++;
 	if (msgb_l3len(msg) < (len + 21 + (cur - msgb_gmmh(msg))))
 		return GMM_CAUSE_PROTO_ERR_UNSPEC;
+	/* MS network cap must be at least 2 bytes long */
+	if (len == 0)
+		return GMM_CAUSE_INV_MAND_INFO;
+
 	att_req->ms_network_cap = cur;
 	att_req->ms_network_cap_len = len;
 	cur += len;
@@ -97,7 +101,7 @@ int gprs_gmm_parse_att_req(struct msgb *msg, struct gprs_gmm_att_req *att_req)
 	cur++;
 
 	/* V: DRX parameter 10.5.5.6 */
-	att_req->drx = osmo_load16le(cur);
+	att_req->drx_parms = osmo_load16le(cur);
 	cur += 2;
 
 	/* LV: Mobile identity 10.5.1.4 */
@@ -107,6 +111,7 @@ int gprs_gmm_parse_att_req(struct msgb *msg, struct gprs_gmm_att_req *att_req)
 	ret = osmo_mobile_identity_decode(&att_req->mi, cur, len, false);
 	if (ret)
 		return GMM_CAUSE_PROTO_ERR_UNSPEC;
+	cur += len;
 
 	/* V: Old routing area identification 10.5.5.15 */
 	osmo_routing_area_id_decode(&att_req->old_rai, cur, 6);
@@ -116,6 +121,10 @@ int gprs_gmm_parse_att_req(struct msgb *msg, struct gprs_gmm_att_req *att_req)
 	len = *cur++;
 	if (msgb_l3len(msg) < (len + (cur - msgb_gmmh(msg))))
 		return GMM_CAUSE_PROTO_ERR_UNSPEC;
+	/* 24.008 Rel 17 specifies min 5, but SGSN will still work with 4 */
+	if (len < 4)
+		return GMM_CAUSE_INV_MAND_INFO;
+
 	att_req->ms_radio_cap = cur;
 	att_req->ms_radio_cap_len = len;
 	cur += len;

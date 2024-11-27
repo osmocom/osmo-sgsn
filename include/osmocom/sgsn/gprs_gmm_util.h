@@ -31,7 +31,7 @@ struct gprs_gmm_att_req {
 	uint8_t attach_type; /* 10.5.5.2 */
 	bool follow_up_req; /* 10.5.5.2 */
 	uint8_t cksq; /* 10.5.1.2 */
-	uint16_t drx; /* 10.5.5.6 */
+	uint16_t drx_parms; /* 10.5.5.6 */
 	struct osmo_mobile_identity mi; /* 10.5.1.4 */
 	struct osmo_routing_area_id old_rai; /* 10.5.5.15 */
 	uint8_t *ms_network_cap; /* 10.5.5.12 */
