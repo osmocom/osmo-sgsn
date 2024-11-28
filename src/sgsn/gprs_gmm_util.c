@@ -137,8 +137,12 @@ int gprs_gmm_parse_att_req(struct msgb *msg, struct gprs_gmm_att_req *att_req)
 	ret = tlv_parse(&att_req->tlv, &gsm48_gmm_ie_tlvdef,
 			cur, msgb_l3len(msg) - mandatory_fields_len, 0, 0);
 
-	if (ret < 0)
-		return GMM_CAUSE_COND_IE_ERR;
+	if (ret < 0) {
+		LOGP(DMM, LOGL_NOTICE, "%s(): tlv_parse() failed (%d)\n", __func__, ret);
+		/* gracefully handle unknown IEs (partial parsing) */
+		if (ret != OSMO_TLVP_ERR_UNKNOWN_TLV_TYPE)
+			return GMM_CAUSE_COND_IE_ERR;
+	}
 
 	return 0;
 }
