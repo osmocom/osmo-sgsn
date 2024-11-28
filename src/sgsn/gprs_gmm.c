@@ -1232,6 +1232,11 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 			ctx->vsub = vlr_subscr_find_or_create_by_imsi(sgsn->vlr, ctx->imsi, "mmctx", &created);
 	}
 
+	/* FIXME: copy more stuff from vsub and also at RAU */
+	if (!strlen(ctx->imsi) && strlen(ctx->vsub->imsi)) {
+		OSMO_STRLCPY_ARRAY(ctx->imsi, ctx->vsub->imsi);
+	}
+
 	if (!ctx->vsub) {
 		reject_cause = GMM_CAUSE_NET_FAIL;
 		goto rejected;
@@ -1852,6 +1857,11 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 
 	mmctx->attach_rau.old_rai = req.old_rai;
 
+	/* FIXME: copy stuff from VSUB over */
+	if (!strlen(mmctx->imsi) && strlen(mmctx->vsub->imsi)) {
+		OSMO_STRLCPY_ARRAY(mmctx->imsi, mmctx->vsub->imsi);
+	}
+
 	/* FIXME: we set here the Rai to a special value to ensure the VLR to fail later */
 	if (from_eutran) {
 		req.old_rai.lac.lac = 0xfffe;
@@ -2436,6 +2446,11 @@ static int vlr_subscr_assoc_cb(void *ref, struct vlr_subscr *vsub)
 
 	vlr_subscr_get(vsub, "mmctx");
 	mmctx->vsub = vsub;
+	/* FIXME: copy stuff from VSUB over */
+	if (!strlen(mmctx->imsi) && strlen(mmctx->vsub->imsi)) {
+		OSMO_STRLCPY_ARRAY(mmctx->imsi, mmctx->vsub->imsi);
+	}
+
 	return 0;
 }
 
