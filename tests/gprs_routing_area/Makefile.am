@@ -44,6 +44,7 @@ gprs_routing_area_test_LDADD = \
 	$(top_builddir)/src/sgsn/gprs_sndcp.o \
 	$(top_builddir)/src/sgsn/gprs_gmm_attach.o \
 	$(top_builddir)/src/sgsn/gprs_gmm.o \
+	$(top_builddir)/src/sgsn/gprs_rau_fsm.o \
 	$(top_builddir)/src/sgsn/gprs_gmm_fsm.o \
 	$(top_builddir)/src/sgsn/gprs_gmm_util.o \
 	$(top_builddir)/src/sgsn/gprs_mm_state_gb_fsm.o \
