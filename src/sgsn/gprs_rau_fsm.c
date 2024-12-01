@@ -129,6 +129,9 @@ static void gmm_rau_fsm_s_wait_vlr(struct osmo_fsm_inst *fi, uint32_t event, voi
 	uint8_t gmm_cause;
 
 	switch (event) {
+	case GMM_RAU_E_UE_RAU_REQUEST:
+		/* same RAU, a different RAU would terminate this FSM */
+		break;
 	case GMM_RAU_E_VLR_RAU_ACCEPT:
 		/* delay forwarding it */
 		if (mmctx->attach_rau.foreign) {
@@ -191,6 +194,9 @@ static void gmm_rau_fsm_s_wait_ggsn(struct osmo_fsm_inst *fi, uint32_t event, vo
 		break;
 	case GMM_RAU_E_VLR_RAU_REJECT:
 		/* FIXME */
+		break;
+	case GMM_RAU_E_UE_RAU_REQUEST:
+		/* same RAU, a different RAU would terminate this FSM */
 		break;
 	default:
 		OSMO_ASSERT(0);
