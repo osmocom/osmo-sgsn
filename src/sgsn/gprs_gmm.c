@@ -1611,6 +1611,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		gprs_rai_to_osmo(&new_ra_id, &MSG_IU_UE_CTX(msg)->ra_id);
 
 		if (!TLVP_PRESENT(&req.tlv, GSM48_IE_GMM_ALLOC_PTMSI)) {
+			LOGMMCTXP(LOGL_NOTICE, mmctx, "GMM RA UPDATE REQUEST: missing PTMSI IE on Iu\n");
 			reject_cause = GMM_CAUSE_IE_NOTEXIST_NOTIMPL;
 			goto rejected;
 		}
@@ -1661,7 +1662,8 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 
 		rc = get_guti(msg, &req, ptmsi, &guti, &nas_token);
 		if (rc) {
-			reject_cause = rc;
+			reject_cause = GMM_CAUSE_IMPL_DETACHED;
+			LOGP(DGPRS, LOGL_ERROR, "Can't decode guti\n");
 			goto rejected;
 		}
 
@@ -1694,6 +1696,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 
 		ra = sgsn_ra_get_ra(&req.old_rai);
 		if (!ra) {
+			LOGP(DGPRS, LOGL_ERROR, "Can't find RA for native PTMSI. No SGSN-to-SGSN mobility implemented. Rejecting\n");
 			/* FIXME: implement SGSN to SGSN routing */
 			foreign_ra = true;
 			reject_cause = GMM_CAUSE_IMPL_DETACHED;
@@ -1835,7 +1838,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 #endif
 	if (mmctx->ran_type == MM_CTX_T_GERAN_Gb) {
 		/* Even if there is no P-TMSI allocated, the MS will switch from
-	 	* foreign TLLI to local TLLI */
+		* foreign TLLI to local TLLI */
 		mmctx->gb.tlli_new = gprs_tmsi2tlli(mmctx->p_tmsi, TLLI_LOCAL);
 	}
 
