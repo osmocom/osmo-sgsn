@@ -235,6 +235,12 @@ static void config_write_mme(struct vty *vty, const struct sgsn_mme_ctx *mme, co
 			osmo_mcc_name(rt->tai.mcc), osmo_mnc_name(rt->tai.mnc, rt->tai.mnc_3_digits),
 			rt->tai.tac, VTY_NEWLINE);
 	}
+	if (mme->gummei_valid)
+		vty_out(vty, "%s gummei %s %s %d %d%s",
+			prefix,
+			osmo_mcc_name(mme->gummei.plmn.mcc),
+			osmo_mnc_name(mme->gummei.plmn.mnc, mme->gummei.plmn.mnc_3_digits),
+			mme->gummei.mme.group_id, mme->gummei.mme.code, VTY_NEWLINE);
 }
 
 static int config_write_sgsn(struct vty *vty)
