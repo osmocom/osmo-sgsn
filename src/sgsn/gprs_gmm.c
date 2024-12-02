@@ -1865,12 +1865,6 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		OSMO_STRLCPY_ARRAY(mmctx->imsi, mmctx->vsub->imsi);
 	}
 
-	/* FIXME: we set here the Rai to a special value to ensure the VLR to fail later */
-	if (from_eutran) {
-		req.old_rai.lac.lac = 0xfffe;
-		req.old_rai.rac = 0xfe;
-	}
-
 	mmctx->attach_rau.cksq = req.cksq;
 	mmctx->attach_rau.old_rai = req.old_rai;
 	mmctx->attach_rau.rau_type = vlr_rau_type;
@@ -2623,8 +2617,9 @@ static bool vlr_location_served_cb(struct vlr_subscr *vsub, const struct osmo_ro
 		return !mmctx->attach_rau.foreign;
 	}
 
-	/* EUTRAN Loc/Rac */
-	return !(rai->rac == 0xfe && rai->lac.lac == 0xfffe);
+	/* FIXME: check if rai is valid */
+
+	return false;
 }
 
 int vlr_pvlr_request_cb(void *ref, const struct osmo_routing_area_id *old_rai)
@@ -2643,11 +2638,6 @@ int vlr_pvlr_request_cb(void *ref, const struct osmo_routing_area_id *old_rai)
 
 	if (!ctx)
 		return -EINVAL;
-
-	/* Is there another way to determ if a RAI is connected to an MME? */
-	if (!(old_rai->rac == 0xfe && old_rai->lac.lac == 0xfffe)) {
-		return -EINVAL;
-	}
 
 	if (!ctx->guti_valid)
 		return -EINVAL;
