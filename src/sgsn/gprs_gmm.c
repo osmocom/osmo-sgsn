@@ -1558,7 +1558,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	struct gprs_gmm_ra_upd_req req;
 	struct osmo_routing_area_id new_ra_id = {};
 	struct osmo_guti guti = {};
-	enum vlr_lu_type vlr_rau_type;
+	enum vlr_lu_type vlr_rau_type = VLR_LU_TYPE_REGULAR;
 	bool foreign_ra = false, from_eutran = false;
 	enum gsm48_ptsmi_type ptmsi_type = PTMSI_TYPE_NATIVE;
 	int rc;
