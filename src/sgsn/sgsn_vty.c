@@ -670,11 +670,10 @@ DEFUN(show_sgsn, show_sgsn_cmd, "show sgsn",
       SHOW_STR "Display information about the SGSN")
 {
 	if (sgsn->gsup_client) {
-		struct ipa_client_conn *link = sgsn->gsup_client->link;
-		vty_out(vty,
-			"  Remote authorization: %sconnected to %s:%d via GSUP%s",
-			sgsn->gsup_client->is_connected ? "" : "not ",
-			link->addr, link->port,
+		vty_out(vty, "  Remote authorization: %sconnected to %s:%d via GSUP%s",
+			osmo_gsup_client_is_connected(sgsn->gsup_client) ? "" : "not ",
+			osmo_gsup_client_get_rem_addr(sgsn->gsup_client),
+			osmo_gsup_client_get_rem_port(sgsn->gsup_client),
 			VTY_NEWLINE);
 	}
 	if (sgsn->gsn)

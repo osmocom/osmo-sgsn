@@ -10,3 +10,4 @@
 libgtp    >1.12.0   new field dir_tun_flags in struct pdp_t
 libgtp    >1.12.0 gtp_set_cb_update_context_ind(), gtp_update_context_resp()
 libosmocore >1.10.0  enum gsm48_gprs_ie_mm: GSM48_IE_GMM_UE_NET_CAP, GSM48_IE_GMM_VD_PREF_UE_USAGE
+libosmo-gsup-client >1.8.0  osmo_gsup_client_is_connected(), osmo_gsup_client_get_rem_addr(), osmo_gsup_client_get_rem_port()
