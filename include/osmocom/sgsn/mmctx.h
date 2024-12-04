@@ -161,6 +161,8 @@ struct sgsn_mm_ctx {
 		struct osmo_fsm_inst *rau_fsm;
 		enum vlr_lu_type rau_type;
 		uint8_t cksq;
+		uint16_t pdp_status;
+		bool pdp_status_valid;
 		bool foreign;
 	} attach_rau;
 	/* VLR number */

@@ -1462,6 +1462,10 @@ int gsm48_tx_gmm_ra_upd_ack(struct sgsn_mm_ctx *mm)
 	/* GMM cause */
 	/* PDP Context Status */
 	uint16_t pdp_ctx_status = encode_ms_ctx_status(mm);
+	if (mm->attach_rau.pdp_status_valid && pdp_ctx_status != mm->attach_rau.pdp_status) {
+		process_ms_ctx_status(mm, pdp_ctx_status);
+		pdp_ctx_status = encode_ms_ctx_status(mm);
+	}
 	msgb_tlv_put(msg, GSM48_IE_GMM_PDP_CTX_STATUS, 2, (uint8_t *) &pdp_ctx_status);
 
 	/* MS ID, ... */
@@ -1839,9 +1843,9 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 
 	/* Look at PDP Context Status IE and see if MS's view of
 	 * activated/deactivated NSAPIs agrees with our view */
-	if (TLVP_PRESENT(&req.tlv, GSM48_IE_GMM_PDP_CTX_STATUS)) {
-		uint16_t pdp_status = osmo_load16le(TLVP_VAL(&req.tlv, GSM48_IE_GMM_PDP_CTX_STATUS));
-		process_ms_ctx_status(mmctx, pdp_status);
+	if (TLVP_PRES_LEN(&req.tlv, GSM48_IE_GMM_PDP_CTX_STATUS, 2)) {
+		mmctx->attach_rau.pdp_status_valid = true;
+		mmctx->attach_rau.pdp_status = osmo_load16le(TLVP_VAL(&req.tlv, GSM48_IE_GMM_PDP_CTX_STATUS))
 	}
 
 	/* Send RA UPDATE ACCEPT. In Iu, the RA upd request can be called from
