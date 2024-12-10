@@ -54,7 +54,6 @@
 #include <osmocom/vty/misc.h>
 #include <osmocom/crypt/gprs_cipher.h>
 #include <osmocom/crypt/utran_cipher.h>
-#include <osmocom/abis/ipa.h>
 
 #include <osmocom/gprs/gprs_bssgp.h>
 
