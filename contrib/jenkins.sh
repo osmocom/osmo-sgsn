@@ -38,7 +38,7 @@ osmo-build-dep.sh osmo-ggsn
 osmo-build-dep.sh osmo-hlr
 
 if [ "x$IU" = "x--enable-iu" ]; then
-	osmo-build-dep.sh libosmo-sigtran
+	osmo-build-dep.sh libosmo-sigtran "" --disable-doxygen
 	osmo-build-dep.sh libasn1c
 	#osmo-build-dep.sh asn1c aper-prefix # only needed for make regen in osmo-iuh
 	osmo-build-dep.sh osmo-iuh
