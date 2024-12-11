@@ -72,19 +72,24 @@ static void st_gmm_common_proc_init(struct osmo_fsm_inst *fi, uint32_t event, vo
 		/* MS may retransmit GPRS Attach Request if for some reason
 		 * CommonProcedure didn't go forward correctly */
 		break;
-	case E_GMM_ATTACH_FAILED:
-		gmm_fsm_state_chg(fi, ST_GMM_DEREGISTERED);
-		break;
 	/* TODO: events not used
 	case E_GMM_LOWER_LAYER_FAILED: */
 	case E_GMM_COMMON_PROC_FAILED:
 		gmm_fsm_state_chg(fi, ST_GMM_DEREGISTERED);
 		break;
 	case E_GMM_COMMON_PROC_SUCCESS: /* FIXME: a Common Proc Success shouldn't result in getting to Attach *if* this is part of an attach request */
-		if (mmctx->gmm_priv.common_proc_to_registered)
-			gmm_fsm_state_chg(fi, ST_GMM_REGISTERED_NORMAL);
+		/* ignore if a RAU or Attach is in progress */
+		if (mmctx->attach_rau.rau_fsm)
+			break;
+
+		gmm_fsm_state_chg(fi, ST_GMM_REGISTERED_NORMAL);
+		break;
+	case E_GMM_ATTACH_FAILED:
+	case E_GMM_RAU_FAILED:
+		gmm_fsm_state_chg(fi, ST_GMM_DEREGISTERED);
 		break;
 	case E_GMM_ATTACH_SUCCESS:
+	case E_GMM_RAU_SUCCESS:
 		gmm_fsm_state_chg(fi, ST_GMM_REGISTERED_NORMAL);
 		break;
 	}
@@ -177,6 +182,8 @@ static struct osmo_fsm_state gmm_fsm_states[] = {
 			X(E_GMM_COMMON_PROC_SUCCESS) |
 			X(E_GMM_ATTACH_SUCCESS) |
 			X(E_GMM_ATTACH_FAILED) |
+			X(E_GMM_RAU_SUCCESS) |
+			X(E_GMM_RAU_FAILED) |
 			X(E_GMM_COMMON_PROC_INIT_REQ),
 		.out_state_mask =
 			X(ST_GMM_DEREGISTERED) |
@@ -202,7 +209,9 @@ static struct osmo_fsm_state gmm_fsm_states[] = {
 	},
 	[ST_GMM_REGISTERED_SUSPENDED] = {
 		.in_event_mask = X(E_GMM_RESUME) |
-				 X(E_GMM_COMMON_PROC_INIT_REQ),
+				 X(E_GMM_COMMON_PROC_INIT_REQ) |
+				 X(E_GMM_RAU_FAILED) |
+				 X(E_GMM_RAU_SUCCESS),
 		.out_state_mask =
 			X(ST_GMM_DEREGISTERED) |
 			X(ST_GMM_REGISTERED_NORMAL) |
@@ -228,6 +237,8 @@ const struct value_string gmm_fsm_event_names[] = {
 	OSMO_VALUE_STRING(E_GMM_COMMON_PROC_SUCCESS),
 	OSMO_VALUE_STRING(E_GMM_ATTACH_SUCCESS),
 	OSMO_VALUE_STRING(E_GMM_ATTACH_FAILED),
+	OSMO_VALUE_STRING(E_GMM_RAU_SUCCESS),
+	OSMO_VALUE_STRING(E_GMM_RAU_FAILED),
 	OSMO_VALUE_STRING(E_GMM_NET_INIT_DETACH_REQ),
 	OSMO_VALUE_STRING(E_GMM_MS_INIT_DETACH_REQ),
 	/* OSMO_VALUE_STRING(E_GMM_DETACH_ACCEPTED), */
@@ -248,6 +259,7 @@ void gmm_fsm_allstate_action(struct osmo_fsm_inst *fi, uint32_t event, void *dat
 
 		switch (fi->state) {
 		case ST_GMM_COMMON_PROC_INIT:
+			/* fixme: this state seems to be wrong. When in COMMON_PROC_INIT, we shouldn't go into deregistered. */
 			gmm_fsm_state_chg(fi, ST_GMM_DEREGISTERED);
 		default:
 			if (mmctx->ran_type == MM_CTX_T_GERAN_Gb)

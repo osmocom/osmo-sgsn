@@ -616,3 +616,23 @@ bool sgsn_mm_ctx_is_r99(const struct sgsn_mm_ctx *mm)
 		return true;
 	return false;
 }
+
+int sgsn_mm_ctx_bind_vsub(struct sgsn_mm_ctx *mm, const char *imsi, uint32_t ptmsi)
+{
+	bool created = false;
+
+	if (imsi)
+		mm->vsub = vlr_subscr_find_or_create_by_imsi(sgsn->vlr, imsi, "mmctx", &created);
+	else
+		mm->vsub = vlr_subscr_find_or_create_by_tmsi(sgsn->vlr, ptmsi, "mmctx", &created);
+
+	if (!mm->vsub)
+		return -1;
+
+	/* FIXME: copy more stuff from vsub */
+	if (!strlen(mm->imsi) && strlen(mm->vsub->imsi)) {
+		OSMO_STRLCPY_ARRAY(mm->imsi, mm->vsub->imsi);
+	}
+
+	return 0;
+}
