@@ -1013,7 +1013,10 @@ static int gsm48_rx_gmm_id_resp(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 		break;
 	}
 
-	return vlr_subscr_rx_id_resp(ctx->vsub, &mi);
+	if (ctx->vsub)
+		return vlr_subscr_rx_id_resp(ctx->vsub, &mi);
+
+	return 0;
 }
 
 /* Allocate a new P-TMSI and change context state */
