@@ -34,10 +34,19 @@ enum gmm_rau_state {
 enum gmm_rau_events {
 	GMM_RAU_E_UE_RAU_REQUEST,
 	GMM_RAU_E_UE_RAU_COMPLETE,
-	GMM_RAU_E_VLR_RAU_ACCEPT,
-	GMM_RAU_E_VLR_RAU_REJECT,
+	GMM_RAU_E_VLR_RAU_ACCEPT, /* Request to transmit Att/RAU Accept */
+	GMM_RAU_E_VLR_RAU_REJECT, /* Request to transmit Att/RAU Reject */
+	GMM_RAU_E_VLR_TERM_SUCCESS, /* VLR Lu FSM terminates. Inform GMM about Att/RAU Success (including Att/RAU complete) */
+	GMM_RAU_E_VLR_TERM_FAIL, /* VLR Lu FSM terminates. Inform GMM about Att/RAU fail */
 	GMM_RAU_E_GGSN_UPD_RESP,
 };
+
+/* To be used as data when terminating the fsm */
+extern char *fsm_term_rau_att_req; /*! while RAU, receive a Attach Req */
+extern char *fsm_term_att_req_chg; /*! Second Attach Req with changed context */
+extern char *fsm_term_att_rej; /*! By SGSN decision, tx Reject */
+extern char *fsm_term_rau_req_chg; /*! Second Rau Req with changed context */
+extern char *fsm_term_rau_rej; /*! By SGSN decision, tx Reject */
 
 extern const struct value_string gmm_rau_event_names[];
 

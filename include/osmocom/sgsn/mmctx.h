@@ -148,12 +148,14 @@ struct sgsn_mm_ctx {
 
 		/* when a second attach req arrives while in this procedure,
 		 * the fsm needs to compare it against old to decide what to do */
-		struct msgb *attach_req;
 		uint32_t id_type;
 		unsigned int auth_reattempt; /* tracking UMTS resync auth attempts */
 	} gmm_att_req;
 
 	struct {
+		/* when a second attach req arrives while in this procedure,
+		 * the fsm needs to compare it against old to decide what to do */
+		struct msgb *req;
 		char p_tmsi_sig[3];
 		bool p_tmsi_sig_valid;
 		struct osmo_routing_area_id old_rai;
@@ -313,6 +315,9 @@ struct sgsn_pdp_ctx *sgsn_pdp_ctx_by_nsapi(const struct sgsn_mm_ctx *mm,
 /* look up PDP context by MM context and transaction ID */
 struct sgsn_pdp_ctx *sgsn_pdp_ctx_by_tid(const struct sgsn_mm_ctx *mm,
 					 uint8_t tid);
+
+/* lookup vsub by imsi or ptmsi */
+int sgsn_mm_ctx_bind_vsub(struct sgsn_mm_ctx *mm, const char *imsi, uint32_t ptmsi);
 
 bool sgsn_mm_ctx_is_r99(const struct sgsn_mm_ctx *mm);
 
