@@ -21,38 +21,52 @@
  */
 
 #include <osmocom/core/fsm.h>
+#include <osmocom/core/signal.h>
 #include <osmocom/core/tdef.h>
 #include <osmocom/gsm/gsm48.h>
 #include <osmocom/vlr/vlr.h>
 
+#include <osmocom/sgsn/gprs_llc.h>
+#include <osmocom/sgsn/gprs_mm_state_gb_fsm.h>
+#include <osmocom/sgsn/gprs_mm_state_iu_fsm.h>
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/gprs_gmm_fsm.h>
-#include <osmocom/sgsn/mmctx.h>
-#include <osmocom/sgsn/sgsn.h>
-
 #include <osmocom/sgsn/gprs_rau_fsm.h>
 #include <osmocom/sgsn/gtp.h>
+#include <osmocom/sgsn/mmctx.h>
 #include <osmocom/sgsn/pdpctx.h>
-
+#include <osmocom/sgsn/sgsn.h>
+#include <osmocom/sgsn/signal.h>
 
 #define S(x)	(1 << (x))
 
 const struct value_string gmm_rau_event_names[] = {
-    OSMO_VALUE_STRING(GMM_RAU_E_UE_RAU_REQUEST),
-    OSMO_VALUE_STRING(GMM_RAU_E_VLR_RAU_ACCEPT),
-    OSMO_VALUE_STRING(GMM_RAU_E_VLR_RAU_REJECT),
-    OSMO_VALUE_STRING(GMM_RAU_E_GGSN_UPD_RESP),
-    OSMO_VALUE_STRING(GMM_RAU_E_UE_RAU_COMPLETE),
-    { 0, NULL }
+	OSMO_VALUE_STRING(GMM_RAU_E_UE_RAU_REQUEST),
+	OSMO_VALUE_STRING(GMM_RAU_E_VLR_RAU_ACCEPT),
+	OSMO_VALUE_STRING(GMM_RAU_E_VLR_RAU_REJECT),
+	OSMO_VALUE_STRING(GMM_RAU_E_GGSN_UPD_RESP),
+	OSMO_VALUE_STRING(GMM_RAU_E_UE_RAU_COMPLETE),
+    OSMO_VALUE_STRING(GMM_RAU_E_VLR_TERM_FAIL),
+    OSMO_VALUE_STRING(GMM_RAU_E_VLR_TERM_SUCCESS),
+	{ 0, NULL }
 };
 
 struct osmo_tdef_state_timeout gmm_rau_tdef_states[32] = {
 };
 
 struct osmo_tdef gmm_rau_tdefs[] = {
-    // { .T = 3350, .default_val = 6, .desc = "Attach/RAU Complete Reallocation procedure" },
-    { /* terminator */ }
+	// { .T = 3350, .default_val = 6, .desc = "Attach/RAU Complete Reallocation procedure" },
+	{ /* terminator */ }
 };
+
+/* Terminate reason, used by osmo_fsm_term as data */
+char *fsm_term_rau_att_req    = "Attach Req Rx while in RAU";
+char *fsm_term_att_req_chg    = "Attach Req Changed";
+char *fsm_term_att_rej        = "Attach Rej";
+char *fsm_term_att_success    = "Attach Success";
+char *fsm_term_rau_req_chg    = "RAU Req Changed";
+char *fsm_term_rau_rej        = "RAU Rej";
+char *fsm_term_rau_success    = "RAU Success";
 
 static inline struct sgsn_mm_ctx *gmm_rau_fsm_priv(struct osmo_fsm_inst *fi)
 {
@@ -67,7 +81,7 @@ static void gmm_rau_fsm_s_init(struct osmo_fsm_inst *fi, uint32_t event, void *d
 	switch (event) {
 	case GMM_RAU_E_UE_RAU_REQUEST:
 		mmctx->vsub->lu_fsm = vlr_ra_update(
-		    mmctx->gmm_fsm, E_GMM_ATTACH_SUCCESS, E_GMM_ATTACH_FAILED, NULL,
+		    mmctx->attach_rau.rau_fsm, GMM_RAU_E_VLR_TERM_SUCCESS, GMM_RAU_E_VLR_TERM_FAIL, NULL,
 		    sgsn->vlr,
 		    mmctx,
 		    mmctx->attach_rau.rau_type,
@@ -84,6 +98,7 @@ static void gmm_rau_fsm_s_init(struct osmo_fsm_inst *fi, uint32_t event, void *d
 		    true);
 
 		osmo_tdef_fsm_inst_state_chg(fi, GMM_RAU_S_WAIT_VLR_ANSWER, gmm_rau_tdef_states, gmm_rau_tdefs, 0);
+		osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_GMM_COMMON_PROC_INIT_REQ, NULL);
 		break;
 	default:
 		OSMO_ASSERT(0);
@@ -215,7 +230,13 @@ static void gmm_rau_fsm_s_wait_ue_rau_compl(struct osmo_fsm_inst *fi, uint32_t e
 		if (mmctx->vsub)
 			vlr_subscr_rx_rau_complete(mmctx->vsub);
 
+		/* We need to wait for the VLR/LU FSM to terminate */
+		break;
+	case GMM_RAU_E_VLR_TERM_SUCCESS:
 		osmo_fsm_inst_term(fi, OSMO_FSM_TERM_REGULAR, NULL);
+		break;
+	case GMM_RAU_E_VLR_TERM_FAIL:
+		osmo_fsm_inst_term(fi, OSMO_FSM_TERM_ERROR, NULL);
 		break;
 	case GMM_RAU_E_VLR_RAU_REJECT:
 		/* VLR timed out */
@@ -232,10 +253,58 @@ static void gmm_rau_fsm_s_wait_ue_rau_compl(struct osmo_fsm_inst *fi, uint32_t e
 		break;
 	}
 }
+static void gmm_attach_success(struct sgsn_mm_ctx *mmctx)
+{
+	struct sgsn_signal_data sig_data;
+
+	switch(mmctx->ran_type) {
+	case MM_CTX_T_UTRAN_Iu:
+		osmo_fsm_inst_dispatch(mmctx->iu.mm_state_fsm, E_PMM_PS_ATTACH, NULL);
+		break;
+	case MM_CTX_T_GERAN_Gb:
+		/* Unassign the old TLLI */
+		mmctx->gb.tlli = mmctx->gb.tlli_new;
+		gprs_llme_copy_key(mmctx, mmctx->gb.llme);
+		gprs_llgmm_assign(mmctx->gb.llme, TLLI_UNASSIGNED,
+				  mmctx->gb.tlli_new);
+		osmo_fsm_inst_dispatch(mmctx->gb.mm_state_fsm, E_MM_GPRS_ATTACH, NULL);
+		break;
+	}
+
+	osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_GMM_ATTACH_SUCCESS, NULL);
+
+	memset(&sig_data, 0, sizeof(sig_data));
+	sig_data.mm = mmctx;
+	osmo_signal_dispatch(SS_SGSN, S_SGSN_ATTACH, &sig_data);
+}
+
+static void gmm_rau_success(struct sgsn_mm_ctx *mmctx)
+{
+	struct sgsn_signal_data sig_data;
+
+	switch(mmctx->ran_type) {
+	case MM_CTX_T_UTRAN_Iu:
+		osmo_fsm_inst_dispatch(mmctx->iu.mm_state_fsm, E_PMM_RA_UPDATE, NULL);
+		break;
+	case MM_CTX_T_GERAN_Gb:
+		/* Unassign the old TLLI */
+		mmctx->gb.tlli = mmctx->gb.tlli_new;
+		gprs_llgmm_assign(mmctx->gb.llme, TLLI_UNASSIGNED, mmctx->gb.tlli_new);
+		osmo_fsm_inst_dispatch(mmctx->gb.mm_state_fsm, E_MM_RA_UPDATE, NULL);
+		break;
+	}
+
+	osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_GMM_RAU_SUCCESS, NULL);
+
+	memset(&sig_data, 0, sizeof(sig_data));
+	sig_data.mm = mmctx;
+	osmo_signal_dispatch(SS_SGSN, S_SGSN_UPDATE, &sig_data);
+}
 
 static void gmm_rau_fsm_cleanup(struct osmo_fsm_inst *fi, enum osmo_fsm_term_cause cause)
 {
 	struct sgsn_mm_ctx *mmctx;
+	uint32_t event;
 
 	/* deregister ourselfs from MMCtx */
 	if (!fi->priv)
@@ -245,43 +314,67 @@ static void gmm_rau_fsm_cleanup(struct osmo_fsm_inst *fi, enum osmo_fsm_term_cau
 	mmctx->attach_rau.rau_fsm = NULL;
 	fi->priv = NULL;
 
-	if (cause == OSMO_FSM_TERM_ERROR || cause == OSMO_FSM_TERM_TIMEOUT) {
-		uint32_t event = E_GMM_COMMON_PROC_FAILED;
+	switch (cause) {
+	case OSMO_FSM_TERM_REGULAR:
+		/* Successful Attach or RAU */
+		switch (mmctx->attach_rau.rau_type) {
+		case VLR_LU_TYPE_IMSI_ATTACH:
+			gmm_attach_success(mmctx);
+			break;
+		case VLR_LU_TYPE_REGULAR:
+		case VLR_LU_TYPE_PERIODIC:
+			gmm_rau_success(mmctx);
+			break;
+		}
+
+		break;
+	case OSMO_FSM_TERM_ERROR:
+	case OSMO_FSM_TERM_TIMEOUT:
+		event = E_GMM_COMMON_PROC_FAILED;
 		if (mmctx->attach_rau.rau_type == VLR_LU_TYPE_IMSI_ATTACH)
 			event = E_GMM_ATTACH_FAILED;
 
 		osmo_fsm_inst_dispatch(mmctx->gmm_fsm, event, NULL);
+		break;
+	case OSMO_FSM_TERM_REQUEST:
+		/* Called when another Att/Rau Request received with different context, silenty terminate and wait for re-creation */
+		break;
+	default:
+		break;
 	}
+
+	TALLOC_FREE(mmctx->attach_rau.req);
+	memset(&mmctx->attach_rau, 0, sizeof(mmctx->attach_rau));
 }
 
 static const struct osmo_fsm_state gmm_rau_fsm_states[] = {
-    [GMM_RAU_S_INIT] = {
+	[GMM_RAU_S_INIT] = {
 		.in_event_mask = S(GMM_RAU_E_UE_RAU_REQUEST),
 		.out_state_mask = S(GMM_RAU_S_WAIT_VLR_ANSWER),
 		.name = OSMO_STRINGIFY(GMM_RAU_S_INIT),
 		.action = gmm_rau_fsm_s_init,
 	},
-    [GMM_RAU_S_WAIT_VLR_ANSWER] = {
-		.in_event_mask = S(GMM_RAU_E_UE_RAU_REQUEST) | S(GMM_RAU_E_VLR_RAU_ACCEPT) | S(GMM_RAU_E_VLR_RAU_REJECT),
+	[GMM_RAU_S_WAIT_VLR_ANSWER] = {
+		.in_event_mask = S(GMM_RAU_E_UE_RAU_REQUEST) | S(GMM_RAU_E_VLR_RAU_ACCEPT) | S(GMM_RAU_E_VLR_RAU_REJECT) | S(GMM_RAU_E_VLR_TERM_SUCCESS)| S(GMM_RAU_E_VLR_TERM_FAIL),
 		.out_state_mask = S(GMM_RAU_S_WAIT_GGSN_UPDATE) |
-					  S(GMM_RAU_S_WAIT_UE_RAU_COMPLETE),
+			S(GMM_RAU_S_WAIT_UE_RAU_COMPLETE),
 		.name = OSMO_STRINGIFY(GMM_RAU_S_WAIT_VLR_ANSWER),
 		.action = gmm_rau_fsm_s_wait_vlr,
-    },
-    [GMM_RAU_S_WAIT_GGSN_UPDATE] = {
-		.in_event_mask = S(GMM_RAU_E_UE_RAU_REQUEST) | S(GMM_RAU_E_GGSN_UPD_RESP) | S(GMM_RAU_E_VLR_RAU_REJECT),
+	},
+	[GMM_RAU_S_WAIT_GGSN_UPDATE] = {
+		.in_event_mask = S(GMM_RAU_E_UE_RAU_REQUEST) | S(GMM_RAU_E_GGSN_UPD_RESP) | S(GMM_RAU_E_VLR_RAU_REJECT) | S(GMM_RAU_E_VLR_TERM_SUCCESS)| S(GMM_RAU_E_VLR_TERM_FAIL),
 		.out_state_mask = S(GMM_RAU_S_WAIT_UE_RAU_COMPLETE),
 		.name = OSMO_STRINGIFY(GMM_RAU_S_WAIT_GGSN_UPDATE),
 		.action = gmm_rau_fsm_s_wait_ggsn,
 		.onenter = gmm_rau_fsm_s_wait_ggsn_onenter,
-    },
-    /* FIXME: add PVLR step here as well? */
-    [GMM_RAU_S_WAIT_UE_RAU_COMPLETE] = {
-	.in_event_mask = S(GMM_RAU_E_UE_RAU_COMPLETE) | S(GMM_RAU_E_VLR_RAU_REJECT) | S(GMM_RAU_E_VLR_RAU_ACCEPT) | S(GMM_RAU_E_UE_RAU_REQUEST),
+	},
+	/* FIXME: add PVLR step here as well? */
+	[GMM_RAU_S_WAIT_UE_RAU_COMPLETE] = {
+		.in_event_mask = S(GMM_RAU_E_UE_RAU_COMPLETE) | S(GMM_RAU_E_VLR_RAU_REJECT) | S(GMM_RAU_E_VLR_RAU_ACCEPT) | S(GMM_RAU_E_UE_RAU_REQUEST) | S(GMM_RAU_E_VLR_TERM_SUCCESS)| S(GMM_RAU_E_VLR_TERM_FAIL),
 		.out_state_mask = 0,
 		.name = OSMO_STRINGIFY(GMM_RAU_S_WAIT_UE_RAU_COMPLETE),
 		.action = gmm_rau_fsm_s_wait_ue_rau_compl,
-    },
+	},
 };
 
 static struct osmo_fsm gmm_rau_fsm = {
@@ -299,12 +392,9 @@ static struct osmo_fsm gmm_rau_fsm = {
 
 void gmm_rau_fsm_req(struct sgsn_mm_ctx *mmctx)
 {
-	if (mmctx->attach_rau.rau_fsm) {
-		/* Check if it is the same */
-		/* do nothing :) */
-	} else {
-		mmctx->attach_rau.rau_fsm = osmo_fsm_inst_alloc(&gmm_rau_fsm, mmctx, mmctx, LOGL_INFO, NULL);
-	}
+	OSMO_ASSERT(!mmctx->attach_rau.rau_fsm);
+
+	mmctx->attach_rau.rau_fsm = osmo_fsm_inst_alloc(&gmm_rau_fsm, mmctx, mmctx, LOGL_INFO, NULL);
 
 	osmo_fsm_inst_dispatch(mmctx->attach_rau.rau_fsm, GMM_RAU_E_UE_RAU_REQUEST, NULL);
 }

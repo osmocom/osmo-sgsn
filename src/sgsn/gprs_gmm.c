@@ -1177,6 +1177,16 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 		goto rejected;
 	}
 
+	/* Check if this Attach Request is a retransmission */
+	if (ctx->attach_rau.req) {
+		if (!gprs_gmm_msg_cmp(ctx->attach_rau.req, msg)) {
+			/* Retransmission of the old Attach Req */
+			/* TODO: retransmit ID Req/Resp from VLR. Currently this will run into a timeout to retransmit */
+			osmo_fsm_inst_dispatch(ctx->attach_rau.rau_fsm, GMM_RAU_E_UE_RAU_REQUEST, (void *) 1);
+			return 0;
+		}
+	}
+
 	if (mmctx_did_rat_change(ctx, msg))
 		mmctx_handle_rat_change(ctx, msg, llme);
 
@@ -1231,16 +1241,12 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 	// 	gprs_llgmm_assign(ctx->gb.llme, ctx->gb.tlli, ctx->gb.tlli_new);
 	// }
 
-	if (!ctx->vsub) {
-		if (req.mi.type == GSM_MI_TYPE_TMSI)
-			ctx->vsub = vlr_subscr_find_or_create_by_tmsi(sgsn->vlr, ctx->p_tmsi, "mmctx", &created);
-		else if (req.mi.type == GSM_MI_TYPE_IMSI)
-			ctx->vsub = vlr_subscr_find_or_create_by_imsi(sgsn->vlr, ctx->imsi, "mmctx", &created);
-	}
-
-	/* FIXME: copy more stuff from vsub and also at RAU */
-	if (!strlen(ctx->imsi) && strlen(ctx->vsub->imsi)) {
-		OSMO_STRLCPY_ARRAY(ctx->imsi, ctx->vsub->imsi);
+	if (req.mi.type == GSM_MI_TYPE_IMSI) {
+		sgsn_mm_ctx_bind_vsub(ctx, req.mi.imsi, 0);
+	} else if (req.mi.type == GSM_MI_TYPE_TMSI) {
+		sgsn_mm_ctx_bind_vsub(ctx, NULL, req.mi.tmsi);
+	} else {
+		goto err_inval;
 	}
 
 	if (!ctx->vsub) {
@@ -1248,15 +1254,13 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 		goto rejected;
 	}
 
-	/* FIXME: how do we want to implement re-sending PDUs for GMM? */
-	if (ctx->vsub->lu_fsm)
-	{
-		osmo_fsm_inst_free(ctx->vsub->lu_fsm);
-	}
+	if (ctx->attach_rau.rau_fsm)
+		osmo_fsm_inst_term(ctx->attach_rau.rau_fsm, OSMO_FSM_TERM_REQUEST, fsm_term_att_req_chg);
 
 	ctx->attach_rau.cksq = req.cksq;
 	ctx->attach_rau.old_rai = req.old_rai;
 	ctx->attach_rau.rau_type = VLR_LU_TYPE_IMSI_ATTACH;
+	ctx->attach_rau.req = msgb_copy_c(ctx, msg, "GMM ATTACH REQ");
 
 	gmm_rau_fsm_req(ctx);
 
@@ -1278,7 +1282,6 @@ rejected:
 		gprs_llgmm_unassign(llme);
 
 	return rc;
-
 }
 
 /* 3GPP TS 24.008 § 9.4.3 Attach complete */
@@ -1300,11 +1303,6 @@ static int gsm48_rx_gmm_att_compl(struct sgsn_mm_ctx *mmctx)
 	if (!mmctx->vsub)
 		return 0;
 
-	/* VSUB doesn't accept Att/Rau Complete */
-	// rc = vlr_subscr_rx_rau_complete(mmctx->vsub);
-	// if (rc < 0)
-	// 	return rc;
-
 	mmctx_timer_stop(mmctx, 3350);
 	mmctx->t3350_mode = GMM_T3350_MODE_NONE;
 	mmctx->p_tmsi_old = 0;
@@ -1317,24 +1315,6 @@ static int gsm48_rx_gmm_att_compl(struct sgsn_mm_ctx *mmctx)
 	if (!mmctx->attach_rau.rau_fsm || rc != 0) {
 		/* FIXME: fail gracefully here or just ignore?! */
 	}
-
-	switch(mmctx->ran_type) {
-	case MM_CTX_T_UTRAN_Iu:
-		osmo_fsm_inst_dispatch(mmctx->iu.mm_state_fsm, E_PMM_PS_ATTACH, NULL);
-		break;
-	case MM_CTX_T_GERAN_Gb:
-		/* Unassign the old TLLI */
-		mmctx->gb.tlli = mmctx->gb.tlli_new;
-		gprs_llme_copy_key(mmctx, mmctx->gb.llme);
-		gprs_llgmm_assign(mmctx->gb.llme, TLLI_UNASSIGNED,
-				  mmctx->gb.tlli_new);
-		osmo_fsm_inst_dispatch(mmctx->gb.mm_state_fsm, E_MM_GPRS_ATTACH, NULL);
-		break;
-	}
-	memset(&sig_data, 0, sizeof(sig_data));
-	sig_data.mm = mmctx;
-
-	osmo_signal_dispatch(SS_SGSN, S_SGSN_ATTACH, &sig_data);
 
 	return 0;
 }
@@ -1853,7 +1833,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	 * activated/deactivated NSAPIs agrees with our view */
 	if (TLVP_PRES_LEN(&req.tlv, GSM48_IE_GMM_PDP_CTX_STATUS, 2)) {
 		mmctx->attach_rau.pdp_status_valid = true;
-		mmctx->attach_rau.pdp_status = osmo_load16le(TLVP_VAL(&req.tlv, GSM48_IE_GMM_PDP_CTX_STATUS))
+		mmctx->attach_rau.pdp_status = osmo_load16le(TLVP_VAL(&req.tlv, GSM48_IE_GMM_PDP_CTX_STATUS));
 	}
 
 	/* Send RA UPDATE ACCEPT. In Iu, the RA upd request can be called from
@@ -1863,11 +1843,9 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 
 	bool vlr_created = false;
 	if (!mmctx->vsub) {
-		mmctx->vsub = vlr_subscr_find_or_create_by_tmsi(sgsn->vlr, ptmsi, "foreign RAU", NULL);
+		mmctx->vsub = vlr_subscr_find_or_create_by_tmsi(sgsn->vlr, ptmsi, "mmctx", &vlr_created);
 		if (!mmctx->vsub)
 			goto rejected;
-
-		vlr_created = true;
 	}
 
 	mmctx->attach_rau.old_rai = req.old_rai;
@@ -1877,15 +1855,16 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		OSMO_STRLCPY_ARRAY(mmctx->imsi, mmctx->vsub->imsi);
 	}
 
+	if (mmctx->attach_rau.req)
+		osmo_fsm_inst_term(mmctx->attach_rau.rau_fsm, OSMO_FSM_TERM_REGULAR, fsm_term_att_req_chg);
+
 	mmctx->attach_rau.cksq = req.cksq;
 	mmctx->attach_rau.old_rai = req.old_rai;
 	mmctx->attach_rau.rau_type = vlr_rau_type;
+	mmctx->attach_rau.req = msgb_copy_c(mmctx, msg, "GMM ATTACH REQ");
 	mmctx->attach_rau.foreign = foreign_ra;
 
 	gmm_rau_fsm_req(mmctx);
-
-	if (vlr_created)
-		vlr_subscr_put(mmctx->vsub, "foreign RAU")
 
 	return 0;
 
@@ -1934,24 +1913,6 @@ static int gsm48_rx_gmm_ra_upd_compl(struct sgsn_mm_ctx *mmctx)
 	if (!mmctx->attach_rau.rau_fsm || rc != 0) {
 		/* FIXME: fail gracefully here or just ignore?! */
 	}
-
-	osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_GMM_COMMON_PROC_SUCCESS, NULL);
-	switch(mmctx->ran_type) {
-	case MM_CTX_T_UTRAN_Iu:
-		osmo_fsm_inst_dispatch(mmctx->iu.mm_state_fsm, E_PMM_RA_UPDATE, NULL);
-		break;
-	case MM_CTX_T_GERAN_Gb:
-		/* Unassign the old TLLI */
-		mmctx->gb.tlli = mmctx->gb.tlli_new;
-		gprs_llgmm_assign(mmctx->gb.llme, TLLI_UNASSIGNED,
-				  mmctx->gb.tlli_new);
-		osmo_fsm_inst_dispatch(mmctx->gb.mm_state_fsm, E_MM_RA_UPDATE, NULL);
-		break;
-	}
-
-	memset(&sig_data, 0, sizeof(sig_data));
-	sig_data.mm = mmctx;
-	osmo_signal_dispatch(SS_SGSN, S_SGSN_UPDATE, &sig_data);
 
 	return 0;
 }
