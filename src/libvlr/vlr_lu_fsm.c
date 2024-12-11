@@ -1214,12 +1214,22 @@ static void lu_fsm_wait_pvlr_onenter(struct osmo_fsm_inst *fi, uint32_t prev_sta
 static void lu_fsm_wait_pvlr(struct osmo_fsm_inst *fi, uint32_t event,
 			     void *data)
 {
+	struct lu_fsm_priv *lfp = lu_fsm_fi_priv(fi);
+
 	switch (event) {
 	case VLR_ULA_E_SEND_ID_ACK:
 		vlr_loc_upd_node1_pre(fi);
 		break;
 	case VLR_ULA_E_SEND_ID_NACK:
-		vlr_loc_upd_want_imsi(fi);
+		if (vlr_is_cs(lfp->vlr)) {
+			vlr_loc_upd_want_imsi(fi);
+			break;
+		}
+		/* PS */
+		if (lfp->lu_type == VLR_LU_TYPE_IMSI_ATTACH)
+			vlr_loc_upd_want_imsi(fi);
+		else
+			lu_fsm_failure(fi, GSM48_REJECT_MS_IDENTITY_NOT_DERVIVABLE);
 		break;
 	default:
 		OSMO_ASSERT(0);
