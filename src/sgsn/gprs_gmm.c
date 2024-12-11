@@ -1463,6 +1463,7 @@ int gsm48_tx_gmm_ra_upd_rej(struct sgsn_mm_ctx *mm, uint8_t cause)
 
 	LOGP(DMM, LOGL_NOTICE, "<- ROUTING AREA UPDATE REJECT\n");
 	rate_ctr_inc(rate_ctr_group_get_ctr(sgsn->rate_ctrs, CTR_GPRS_ROUTING_AREA_REJECT));
+	mmctx2msgid(msg, mm);
 
 	gh = (struct gsm48_hdr *) msgb_put(msg, sizeof(*gh) + 2);
 	gh->proto_discr = GSM48_PDISC_MM_GPRS;
@@ -1470,7 +1471,7 @@ int gsm48_tx_gmm_ra_upd_rej(struct sgsn_mm_ctx *mm, uint8_t cause)
 	gh->data[0] = cause;
 	gh->data[1] = 0; /* ? */
 
-	return gsm48_gmm_sendmsg(msg, 0, NULL, false);
+	return gsm48_gmm_sendmsg(msg, 0, mm, false);
 }
 
 /* Chapter 9.4.17: Routing area update reject */
