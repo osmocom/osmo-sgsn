@@ -275,7 +275,7 @@ void gmm_fsm_allstate_action(struct osmo_fsm_inst *fi, uint32_t event, void *dat
 
 	case E_GMM_CLEANUP:
 		if (mmctx->attach_rau.rau_fsm)
-			osmo_fsm_inst_term(mmctx->attach_rau.rau_fsm, OSMO_FSM_TERM_REGULAR, NULL);
+			osmo_fsm_inst_term(mmctx->attach_rau.rau_fsm, OSMO_FSM_TERM_REQUEST, NULL);
 
 		switch (fi->state) {
 		case ST_GMM_DEREGISTERED:
