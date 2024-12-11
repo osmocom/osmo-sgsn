@@ -159,7 +159,11 @@ static void gmm_rau_fsm_s_wait_vlr(struct osmo_fsm_inst *fi, uint32_t event, voi
 	case GMM_RAU_E_VLR_RAU_REJECT:
 		gmm_cause = (uint8_t) ((long) data & 0xff);
 		transmit_rau_reject(mmctx, gmm_cause);
+		break;
+	case GMM_RAU_E_VLR_TERM_FAIL:
 		osmo_fsm_inst_term(fi, OSMO_FSM_TERM_ERROR, data);
+		break;
+	case GMM_RAU_E_VLR_TERM_SUCCESS:
 		break;
 	default:
 		OSMO_ASSERT(0);
