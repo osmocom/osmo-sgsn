@@ -1662,8 +1662,6 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 			/* create a new MMCtx and ask for the context */
 			if (msgb_bcid(msg)) {
 				mmctx = sgsn_mm_ctx_alloc_gb(tlli, &req.old_rai);
-				if (mmctx)
-					mmctx->gb.llme = llme;
 			} else {
 				mmctx = sgsn_mm_ctx_alloc_iu(MSG_IU_UE_CTX(msg));
 			}
