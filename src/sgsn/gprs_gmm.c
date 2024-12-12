@@ -1446,7 +1446,7 @@ int gsm48_tx_gmm_ra_upd_ack(struct sgsn_mm_ctx *mm)
 	/* PDP Context Status */
 	uint16_t pdp_ctx_status = encode_ms_ctx_status(mm);
 	if (mm->attach_rau.pdp_status_valid && pdp_ctx_status != mm->attach_rau.pdp_status) {
-		process_ms_ctx_status(mm, pdp_ctx_status);
+		process_ms_ctx_status(mm, mm->attach_rau.pdp_status);
 		pdp_ctx_status = encode_ms_ctx_status(mm);
 	}
 	msgb_tlv_put(msg, GSM48_IE_GMM_PDP_CTX_STATUS, 2, (uint8_t *) &pdp_ctx_status);
