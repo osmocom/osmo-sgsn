@@ -1201,6 +1201,10 @@ static void mmctx_handle_rat_change(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 static uint8_t gprs_ms_net_cap_gea_mask(const uint8_t *ms_net_cap, uint8_t cap_len)
 {
 	uint8_t mask = (1 << GPRS_ALGO_GEA0);
+
+	if (cap_len == 0)
+		return mask;
+
 	mask |= (0x80 & ms_net_cap[0]) ? (1 << GPRS_ALGO_GEA1) : 0;
 
 	if (cap_len < 2)
