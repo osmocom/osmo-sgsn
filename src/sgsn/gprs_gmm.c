@@ -67,9 +67,11 @@
 #include <osmocom/sgsn/gtp.h>
 #include <osmocom/sgsn/pdpctx.h>
 #include <osmocom/sgsn/gprs_gmm_util.h>
+#include <osmocom/sgsn/gprs_rau_fsm.h>
 
 #include <osmocom/gsupclient/gsup_client_mux.h>
 #include <osmocom/vlr/vlr.h>
+
 #define PTMSI_ALLOC
 
 
@@ -751,14 +753,8 @@ static int gsm48_rx_gmm_auth_ciph_resp(struct sgsn_mm_ctx *ctx,
 
 	/* FIXIME: move Gn into a FSM and wait for a response before sending out the RAU Accept */
 	/* Gn: SGSN Context Req/Resp/Ack procedure */
-	if (ctx->gtp_local_ref_valid) {
+	if (ctx->gtp_local_ref_valid)
 		sgsn_context_ack(sgsn->gsn, ctx, GTPCAUSE_ACC_REQ);
-		/* update the PDP Request should be done now */
-		struct sgsn_pdp_ctx *pctx;
-		llist_for_each_entry(pctx, &ctx->pdp_list, list) {
-			sgsn_pdp_ctx_gn_update(pctx);
-		}
-	}
 
 	/* FIXME: enable LLC cipheirng */
 	/* FIXME: This should _not_ trigger a FSM success */
@@ -1249,22 +1245,13 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 	{
 		osmo_fsm_inst_free(ctx->vsub->lu_fsm);
 	}
-	ctx->vsub->lu_fsm = vlr_ra_update(
-	    ctx->gmm_fsm, E_GMM_ATTACH_SUCCESS, E_GMM_ATTACH_FAILED, NULL,
-	    sgsn->vlr,
-	    ctx,
-	    VLR_LU_TYPE_IMSI_ATTACH,
-	    ctx->p_tmsi,
-	    ctx->imsi,
-	    &old_ra_id,
-	    &ra_id,
-	    sgsn->cfg.auth_policy == SGSN_AUTH_POLICY_REMOTE,
-	    ctx->ciph_algo != GPRS_ALGO_GEA0,
-	    ctx->ciph_algo != GPRS_ALGO_GEA0,
-	    key_seq,
-	    mmctx_is_r99(ctx),
-	    ctx->ran_type == MM_CTX_T_UTRAN_Iu,
-	    true);
+
+	ctx->attach_rau.cksq = req.cksq;
+	ctx->attach_rau.old_rai = req.old_rai;
+	ctx->attach_rau.rau_type = VLR_LU_TYPE_IMSI_ATTACH;
+
+	gmm_rau_fsm_req(ctx);
+
 	return 0;
 
 err_inval:
@@ -1290,7 +1277,7 @@ rejected:
 static int gsm48_rx_gmm_att_compl(struct sgsn_mm_ctx *mmctx)
 {
 	struct sgsn_signal_data sig_data;
-	int rc;
+	int rc = 0;
 	/* only in case SGSN offered new P-TMSI */
 	LOGMMCTXP(LOGL_INFO, mmctx, "-> GMM ATTACH COMPLETE\n");
 
@@ -1306,14 +1293,22 @@ static int gsm48_rx_gmm_att_compl(struct sgsn_mm_ctx *mmctx)
 		return 0;
 
 	/* VSUB doesn't accept Att/Rau Complete */
-	rc = vlr_subscr_rx_rau_complete(mmctx->vsub);
-	if (rc < 0)
-		return rc;
+	// rc = vlr_subscr_rx_rau_complete(mmctx->vsub);
+	// if (rc < 0)
+	// 	return rc;
 
 	mmctx_timer_stop(mmctx, 3350);
 	mmctx->t3350_mode = GMM_T3350_MODE_NONE;
 	mmctx->p_tmsi_old = 0;
 	mmctx->pending_req = 0;
+
+	if (mmctx->attach_rau.rau_fsm) {
+		rc = osmo_fsm_inst_dispatch(mmctx->attach_rau.rau_fsm, GMM_RAU_E_UE_RAU_COMPLETE, NULL);
+	}
+
+	if (!mmctx->attach_rau.rau_fsm || rc != 0) {
+		/* FIXME: fail gracefully here or just ignore?! */
+	}
 
 	switch(mmctx->ran_type) {
 	case MM_CTX_T_UTRAN_Iu:
@@ -1330,6 +1325,7 @@ static int gsm48_rx_gmm_att_compl(struct sgsn_mm_ctx *mmctx)
 	}
 	memset(&sig_data, 0, sizeof(sig_data));
 	sig_data.mm = mmctx;
+
 	osmo_signal_dispatch(SS_SGSN, S_SGSN_ATTACH, &sig_data);
 
 	return 0;
@@ -1633,6 +1629,26 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		ptmsi_type = (*TLVP_VAL(&req.tlv, GSM48_IE_GMM_PTMSI_TYPE)) & 0x1;
 	}
 
+	/* TODO: Check if there is an MM CTX with old_ra_id and
+	 * the P-TMSI (if given, reguired for UMTS) or as last resort
+	 * if the TLLI matches foreign_tlli (P-TMSI). Note that this
+	 * is an optimization to avoid the RA reject (impl detached)
+	 * below, which will cause a new attach cycle. */
+	/* Look-up the MM context based on old RA-ID and TLLI */
+	if (!MSG_IU_UE_CTX(msg)) {
+		/* Gb */
+		mmctx = sgsn_mm_ctx_by_tlli_and_ptmsi(tlli, &req.old_rai);
+	} else if (TLVP_PRESENT(&req.tlv, GSM48_IE_GMM_ALLOC_PTMSI)) {
+#ifdef BUILD_IU
+		/* In Iu mode search only for ptmsi */
+		mmctx = sgsn_mm_ctx_by_ptmsi(ptmsi);
+#else
+		LOGIUP(MSG_IU_UE_CTX(msg), LOGL_ERROR,
+		       "Rejecting GMM RA Update Request: No Iu support\n");
+		goto rejected;
+#endif
+	}
+
 	if (ptmsi_type == PTMSI_TYPE_MAPPED) {
 		/* the UE is transitioning from EUTRAN to GERAN/UTRAN */
 		from_eutran = true;
@@ -1675,7 +1691,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		if (!ra) {
 			/* FIXME: implement SGSN to SGSN routing */
 			foreign_ra = true;
-			reject_cause = GMM_CAUSE_NET_FAIL;
+			reject_cause = GMM_CAUSE_IMPL_DETACHED;
 			goto rejected;
 		}
 
@@ -1683,25 +1699,6 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		if (!mmctx) {
 			/* BSSGP doesn't give us an mmctx, old RAI is GERAN or UTRAN */
 
-			/* TODO: Check if there is an MM CTX with old_ra_id and
-			 * the P-TMSI (if given, reguired for UMTS) or as last resort
-			 * if the TLLI matches foreign_tlli (P-TMSI). Note that this
-			 * is an optimization to avoid the RA reject (impl detached)
-			 * below, which will cause a new attach cycle. */
-			/* Look-up the MM context based on old RA-ID and TLLI */
-			if (!MSG_IU_UE_CTX(msg)) {
-				/* Gb */
-				mmctx = sgsn_mm_ctx_by_tlli_and_ptmsi(tlli, &req.old_rai);
-			} else if (TLVP_PRESENT(&req.tlv, GSM48_IE_GMM_ALLOC_PTMSI)) {
-#ifdef BUILD_IU
-				/* In Iu mode search only for ptmsi */
-				mmctx = sgsn_mm_ctx_by_ptmsi(ptmsi);
-#else
-				LOGIUP(MSG_IU_UE_CTX(msg), LOGL_ERROR,
-				       "Rejecting GMM RA Update Request: No Iu support\n");
-				goto rejected;
-#endif
-			}
 
 			if (mmctx) {
 				LOGMMCTXP(LOGL_INFO, mmctx,
@@ -1866,22 +1863,12 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		req.old_rai.rac = 0xfe;
 	}
 
-	mmctx->vsub->lu_fsm = vlr_ra_update(
-	    mmctx->gmm_fsm, E_GMM_ATTACH_SUCCESS, E_GMM_ATTACH_FAILED, NULL,
-	    sgsn->vlr,
-	    mmctx,
-	    vlr_rau_type,
-	    mmctx->p_tmsi,
-	    mmctx->imsi,
-	    &req.old_rai,
-	    &mmctx->ra,
-	    sgsn->cfg.auth_policy == SGSN_AUTH_POLICY_REMOTE,
-	    mmctx->ciph_algo != GPRS_ALGO_GEA0,
-	    mmctx->ciph_algo != GPRS_ALGO_GEA0,
-	    req.cksq,
-	    mmctx_is_r99(mmctx),
-	    mmctx->ran_type == MM_CTX_T_UTRAN_Iu,
-	    true);
+	mmctx->attach_rau.cksq = req.cksq;
+	mmctx->attach_rau.old_rai = req.old_rai;
+	mmctx->attach_rau.rau_type = vlr_rau_type;
+	mmctx->attach_rau.foreign = foreign_ra;
+
+	gmm_rau_fsm_req(mmctx);
 
 	if (vlr_created)
 		vlr_subscr_put(mmctx->vsub, "foreign RAU")
@@ -1896,10 +1883,16 @@ rejected:
 	rc = gsm48_tx_gmm_ra_upd_rej_oldmsg(msg, reject_cause);
 	if (mmctx)
 		mm_ctx_cleanup_free(mmctx, "GMM RA UPDATE REJ");
-	else if (llme)
-		gprs_llgmm_unassign(llme);
+	else if (llme) {
+		/* There could be a corner case where the LLME is part of a MMCtx */
+		mmctx = sgsn_mm_ctx_by_llme(llme);
+		if (mmctx) {
+			mm_ctx_cleanup_free(mmctx, "GMM RA UPDATE REJ");
+		} else {
+			gprs_llgmm_unassign(llme);
+		}
 #ifdef BUILD_IU
-	else if (MSG_IU_UE_CTX(msg)) {
+	} else if (MSG_IU_UE_CTX(msg)) {
 		unsigned long X1001 = osmo_tdef_get(sgsn->cfg.T_defs, -1001, OSMO_TDEF_S, -1);
 		ranap_iu_tx_release_free(MSG_IU_UE_CTX(msg), NULL, (int) X1001);
 	}
@@ -1912,7 +1905,7 @@ rejected:
 static int gsm48_rx_gmm_ra_upd_compl(struct sgsn_mm_ctx *mmctx)
 {
 	struct sgsn_signal_data sig_data;
-	int rc;
+	int rc = 0;
 	/* only in case SGSN offered new P-TMSI */
 	LOGMMCTXP(LOGL_INFO, mmctx, "-> ROUTING AREA UPDATE COMPLETE\n");
 	mmctx_timer_stop(mmctx, 3350);
@@ -1920,10 +1913,13 @@ static int gsm48_rx_gmm_ra_upd_compl(struct sgsn_mm_ctx *mmctx)
 	mmctx->p_tmsi_old = 0;
 	mmctx->pending_req = 0;
 
-	/* VLR doesn't accept Att/Rau Complete */
-	rc = vlr_subscr_rx_rau_complete(mmctx->vsub);
-	if (rc < 0)
-		return rc;
+	if (mmctx->attach_rau.rau_fsm) {
+		rc = osmo_fsm_inst_dispatch(mmctx->attach_rau.rau_fsm, GMM_RAU_E_UE_RAU_COMPLETE, NULL);
+	}
+
+	if (!mmctx->attach_rau.rau_fsm || rc != 0) {
+		/* FIXME: fail gracefully here or just ignore?! */
+	}
 
 	osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_GMM_COMMON_PROC_SUCCESS, NULL);
 	switch(mmctx->ran_type) {
@@ -2507,19 +2503,26 @@ static int vlr_tx_lu_acc_cb(void *ref, uint32_t send_tmsi, enum vlr_lu_type lu_t
 		}
 	}
 
+	if (ctx->attach_rau.rau_fsm) {
+		osmo_fsm_inst_dispatch(ctx->attach_rau.rau_fsm, GMM_RAU_E_VLR_RAU_ACCEPT, (void *) lu_type);
+	}
+
+	/* FIXME: maybe move this */
+	if (ctx->attach_rau.foreign) {
+		switch(ctx->ran_type) {
+		case MM_CTX_T_UTRAN_Iu:
+			osmo_fsm_inst_dispatch(ctx->iu.mm_state_fsm, E_PMM_PS_ATTACH, NULL);
+			break;
+		case MM_CTX_T_GERAN_Gb:
+			osmo_fsm_inst_dispatch(ctx->gb.mm_state_fsm, E_MM_GPRS_ATTACH, NULL);
+			break;
+		}
+	}
+
 	// inform LLC layer
 
 	/* FIXME: kick GMM FSM - only on Complete, right? */
 	/* TODO: check here if we need to send a Attach Accept or Routing Area Accept (use update type?) */
-	switch (lu_type) {
-	case VLR_LU_TYPE_PERIODIC:
-	case VLR_LU_TYPE_REGULAR:
-		gsm48_tx_gmm_ra_upd_ack(ctx);
-		break;
-	case VLR_LU_TYPE_IMSI_ATTACH:
-		gsm48_tx_gmm_att_ack(ctx);
-		break;
-	}
 
 	return 0;
 }
@@ -2530,22 +2533,8 @@ static int vlr_tx_lu_rej_cb(void *ref, enum gsm48_reject_value cause, enum vlr_l
 	if (!ctx)
 		return -EINVAL;
 
-	/* FIXME: kick GMM FSM */
-	// maybe remove attached again?
-
-	switch (lu_type) {
-	case VLR_LU_TYPE_PERIODIC:
-	case VLR_LU_TYPE_REGULAR:
-		gsm48_tx_gmm_ra_upd_rej(ctx, cause);
-		break;
-	case VLR_LU_TYPE_IMSI_ATTACH:
-		gsm48_tx_gmm_att_rej(ctx, cause);
-		break;
-	default:
-		OSMO_ASSERT(0);
-	}
-
-	osmo_fsm_inst_dispatch(ctx->gmm_fsm, E_GMM_COMMON_PROC_FAILED, NULL);
+	if (ctx->attach_rau.rau_fsm)
+		osmo_fsm_inst_dispatch(ctx->attach_rau.rau_fsm, GMM_RAU_E_VLR_RAU_REJECT, (void *) cause);
 
 	return 0;
 }
@@ -2613,8 +2602,14 @@ static int vlr_tx_mm_info_cb(void *ref)
 }
 
 /* decide if the location/routing area id is within the VLR or not */
-static bool vlr_location_served_cb(const struct osmo_routing_area_id *rai)
+static bool vlr_location_served_cb(struct vlr_subscr *vsub, const struct osmo_routing_area_id *rai)
 {
+	struct sgsn_mm_ctx *mmctx = vsub->msc_conn_ref;
+
+	if (mmctx) {
+		return !mmctx->attach_rau.foreign;
+	}
+
 	/* EUTRAN Loc/Rac */
 	return !(rai->rac == 0xfe && rai->lac.lac == 0xfffe);
 }
