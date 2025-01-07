@@ -1582,20 +1582,21 @@ static void test_ggsn_selection(void)
 	cleanup_test();
 }
 
-bool pdp_status_has_active_nsapis(const uint8_t *pdp_status, const size_t pdp_status_len);
+bool pdp_status_has_active_nsapis(uint16_t pdp_status);
 
 static void test_pdp_status_has_active_nsapis(void)
 {
-	const size_t pdp_status_len = 2;
-	const uint8_t pdp_status1[] = { 0b00100000, 0b00000000 }; /* PDP NSAPI 5 active */
-	const uint8_t pdp_status2[] = { 0b00000000, 0b00000000 }; /* no active PDP NSAPI */
-	const uint8_t pdp_status3[] = { 0b00000000, 0b00000001 }; /* PDP NSAPI 8 active */
+	uint16_t pdp_status1 = 0b0000000000100000; /* PDP NSAPI 5 active */
+	uint16_t pdp_status2 = 0b0000000000000000; /* no active PDP NSAPI */
+	uint16_t pdp_status3 = 0b0000000100000000; /* PDP NSAPI 8 active */
+	uint16_t pdp_status4 = 0b0000000000000001; /* reserved NSAPI 0 active -> no active */
 
 	printf("Testing pdp_status_has_active_nsapis\n");
 
-	OSMO_ASSERT(pdp_status_has_active_nsapis(pdp_status1, pdp_status_len));
-	OSMO_ASSERT(!pdp_status_has_active_nsapis(pdp_status2, pdp_status_len));
-	OSMO_ASSERT(pdp_status_has_active_nsapis(pdp_status3, pdp_status_len));
+	OSMO_ASSERT(pdp_status_has_active_nsapis(pdp_status1));
+	OSMO_ASSERT(!pdp_status_has_active_nsapis(pdp_status2));
+	OSMO_ASSERT(pdp_status_has_active_nsapis(pdp_status3));
+	OSMO_ASSERT(!pdp_status_has_active_nsapis(pdp_status4));
 }
 
 static struct log_info_cat gprs_categories[] = {
