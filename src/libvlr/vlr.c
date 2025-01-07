@@ -572,6 +572,7 @@ struct vlr_subscr *_vlr_subscr_find_or_create_by_tmsi(struct vlr_instance *vlr,
 						      const char *file,
 						      int line)
 {
+	/* FIXME: we need to add a type to the tmsi (local, foreign) so overlaps doesn't matter */
 	struct vlr_subscr *vsub;
 	vsub = _vlr_subscr_find_by_tmsi(vlr, tmsi, use, file, line);
 	if (vsub) {
