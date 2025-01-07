@@ -89,6 +89,38 @@ const struct tlv_definition gsm48_gmm_att_ie_tlvdef = {
 };
 
 
+
+const struct tlv_definition gsm48_gmm_rau_ie_tlvdef = {
+	.def = {
+		[GSM48_IE_GMM_PTMSI_SIG]	= { TLV_TYPE_FIXED, 3 },
+		[GSM48_IE_GMM_TIMER_READY]	= { TLV_TYPE_TV, 1 },
+		[GSM48_IE_GMM_DRX_PARAM]	= { TLV_TYPE_FIXED, 2 },
+		[GSM48_IE_GMM_TMSI_STATUS]	= { TLV_TYPE_SINGLE_TV, 1 },
+		[GSM48_IE_GMM_ALLOC_PTMSI]	= { TLV_TYPE_TLV, 5 },
+		[GSM48_IE_GMM_MS_NET_CAPA]	= { TLV_TYPE_TLV, 2 },
+		[GSM48_IE_GMM_PDP_CTX_STATUS]	= { TLV_TYPE_TLV, 2 },
+		[GSM48_IE_GMM_PS_LCS_CAPA]	= { TLV_TYPE_TLV, 1 },
+		[GSM48_IE_GMM_GMM_MBMS_CTX_ST]	= { TLV_TYPE_TLV, 0 },
+		[GSM48_IE_GMM_UE_NET_CAP]	= { TLV_TYPE_TLV, 2 },
+		[GSM48_IE_GMM_ADD_IDENTITY]	= { TLV_TYPE_TLV, 0 },
+		[GSM48_IE_GMM_RAI2]		= { TLV_TYPE_TLV, 0 },
+		[GSM48_IE_GMM_MS_CLASSMARK2]	= { TLV_TYPE_TLV, 3 },
+		[GSM48_IE_GMM_MS_CLASSMARK3]	= { TLV_TYPE_TLV, 0 },
+		[GSM48_IE_GMM_SUPP_CODEC_LIST]	= { TLV_TYPE_TLV, 3 },
+		[GSM48_IE_GMM_VD_PREF_UE_USAGE]	= { TLV_TYPE_TLV, 1 },
+		[GSM48_IE_GMM_PTMSI_TYPE]	= { TLV_TYPE_SINGLE_TV, 1 },
+		[GSM48_IE_GMM_DEVICE_PROP]	= { TLV_TYPE_SINGLE_TV, 1 },
+		[GSM48_IE_GMM_MS_NET_FEAT_SUP]	= { TLV_TYPE_SINGLE_TV, 1 },
+		[GSM48_IE_GMM_OLD_LAI]		= { TLV_TYPE_TLV, 5 },
+		[GSM48_IE_GMM_ADD_UPDATE_TYPE]	= { TLV_TYPE_SINGLE_TV, 1 },
+		[GSM48_IE_GMM_TMSI_BASED_NRI_C]	= { TLV_TYPE_TLV, 4 },
+		[GMM48_IE_GMM_TIMER_T3324]	= { TLV_TYPE_TLV, 3 },
+		[GSM48_IE_GMM_TIMER_T3312_EXT]	= { TLV_TYPE_TLV, 3 },
+		[GSM48_IE_GMM_EXT_DRX_PARAMS]	= { TLV_TYPE_TLV, 3 },
+	}
+};
+
+
 /*! Parse 24.008 9.4.1 Attach Request
  * \param[in] msg l3 pointers must point to gmm.
  * \param[out] rau_req parsed RA update request
@@ -230,8 +262,8 @@ int gprs_gmm_parse_ra_upd_req(struct msgb *msg, struct gprs_gmm_ra_upd_req *rau_
 	if (msgb_l3len(msg) == mandatory_fields_len)
 		return 0;
 
-	ret = tlv_parse(&rau_req->tlv, &gsm48_gmm_ie_tlvdef,
-		  cur, msgb_l3len(msg) - mandatory_fields_len, 0, 0);
+	ret = tlv_parse(&rau_req->tlv, &gsm48_gmm_rau_ie_tlvdef,
+			cur, msgb_l3len(msg) - mandatory_fields_len, 0, 0);
 
 	if (ret < 0)
 		return GMM_CAUSE_COND_IE_ERR;
