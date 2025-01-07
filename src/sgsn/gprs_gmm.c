@@ -196,6 +196,61 @@ static void mm_ctx_cleanup_free(struct sgsn_mm_ctx *ctx, const char *log_text)
 	sgsn_mm_ctx_cleanup_free(ctx);
 }
 
+
+/* 3GPP TS 24.008 § 10.5.7.1 Process PDP context status value, bit 0 corresponds to nsapi 0 */
+static void process_ms_ctx_status(struct sgsn_mm_ctx *mmctx,
+				  uint16_t pdp_status)
+{
+	struct sgsn_pdp_ctx *pdp, *pdp2;
+	/* 24.008 4.7.5.1.3: If the PDP context status information element is
+	 * included in ROUTING AREA UPDATE REQUEST message, then the network
+	 * shall deactivate all those PDP contexts locally (without peer to
+	 * peer signalling between the MS and the network), which are not in SM
+	 * state PDP-INACTIVE on network side but are indicated by the MS as
+	 * being in state PDP-INACTIVE. */
+
+	/* NSAPI 0 - 4 are spare, ignore these */
+	pdp_status &= 0xffe0;
+
+	llist_for_each_entry_safe(pdp, pdp2, &mmctx->pdp_list, list) {
+		bool active = (pdp_status & (1 << pdp->nsapi));
+		if (active)
+			continue;
+
+		LOGMMCTXP(LOGL_NOTICE, mmctx, "Dropping PDP context for NSAPI=%u "
+					      "due to PDP CTX STATUS IE=0x%02x\n",
+			  pdp->nsapi, pdp_status);
+		pdp->ue_pdp_active = false;
+		if (pdp->ggsn)
+			sgsn_delete_pdp_ctx(pdp);
+		else /* GTP side already detached, freeing */
+			sgsn_pdp_ctx_free(pdp);
+	}
+}
+
+/* 3GPP TS 24.008 § 10.5.7.1 Encode PDP context status value, bit 0 correspond to nsapi 0 */
+uint16_t encode_ms_ctx_status(struct sgsn_mm_ctx *mmctx)
+{
+	struct sgsn_pdp_ctx *pdp;
+
+	uint16_t pdp_status = 0;
+
+	llist_for_each_entry(pdp, &mmctx->pdp_list, list) {
+		if (pdp->ue_pdp_active)
+			pdp_status |= (1 << pdp->nsapi);
+	}
+
+	return pdp_status;
+}
+
+/* 3GPP TS 24.008 § 4.7.13.4/10.5.7.1 Service request procedure not accepted by the
+ * network. Returns true if MS has active PDP contexts in pdp_status */
+bool pdp_status_has_active_nsapis(uint16_t pdp_status)
+{
+	/* NSAPI 0 - 4 are spare and should be ignored 0 */
+	return (pdp_status >> 5) != 0;
+}
+
 /* Chapter 9.4.18 */
 static int _tx_status(struct msgb *msg, uint8_t cause,
 		      struct sgsn_mm_ctx *mmctx)
@@ -1487,6 +1542,8 @@ static int gsm48_tx_gmm_ra_upd_ack(struct sgsn_mm_ctx *mm)
 	rua = (struct gsm48_ra_upd_ack *) msgb_put(msg, sizeof(*rua));
 	rua->force_stby = 0;	/* not indicated */
 	rua->upd_result = 0;	/* RA updated */
+
+	/* Periodic RA update timer */
 	t = osmo_tdef_get(sgsn->cfg.T_defs, 3312, OSMO_TDEF_S, -1);
 	rua->ra_upd_timer = gprs_secs_to_tmr_floor(t);
 
@@ -1515,12 +1572,19 @@ static int gsm48_tx_gmm_ra_upd_ack(struct sgsn_mm_ctx *mm)
 	}
 	*l = rc;
 #endif
+	/* MS identity */
+	/* List of Received N-PDU */
 
 	/* Optional: Negotiated READY timer value */
 	t = osmo_tdef_get(sgsn->cfg.T_defs, 3314, OSMO_TDEF_S, -1);
 	msgb_tv_put(msg, GSM48_IE_GMM_TIMER_READY, gprs_secs_to_tmr_floor(t));
 
-	/* Option: MS ID, ... */
+	/* GMM cause */
+	/* PDP Context Status */
+	uint16_t pdp_ctx_status = encode_ms_ctx_status(mm);
+	msgb_tlv_put(msg, GSM48_IE_GMM_PDP_CTX_STATUS, 2, (uint8_t *) &pdp_ctx_status);
+
+	/* MS ID, ... */
 	return gsm48_gmm_sendmsg(msg, 0, mm, true);
 }
 
@@ -1543,48 +1607,6 @@ int gsm48_tx_gmm_ra_upd_rej(struct msgb *old_msg, uint8_t cause)
 
 	/* Option: P-TMSI signature, allocated P-TMSI, MS ID, ... */
 	return gsm48_gmm_sendmsg(msg, 0, NULL, false);
-}
-
-static void process_ms_ctx_status(struct sgsn_mm_ctx *mmctx,
-				  const uint8_t *pdp_status)
-{
-	struct sgsn_pdp_ctx *pdp, *pdp2;
-	/* 24.008 4.7.5.1.3: If the PDP context status information element is
-	 * included in ROUTING AREA UPDATE REQUEST message, then the network
-	 * shall deactivate all those PDP contexts locally (without peer to
-	 * peer signalling between the MS and the network), which are not in SM
-	 * state PDP-INACTIVE on network side but are indicated by the MS as
-	 * being in state PDP-INACTIVE. */
-
-	llist_for_each_entry_safe(pdp, pdp2, &mmctx->pdp_list, list) {
-		bool inactive = (pdp->nsapi < 8) ?
-					!(pdp_status[0] & (1 << pdp->nsapi)) :
-					!(pdp_status[1] & (1 << (pdp->nsapi - 8)));
-		if (!inactive)
-			continue;
-
-		LOGMMCTXP(LOGL_NOTICE, mmctx, "Dropping PDP context for NSAPI=%u "
-			"due to PDP CTX STATUS IE=0x%02x%02x\n",
-			pdp->nsapi, pdp_status[1], pdp_status[0]);
-		pdp->ue_pdp_active = false;
-		if (pdp->ggsn)
-			sgsn_delete_pdp_ctx(pdp);
-		else /* GTP side already detached, freeing */
-			sgsn_pdp_ctx_free(pdp);
-	}
-}
-
-/* 3GPP TS 24.008 § 4.7.13.4 Service request procedure not accepted by the
- * network. Returns true if MS has active PDP contexts in pdp_status */
-bool pdp_status_has_active_nsapis(const uint8_t *pdp_status, const size_t pdp_status_len)
-{
-	size_t i;
-
-	for (i = 0; i < pdp_status_len; i++)
-		if (pdp_status[i] != 0)
-			return true;
-
-	return false;
 }
 
 /* Chapter 9.4.14: Routing area update request */
@@ -1777,7 +1799,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	/* Look at PDP Context Status IE and see if MS's view of
 	 * activated/deactivated NSAPIs agrees with our view */
 	if (TLVP_PRESENT(&req.tlv, GSM48_IE_GMM_PDP_CTX_STATUS)) {
-		const uint8_t *pdp_status = TLVP_VAL(&req.tlv, GSM48_IE_GMM_PDP_CTX_STATUS);
+		uint16_t pdp_status = osmo_load16le(TLVP_VAL(&req.tlv, GSM48_IE_GMM_PDP_CTX_STATUS));
 		process_ms_ctx_status(mmctx, pdp_status);
 	}
 
@@ -1936,8 +1958,7 @@ static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 	/* Look at PDP Context Status IE and see if MS's view of
 	 * activated/deactivated NSAPIs agrees with our view */
 	if (TLVP_PRESENT(&tp, GSM48_IE_GMM_PDP_CTX_STATUS)) {
-		const uint8_t *pdp_status = TLVP_VAL(&tp, GSM48_IE_GMM_PDP_CTX_STATUS);
-		const size_t pdp_status_len = TLVP_LEN(&tp, GSM48_IE_GMM_PDP_CTX_STATUS);
+		uint16_t pdp_status =  tlvp_val16be(&tp, GSM48_IE_GMM_PDP_CTX_STATUS);
 
 		process_ms_ctx_status(ctx, pdp_status);
 
@@ -1946,7 +1967,7 @@ static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 		 * Active state in pdp_status but there is no PDP contexts on
 		 * SGSN side then Reject with the cause will force the mobile to
 		 * reset PDP contexts */
-		if (llist_empty(&ctx->pdp_list) && pdp_status_has_active_nsapis(pdp_status, pdp_status_len)) {
+		if (llist_empty(&ctx->pdp_list) && pdp_status_has_active_nsapis(pdp_status)) {
 			reject_cause = GMM_CAUSE_NO_PDP_ACTIVATED;
 			goto rejected;
 		}
