@@ -256,7 +256,7 @@ struct vlr_ops {
 						 enum gsm48_reject_value cause, bool cancel_by_update);
 
 	/* decide if the location/routing area id is within the VLR or not */
-	bool (*location_served)(const struct osmo_routing_area_id *rai);
+	bool (*location_served)(struct vlr_subscr *vsub, const struct osmo_routing_area_id *rai);
 };
 
 /* An instance of the VLR codebase */
