@@ -1200,6 +1200,14 @@ static void lu_fsm_wait_imeisv(struct osmo_fsm_inst *fi, uint32_t event,
 	}
 }
 
+static void lu_fsm_wait_pvlr_onenter(struct osmo_fsm_inst *fi, uint32_t prev_state)
+{
+	struct lu_fsm_priv *lfp = lu_fsm_fi_priv(fi);
+	struct vlr_instance *vlr = lfp->vlr;
+
+	vlr->ops.tx_pvlr_request(lfp->msc_conn_ref, &lfp->old_rai);
+}
+
 /* Wait for response from Send_Identification to PVLR */
 static void lu_fsm_wait_pvlr(struct osmo_fsm_inst *fi, uint32_t event,
 			     void *data)
@@ -1467,6 +1475,7 @@ static const struct osmo_fsm_state vlr_lu_fsm_states[] = {
 				  S(VLR_ULA_S_WAIT_HLR_CHECK_IMEI_EARLY) |
 				  S(VLR_ULA_S_DONE),
 		.name = OSMO_STRINGIFY(VLR_ULA_S_WAIT_PVLR),
+		.onenter = lu_fsm_wait_pvlr_onenter,
 		.action = lu_fsm_wait_pvlr,
 	},
 	[VLR_ULA_S_WAIT_AUTH] = {
