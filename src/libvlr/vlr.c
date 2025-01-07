@@ -597,11 +597,14 @@ static void dedup_vsub(struct vlr_subscr *exists, struct vlr_subscr *vsub)
 	struct vlr_instance *vlr = exists->vlr;
 	int i;
 	int j;
+	void *tmp = talloc_zero_size(vsub, 4);
+
 	LOGVLR(LOGL_NOTICE,
 	     "There is an existing subscriber for IMSI %s used by %s, replacing with new VLR subscr: %s used by %s\n",
-	     exists->imsi, osmo_use_count_to_str_c(OTC_SELECT, &exists->use_count),
+	     exists->imsi, osmo_use_count_to_str_c(tmp, &exists->use_count),
 	     vlr_subscr_name(vsub),
-	     osmo_use_count_to_str_c(OTC_SELECT, &vsub->use_count));
+	     osmo_use_count_to_str_c(tmp, &vsub->use_count));
+	talloc_free(tmp);
 
 	if (!vsub->msisdn[0])
 		OSMO_STRLCPY_ARRAY(vsub->msisdn, exists->msisdn);
