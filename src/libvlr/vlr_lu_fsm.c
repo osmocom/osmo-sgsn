@@ -1142,7 +1142,7 @@ static void _start_lu_main(struct osmo_fsm_inst *fi)
 	/* TODO: PUESBINE related handling */
 
 	/* Is previous LAI/RAI in this VLR? */
-	if (!vlr->ops.location_served(&lfp->old_rai)) {
+	if (!vlr->ops.location_served(lfp->vsub, &lfp->old_rai)) {
 		osmo_fsm_inst_state_chg(fi, VLR_ULA_S_WAIT_PVLR,
 					LU_TIMEOUT_LONG, 0);
 		return;
