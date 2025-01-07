@@ -1,0 +1,5 @@
+- use tdef in vlr timers
+- PS related re-transmission on Attach/RAU reject
+- VLR Handle Cancel Request
+- libvlr: vlr: when receiving imsi detach, purge the subscriber
+- TTCN3: write a MSC test case for Cancel Request
