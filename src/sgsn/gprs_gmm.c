@@ -2637,6 +2637,8 @@ int vlr_pvlr_request_cb(void *ref, const struct osmo_routing_area_id *old_rai)
 		ctx->gtp_local_ref_valid = true;
 	}
 
+	/* FIXME: if !rc: report back to PVLR failed */
+
 	return 0;
 }
 
