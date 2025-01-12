@@ -637,6 +637,7 @@ static int gsm48_rx_gmm_auth_ciph_resp(struct sgsn_mm_ctx *ctx,
 {
 	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
 	struct gsm48_auth_ciph_resp *acr = (struct gsm48_auth_ciph_resp *)gh->data;
+	struct osmo_mobile_identity mi;
 	struct tlv_parsed tp;
 	struct gsm_auth_tuple *at;
 	const char *res_name = "(no response)";
@@ -672,6 +673,28 @@ static int gsm48_rx_gmm_auth_ciph_resp(struct sgsn_mm_ctx *ctx,
 		LOGMMCTXP(LOGL_ERROR, ctx, "Missing mandantory IE\n");
 		return -EINVAL;
 	}
+
+	/* IMEI SV parsing */
+	if (TLVP_LEN(&tp, GSM48_IE_GMM_IMEISV) != 9) {
+		LOGMMCTXP(LOGL_ERROR, ctx, "-> GMM AUTH AND CIPH RESPONSE: Invalid IMEISV\n");
+		return -EINVAL;
+	}
+
+	/* FIXME: should we allow invalid IMEI SV? Are there phones which have broken SV in hex? */
+	if (osmo_mobile_identity_decode(&mi,
+					TLVP_VAL(&tp, GSM48_IE_GMM_IMEISV),
+					TLVP_LEN(&tp, GSM48_IE_GMM_IMEISV),
+					false)) {
+		LOGMMCTXP(LOGL_ERROR, ctx, "-> GMM AUTH AND CIPH RESPONSE: Cannot decode IMEISV\n");
+		return -EINVAL;
+	}
+
+	if (mi.type != GSM_MI_TYPE_IMEISV) {
+		LOGMMCTXP(LOGL_ERROR, ctx, "-> GMM AUTH AND CIPH RESPONSE: Invalid MI type found in IMEISV %d\n", mi.type);
+		return -EINVAL;
+	}
+
+	memcpy(&ctx->imei, mi.imeisv, ARRAY_SIZE(ctx->imei));
 
 	/* Start with the good old 4-byte SRES */
 	memcpy(res, TLVP_VAL(&tp, GSM48_IE_GMM_AUTH_SRES), 4);
