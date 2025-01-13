@@ -254,6 +254,11 @@ int sgsn_ra_bvc_reset_ind(uint16_t nsei, uint16_t bvci, struct osmo_cell_global_
 		ra_created = true;
 	}
 
+	/* FIXME: write a unit tests
+	 * move a present cell into a new routing area
+	 * The old cell isn't found then!
+	 */
+
 	if (!ra_created) {
 		cell = sgsn_ra_get_cell_by_ra(ra, cgi_ps->cell_identity);
 		if (cell && cell->ran_type == RA_TYPE_GERAN_Gb) {
