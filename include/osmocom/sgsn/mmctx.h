@@ -232,6 +232,15 @@ struct sgsn_mm_ctx {
 	/* the current GGSN look-up operation */
 	struct sgsn_ggsn_lookup *ggsn_lookup;
 
+	/* When a GSN requests a SGSN Context, we need to keep a reference */
+	uint32_t gtp_local_ref;
+	bool gtp_local_ref_valid;
+
+	/* GUTI will be used when a inter RAT from EUTRAN happens */
+	struct osmo_guti guti;
+	uint8_t eutran_nri;
+	bool guti_valid;
+
 	struct gprs_subscr	*subscr;
 	struct vlr_subscr	*vsub;
 	/* to know if subscriber is doing an attach or location update */
@@ -280,6 +289,7 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_by_tlli(uint32_t tlli,
 					const struct osmo_routing_area_id *raid);
 struct sgsn_mm_ctx *sgsn_mm_ctx_by_ptmsi(uint32_t tmsi);
 struct sgsn_mm_ctx *sgsn_mm_ctx_by_imsi(const char *imsi);
+struct sgsn_mm_ctx *sgsn_mm_ctx_by_gtp_local_ref(uint32_t local_ref);
 struct sgsn_mm_ctx *sgsn_mm_ctx_by_ue_ctx(const void *uectx);
 struct sgsn_mm_ctx *sgsn_mm_ctx_by_llme(const struct gprs_llc_llme *llme);
 
