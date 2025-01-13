@@ -12,6 +12,7 @@ struct sgsn_ggsn_ctx;
 struct sgsn_pdp_ctx;
 struct sgsn_mm_ctx;
 struct sgsn_mme_ctx;
+struct gsn_t;
 
 int sgsn_gtp_init(struct sgsn_instance *sgi);
 
@@ -27,3 +28,5 @@ int sgsn_gtp_data_req(struct osmo_routing_area_id *ra_id, int32_t tlli, uint8_t 
 		      struct msgb *msg, uint32_t npdu_len, uint8_t *npdu);
 int sgsn_delete_pdp_ctx(struct sgsn_pdp_ctx *pctx);
 int send_act_pdp_cont_acc(struct sgsn_pdp_ctx *pctx);
+
+int sgsn_context_ack(struct gsn_t *gsn, struct sgsn_mm_ctx *mmctx, uint8_t cause);

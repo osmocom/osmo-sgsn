@@ -752,6 +752,10 @@ static int gsm48_rx_gmm_auth_ciph_resp(struct sgsn_mm_ctx *ctx,
 	if (ctx->ran_type == MM_CTX_T_UTRAN_Iu)
 		ctx->iu.new_key = 1;
 
+	/* Gn: SGSN Context Req/Resp/Ack procedure */
+	if (ctx->gtp_local_ref_valid)
+		sgsn_context_ack(sgsn->gsn, ctx, GTPCAUSE_ACC_REQ);
+
 	/* FIXME: enable LLC cipheirng */
 	/* FIXME: This should _not_ trigger a FSM success */
 	osmo_fsm_inst_dispatch(ctx->gmm_fsm, E_GMM_COMMON_PROC_SUCCESS, NULL);
@@ -1472,6 +1476,41 @@ int gsm48_tx_gmm_ra_upd_rej_oldmsg(struct msgb *old_msg, uint8_t cause)
 	return gsm48_gmm_sendmsg(msg, 0, NULL, false);
 }
 
+/*! Calculate the GUTI from a Routing Area Update Request, P-TMSI, P-TMSI signature
+ *
+ * \param[in] msg
+ * \param[in] req
+ * \param[in] new_ra_id
+ * \param[out] guti
+ * \param[out] nas_token
+ * \return 0 on success
+ */
+static int get_guti(struct msgb *msg, struct gprs_gmm_ra_upd_req *req, uint32_t ptmsi, struct osmo_guti *guti, uint16_t *nas_token)
+{
+	/* uint16_t nas_token; */
+	uint8_t ptmsi_mtmsi;
+
+	OSMO_ASSERT(guti);
+
+	if (!TLVP_PRES_LEN(&req->tlv, GSM48_IE_GMM_PTMSI_SIG, 3))
+		return GMM_CAUSE_IE_NOTEXIST_NOTIMPL;
+
+	ptmsi_mtmsi = tlvp_val8(&req->tlv, GSM48_IE_GMM_PTMSI_SIG, 0);
+	/* nas_token only valid for UTRAN */
+	*nas_token = osmo_load16be(TLVP_VAL(&req->tlv, GSM48_IE_GMM_PTMSI_SIG) + 1);
+
+	guti->gummei.plmn = req->old_rai.lac.plmn;
+	guti->gummei.mme.group_id = req->old_rai.lac.lac;
+	guti->gummei.mme.code = req->old_rai.rac;
+	/* bits 31 to 30 are always 11; P-TMSI  bits29 to 24, 15 to 0 */
+	guti->mtmsi |= (1 << 31) | (1 << 30) | (ptmsi & 0x3f00ffff);
+	guti->mtmsi |= (ptmsi_mtmsi << 16);
+	/* bits 23 to 16 is the NRI */
+	/* eutran_nri = (ptmsi >> 16) & 0xff; */
+
+	return 0;
+}
+
 /* Chapter 9.4.14: Routing area update request */
 static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 				   struct gprs_llc_llme *llme)
@@ -1482,12 +1521,15 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	enum gsm48_gmm_cause reject_cause = GMM_CAUSE_PROTO_ERR_UNSPEC;
 	struct gprs_gmm_ra_upd_req req;
 	struct osmo_routing_area_id new_ra_id = {};
+	struct osmo_guti guti = {};
 	enum vlr_lu_type vlr_rau_type = VLR_LU_TYPE_REGULAR;
 	bool foreign_ra = false;
 	enum gsm48_ptsmi_type ptmsi_type = PTMSI_TYPE_NATIVE;
 	int rc;
+	uint16_t nas_token;
 	uint32_t ptmsi = 0xffffffff;
 	uint32_t tlli = 0xffffffff;
+	struct sgsn_mme_ctx *mme;
 
 	rc = gprs_gmm_parse_ra_upd_req(msg, &req);
 	if (rc) {
@@ -1580,16 +1622,46 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 		/* the UE is transitioning from EUTRAN to GERAN/UTRAN */
 		foreign_ra = true;
 
-		reject_cause = GMM_CAUSE_IMPL_DETACHED;
-		LOGP(DGPRS, LOGL_ERROR, "UE has a mapped P-TMSI. MME-to-SGSN mobility not implemented. Rejecting\n");
-		goto rejected;
+		rc = get_guti(msg, &req, ptmsi, &guti, &nas_token);
+		if (rc) {
+			reject_cause = GMM_CAUSE_IMPL_DETACHED;
+			LOGP(DGPRS, LOGL_ERROR, "Can't decode guti\n");
+			goto rejected;
+		}
+
+		mme = sgsn_mme_ctx_by_gummei(sgsn, &guti.gummei);
+		if (!mme) {
+			reject_cause = GMM_CAUSE_IMPL_DETACHED;
+			LOGP(DGPRS, LOGL_ERROR, "No MME found for Gummei %s", osmo_gummei_name(&guti.gummei));
+			/* FIXME: check for additional RAI + PTMSI */
+			goto rejected;
+		}
+
+		if (!mmctx) {
+			/* create a new MMCtx and ask for the context */
+			if (msgb_bcid(msg)) {
+				mmctx = sgsn_mm_ctx_alloc_gb(tlli, &req.old_rai);
+				if (mmctx)
+					mmctx->gb.llme = llme;
+			} else {
+				mmctx = sgsn_mm_ctx_alloc_iu(MSG_IU_UE_CTX(msg));
+			}
+
+			if (!mmctx)
+				goto rejected;
+
+			mmctx->p_tmsi = ptmsi;
+		}
+		mmctx->guti = guti;
+		mmctx->guti_valid = true;
 	} else { /* (ptmsi_type == PTMSI_TYPE_NATIVE) - 2G/3G PTMSI */
 		/* Check if this a local RA or a foreign */
 		struct sgsn_ra *ra;
 
 		ra = sgsn_ra_get_ra(&req.old_rai);
 		if (!ra) {
-			LOGP(DGPRS, LOGL_ERROR, "Can't find RA for native PTMSI. SGSN-to-SGSN mobility not implemented. Rejecting\n");
+			LOGP(DGPRS, LOGL_ERROR, "Can't find RA for native PTMSI. No SGSN-to-SGSN mobility implemented. Rejecting\n");
+			/* FIXME: implement SGSN to SGSN routing */
 			foreign_ra = true;
 			reject_cause = GMM_CAUSE_IMPL_DETACHED;
 			goto rejected;
@@ -2491,12 +2563,73 @@ static int vlr_tx_mm_info_cb(void *ref)
 /* decide if the location/routing area id is within the VLR or not */
 static bool vlr_location_served_cb(struct vlr_subscr *vsub, const struct osmo_routing_area_id *rai)
 {
+	struct sgsn_mm_ctx *mmctx = vsub->msc_conn_ref;
+
+	if (mmctx) {
+		return !mmctx->attach_rau.foreign;
+	}
+
+	/* FIXME: check if rai is valid */
+
 	return false;
 }
 
+/* VLR request the SGSN to ask the old SGSN/MME for more information */
 int vlr_pvlr_request_cb(void *ref, const struct osmo_routing_area_id *old_rai)
 {
-	return 1;
+	struct sgsn_mm_ctx *ctx = ref;
+	int rc;
+	uint32_t local_ref;
+	struct sgsn_mme_ctx *mme = NULL;
+	struct sockaddr_in remote = {};
+
+	union gtpie_member *ie[GTPIE_SIZE] = {};
+	union gtpie_member ie_elem[3] = {};
+	unsigned int i = 0;
+
+	if (!ctx)
+		return -EINVAL;
+
+	if (!ctx->guti_valid)
+		return -EINVAL;
+
+	mme = sgsn_mme_ctx_by_gummei(sgsn, &ctx->guti.gummei);
+	if (!mme) {
+		return -EINVAL;
+	}
+
+	remote.sin_family = AF_INET;
+	remote.sin_addr = mme->remote_addr;
+
+	if (ctx->p_tmsi != 0x0 && ctx->p_tmsi != 0xffffffff) {
+		ie_elem[i].tv4.t = GTPIE_P_TMSI;
+		ie_elem[i].tv4.v = osmo_htonl(ctx->p_tmsi);
+		ie[GTPIE_P_TMSI] = &ie_elem[i];
+		i++;
+	}
+
+	if (ctx->attach_rau.p_tmsi_sig_valid) {
+		ie_elem[i].tv0.t = GTPIE_P_TMSI_S;
+		memcpy(ie_elem[i].tv0.v, ctx->attach_rau.p_tmsi_sig, sizeof(ctx->attach_rau.p_tmsi_sig));
+		ie[GTPIE_P_TMSI_S] = &ie_elem[i];
+		i++;
+	}
+
+	ie_elem[i].tv0.t = GTPIE_RAI;
+	osmo_routing_area_id_encode_buf(ie_elem[i].tv0.v, 6, &ctx->attach_rau.old_rai);
+	ie[GTPIE_RAI] = &ie_elem[i];
+	i++;
+
+	rc = gtp_sgsn_context_req(sgsn->gsn, &local_ref, &remote, ie, GTPIE_SIZE);
+	if (!rc) {
+		/* FIXME: reject with impl. */
+		return -1;
+	} else {
+		ctx->gtp_local_ref = local_ref;
+		ctx->gtp_local_ref_valid = true;
+	}
+
+	return 0;
 }
 
 

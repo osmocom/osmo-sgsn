@@ -187,6 +187,20 @@ struct sgsn_mm_ctx *sgsn_mm_ctx_by_imsi(const char *imsi)
 
 }
 
+struct sgsn_mm_ctx *sgsn_mm_ctx_by_gtp_local_ref(uint32_t local_ref)
+{
+	struct sgsn_mm_ctx *ctx;
+
+	llist_for_each_entry(ctx, &sgsn->mm_list, list) {
+		if (!ctx->gtp_local_ref_valid)
+			continue;
+
+		if (ctx->gtp_local_ref == local_ref)
+			return ctx;
+	}
+	return NULL;
+}
+
 /* Allocate a new SGSN MM context, generic part */
 struct sgsn_mm_ctx *sgsn_mm_ctx_alloc(uint32_t rate_ctr_id)
 {
