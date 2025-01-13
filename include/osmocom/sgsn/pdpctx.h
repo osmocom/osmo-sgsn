@@ -33,6 +33,10 @@ enum pdp_ctx_state {
 	PDP_STATE_CR_REQ,
 	PDP_STATE_CR_CONF,
 
+	/* when received via SGSN Context Req from another SGSN/MME,
+	 * the PDP context needs to be updated with our own address */
+	PDP_STATE_NEED_UPDATE_GSN,
+
 	/* 04.08 / Figure 6.2 / 6.1.2.2 */
 	PDP_STATE_INACT_PEND,
 	PDP_STATE_INACTIVE = PDP_STATE_NONE,
@@ -96,6 +100,7 @@ struct sgsn_pdp_ctx *sgsn_pdp_ctx_alloc(struct sgsn_mm_ctx *mm,
 					uint8_t nsapi);
 void sgsn_pdp_ctx_terminate(struct sgsn_pdp_ctx *pdp);
 void sgsn_pdp_ctx_free(struct sgsn_pdp_ctx *pdp);
+int sgsn_pdp_ctx_gn_update(struct sgsn_pdp_ctx *pctx);
 
 #ifdef BUILD_IU
 int sgsn_pdp_ctx_iu_rab_activate(struct sgsn_pdp_ctx *pdp, uint8_t rab_id);
