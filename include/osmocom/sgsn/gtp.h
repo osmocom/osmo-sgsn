@@ -15,6 +15,7 @@ struct sgsn_ggsn_ctx;
 struct sgsn_pdp_ctx;
 struct sgsn_mm_ctx;
 struct sgsn_mme_ctx;
+struct gsn_t;
 
 int sgsn_gtp_init(struct sgsn_instance *sgi);
 
@@ -35,3 +36,5 @@ static inline int gsna_to_osa(struct osmo_sockaddr *dst, const struct ul16_t *in
 {
 	return osmo_sockaddr_from_octets(dst, &in->v[0], in->l);
 }
+
+int sgsn_context_ack(struct gsn_t *gsn, struct sgsn_mm_ctx *mmctx, uint8_t cause);
