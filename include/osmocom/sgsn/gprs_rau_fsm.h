@@ -27,6 +27,7 @@ struct sgsn_mm_ctx;
 enum gmm_rau_state {
 	GMM_RAU_S_INIT,
 	GMM_RAU_S_WAIT_VLR_ANSWER,
+	GMM_RAU_S_WAIT_GGSN_UPDATE,
 	GMM_RAU_S_WAIT_UE_RAU_COMPLETE,
 };
 
@@ -37,6 +38,7 @@ enum gmm_rau_events {
 	GMM_RAU_E_VLR_RAU_REJECT, /* Request to transmit Att/RAU Reject */
 	GMM_RAU_E_VLR_TERM_SUCCESS, /* VLR Lu FSM terminates. Inform GMM about Att/RAU Success (including Att/RAU complete) */
 	GMM_RAU_E_VLR_TERM_FAIL, /* VLR Lu FSM terminates. Inform GMM about Att/RAU fail */
+	GMM_RAU_E_GGSN_UPD_RESP,
 };
 
 /* To be used as data when terminating the fsm */
