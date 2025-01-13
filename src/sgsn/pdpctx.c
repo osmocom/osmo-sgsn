@@ -33,10 +33,11 @@
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/signal.h>
 #include <osmocom/sgsn/gtp_ggsn.h>
-#include <osmocom/sgsn/gprs_llc_xid.h>
-#include <osmocom/sgsn/gprs_sndcp.h>
 #include <osmocom/sgsn/gprs_llc.h>
+#include <osmocom/sgsn/gprs_llc_xid.h>
+#include <osmocom/sgsn/gprs_ranap.h>
 #include <osmocom/sgsn/gprs_sm.h>
+#include <osmocom/sgsn/gprs_sndcp.h>
 #include <osmocom/sgsn/gtp.h>
 
 static const struct rate_ctr_desc pdpctx_ctr_description[] = {
@@ -79,10 +80,37 @@ struct sgsn_pdp_ctx *sgsn_pdp_ctx_alloc(struct sgsn_mm_ctx *mm,
 		return NULL;
 	}
 	llist_add(&pdp->list, &mm->pdp_list);
-	sgsn_ggsn_ctx_add_pdp(pdp->ggsn, pdp);
+	if (pdp->ggsn)
+		sgsn_ggsn_ctx_add_pdp(pdp->ggsn, pdp);
 	llist_add(&pdp->g_list, &sgsn->pdp_list);
 
 	return pdp;
+}
+
+int sgsn_pdp_ctx_gn_update(struct sgsn_pdp_ctx *pctx)
+{
+	int rc = 0;
+
+	if (pctx->state == PDP_STATE_NEED_UPDATE_GSN) {
+		pctx->state = PDP_STATE_CR_CONF;
+		rc = gtp_update_context(pctx->ggsn->gsn, pctx->lib, pctx, &pctx->ggsn->remote_addr);
+	}
+
+	if (pctx->mm->ran_type == MM_CTX_T_GERAN_Gb) {
+		/* Activate the SNDCP layer */
+		sndcp_sm_activate_ind(&pctx->mm->gb.llme->lle[pctx->sapi], pctx->nsapi);
+	} else if (pctx->mm->ran_type == MM_CTX_T_UTRAN_Iu) {
+#ifdef BUILD_IU
+		/* Activate a radio bearer */
+		iu_rab_act_ps(pctx->lib->nsapi, pctx);
+		return 0;
+#else
+		return -ENOTSUP;
+#endif
+	}
+
+
+	return rc;
 }
 
 /*

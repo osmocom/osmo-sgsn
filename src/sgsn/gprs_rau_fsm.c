@@ -44,6 +44,7 @@ const struct value_string gmm_rau_event_names[] = {
 	OSMO_VALUE_STRING(GMM_RAU_E_UE_RAU_REQUEST),
 	OSMO_VALUE_STRING(GMM_RAU_E_VLR_RAU_ACCEPT),
 	OSMO_VALUE_STRING(GMM_RAU_E_VLR_RAU_REJECT),
+	OSMO_VALUE_STRING(GMM_RAU_E_GGSN_UPD_RESP),
 	OSMO_VALUE_STRING(GMM_RAU_E_UE_RAU_COMPLETE),
 	OSMO_VALUE_STRING(GMM_RAU_E_VLR_TERM_FAIL),
 	OSMO_VALUE_STRING(GMM_RAU_E_VLR_TERM_SUCCESS),
@@ -147,8 +148,13 @@ static void gmm_rau_fsm_s_wait_vlr(struct osmo_fsm_inst *fi, uint32_t event, voi
 		/* same RAU, a different RAU would terminate this FSM */
 		break;
 	case GMM_RAU_E_VLR_RAU_ACCEPT:
-		transmit_rau_accept(mmctx);
-		osmo_tdef_fsm_inst_state_chg(fi, GMM_RAU_S_WAIT_UE_RAU_COMPLETE, gmm_rau_tdef_states, gmm_rau_tdefs, 0);
+		/* delay forwarding it */
+		if (mmctx->attach_rau.foreign) {
+			osmo_tdef_fsm_inst_state_chg(fi, GMM_RAU_S_WAIT_GGSN_UPDATE, gmm_rau_tdef_states, gmm_rau_tdefs, 0);
+		} else {
+			transmit_rau_accept(mmctx);
+			osmo_tdef_fsm_inst_state_chg(fi, GMM_RAU_S_WAIT_UE_RAU_COMPLETE, gmm_rau_tdef_states, gmm_rau_tdefs, 0);
+		}
 		break;
 	case GMM_RAU_E_VLR_RAU_REJECT:
 		gmm_cause = (uint8_t) ((long) data & 0xff);
@@ -158,6 +164,58 @@ static void gmm_rau_fsm_s_wait_vlr(struct osmo_fsm_inst *fi, uint32_t event, voi
 		osmo_fsm_inst_term(fi, OSMO_FSM_TERM_ERROR, data);
 		break;
 	case GMM_RAU_E_VLR_TERM_SUCCESS:
+		break;
+	default:
+		OSMO_ASSERT(0);
+		break;
+	}
+}
+
+static int transmit_update_pdp_req(struct sgsn_mm_ctx *mmctx)
+{
+	struct sgsn_pdp_ctx *pctx;
+
+	/* Gn: SGSN Context Req/Resp/Ack procedure */
+	/* update the PDP Request should be done now */
+	llist_for_each_entry(pctx, &mmctx->pdp_list, list) {
+		if (pctx->ue_pdp_active)
+			sgsn_pdp_ctx_gn_update(pctx);
+		else
+			sgsn_pdp_ctx_terminate(pctx);
+	}
+
+	return 0;
+}
+
+void gmm_rau_fsm_s_wait_ggsn_onenter(struct osmo_fsm_inst *fi, uint32_t prev_state)
+{
+	struct sgsn_mm_ctx *mmctx = gmm_rau_fsm_priv(fi);
+	/* transmit Update PDP Request when doing a Inter-SGSN handover (or 4G->2G/4G) */
+
+	/* FIXME: move Gn into a FSM and wait for a response before sending out the RAU Accept */
+	/* update the PDP Request should be done now */
+	struct sgsn_pdp_ctx *pctx;
+	llist_for_each_entry(pctx, &mmctx->pdp_list, list) {
+		sgsn_pdp_ctx_gn_update(pctx);
+	}
+}
+
+static void gmm_rau_fsm_s_wait_ggsn(struct osmo_fsm_inst *fi, uint32_t event, void *data)
+{
+	struct sgsn_mm_ctx *mmctx = gmm_rau_fsm_priv(fi);
+
+	switch (event) {
+	case GMM_RAU_E_GGSN_UPD_RESP:
+		transmit_rau_accept(mmctx);
+		// FIXME: transmit Routing Area Update Accpet OR inform the VLR to continue ULA */
+		/* FIXME: check for *all* pdp before going to next state */
+		osmo_tdef_fsm_inst_state_chg(fi, GMM_RAU_S_WAIT_UE_RAU_COMPLETE, gmm_rau_tdef_states, gmm_rau_tdefs, 0);
+		break;
+	case GMM_RAU_E_VLR_RAU_REJECT:
+		/* FIXME */
+		break;
+	case GMM_RAU_E_UE_RAU_REQUEST:
+		/* same RAU, a different RAU would terminate this FSM */
 		break;
 	default:
 		OSMO_ASSERT(0);
@@ -302,10 +360,19 @@ static const struct osmo_fsm_state gmm_rau_fsm_states[] = {
 	},
 	[GMM_RAU_S_WAIT_VLR_ANSWER] = {
 		.in_event_mask = S(GMM_RAU_E_UE_RAU_REQUEST) | S(GMM_RAU_E_VLR_RAU_ACCEPT) | S(GMM_RAU_E_VLR_RAU_REJECT) | S(GMM_RAU_E_VLR_TERM_SUCCESS)| S(GMM_RAU_E_VLR_TERM_FAIL),
-		.out_state_mask = S(GMM_RAU_S_WAIT_UE_RAU_COMPLETE),
+		.out_state_mask = S(GMM_RAU_S_WAIT_GGSN_UPDATE) |
+			S(GMM_RAU_S_WAIT_UE_RAU_COMPLETE),
 		.name = OSMO_STRINGIFY(GMM_RAU_S_WAIT_VLR_ANSWER),
 		.action = gmm_rau_fsm_s_wait_vlr,
 	},
+	[GMM_RAU_S_WAIT_GGSN_UPDATE] = {
+		.in_event_mask = S(GMM_RAU_E_UE_RAU_REQUEST) | S(GMM_RAU_E_GGSN_UPD_RESP) | S(GMM_RAU_E_VLR_RAU_REJECT) | S(GMM_RAU_E_VLR_TERM_SUCCESS)| S(GMM_RAU_E_VLR_TERM_FAIL),
+		.out_state_mask = S(GMM_RAU_S_WAIT_UE_RAU_COMPLETE),
+		.name = OSMO_STRINGIFY(GMM_RAU_S_WAIT_GGSN_UPDATE),
+		.action = gmm_rau_fsm_s_wait_ggsn,
+		.onenter = gmm_rau_fsm_s_wait_ggsn_onenter,
+	},
+	/* FIXME: add PVLR step here as well? */
 	[GMM_RAU_S_WAIT_UE_RAU_COMPLETE] = {
 		.in_event_mask = S(GMM_RAU_E_UE_RAU_COMPLETE) | S(GMM_RAU_E_VLR_RAU_REJECT) | S(GMM_RAU_E_VLR_RAU_ACCEPT) | S(GMM_RAU_E_UE_RAU_REQUEST) | S(GMM_RAU_E_VLR_TERM_SUCCESS)| S(GMM_RAU_E_VLR_TERM_FAIL),
 		.out_state_mask = 0,
