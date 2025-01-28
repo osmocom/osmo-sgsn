@@ -86,6 +86,7 @@ sgsn_test_LDADD = \
 	$(top_builddir)/src/gprs/gprs_llc_parse.o \
 	$(top_builddir)/src/gprs/crc24.o \
 	$(top_builddir)/src/gprs/sgsn_ares.o \
+	$(top_builddir)/src/libvlr/libvlr.a \
 	$(LIBOSMOCORE_LIBS) \
 	$(LIBOSMOCTRL_LIBS) \
 	$(LIBOSMOGSM_LIBS) \
