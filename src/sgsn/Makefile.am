@@ -80,6 +80,7 @@ osmo_sgsn_LDADD = \
 	$(top_builddir)/src/gprs/crc24.o \
 	$(top_builddir)/src/gprs/gprs_utils.o \
 	$(top_builddir)/src/gprs/sgsn_ares.o \
+	$(top_builddir)/src/libvlr/libvlr.a \
 	$(OSMO_LIBS) \
 	$(LIBOSMOGSUPCLIENT_LIBS) \
 	$(LIBCARES_LIBS) \

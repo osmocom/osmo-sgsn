@@ -236,7 +236,9 @@ AC_OUTPUT(
     include/osmocom/Makefile
     include/osmocom/gtphub/Makefile
     include/osmocom/sgsn/Makefile
+    include/osmocom/vlr/Makefile
     src/Makefile
+    src/libvlr/Makefile
     src/gprs/Makefile
     src/sgsn/Makefile
     src/gtphub/Makefile
