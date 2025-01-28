@@ -1,4 +1,5 @@
 SUBDIRS = \
+	libvlr \
 	gprs \
 	sgsn \
 	gtphub \
