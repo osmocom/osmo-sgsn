@@ -1,3 +1,38 @@
+osmo-sgsn (1.13.0) unstable; urgency=medium
+
+  [ Pau Espin Pedrol ]
+  * Fix DeactPDPCtxAcc when UE goes PMM ENABLED but lost its PDP context
+  * gtp: Set Direct Tunnel Flags DTI during UpdatePDPCtx
+  * Announce SGSN own TEID during UpdatePDPCtxReq after UE goes PMM-IDLE
+  * Handle rx UpdatePDPCtxReq with Tunnel Direct Flags EI=1
+  * Fix double free during RAU with unexpected Old RAI
+  * llc: Mark old/current tlli as all 1's when unassigning LLME
+  * ranap: Fix decoding of padded ITU X.213 IPv4 TLA in Rab Ass Resp
+  * ranap: Reject ActivatePDPCtx from UE if RABAssResp parsing fails
+  * jenkins.sh: libosmo-netif no longer depends on libosmo-abis
+  * vty: Avoid accessing gsupclient object fields directly
+  * sgsn_vty: Drop unneeded use of abis/ipa.h header
+  * jenkins.sh: No need to build libosmo-sigtran with doxygen
+
+  [ Alexander Couzens ]
+  * includes: sgsn.h: use full path include for gtp.h
+  * includes: add forward declartion of external types
+  * Replace gprs_ra_id with modern osmo_routing_area_id
+  * GTP: CreatePDPContext: only use IMEISV IE when IMEISV is known
+  * GMM: rework PDP context status
+  * gprs_ms_net_cap_gea_mask(): protect against empty MS Network Capabilities
+
+  [ Vadim Yanitskiy ]
+  * build: remove indirect libosmo-netif dependency
+  * build: do not link against libosmo-abis
+  * sm: pdpctx_timer_stop(): warn about timer not running
+
+  [ Oliver Smith ]
+  * debian/control: remove build-dep: libosmo-sccp-dev
+  * contrib/jenkins: libosmo-sccp -> libosmo-sigtran
+
+ -- Oliver Smith <osmith@sysmocom.de>  Thu, 13 Feb 2025 15:10:23 +0100
+
 osmo-sgsn (1.12.0) unstable; urgency=medium
 
   [ Andreas Eversberg ]
