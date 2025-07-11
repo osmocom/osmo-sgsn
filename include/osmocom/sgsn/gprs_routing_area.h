@@ -56,13 +56,13 @@ struct sgsn_ra_cell {
 	struct sgsn_ra *ra;
 
 	enum sgsn_ra_ran_type ran_type;
-
-	uint16_t cell_id;
 	union {
 		struct {
 			uint16_t nsei;
 			uint16_t bvci;
+			uint16_t cell_id;
 		} geran;
+
 		struct {
 			/* TODO: unused */
 			uint16_t rncid;

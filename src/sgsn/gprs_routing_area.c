@@ -102,8 +102,8 @@ struct sgsn_ra_cell *sgsn_ra_cell_alloc_geran(struct sgsn_ra *ra, uint16_t cell_
 		return NULL;
 
 	cell->ra = ra;
-	cell->cell_id = cell_id;
 	cell->ran_type = RA_TYPE_GERAN_Gb;
+	cell->u.geran.cell_id = cell_id;
 	cell->u.geran.bvci = bvci;
 	cell->u.geran.nsei = nsei;
 
@@ -207,7 +207,10 @@ struct sgsn_ra_cell *sgsn_ra_get_cell_by_ra(const struct sgsn_ra *ra, uint16_t c
 		return NULL;
 
 	llist_for_each_entry(cell, &ra->cells_alive_list, list) {
-		if (cell->cell_id == cell_id)
+		if (cell->ran_type != RA_TYPE_GERAN_Gb)
+			continue;
+
+		if (cell->u.geran.cell_id == cell_id)
 			return cell;
 	}
 
@@ -230,7 +233,10 @@ struct sgsn_ra_cell *sgsn_ra_get_cell_by_lai(const struct osmo_location_area_id 
 			continue;
 
 		llist_for_each_entry(cell, &ra->cells_alive_list, list) {
-			if (cell->cell_id == cell_id)
+			if (cell->ran_type != RA_TYPE_GERAN_Gb)
+				continue;
+
+			if (cell->u.geran.cell_id == cell_id)
 				return cell;
 		}
 	}
