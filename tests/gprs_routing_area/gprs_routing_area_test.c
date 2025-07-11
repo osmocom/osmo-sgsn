@@ -75,7 +75,7 @@ static void test_routing_area_create(void)
 	printf("Testing Routing Area create/free\n");
 
 	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
-	ra = sgsn_ra_alloc(&raid);
+	ra = sgsn_ra_alloc(&raid, RA_TYPE_GERAN_Gb);
 	OSMO_ASSERT(ra);
 	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
 
@@ -105,26 +105,26 @@ static void test_routing_area_free_empty(void)
 	printf("Testing Routing Area create/free\n");
 
 	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
-	ra = sgsn_ra_alloc(&raid);
+	ra = sgsn_ra_alloc(&raid, RA_TYPE_GERAN_Gb);
 	OSMO_ASSERT(ra);
 	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
 
 	cell_a = sgsn_ra_cell_alloc_geran(ra, cell_id, nsei, bvci);
 	OSMO_ASSERT(cell_a);
 	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
-	OSMO_ASSERT(llist_count(&ra->cells) == 1);
+	OSMO_ASSERT(llist_count(&ra->cells_alive_list) == 1);
 
 	sgsn_ra_free(ra);
 	OSMO_ASSERT(llist_empty(&sgsn->routing_area->ra_list));
 
-	ra = sgsn_ra_alloc(&raid);
+	ra = sgsn_ra_alloc(&raid, RA_TYPE_GERAN_Gb);
 	OSMO_ASSERT(ra);
 	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
 
 	cell_a = sgsn_ra_cell_alloc_geran(ra, cell_id, nsei, bvci);
 	OSMO_ASSERT(cell_a);
 	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
-	OSMO_ASSERT(llist_count(&ra->cells) == 1);
+	OSMO_ASSERT(llist_count(&ra->cells_alive_list) == 1);
 
 	sgsn_ra_free(ra);
 	OSMO_ASSERT(llist_empty(&sgsn->routing_area->ra_list));
@@ -160,7 +160,7 @@ static void test_routing_area_find(void)
 	printf("Testing Routing Area find\n");
 
 	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
-	ra_a = sgsn_ra_alloc(&ra_id);
+	ra_a = sgsn_ra_alloc(&ra_id, RA_TYPE_GERAN_Gb);
 	OSMO_ASSERT(ra_a);
 	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
 
@@ -194,7 +194,7 @@ static void test_routing_area_find(void)
 	cgi.cell_identity = cell_id_not_found;
 	cgi_ps.cell_identity = cell_id_not_found;
 
-	ra_a = sgsn_ra_alloc(&ra_id);
+	ra_a = sgsn_ra_alloc(&ra_id, RA_TYPE_GERAN_Gb);
 	OSMO_ASSERT(ra_a);
 	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
 
@@ -263,14 +263,14 @@ static void test_routing_area_reset_ind(void)
 	printf("Testing Routing Area BSSGP BVC RESET IND\n");
 
 	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
-	ra_a = sgsn_ra_alloc(&ra_id);
+	ra_a = sgsn_ra_alloc(&ra_id, RA_TYPE_GERAN_Gb);
 	OSMO_ASSERT(ra_a);
 	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
-	OSMO_ASSERT(llist_count(&ra_a->cells) == 0);
+	OSMO_ASSERT(llist_count(&ra_a->cells_alive_list) == 0);
 
 	rc = sgsn_ra_bvc_reset_ind(nsei, bvci, &cgi_ps);
 	OSMO_ASSERT(rc == 0);
-	OSMO_ASSERT(llist_count(&ra_a->cells) == 1);
+	OSMO_ASSERT(llist_count(&ra_a->cells_alive_list) == 1);
 
 	cell_a = sgsn_ra_get_cell_by_cgi(&cgi);
 	OSMO_ASSERT(cell_a);
@@ -324,7 +324,7 @@ void test_routing_area_nsei_free(void)
 	OSMO_ASSERT(rc == 0);
 
 	ra_a = sgsn_ra_get_ra(&cgi_ps.rai);
-	OSMO_ASSERT(llist_count(&ra_a->cells) == 1);
+	OSMO_ASSERT(llist_count(&ra_a->cells_alive_list) == 1);
 
 	rc = sgsn_ra_nsei_failure_ind(nsei);
 	OSMO_ASSERT(rc == 0);

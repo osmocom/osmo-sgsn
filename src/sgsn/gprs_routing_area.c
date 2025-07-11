@@ -23,6 +23,7 @@
 #include <osmocom/core/linuxlist.h>
 #include <osmocom/core/logging.h>
 #include <osmocom/core/rate_ctr.h>
+#include <osmocom/core/utils.h>
 #include <osmocom/gsm/gsm48.h>
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/gprs_bssgp.h>
@@ -30,6 +31,12 @@
 #include <osmocom/sgsn/sgsn.h>
 
 #include <osmocom/sgsn/gprs_routing_area.h>
+
+const struct value_string sgsn_ra_ran_type_names[] = {
+	{ RA_TYPE_GERAN_Gb,	"GERAN_Gb" },
+	{ RA_TYPE_UTRAN_Iu,	"UTRAN_Iu" },
+	{ 0,                    NULL },
+};
 
 static void _sgsn_ra_cell_free(struct sgsn_ra_cell *cell, bool drop_empty_ra)
 {
@@ -48,7 +55,7 @@ static void _sgsn_ra_cell_free(struct sgsn_ra_cell *cell, bool drop_empty_ra)
 	ra = cell->ra;
 	talloc_free(cell);
 
-	if (llist_empty(&ra->cells))
+	if (llist_empty(&ra->cells_alive_list))
 		sgsn_ra_free(ra);
 }
 
@@ -64,7 +71,7 @@ void sgsn_ra_free(struct sgsn_ra *ra)
 	if (!ra)
 		return;
 
-	llist_for_each_entry_safe(cell, cell2, &ra->cells, list) {
+	llist_for_each_entry_safe(cell, cell2, &ra->cells_alive_list, list) {
 		_sgsn_ra_cell_free(cell, false);
 	}
 
@@ -72,15 +79,16 @@ void sgsn_ra_free(struct sgsn_ra *ra)
 	talloc_free(ra);
 }
 
-struct sgsn_ra *sgsn_ra_alloc(const struct osmo_routing_area_id *rai)
+struct sgsn_ra *sgsn_ra_alloc(const struct osmo_routing_area_id *rai, enum sgsn_ra_ran_type ran_type)
 {
 	struct sgsn_ra *ra;
 	ra = talloc_zero(sgsn->routing_area, struct sgsn_ra);
 	if (!ra)
 		return NULL;
 
-	INIT_LLIST_HEAD(&ra->cells);
+	INIT_LLIST_HEAD(&ra->cells_alive_list);
 	ra->rai = *rai;
+	ra->ran_type = ran_type;
 	llist_add(&ra->list, &sgsn->routing_area->ra_list);
 	return ra;
 }
@@ -99,7 +107,7 @@ struct sgsn_ra_cell *sgsn_ra_cell_alloc_geran(struct sgsn_ra *ra, uint16_t cell_
 	cell->u.geran.bvci = bvci;
 	cell->u.geran.nsei = nsei;
 
-	llist_add(&cell->list, &ra->cells);
+	llist_add(&cell->list, &ra->cells_alive_list);
 
 	return cell;
 }
@@ -115,6 +123,19 @@ struct sgsn_ra *sgsn_ra_get_ra(const struct osmo_routing_area_id *ra_id)
 	return NULL;
 }
 
+struct sgsn_ra *sgsn_ra_get_ra_geran(const struct osmo_routing_area_id *ra_id)
+{
+	struct sgsn_ra *ra = sgsn_ra_get_ra(ra_id);
+
+	if (!ra)
+		return ra;
+
+	if (ra->ran_type == RA_TYPE_GERAN_Gb)
+		return ra;
+
+	return NULL;
+}
+
 struct sgsn_ra_cell *sgsn_ra_get_cell_by_gb(uint16_t nsei, uint16_t bvci)
 {
 	struct sgsn_ra *ra;
@@ -125,7 +146,10 @@ struct sgsn_ra_cell *sgsn_ra_get_cell_by_gb(uint16_t nsei, uint16_t bvci)
 		return NULL;
 
 	llist_for_each_entry(ra, &sgsn->routing_area->ra_list, list) {
-		llist_for_each_entry(cell, &ra->cells, list) {
+		if (ra->ran_type != RA_TYPE_GERAN_Gb)
+			continue;
+
+		llist_for_each_entry(cell, &ra->cells_alive_list, list) {
 			if (cell->ran_type != RA_TYPE_GERAN_Gb)
 				continue;
 
@@ -144,7 +168,7 @@ int sgsn_ra_foreach_cell(struct sgsn_ra *ra, sgsn_ra_cb_t *cb, void *cb_data)
 
 	OSMO_ASSERT(cb);
 
-	llist_for_each_entry_safe(cell, tmp, &ra->cells, list) {
+	llist_for_each_entry_safe(cell, tmp, &ra->cells_alive_list, list) {
 		ret = cb(cell, cb_data);
 		switch (ret) {
 		case SGSN_RA_CB_CONT:
@@ -174,11 +198,15 @@ int sgsn_ra_foreach_cell2(struct osmo_routing_area_id *ra_id, sgsn_ra_cb_t *cb, 
 	return sgsn_ra_foreach_cell(ra, cb, cb_data);
 }
 
+/* valid for GERAN */
 struct sgsn_ra_cell *sgsn_ra_get_cell_by_ra(const struct sgsn_ra *ra, uint16_t cell_id)
 {
 	struct sgsn_ra_cell *cell;
 
-	llist_for_each_entry(cell, &ra->cells, list) {
+	if (ra->ran_type != RA_TYPE_GERAN_Gb)
+		return NULL;
+
+	llist_for_each_entry(cell, &ra->cells_alive_list, list) {
 		if (cell->cell_id == cell_id)
 			return cell;
 	}
@@ -186,6 +214,7 @@ struct sgsn_ra_cell *sgsn_ra_get_cell_by_ra(const struct sgsn_ra *ra, uint16_t c
 	return NULL;
 }
 
+/* valid for GERAN */
 struct sgsn_ra_cell *sgsn_ra_get_cell_by_lai(const struct osmo_location_area_id *lai, uint16_t cell_id)
 {
 	struct sgsn_ra *ra;
@@ -194,10 +223,13 @@ struct sgsn_ra_cell *sgsn_ra_get_cell_by_lai(const struct osmo_location_area_id 
 	/* This is a little bit in-efficient. A more performance way, but more complex would
 	 * adding a llist for LAC on top of the routing areas */
 	llist_for_each_entry(ra, &sgsn->routing_area->ra_list, list) {
+		if (ra->ran_type != RA_TYPE_GERAN_Gb)
+			continue;
+
 		if (osmo_lai_cmp(&ra->rai.lac, lai) != 0)
 			continue;
 
-		llist_for_each_entry(cell, &ra->cells, list) {
+		llist_for_each_entry(cell, &ra->cells_alive_list, list) {
 			if (cell->cell_id == cell_id)
 				return cell;
 		}
@@ -206,7 +238,7 @@ struct sgsn_ra_cell *sgsn_ra_get_cell_by_lai(const struct osmo_location_area_id 
 	return NULL;
 }
 
-/*! Return the cell by searching for the RA, when found, search the cell within the RA
+/*! Return the GERAN cell by searching for the RA, when found, search the cell within the RA
  *
  * \param cgi_ps
  * \return the cell or NULL if not found
@@ -217,7 +249,7 @@ struct sgsn_ra_cell *sgsn_ra_get_cell_by_cgi_ps(const struct osmo_cell_global_id
 
 	OSMO_ASSERT(cgi_ps);
 
-	ra = sgsn_ra_get_ra(&cgi_ps->rai);
+	ra = sgsn_ra_get_ra_geran(&cgi_ps->rai);
 	if (!ra)
 		return NULL;
 
@@ -246,9 +278,10 @@ int sgsn_ra_bvc_reset_ind(uint16_t nsei, uint16_t bvci, struct osmo_cell_global_
 	OSMO_ASSERT(cgi_ps);
 
 	/* TODO: do we have to move all MS to GMM IDLE state when this happens for a alive cell which got reseted? */
-	ra = sgsn_ra_get_ra(&cgi_ps->rai);
+	ra = sgsn_ra_get_ra_geran(&cgi_ps->rai);
 	if (!ra) {
-		ra = sgsn_ra_alloc(&cgi_ps->rai);
+		/* TODO: check for UTRAN rai when introducing UTRAN support */
+		ra = sgsn_ra_alloc(&cgi_ps->rai, RA_TYPE_GERAN_Gb);
 		if (!ra)
 			return -ENOMEM;
 		ra_created = true;
@@ -312,7 +345,10 @@ int sgsn_ra_nsei_failure_ind(uint16_t nsei)
 	bool found = false;
 
 	llist_for_each_entry_safe(ra, ra2, &sgsn->routing_area->ra_list, list) {
-		llist_for_each_entry_safe(cell, cell2, &ra->cells, list) {
+		if (ra->ran_type != RA_TYPE_GERAN_Gb)
+			continue;
+
+		llist_for_each_entry_safe(cell, cell2, &ra->cells_alive_list, list) {
 			if (cell->ran_type != RA_TYPE_GERAN_Gb)
 				continue;
 
@@ -322,9 +358,8 @@ int sgsn_ra_nsei_failure_ind(uint16_t nsei)
 			}
 		}
 
-		if (llist_empty(&ra->cells))
+		if (llist_empty(&ra->cells_alive_list))
 			sgsn_ra_free(ra);
-
 	}
 
 	return found ? 0 : -ENOENT;
@@ -338,11 +373,11 @@ int sgsn_ra_geran_page_ra(struct osmo_routing_area_id *ra_id, struct sgsn_mm_ctx
 
 	rate_ctr_inc(rate_ctr_group_get_ctr(mmctx->ctrg, GMM_CTR_PAGING_PS));
 
-	ra = sgsn_ra_get_ra(ra_id);
+	ra = sgsn_ra_get_ra_geran(ra_id);
 	if (!ra)
 		return -ENOENT;
 
-	llist_for_each_entry(cell, &ra->cells, list) {
+	llist_for_each_entry(cell, &ra->cells_alive_list, list) {
 		if (cell->ran_type == RA_TYPE_GERAN_Gb) {
 			sgsn_bssgp_page_ps_bvci(mmctx, cell->u.geran.nsei, cell->u.geran.bvci);
 			ret = 0;
