@@ -75,7 +75,7 @@ static void test_routing_area_create(void)
 	printf("Testing Routing Area create/free\n");
 
 	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
-	ra = sgsn_ra_alloc(&rai, RA_TYPE_GERAN_Gb);
+	ra = sgsn_ra_find_or_create(&rai, RA_TYPE_GERAN_Gb);
 	OSMO_ASSERT(ra);
 	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
 
@@ -105,7 +105,7 @@ static void test_routing_area_free_empty(void)
 	printf("Testing Routing Area create/free\n");
 
 	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
-	ra = sgsn_ra_alloc(&rai, RA_TYPE_GERAN_Gb);
+	ra = sgsn_ra_find_or_create(&rai, RA_TYPE_GERAN_Gb);
 	OSMO_ASSERT(ra);
 	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
 
@@ -117,7 +117,7 @@ static void test_routing_area_free_empty(void)
 	sgsn_ra_free(ra);
 	OSMO_ASSERT(llist_empty(&sgsn->routing_area->ra_list));
 
-	ra = sgsn_ra_alloc(&rai, RA_TYPE_GERAN_Gb);
+	ra = sgsn_ra_find_or_create(&rai, RA_TYPE_GERAN_Gb);
 	OSMO_ASSERT(ra);
 	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
 
@@ -160,7 +160,7 @@ static void test_routing_area_find(void)
 	printf("Testing Routing Area find\n");
 
 	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
-	ra_a = sgsn_ra_alloc(&rai, RA_TYPE_GERAN_Gb);
+	ra_a = sgsn_ra_find_or_create(&rai, RA_TYPE_GERAN_Gb);
 	OSMO_ASSERT(ra_a);
 	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
 
@@ -194,7 +194,7 @@ static void test_routing_area_find(void)
 	cgi.cell_identity = cell_id_not_found;
 	cgi_ps.cell_identity = cell_id_not_found;
 
-	ra_a = sgsn_ra_alloc(&rai, RA_TYPE_GERAN_Gb);
+	ra_a = sgsn_ra_find_or_create(&rai, RA_TYPE_GERAN_Gb);
 	OSMO_ASSERT(ra_a);
 	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
 
@@ -263,7 +263,7 @@ static void test_routing_area_reset_ind(void)
 	printf("Testing Routing Area BSSGP BVC RESET IND\n");
 
 	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
-	ra_a = sgsn_ra_alloc(&rai, RA_TYPE_GERAN_Gb);
+	ra_a = sgsn_ra_find_or_create(&rai, RA_TYPE_GERAN_Gb);
 	OSMO_ASSERT(ra_a);
 	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
 	OSMO_ASSERT(llist_count(&ra_a->cells_alive_list) == 0);

@@ -93,6 +93,26 @@ struct sgsn_ra *sgsn_ra_alloc(const struct osmo_routing_area_id *rai, enum sgsn_
 	return ra;
 }
 
+struct sgsn_ra *sgsn_ra_find_or_create(const struct osmo_routing_area_id *rai, enum sgsn_ra_ran_type ran_type)
+{
+	struct sgsn_ra *ra = sgsn_ra_get_ra(rai);
+
+	if (ra) {
+		if (ra->ran_type == ran_type) {
+			LOGP(DRA, LOGL_ERROR, "Trying to create an already existing RA %s with the same ran type %s. Using old RA.\n",
+			     osmo_rai_name2(rai), get_value_string(sgsn_ra_ran_type_names, ra->ran_type));
+
+			return ra;
+		}
+
+		LOGP(DRA, LOGL_ERROR, "Failed to create an already existing RA %s with a different ran type %s.\n",
+		     osmo_rai_name2(rai), get_value_string(sgsn_ra_ran_type_names, ra->ran_type));
+		return NULL;
+	}
+
+	return sgsn_ra_alloc(rai, ran_type);
+}
+
 struct sgsn_ra_cell *sgsn_ra_cell_alloc_geran(struct sgsn_ra *ra, uint16_t cell_id, uint16_t nsei, uint16_t bvci)
 {
 	struct sgsn_ra_cell *cell;
@@ -287,7 +307,7 @@ int sgsn_ra_bvc_reset_ind(uint16_t nsei, uint16_t bvci, struct osmo_cell_global_
 	ra = sgsn_ra_get_ra_geran(&cgi_ps->rai);
 	if (!ra) {
 		/* TODO: check for UTRAN rai when introducing UTRAN support */
-		ra = sgsn_ra_alloc(&cgi_ps->rai, RA_TYPE_GERAN_Gb);
+		ra = sgsn_ra_find_or_create(&cgi_ps->rai, RA_TYPE_GERAN_Gb);
 		if (!ra)
 			return -ENOMEM;
 		ra_created = true;

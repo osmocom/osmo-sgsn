@@ -74,6 +74,7 @@ struct sgsn_ra_cell {
 void sgsn_ra_init(struct sgsn_instance *inst);
 
 struct sgsn_ra *sgsn_ra_alloc(const struct osmo_routing_area_id *rai, enum sgsn_ra_ran_type ran_type);
+struct sgsn_ra *sgsn_ra_find_or_create(const struct osmo_routing_area_id *rai, enum sgsn_ra_ran_type ran_type);
 void sgsn_ra_free(struct sgsn_ra *ra);
 struct sgsn_ra_cell *sgsn_ra_cell_alloc_geran(struct sgsn_ra *ra, uint16_t cell_id, uint16_t nsei, uint16_t bvci);
 void sgsn_ra_cell_free(struct sgsn_ra_cell *cell);
