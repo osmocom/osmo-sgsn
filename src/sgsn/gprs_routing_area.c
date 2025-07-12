@@ -80,7 +80,21 @@ void sgsn_ra_free(struct sgsn_ra *ra)
 
 struct sgsn_ra *sgsn_ra_alloc(const struct osmo_routing_area_id *rai, enum sgsn_ra_ran_type ran_type)
 {
-	struct sgsn_ra *ra;
+	struct sgsn_ra *ra = sgsn_ra_get_ra(rai);
+
+	if (ra) {
+		if (ra->ran_type == ran_type) {
+			LOGP(DRA, LOGL_ERROR, "Trying to create an already existing RA %s with the same ran type %s. Using old RA.\n",
+			     osmo_rai_name2(rai), get_value_string(sgsn_ra_ran_type_names, ra->ran_type));
+
+			return ra;
+		}
+
+		LOGP(DRA, LOGL_ERROR, "Failed to create an already existing RA %s with a different ran type %s.\n",
+		     osmo_rai_name2(rai), get_value_string(sgsn_ra_ran_type_names, ra->ran_type));
+		return NULL;
+	}
+
 	ra = talloc_zero(sgsn->routing_area, struct sgsn_ra);
 	if (!ra)
 		return NULL;
