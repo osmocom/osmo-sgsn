@@ -23,6 +23,7 @@
 #include <osmocom/core/linuxlist.h>
 #include <osmocom/core/logging.h>
 #include <osmocom/core/rate_ctr.h>
+#include <osmocom/core/utils.h>
 #include <osmocom/gsm/gsm48.h>
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/gprs_bssgp.h>
@@ -30,6 +31,11 @@
 #include <osmocom/sgsn/sgsn.h>
 
 #include <osmocom/sgsn/gprs_routing_area.h>
+
+const struct value_string sgsn_ra_ran_type_names[] = {
+	{ RA_TYPE_GERAN_Gb,	"GERAN_Gb"},
+	{ RA_TYPE_UTRAN_Iu,	"UTRAN_Iu"},
+};
 
 static void _sgsn_ra_cell_free(struct sgsn_ra_cell *cell, bool drop_empty_ra)
 {

@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 #include <osmocom/core/linuxlist.h>
+#include <osmocom/core/utils.h>
 #include <osmocom/gsm/gsm23003.h>
 
 struct sgsn_instance;
@@ -20,6 +21,8 @@ enum sgsn_ra_ran_type {
 	RA_TYPE_GERAN_Gb,
 	RA_TYPE_UTRAN_Iu,
 };
+
+extern const struct value_string sgsn_ra_ran_type_names[];
 
 struct sgsn_ra {
 	/* Entry in sgsn_ra_global->ra_list */
