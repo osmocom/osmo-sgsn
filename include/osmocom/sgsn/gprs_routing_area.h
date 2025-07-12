@@ -9,6 +9,18 @@
 #include <osmocom/core/utils.h>
 #include <osmocom/gsm/gsm23003.h>
 
+/* rai -> struct osmo_routing_area_id * */
+#define LOGRAI(level, rai, fmt, args...) \
+	do {\
+		char __log_rai_buf[32]; \
+		osmo_rai_name2_buf(__log_rai_buf, sizeof(__log_rai_buf), rai); \
+		LOGP(DRA, level, "RA(%s) " fmt, __log_rai_buf, ## args); \
+	} while (0)
+
+/* ra -> struct sgsn_ra * */
+#define LOGRA(level, ra, fmt, args...) \
+	LOGRAI(level, (&(ra)->rai), fmt, ## args)
+
 struct sgsn_instance;
 struct sgsn_mm_ctx;
 
