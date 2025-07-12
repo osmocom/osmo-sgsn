@@ -1249,7 +1249,7 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 	uint8_t msnc_len, att_type, mi_len, ms_ra_acc_cap_len;
 	uint16_t drx_par;
 	char mi_log_string[32];
-	struct osmo_routing_area_id ra_id;
+	struct osmo_routing_area_id rai;
 	uint16_t cid = 0;
 	enum gsm48_gmm_cause reject_cause;
 	struct osmo_mobile_identity mi;
@@ -1264,10 +1264,10 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 
 	if (!MSG_IU_UE_CTX(msg)) {
 		/* Gb mode */
-		bssgp_parse_cell_id2(&ra_id, &cid, msgb_bcid(msg), 8);
+		bssgp_parse_cell_id2(&rai, &cid, msgb_bcid(msg), 8);
 	} else {
 #ifdef BUILD_IU
-		gprs_rai_to_osmo(&ra_id, &MSG_IU_UE_CTX(msg)->ra_id);
+		gprs_rai_to_osmo(&rai, &MSG_IU_UE_CTX(msg)->ra_id);
 #else
 		LOGMMCTXP(LOGL_ERROR, ctx, "Cannot handle Iu Attach Request, built without Iu support\n");
 		return -ENOTSUP;
@@ -1330,7 +1330,7 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 			if (MSG_IU_UE_CTX(msg))
 				ctx = sgsn_mm_ctx_alloc_iu(MSG_IU_UE_CTX(msg));
 			else
-				ctx = sgsn_mm_ctx_alloc_gb(0, &ra_id);
+				ctx = sgsn_mm_ctx_alloc_gb(0, &rai);
 			if (!ctx) {
 				reject_cause = GMM_CAUSE_NET_FAIL;
 				goto rejected;
@@ -1348,7 +1348,7 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 			if (MSG_IU_UE_CTX(msg))
 				ctx = sgsn_mm_ctx_alloc_iu(MSG_IU_UE_CTX(msg));
 			else
-				ctx = sgsn_mm_ctx_alloc_gb(msgb_tlli(msg), &ra_id);
+				ctx = sgsn_mm_ctx_alloc_gb(msgb_tlli(msg), &rai);
 			if (!ctx) {
 				reject_cause = GMM_CAUSE_NET_FAIL;
 				goto rejected;
@@ -1372,7 +1372,7 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 	}
 	msgid2mmctx(ctx, msg);
 	/* Update MM Context with currient RA and Cell ID */
-	ctx->ra = ra_id;
+	ctx->ra = rai;
 	if (ctx->ran_type == MM_CTX_T_GERAN_Gb)
 		ctx->gb.cell_id = cid;
 

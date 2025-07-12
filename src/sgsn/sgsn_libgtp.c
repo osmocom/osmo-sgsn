@@ -144,7 +144,7 @@ struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
 					 uint16_t nsapi,
 					 struct tlv_parsed *tp)
 {
-	struct osmo_routing_area_id raid = {};
+	struct osmo_routing_area_id rai = {};
 	struct sgsn_pdp_ctx *pctx;
 	struct pdp_t *pdp;
 	uint64_t imsi_ui64;
@@ -273,10 +273,10 @@ struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
 
 	/* Routing Area Identifier with LAC and RAC fixed values, as
 	 * requested in 29.006 7.3.1 */
-	raid = mmctx->ra;
-	raid.lac.lac = 0xFFFE;
-	raid.rac = 0xFF;
-	osmo_routing_area_id_encode_buf(pdp->rai.v, pdp->rai.l, &raid);
+	rai = mmctx->ra;
+	rai.lac.lac = 0xFFFE;
+	rai.rac = 0xFF;
+	osmo_routing_area_id_encode_buf(pdp->rai.v, pdp->rai.l, &rai);
 
 	/* Encode User Location Information accordint to TS 29.060 7.7.51 */
 	pdp->userloc_given = 1;
@@ -894,14 +894,14 @@ static int cb_data_ind(struct pdp_t *lib, void *packet, unsigned int len)
 }
 
 /* Called by SNDCP when it has received/re-assembled a N-PDU */
-int sgsn_gtp_data_req(struct osmo_routing_area_id *ra_id, int32_t tlli, uint8_t nsapi,
+int sgsn_gtp_data_req(struct osmo_routing_area_id *rai, int32_t tlli, uint8_t nsapi,
 			 struct msgb *msg, uint32_t npdu_len, uint8_t *npdu)
 {
 	struct sgsn_mm_ctx *mmctx;
 	struct sgsn_pdp_ctx *pdp;
 
 	/* look-up the MM context for this message */
-	mmctx = sgsn_mm_ctx_by_tlli(tlli, ra_id);
+	mmctx = sgsn_mm_ctx_by_tlli(tlli, rai);
 	if (!mmctx) {
 		LOGP(DGPRS, LOGL_ERROR,
 			"Cannot find MM CTX for TLLI %08x\n", tlli);

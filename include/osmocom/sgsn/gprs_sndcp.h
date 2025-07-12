@@ -47,7 +47,7 @@ struct gprs_sndcp_entity {
 	struct llist_head list;
 
 	/* FIXME: move this RA_ID up to the LLME or even higher */
-	struct osmo_routing_area_id ra_id;
+	struct osmo_routing_area_id rai;
 	/* reference to the LLC Entity below this SNDCP entity */
 	struct gprs_llc_lle *lle;
 	/* The NSAPI we shall use on top of LLC */
