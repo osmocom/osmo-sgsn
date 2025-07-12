@@ -89,8 +89,8 @@ struct sgsn_ra_cell *sgsn_ra_get_cell_by_lai(const struct osmo_location_area_id 
 struct sgsn_ra_cell *sgsn_ra_get_cell_by_cgi(const struct osmo_cell_global_id *cgi);
 struct sgsn_ra_cell *sgsn_ra_get_cell_by_ra(const struct sgsn_ra *ra, uint16_t cell_id);
 struct sgsn_ra_cell *sgsn_ra_get_cell_by_gb(uint16_t nsei, uint16_t bvci);
-struct sgsn_ra *sgsn_ra_get_ra(const struct osmo_routing_area_id *ra_id);
-struct sgsn_ra *sgsn_ra_get_ra_geran(const struct osmo_routing_area_id *ra_id);
+struct sgsn_ra *sgsn_ra_get_ra(const struct osmo_routing_area_id *rai);
+struct sgsn_ra *sgsn_ra_get_ra_geran(const struct osmo_routing_area_id *rai);
 
 
 /*
@@ -108,4 +108,4 @@ int sgsn_ra_foreach_cell(struct sgsn_ra *ra, sgsn_ra_cb_t *cb, void *cb_data);
 int sgsn_ra_foreach_cell2(struct osmo_routing_area_id *rai, sgsn_ra_cb_t *cb, void *cb_data);
 
 /* Page the whole routing area for this mmctx */
-int sgsn_ra_geran_page_ra(struct osmo_routing_area_id *ra_id, struct sgsn_mm_ctx *mmctx);
+int sgsn_ra_geran_page_ra(struct osmo_routing_area_id *rai, struct sgsn_mm_ctx *mmctx);

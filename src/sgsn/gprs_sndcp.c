@@ -834,9 +834,9 @@ int sndcp_ll_unitdata_ind(struct msgb *msg, struct gprs_llc_lle *lle,
 		return -EIO;
 	}
 	/* FIXME: move this RA_ID up to the LLME or even higher */
-	bssgp_parse_cell_id2(&sne->ra_id, NULL, msgb_bcid(msg), 8);
+	bssgp_parse_cell_id2(&sne->rai, NULL, msgb_bcid(msg), 8);
 
-	mmctx = sgsn_mm_ctx_by_tlli(msgb_tlli(msg), &sne->ra_id);
+	mmctx = sgsn_mm_ctx_by_tlli(msgb_tlli(msg), &sne->rai);
 	if (!mmctx) {
 		LOGP(DSNDCP, LOGL_ERROR, "Message for non-existing MM ctx "
 				"(lle=%p, TLLI=%08x, SAPI=%u, NSAPI=%u)\n",
@@ -895,7 +895,7 @@ int sndcp_sn_unitdata_ind(struct gprs_sndcp_entity *sne,
 		    struct msgb *msg, uint32_t npdu_len, uint8_t *npdu)
 {
 	/* Hand it off N-PDU to the correct GTP tunnel + GGSN: */
-	return sgsn_gtp_data_req(&sne->ra_id, sne->lle->llme->tlli,
+	return sgsn_gtp_data_req(&sne->rai, sne->lle->llme->tlli,
 				  sne->nsapi, msg, npdu_len, npdu);
 }
 

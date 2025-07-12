@@ -64,7 +64,7 @@ static void cleanup_test(void)
 static void test_routing_area_create(void)
 {
 	struct sgsn_ra *ra;
-	struct osmo_routing_area_id raid = {
+	struct osmo_routing_area_id rai = {
 		.lac = {
 			.plmn = { .mcc = 262, .mnc = 42, .mnc_3_digits = false },
 			.lac = 23
@@ -75,7 +75,7 @@ static void test_routing_area_create(void)
 	printf("Testing Routing Area create/free\n");
 
 	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
-	ra = sgsn_ra_alloc(&raid, RA_TYPE_GERAN_Gb);
+	ra = sgsn_ra_alloc(&rai, RA_TYPE_GERAN_Gb);
 	OSMO_ASSERT(ra);
 	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
 
@@ -91,7 +91,7 @@ static void test_routing_area_free_empty(void)
 
 	struct sgsn_ra *ra;
 	struct sgsn_ra_cell *cell_a;
-	struct osmo_routing_area_id raid = {
+	struct osmo_routing_area_id rai = {
 		.lac = {
 			.plmn = { .mcc = 262, .mnc = 42, .mnc_3_digits = false },
 			.lac = 24
@@ -105,7 +105,7 @@ static void test_routing_area_free_empty(void)
 	printf("Testing Routing Area create/free\n");
 
 	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
-	ra = sgsn_ra_alloc(&raid, RA_TYPE_GERAN_Gb);
+	ra = sgsn_ra_alloc(&rai, RA_TYPE_GERAN_Gb);
 	OSMO_ASSERT(ra);
 	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
 
@@ -117,7 +117,7 @@ static void test_routing_area_free_empty(void)
 	sgsn_ra_free(ra);
 	OSMO_ASSERT(llist_empty(&sgsn->routing_area->ra_list));
 
-	ra = sgsn_ra_alloc(&raid, RA_TYPE_GERAN_Gb);
+	ra = sgsn_ra_alloc(&rai, RA_TYPE_GERAN_Gb);
 	OSMO_ASSERT(ra);
 	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
 
@@ -137,7 +137,7 @@ static void test_routing_area_find(void)
 {
 	struct sgsn_ra *ra_a, *ra_b;
 	struct sgsn_ra_cell *cell_a, *cell_b;
-	struct osmo_routing_area_id ra_id = {
+	struct osmo_routing_area_id rai = {
 		.lac = {
 			.plmn = { .mcc = 262, .mnc = 42, .mnc_3_digits = false },
 			.lac = 24
@@ -147,11 +147,11 @@ static void test_routing_area_find(void)
 
 	uint16_t cell_id = 9999, cell_id_not_found = 44;
 	struct osmo_cell_global_id_ps cgi_ps = {
-		.rai = ra_id,
+		.rai = rai,
 		.cell_identity = cell_id,
 	};
 	struct osmo_cell_global_id cgi = {
-		.lai = ra_id.lac,
+		.lai = rai.lac,
 		.cell_identity = cell_id
 	};
 
@@ -160,11 +160,11 @@ static void test_routing_area_find(void)
 	printf("Testing Routing Area find\n");
 
 	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
-	ra_a = sgsn_ra_alloc(&ra_id, RA_TYPE_GERAN_Gb);
+	ra_a = sgsn_ra_alloc(&rai, RA_TYPE_GERAN_Gb);
 	OSMO_ASSERT(ra_a);
 	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
 
-	ra_b = sgsn_ra_get_ra(&ra_id);
+	ra_b = sgsn_ra_get_ra(&rai);
 	OSMO_ASSERT(ra_a == ra_b);
 
 	cell_a = sgsn_ra_cell_alloc_geran(ra_a, cell_id, nsei, bvci);
@@ -194,7 +194,7 @@ static void test_routing_area_find(void)
 	cgi.cell_identity = cell_id_not_found;
 	cgi_ps.cell_identity = cell_id_not_found;
 
-	ra_a = sgsn_ra_alloc(&ra_id, RA_TYPE_GERAN_Gb);
+	ra_a = sgsn_ra_alloc(&rai, RA_TYPE_GERAN_Gb);
 	OSMO_ASSERT(ra_a);
 	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
 
@@ -216,12 +216,12 @@ static void test_routing_area_find(void)
 
 	/* try to find for a different RAC */
 	cgi_ps.rai.rac = 45;
-	ra_id.rac = 46;
+	rai.rac = 46;
 
 	cell_b = sgsn_ra_get_cell_by_cgi_ps(&cgi_ps);
 	OSMO_ASSERT(!cell_b);
 
-	ra_b = sgsn_ra_get_ra(&ra_id);
+	ra_b = sgsn_ra_get_ra(&rai);
 	OSMO_ASSERT(!ra_b);
 
 	/* try to find for different LAC */
@@ -239,7 +239,7 @@ static void test_routing_area_reset_ind(void)
 {
 	struct sgsn_ra *ra_a;
 	struct sgsn_ra_cell *cell_a, *cell_b;
-	struct osmo_routing_area_id ra_id = {
+	struct osmo_routing_area_id rai = {
 		.lac = {
 			.plmn = { .mcc = 262, .mnc = 42, .mnc_3_digits = false },
 			.lac = 24
@@ -249,11 +249,11 @@ static void test_routing_area_reset_ind(void)
 
 	uint16_t cell_id = 9999;
 	struct osmo_cell_global_id_ps cgi_ps = {
-		.rai = ra_id,
+		.rai = rai,
 		.cell_identity = cell_id,
 	};
 	struct osmo_cell_global_id cgi = {
-		.lai = ra_id.lac,
+		.lai = rai.lac,
 		.cell_identity = cell_id
 	};
 
@@ -263,7 +263,7 @@ static void test_routing_area_reset_ind(void)
 	printf("Testing Routing Area BSSGP BVC RESET IND\n");
 
 	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
-	ra_a = sgsn_ra_alloc(&ra_id, RA_TYPE_GERAN_Gb);
+	ra_a = sgsn_ra_alloc(&rai, RA_TYPE_GERAN_Gb);
 	OSMO_ASSERT(ra_a);
 	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
 	OSMO_ASSERT(llist_count(&ra_a->cells_alive_list) == 0);
@@ -299,7 +299,7 @@ static void test_routing_area_reset_ind(void)
 void test_routing_area_nsei_free(void)
 {
 	struct sgsn_ra *ra_a;
-	struct osmo_routing_area_id ra_id = {
+	struct osmo_routing_area_id rai = {
 		.lac = {
 			.plmn = { .mcc = 262, .mnc = 42, .mnc_3_digits = false },
 			.lac = 24
@@ -309,7 +309,7 @@ void test_routing_area_nsei_free(void)
 
 	uint16_t cell_id = 9999;
 	struct osmo_cell_global_id_ps cgi_ps = {
-		.rai = ra_id,
+		.rai = rai,
 		.cell_identity = cell_id,
 	};
 
@@ -375,7 +375,7 @@ static void check_paging(void)
 void test_routing_area_paging(void)
 {
 	struct sgsn_mm_ctx *mmctx;
-	struct osmo_routing_area_id ra_id = {
+	struct osmo_routing_area_id rai = {
 		.lac = {
 			.plmn = { .mcc = 262, .mnc = 42, .mnc_3_digits = false },
 			.lac = 24
@@ -385,7 +385,7 @@ void test_routing_area_paging(void)
 
 	uint16_t cell_id = 9999;
 	struct osmo_cell_global_id_ps cgi_ps = {
-		.rai = ra_id,
+		.rai = rai,
 		.cell_identity = cell_id,
 	};
 
@@ -414,9 +414,9 @@ void test_routing_area_paging(void)
 	g_paging[1].valid = true;
 	g_paging[1].paged = false;
 
-	mmctx = sgsn_mm_ctx_alloc_gb(0xc0001234, &ra_id);
+	mmctx = sgsn_mm_ctx_alloc_gb(0xc0001234, &rai);
 
-	sgsn_ra_geran_page_ra(&ra_id, mmctx);
+	sgsn_ra_geran_page_ra(&rai, mmctx);
 	check_paging();
 
 	sgsn_mm_ctx_cleanup_free(mmctx);

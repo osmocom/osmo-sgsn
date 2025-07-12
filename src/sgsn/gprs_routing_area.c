@@ -112,20 +112,20 @@ struct sgsn_ra_cell *sgsn_ra_cell_alloc_geran(struct sgsn_ra *ra, uint16_t cell_
 	return cell;
 }
 
-struct sgsn_ra *sgsn_ra_get_ra(const struct osmo_routing_area_id *ra_id)
+struct sgsn_ra *sgsn_ra_get_ra(const struct osmo_routing_area_id *rai)
 {
 	struct sgsn_ra *ra;
 
 	llist_for_each_entry(ra, &sgsn->routing_area->ra_list, list)
-		if (osmo_rai_cmp(&ra->rai, ra_id) == 0)
+		if (osmo_rai_cmp(&ra->rai, rai) == 0)
 			return ra;
 
 	return NULL;
 }
 
-struct sgsn_ra *sgsn_ra_get_ra_geran(const struct osmo_routing_area_id *ra_id)
+struct sgsn_ra *sgsn_ra_get_ra_geran(const struct osmo_routing_area_id *rai)
 {
-	struct sgsn_ra *ra = sgsn_ra_get_ra(ra_id);
+	struct sgsn_ra *ra = sgsn_ra_get_ra(rai);
 
 	if (!ra)
 		return ra;
@@ -185,13 +185,13 @@ int sgsn_ra_foreach_cell(struct sgsn_ra *ra, sgsn_ra_cb_t *cb, void *cb_data)
 	return ret;
 }
 
-int sgsn_ra_foreach_cell2(struct osmo_routing_area_id *ra_id, sgsn_ra_cb_t *cb, void *cb_data)
+int sgsn_ra_foreach_cell2(struct osmo_routing_area_id *rai, sgsn_ra_cb_t *cb, void *cb_data)
 {
 	struct sgsn_ra *ra;
-	OSMO_ASSERT(ra_id);
+	OSMO_ASSERT(rai);
 	OSMO_ASSERT(cb);
 
-	ra = sgsn_ra_get_ra(ra_id);
+	ra = sgsn_ra_get_ra(rai);
 	if (!ra)
 		return -ENOENT;
 
@@ -365,7 +365,7 @@ int sgsn_ra_nsei_failure_ind(uint16_t nsei)
 	return found ? 0 : -ENOENT;
 }
 
-int sgsn_ra_geran_page_ra(struct osmo_routing_area_id *ra_id, struct sgsn_mm_ctx *mmctx)
+int sgsn_ra_geran_page_ra(struct osmo_routing_area_id *rai, struct sgsn_mm_ctx *mmctx)
 {
 	struct sgsn_ra *ra;
 	struct sgsn_ra_cell *cell;
@@ -373,7 +373,7 @@ int sgsn_ra_geran_page_ra(struct osmo_routing_area_id *ra_id, struct sgsn_mm_ctx
 
 	rate_ctr_inc(rate_ctr_group_get_ctr(mmctx->ctrg, GMM_CTR_PAGING_PS));
 
-	ra = sgsn_ra_get_ra_geran(ra_id);
+	ra = sgsn_ra_get_ra_geran(rai);
 	if (!ra)
 		return -ENOENT;
 
