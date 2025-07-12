@@ -391,7 +391,7 @@ int sgsn_ra_nsei_failure_ind(uint16_t nsei)
 	return found ? 0 : -ENOENT;
 }
 
-int sgsn_ra_geran_page_ra(struct osmo_routing_area_id *rai, struct sgsn_mm_ctx *mmctx)
+int sgsn_ra_geran_page_ra(const struct osmo_routing_area_id *rai, struct sgsn_mm_ctx *mmctx)
 {
 	struct sgsn_ra *ra;
 	struct sgsn_ra_cell *cell;
