@@ -99,14 +99,14 @@ struct sgsn_ra *sgsn_ra_find_or_create(const struct osmo_routing_area_id *rai, e
 
 	if (ra) {
 		if (ra->ran_type == ran_type) {
-			LOGP(DRA, LOGL_ERROR, "Trying to create an already existing RA %s with the same ran type %s. Using old RA.\n",
-			     osmo_rai_name2(rai), get_value_string(sgsn_ra_ran_type_names, ra->ran_type));
+			LOGRAI(LOGL_ERROR, rai, "Trying to create an already existing RA with the same ran type %s. Using old RA.\n",
+			      get_value_string(sgsn_ra_ran_type_names, ra->ran_type));
 
 			return ra;
 		}
 
-		LOGP(DRA, LOGL_ERROR, "Failed to create an already existing RA %s with a different ran type %s.\n",
-		     osmo_rai_name2(rai), get_value_string(sgsn_ra_ran_type_names, ra->ran_type));
+		LOGRAI(LOGL_ERROR, rai, "Failed to create an already existing RA with a different ran type %s.\n",
+		      get_value_string(sgsn_ra_ran_type_names, ra->ran_type));
 		return NULL;
 	}
 
@@ -318,8 +318,8 @@ int sgsn_ra_bvc_reset_ind(uint16_t nsei, uint16_t bvci, struct osmo_cell_global_
 		if (cell && cell->ran_type == RA_TYPE_GERAN_Gb) {
 			/* Cell already exist, update NSEI/BVCI */
 			if (cell->u.geran.bvci != bvci || cell->u.geran.nsei != nsei) {
-				LOGP(DRA, LOGL_INFO, "GERAN Cell changed DLCI. Old: nsei/bvci %05u/%05u New: nsei/bvci %05u/%05u\n",
-				     cell->u.geran.nsei, cell->u.geran.bvci, nsei, bvci);
+				LOGRA(LOGL_INFO, ra, "GERAN Cell changed DLCI. Old: nsei/bvci %05u/%05u New: nsei/bvci %05u/%05u\n",
+				      cell->u.geran.nsei, cell->u.geran.bvci, nsei, bvci);
 				cell->u.geran.bvci = bvci;
 				cell->u.geran.nsei = nsei;
 			}
@@ -328,7 +328,7 @@ int sgsn_ra_bvc_reset_ind(uint16_t nsei, uint16_t bvci, struct osmo_cell_global_
 
 		if (cell && cell->ran_type != RA_TYPE_GERAN_Gb) {
 			/* How can we have here a RA change? Must be a configuration error. */
-			LOGP(DRA, LOGL_INFO, "CGI %s: RAN change detected to GERAN!", osmo_cgi_ps_name(cgi_ps));
+			LOGRAI(LOGL_INFO, &cgi_ps->rai, "CGI %s: RAN change detected to GERAN!", osmo_cgi_ps_name(cgi_ps));
 			_sgsn_ra_cell_free(cell, false);
 			cell = NULL;
 		}
@@ -340,10 +340,10 @@ int sgsn_ra_bvc_reset_ind(uint16_t nsei, uint16_t bvci, struct osmo_cell_global_
 			 * This should only happen when a Cell is changing routing areas */
 			cell = sgsn_ra_get_cell_by_lai(&cgi_ps->rai.lac, cgi_ps->cell_identity);
 			if (cell) {
-				LOGP(DRA, LOGL_INFO, "CGI %s: changed Routing Area. Old: %s, New: %s\n",
-				     osmo_cgi_ps_name(cgi_ps),
-				     osmo_rai_name2_buf(old_ra, sizeof(old_ra), &cell->ra->rai),
-				     osmo_rai_name2_buf(new_ra, sizeof(new_ra), &cgi_ps->rai));
+				LOGRAI(LOGL_INFO, &cgi_ps->rai, "CGI %s: changed Routing Area. Old: %s, New: %s\n",
+				       osmo_cgi_ps_name(cgi_ps),
+				       osmo_rai_name2_buf(old_ra, sizeof(old_ra), &cell->ra->rai),
+				       osmo_rai_name2_buf(new_ra, sizeof(new_ra), &cgi_ps->rai));
 
 				OSMO_ASSERT(cell->ra != ra);
 
@@ -358,7 +358,7 @@ int sgsn_ra_bvc_reset_ind(uint16_t nsei, uint16_t bvci, struct osmo_cell_global_
 	if (!cell)
 		return -ENOMEM;
 
-	LOGP(DRA, LOGL_INFO, "New cell registered %s via nsei/bvci %05u/%05u\n", osmo_cgi_ps_name(cgi_ps), nsei, bvci);
+	LOGRA(LOGL_INFO, ra, "New cell registered %s via nsei/bvci %05u/%05u\n", osmo_cgi_ps_name(cgi_ps), nsei, bvci);
 
 	return 0;
 }
