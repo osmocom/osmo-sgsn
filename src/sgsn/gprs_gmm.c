@@ -1975,7 +1975,8 @@ static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 	/* Look at PDP Context Status IE and see if MS's view of
 	 * activated/deactivated NSAPIs agrees with our view */
 	if (TLVP_PRESENT(&tp, GSM48_IE_GMM_PDP_CTX_STATUS)) {
-		uint16_t pdp_status =  tlvp_val16be(&tp, GSM48_IE_GMM_PDP_CTX_STATUS);
+		/* TODO: Use tlvp_val16le when available */
+		uint16_t pdp_status = osmo_load16le(TLVP_VAL(&tp, GSM48_IE_GMM_PDP_CTX_STATUS));
 
 		process_ms_ctx_status(ctx, pdp_status);
 
