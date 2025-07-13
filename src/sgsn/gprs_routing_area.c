@@ -24,6 +24,7 @@
 #include <osmocom/core/logging.h>
 #include <osmocom/core/rate_ctr.h>
 #include <osmocom/core/utils.h>
+#include <osmocom/gsm/gsm23003.h>
 #include <osmocom/gsm/gsm48.h>
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/gprs_bssgp.h>
@@ -144,6 +145,19 @@ struct sgsn_ra *sgsn_ra_get_ra_geran(const struct osmo_routing_area_id *rai)
 		return ra;
 
 	if (ra->ran_type == RA_TYPE_GERAN_Gb)
+		return ra;
+
+	return NULL;
+}
+
+struct sgsn_ra *sgsn_ra_get_ra_utran(const struct osmo_routing_area_id *ra_id)
+{
+	struct sgsn_ra *ra = sgsn_ra_get_ra(ra_id);
+
+	if (!ra)
+		return ra;
+
+	if (ra->ran_type == RA_TYPE_UTRAN_Iu)
 		return ra;
 
 	return NULL;
@@ -384,6 +398,42 @@ int sgsn_ra_nsei_failure_ind(uint16_t nsei)
 	return found ? 0 : -ENOENT;
 }
 
+/* Register a new UTRAN Routing Area if possible.
+ * Return 0 on success and < 0 on failure. */
+int sgsn_ra_utran_register(const struct osmo_routing_area_id *rai, const struct osmo_rnc_id *rnc_id)
+{
+	struct sgsn_ra *ra = sgsn_ra_get_ra(rai);
+	if (!ra) {
+		ra = sgsn_ra_alloc(rai, RA_TYPE_UTRAN_Iu);
+		if (!ra) {
+			LOGP(DRA, LOGL_ERROR, "Couldn't create new RA for %s ran type %s\n",
+			     osmo_rai_name2(rai), get_value_string(sgsn_ra_ran_type_names, ra->ran_type));
+			return -ENOMEM;
+		}
+		ra->u.utran.rnc_id = *rnc_id;
+	}
+
+	if (ra->ran_type == RA_TYPE_UTRAN_Iu) {
+		if (osmo_rnc_id_cmp(&ra->u.utran.rnc_id, rnc_id) == 0)
+			return 0;
+
+		char new_rnc_id_name[32];
+		osmo_rnc_id_name_buf(new_rnc_id_name, sizeof(new_rnc_id_name), rnc_id);
+		LOGRA(LOGL_INFO, ra, "RNC Id changed from %s to %s\n",
+		      osmo_rnc_id_name(&ra->u.utran.rnc_id), new_rnc_id_name);
+
+		ra->u.utran.rnc_id = *rnc_id;
+		return 0;
+	} else {
+		LOGRA(LOGL_ERROR, ra, "rejecting new RA of type %s, because already present RA has ran type %s\n",
+		      get_value_string(sgsn_ra_ran_type_names, RA_TYPE_UTRAN_Iu),
+		      get_value_string(sgsn_ra_ran_type_names, ra->ran_type));
+		return -ENOENT;
+	}
+
+	return -ENOENT;
+}
+
 int sgsn_ra_geran_page_ra(const struct osmo_routing_area_id *rai, struct sgsn_mm_ctx *mmctx)
 {
 	struct sgsn_ra *ra;
@@ -405,6 +455,23 @@ int sgsn_ra_geran_page_ra(const struct osmo_routing_area_id *rai, struct sgsn_mm
 
 
 	return ret;
+}
+
+int sgsn_ra_utran_page_ra(const struct osmo_routing_area_id *ra_id, const struct sgsn_mm_ctx *mmctx)
+{
+	struct sgsn_ra *ra;
+	rate_ctr_inc(rate_ctr_group_get_ctr(mmctx->ctrg, GMM_CTR_PAGING_PS));
+
+	ra = sgsn_ra_get_ra_utran(ra_id);
+	if (!ra)
+		return -ENOENT;
+
+	if (mmctx->p_tmsi != GSM_RESERVED_TMSI)
+		return ranap_iu_page_ps2(mmctx->imsi, &mmctx->p_tmsi, ra_id);
+	else if (mmctx->p_tmsi_old != GSM_RESERVED_TMSI)
+		return ranap_iu_page_ps2(mmctx->imsi, &mmctx->p_tmsi_old, ra_id);
+	else
+		return ranap_iu_page_ps2(mmctx->imsi, NULL, ra_id);
 }
 
 void sgsn_ra_init(struct sgsn_instance *inst)

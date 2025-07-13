@@ -55,6 +55,12 @@ struct sgsn_ra {
 	 * For UTRAN only do a LAC/RAC <> RNC relation and don't have a specific cell relation.
 	 */
 	enum sgsn_ra_ran_type ran_type;
+	union {
+		struct {
+			/* the RNC id must be the same for a given Routing Area */
+			struct osmo_rnc_id rnc_id;
+		} utran;
+	} u;
 
 	/* GERAN/UTRAN: cells contains a list of sgsn_ra_cells which are alive */
 	struct llist_head cells;
@@ -76,8 +82,7 @@ struct sgsn_ra_cell {
 		} geran;
 
 		struct {
-			/* TODO: unused */
-			uint16_t rncid;
+			/* the RNC id must be the same for a given Routing Area */
 			uint16_t sac;
 		} utran;
 	} u;
@@ -90,20 +95,25 @@ void sgsn_ra_free(struct sgsn_ra *ra);
 struct sgsn_ra_cell *sgsn_ra_cell_alloc_geran(struct sgsn_ra *ra, uint16_t cell_id, uint16_t nsei, uint16_t bvci);
 void sgsn_ra_cell_free(struct sgsn_ra_cell *cell);
 
+/* GERAN */
 /* Called by BSSGP layer to inform about a reset on a BVCI */
 int sgsn_ra_bvc_reset_ind(uint16_t nsei, uint16_t bvci, struct osmo_cell_global_id_ps *cgi_ps);
 /* FIXME: handle BVC BLOCK/UNBLOCK/UNAVAILABLE */
 /* Called by NS-VC layer to inform about an unavailable NSEI (and all BVCI on them) */
 int sgsn_ra_nsei_failure_ind(uint16_t nsei);
 
+/* UTRAN */
+int sgsn_ra_utran_register(const struct osmo_routing_area_id *rai, const struct osmo_rnc_id *rnc_id);
+
 struct sgsn_ra_cell *sgsn_ra_get_cell_by_cgi_ps(const struct osmo_cell_global_id_ps *cgi_ps);
 struct sgsn_ra_cell *sgsn_ra_get_cell_by_lai(const struct osmo_location_area_id *lai, uint16_t cell_id);
 struct sgsn_ra_cell *sgsn_ra_get_cell_by_cgi(const struct osmo_cell_global_id *cgi);
 struct sgsn_ra_cell *sgsn_ra_get_cell_by_ra(const struct sgsn_ra *ra, uint16_t cell_id);
 struct sgsn_ra_cell *sgsn_ra_get_cell_by_gb(uint16_t nsei, uint16_t bvci);
+
 struct sgsn_ra *sgsn_ra_get_ra(const struct osmo_routing_area_id *rai);
 struct sgsn_ra *sgsn_ra_get_ra_geran(const struct osmo_routing_area_id *rai);
-
+struct sgsn_ra *sgsn_ra_get_ra_utran(const struct osmo_routing_area_id *rai);
 
 /*
  * return value for callbacks.
@@ -121,3 +131,4 @@ int sgsn_ra_foreach_cell2(struct osmo_routing_area_id *rai, sgsn_ra_cb_t *cb, vo
 
 /* Page the whole routing area for this mmctx */
 int sgsn_ra_geran_page_ra(const struct osmo_routing_area_id *rai, struct sgsn_mm_ctx *mmctx);
+int sgsn_ra_utran_page_ra(const struct osmo_routing_area_id *rai, const struct sgsn_mm_ctx *mmctx);
