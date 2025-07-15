@@ -27,6 +27,7 @@ noinst_HEADERS = \
 	gtp.h \
 	gtp_ggsn.h \
 	gtp_mme.h \
+	iu_client.h \
 	mmctx.h \
 	pdpctx.h \
 	sgsn.h \
