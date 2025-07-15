@@ -137,10 +137,16 @@ ret_error:
 	return -1;
 }
 
-int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type type, void *data)
+static int sgsn_ranap_iu_event_mmctx(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type type, void *data)
 {
 	struct sgsn_mm_ctx *mm;
 	int rc = -1;
+
+	if (!ctx) {
+		LOGIUP(ctx, LOGL_ERROR, "NULL ctx given for IU event %s\n",
+		       ranap_iu_event_type_str(type));
+		return rc;
+	}
 
 	mm = sgsn_mm_ctx_by_ue_ctx(ctx);
 	if (!mm) {
@@ -191,6 +197,21 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 		break;
 	}
 	return rc;
+}
+
+
+int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type type, void *data)
+{
+	switch (type) {
+	case RANAP_IU_EVENT_RAB_ASSIGN:
+	case RANAP_IU_EVENT_IU_RELEASE:
+	case RANAP_IU_EVENT_LINK_INVALIDATED:
+	case RANAP_IU_EVENT_SECURITY_MODE_COMPLETE:
+		return sgsn_ranap_iu_event_mmctx(ctx, type, data);
+	default:
+		LOGP(DRANAP, LOGL_NOTICE, "Iu: Unknown event received: type: %d\n", type);
+		return -1;
+	}
 }
 
 void sgsn_ranap_iu_free(struct sgsn_mm_ctx *ctx)
