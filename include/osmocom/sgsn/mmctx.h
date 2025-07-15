@@ -231,7 +231,8 @@ static inline bool sgsn_mm_ctx_is_authenticated(struct sgsn_mm_ctx *ctx)
 
 #ifdef BUILD_IU
 #define LOGIUP(ue, level, fmt, args...) \
-	LOGP(DMM, level, "UE(0x%x){%s} " fmt, ue->conn_id, osmo_rai_name(&(ue)->ra_id), ## args)
+	LOGP(DMM, level, "UE(0x%x){%s} " fmt, (ue) ? (ue)->conn_id : 0xffffffff, \
+	     (ue) ? osmo_rai_name(&(ue)->ra_id) : "", ## args)
 #else
 #define LOGIUP(ue, level, fmt, args...) \
 	LOGP(DMM, level, "UE(%p){NOTSUPPORTED} " fmt, ue, ## args)
