@@ -20,4 +20,10 @@ Testing Routing Area GERAN to GERAN (BVCI change)
  Checking cell on BVCI B
  Ensure only 1 RA is present
  Ensure only 1 cell is present
+Testing Routing Area mv geran -> utran
+ Registering GERAN RA/cell via BVC Reset Ind
+ Registering UTRAN RA (should fail)
+Testing Routing Area mv utran -> geran
+ Registering UTRAN RA
+ Registering GERAN RA/cell via BVC Reset Ind (should fail)
 Done

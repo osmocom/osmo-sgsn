@@ -56,6 +56,12 @@ struct sgsn_ra {
 	 * For UTRAN only do a LAC/RAC <> RNC relation and don't have a specific cell relation.
 	 */
 	enum sgsn_ra_ran_type ran_type;
+	union {
+		struct {
+			/* the RNC id must be the same for a given Routing Area */
+			struct osmo_rnc_id rnc_id;
+		} utran;
+	} u;
 
 	/* GERAN/UTRAN: cells contains a list of sgsn_ra_cells which are alive */
 	struct llist_head cells_alive_list;
@@ -77,8 +83,7 @@ struct sgsn_ra_cell {
 		} geran;
 
 		struct {
-			/* TODO: unused */
-			uint16_t rncid;
+			/* the RNC id must be the same for a given Routing Area */
 			uint16_t sac;
 		} utran;
 	} u;
@@ -107,10 +112,15 @@ struct sgsn_ra_cell *sgsn_ra_geran_get_cell_by_lai(const struct osmo_location_ar
 struct sgsn_ra_cell *sgsn_ra_geran_get_cell_by_cgi(const struct osmo_cell_global_id *cgi);
 struct sgsn_ra_cell *sgsn_ra_geran_get_cell_by_ra(const struct sgsn_ra *ra, uint16_t cell_id);
 struct sgsn_ra_cell *sgsn_ra_geran_get_cell_by_gb(uint16_t nsei, uint16_t bvci);
+
+/* UTRAN */
+int sgsn_ra_utran_register(const struct osmo_routing_area_id *rai, const struct osmo_rnc_id *rnc_id);
+
 struct sgsn_ra *sgsn_ra_geran_get_ra(const struct osmo_routing_area_id *rai);
 
 /* Page the whole routing area for this mmctx */
 int sgsn_ra_geran_page_ra(const struct osmo_routing_area_id *rai, struct sgsn_mm_ctx *mmctx);
+struct sgsn_ra *sgsn_ra_utran_get_ra(const struct osmo_routing_area_id *rai);
 
 /*
  * return value for callbacks.
@@ -125,3 +135,6 @@ int sgsn_ra_geran_page_ra(const struct osmo_routing_area_id *rai, struct sgsn_mm
 typedef int (sgsn_ra_cb_t)(struct sgsn_ra_cell *ra_cell, void *cb_data);
 int sgsn_ra_foreach_cell(struct sgsn_ra *ra, sgsn_ra_cb_t *cb, void *cb_data);
 int sgsn_ra_foreach_cell2(struct osmo_routing_area_id *rai, sgsn_ra_cb_t *cb, void *cb_data);
+
+/* Page the whole routing area for this mmctx */
+int sgsn_ra_utran_page_ra(const struct osmo_routing_area_id *rai, const struct sgsn_mm_ctx *mmctx);

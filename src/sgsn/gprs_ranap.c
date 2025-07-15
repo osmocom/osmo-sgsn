@@ -38,6 +38,7 @@
 #include <osmocom/sgsn/gprs_ranap.h>
 #include <osmocom/sgsn/gprs_gmm_attach.h>
 #include <osmocom/sgsn/gprs_mm_state_iu_fsm.h>
+#include <osmocom/sgsn/gprs_routing_area.h>
 #include <osmocom/sgsn/gtp_ggsn.h>
 #include <osmocom/sgsn/gtp.h>
 #include <osmocom/sgsn/pdpctx.h>
@@ -202,12 +203,24 @@ static int sgsn_ranap_iu_event_mmctx(struct ranap_ue_conn_ctx *ctx, enum ranap_i
 
 int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type type, void *data)
 {
+	struct ranap_iu_event_new_area *new_area;
+
 	switch (type) {
 	case RANAP_IU_EVENT_RAB_ASSIGN:
 	case RANAP_IU_EVENT_IU_RELEASE:
 	case RANAP_IU_EVENT_LINK_INVALIDATED:
 	case RANAP_IU_EVENT_SECURITY_MODE_COMPLETE:
 		return sgsn_ranap_iu_event_mmctx(ctx, type, data);
+	case RANAP_IU_EVENT_NEW_AREA:
+		/* inform the Routing Area code about a new RA for Iu */
+		new_area = data;
+
+		/* Only interesting in Routing Area changes, but not Location Area */
+		if (new_area->cell_type != RANAP_IU_NEW_RAC) {
+			return 0;
+		}
+
+		return sgsn_ra_utran_register(new_area->u.rai, new_area->rnc_id);
 	default:
 		LOGP(DRANAP, LOGL_NOTICE, "Iu: Unknown event received: type: %d\n", type);
 		return -1;

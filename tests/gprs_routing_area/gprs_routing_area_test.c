@@ -24,6 +24,7 @@
 #include <osmocom/core/rate_ctr.h>
 #include <osmocom/core/utils.h>
 #include <osmocom/gsm/apn.h>
+#include <osmocom/gsm/gsm23003.h>
 #include <osmocom/gsm/gsm_utils.h>
 #include <osmocom/gsm/gsup.h>
 #include <osmocom/gprs/gprs_bssgp.h>
@@ -537,6 +538,100 @@ void test_routing_area_geran_geran_bvci_change(void)
 	cleanup_test();
 }
 
+/* check if a GERAN RA/cell with the same LAC as an already register UTRAN gets rejected */
+void test_routing_area_mv_utran_geran_reject(void)
+{
+	int rc;
+
+	/* GERAN */
+	struct osmo_routing_area_id geran_rai = {
+		.lac = {
+			.plmn = { .mcc = 262, .mnc = 42, .mnc_3_digits = false },
+			.lac = 24
+		},
+		.rac = 43
+	};
+	struct osmo_cell_global_id_ps cgi_ps = {
+		.rai = geran_rai,
+		.cell_identity = 9998,
+	};
+	uint16_t nsei = 2, bvci = 3;
+
+	/* UTRAN */
+	struct osmo_routing_area_id utran_rai = {
+		.lac = {
+			.plmn = { .mcc = 262, .mnc = 42, .mnc_3_digits = false },
+			.lac = 24
+		},
+		.rac = 43
+	};
+	struct osmo_rnc_id rnc_id = {
+		.plmn = utran_rai.lac.plmn,
+		.rnc_id = 2222
+	};
+
+	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
+
+	printf("Testing Routing Area mv utran -> geran\n");
+
+	printf(" Registering UTRAN RA\n");
+	rc = sgsn_ra_utran_register(&utran_rai, &rnc_id);
+	OSMO_ASSERT(rc == 0);
+
+	printf(" Registering GERAN RA/cell via BVC Reset Ind (should fail)\n");
+	rc = sgsn_ra_geran_bvc_reset_ind(nsei, bvci, &cgi_ps);
+	OSMO_ASSERT(rc != 0);
+
+	cleanup_test();
+}
+
+/* check if a UTRAN RA with the same LAC as an already register GERAN RA gets rejected */
+void test_routing_area_mv_geran_utran_reject(void)
+{
+	int rc;
+
+	/* GERAN */
+	struct osmo_routing_area_id geran_rai = {
+		.lac = {
+			.plmn = { .mcc = 262, .mnc = 42, .mnc_3_digits = false },
+			.lac = 24
+		},
+		.rac = 43
+	};
+	struct osmo_cell_global_id_ps cgi_ps = {
+		.rai = geran_rai,
+		.cell_identity = 9998,
+	};
+	uint16_t nsei = 2, bvci = 3;
+
+	/* UTRAN */
+	struct osmo_routing_area_id utran_rai = {
+		.lac = {
+			.plmn = { .mcc = 262, .mnc = 42, .mnc_3_digits = false },
+			.lac = 24
+		},
+		.rac = 43
+	};
+	struct osmo_rnc_id rnc_id = {
+		.plmn = utran_rai.lac.plmn,
+		.rnc_id = 2222
+	};
+
+	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
+
+	printf("Testing Routing Area mv geran -> utran\n");
+
+	printf(" Registering GERAN RA/cell via BVC Reset Ind\n");
+	rc = sgsn_ra_geran_bvc_reset_ind(nsei, bvci, &cgi_ps);
+	OSMO_ASSERT(rc == 0);
+
+	printf(" Registering UTRAN RA (should fail)\n");
+	rc = sgsn_ra_utran_register(&utran_rai, &rnc_id);
+	OSMO_ASSERT(rc != 0);
+
+	cleanup_test();
+}
+
 static struct log_info_cat gprs_categories[] = {
 	[DMM] = {
 		.name = "DMM",
@@ -601,6 +696,8 @@ int main(int argc, char **argv)
 	test_routing_area_paging();
 	test_routing_area_geran_geran_sig_reset();
 	test_routing_area_geran_geran_bvci_change();
+	test_routing_area_mv_geran_utran_reject();
+	test_routing_area_mv_utran_geran_reject();
 	printf("Done\n");
 
 	talloc_report_full(osmo_sgsn_ctx, stderr);
