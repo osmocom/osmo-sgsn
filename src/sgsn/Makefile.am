@@ -96,6 +96,7 @@ osmo_sgsn_LDADD += \
 
 osmo_sgsn_SOURCES += \
 	gprs_mm_state_iu_fsm.c \
-	gprs_ranap.c
+	gprs_ranap.c \
+	iu_client.c
 
 endif

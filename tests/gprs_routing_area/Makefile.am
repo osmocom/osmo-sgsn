@@ -87,6 +87,7 @@ if BUILD_IU
 gprs_routing_area_test_LDADD += \
 	$(top_builddir)/src/sgsn/gprs_ranap.o \
 	$(top_builddir)/src/sgsn/gprs_mm_state_iu_fsm.o \
+	$(top_builddir)/src/sgsn/iu_client.o \
 	$(LIBOSMORANAP_LIBS) \
 	$(LIBOSMOSIGTRAN_LIBS) \
 	$(LIBASN1C_LIBS) \
