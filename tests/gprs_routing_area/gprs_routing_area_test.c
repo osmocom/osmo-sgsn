@@ -268,14 +268,14 @@ static void test_routing_area_reset_ind(void)
 	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
 	OSMO_ASSERT(llist_count(&ra_a->cells_alive_list) == 0);
 
-	rc = sgsn_ra_bvc_reset_ind(nsei, bvci, &cgi_ps);
+	rc = sgsn_ra_bvc_cell_reset_ind(nsei, bvci, &cgi_ps);
 	OSMO_ASSERT(rc == 0);
 	OSMO_ASSERT(llist_count(&ra_a->cells_alive_list) == 1);
 
 	cell_a = sgsn_ra_get_cell_by_cgi(&cgi);
 	OSMO_ASSERT(cell_a);
 
-	rc = sgsn_ra_bvc_reset_ind(nsei, bvci, &cgi_ps);
+	rc = sgsn_ra_bvc_cell_reset_ind(nsei, bvci, &cgi_ps);
 	OSMO_ASSERT(rc == 0);
 
 	cell_b = sgsn_ra_get_cell_by_cgi(&cgi);
@@ -285,7 +285,7 @@ static void test_routing_area_reset_ind(void)
 	sgsn_ra_free(ra_a);
 	OSMO_ASSERT(llist_empty(&sgsn->routing_area->ra_list));
 
-	rc = sgsn_ra_bvc_reset_ind(nsei, bvci, &cgi_ps);
+	rc = sgsn_ra_bvc_cell_reset_ind(nsei, bvci, &cgi_ps);
 	OSMO_ASSERT(rc == 0);
 	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
 
@@ -320,7 +320,7 @@ void test_routing_area_nsei_free(void)
 
 	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
 
-	rc = sgsn_ra_bvc_reset_ind(nsei, bvci, &cgi_ps);
+	rc = sgsn_ra_bvc_cell_reset_ind(nsei, bvci, &cgi_ps);
 	OSMO_ASSERT(rc == 0);
 
 	ra_a = sgsn_ra_get_ra(&cgi_ps.rai);
@@ -402,11 +402,11 @@ void test_routing_area_paging(void)
 	g_paging[0].valid = true;
 	g_paging[0].paged = false;
 
-	rc = sgsn_ra_bvc_reset_ind(nsei, bvci, &cgi_ps);
+	rc = sgsn_ra_bvc_cell_reset_ind(nsei, bvci, &cgi_ps);
 	OSMO_ASSERT(rc == 0);
 
 	cgi_ps.cell_identity++;
-	rc = sgsn_ra_bvc_reset_ind(nsei, bvci+1, &cgi_ps);
+	rc = sgsn_ra_bvc_cell_reset_ind(nsei, bvci+1, &cgi_ps);
 	OSMO_ASSERT(rc == 0);
 
 	g_paging[1].bvci = bvci+1;
@@ -423,6 +423,59 @@ void test_routing_area_paging(void)
 
 	cleanup_test();
 }
+
+/* check if a GERAN cell got removed when sending a Reset Ind on Sig BVCI */
+void test_routing_area_geran_geran_sig_reset(void)
+{
+	int rc;
+
+	/* GERAN */
+	struct osmo_routing_area_id geran_rai = {
+		.lac = {
+			.plmn = { .mcc = 262, .mnc = 42, .mnc_3_digits = false },
+			.lac = 24
+		},
+		.rac = 43
+	};
+	struct osmo_cell_global_id_ps cgi_ps = {
+		.rai = geran_rai,
+		.cell_identity = 9998,
+	};
+	uint16_t nsei = 2, bvci = 5;
+
+	struct sgsn_ra_cell *cell;
+
+	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
+
+	printf("Testing Routing Area GERAN BVCI Signalling Reset Ind\n");
+
+	printf(" Registering GERAN RA/cell via BVCI 5/BVC Reset Ind\n");
+	sgsn_ra_bvc_sign_reset_ind(nsei);
+
+	rc = sgsn_ra_bvc_cell_reset_ind(nsei, bvci, &cgi_ps);
+	OSMO_ASSERT(rc == 0);
+
+	printf(" Checking cell on BVCI 5\n");
+	cell = sgsn_ra_get_cell_by_cgi_ps(&cgi_ps);
+	OSMO_ASSERT(cell);
+	OSMO_ASSERT(cell->ran_type == RA_TYPE_GERAN_Gb);
+	OSMO_ASSERT(cell->u.geran.bvci == bvci);
+
+	printf(" Ensure only 1 RA is present\n");
+	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
+
+	printf(" Ensure only 1 cell is present\n");
+	OSMO_ASSERT(llist_count(&cell->ra->cells_alive_list) == 1);
+
+	printf(" Drop all cells via BVC Reset Ind on Signalling BVCI\n");
+	sgsn_ra_bvc_sign_reset_ind(nsei);
+
+	printf(" Ensure only 0 RAs are present\n");
+	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 0);
+
+	cleanup_test();
+}
+
 
 /* check if a GERAN cell X can changed it's BVCI by BVC Reset Ind */
 void test_routing_area_geran_geran_bvci_change(void)
@@ -450,7 +503,7 @@ void test_routing_area_geran_geran_bvci_change(void)
 	printf("Testing Routing Area GERAN to GERAN (BVCI change)\n");
 
 	printf(" Registering GERAN RA/cell via BVCI A/BVC Reset Ind\n");
-	rc = sgsn_ra_bvc_reset_ind(nsei, bvci_a, &cgi_ps);
+	rc = sgsn_ra_bvc_cell_reset_ind(nsei, bvci_a, &cgi_ps);
 	OSMO_ASSERT(rc == 0);
 
 	printf(" Checking cell on BVCI A\n");
@@ -466,7 +519,7 @@ void test_routing_area_geran_geran_bvci_change(void)
 	OSMO_ASSERT(llist_count(&cell_a->ra->cells_alive_list) == 1);
 
 	printf(" Registering GERAN RA/cell via BVCI B/BVC Reset Ind\n");
-	rc = sgsn_ra_bvc_reset_ind(nsei, bvci_b, &cgi_ps);
+	rc = sgsn_ra_bvc_cell_reset_ind(nsei, bvci_b, &cgi_ps);
 	OSMO_ASSERT(rc == 0);
 
 	printf(" Checking cell on BVCI B\n");
@@ -546,6 +599,7 @@ int main(int argc, char **argv)
 	test_routing_area_reset_ind();
 	test_routing_area_nsei_free();
 	test_routing_area_paging();
+	test_routing_area_geran_geran_sig_reset();
 	test_routing_area_geran_geran_bvci_change();
 	printf("Done\n");
 

@@ -92,8 +92,11 @@ void sgsn_ra_free(struct sgsn_ra *ra);
 struct sgsn_ra_cell *sgsn_ra_cell_alloc_geran(struct sgsn_ra *ra, uint16_t cell_id, uint16_t nsei, uint16_t bvci);
 void sgsn_ra_cell_free(struct sgsn_ra_cell *cell);
 
-/* Called by BSSGP layer to inform about a reset on a BVCI */
-int sgsn_ra_bvc_reset_ind(uint16_t nsei, uint16_t bvci, struct osmo_cell_global_id_ps *cgi_ps);
+/* GERAN */
+/* Called by BSSGP layer to inform about a reset on a PtP BVCI */
+int sgsn_ra_bvc_cell_reset_ind(uint16_t nsei, uint16_t bvci, struct osmo_cell_global_id_ps *cgi_ps);
+/* Called by BSSGP layer to inform about a reset on a Signal BVCI */
+void sgsn_ra_bvc_sign_reset_ind(uint16_t nsei);
 /* FIXME: handle BVC BLOCK/UNBLOCK/UNAVAILABLE */
 /* Called by NS-VC layer to inform about an unavailable NSEI (and all BVCI on them) */
 int sgsn_ra_nsei_failure_ind(uint16_t nsei);

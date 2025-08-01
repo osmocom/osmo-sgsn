@@ -289,14 +289,14 @@ struct sgsn_ra_cell *sgsn_ra_get_cell_by_cgi(const struct osmo_cell_global_id *c
 	return sgsn_ra_get_cell_by_lai(&cgi->lai, cgi->cell_identity);
 }
 
-/*! Callback from the BSSGP layer on NM RESET IND
+/*! Callback from the BSSGP layer on NM RESET IND for a cell (PtP BVCI).
  *
  * \param nsei
  * \param bvci
  * \param cgi_ps
  * \return 0 on success or -ENOMEM
  */
-int sgsn_ra_bvc_reset_ind(uint16_t nsei, uint16_t bvci, struct osmo_cell_global_id_ps *cgi_ps)
+int sgsn_ra_bvc_cell_reset_ind(uint16_t nsei, uint16_t bvci, struct osmo_cell_global_id_ps *cgi_ps)
 {
 	struct sgsn_ra *ra;
 	struct sgsn_ra_cell *cell;
@@ -389,6 +389,11 @@ int sgsn_ra_nsei_failure_ind(uint16_t nsei)
 	}
 
 	return found ? 0 : -ENOENT;
+}
+
+void sgsn_ra_bvc_sign_reset_ind(uint16_t nsei)
+{
+	sgsn_ra_nsei_failure_ind(nsei);
 }
 
 int sgsn_ra_geran_page_ra(const struct osmo_routing_area_id *rai, struct sgsn_mm_ctx *mmctx)
