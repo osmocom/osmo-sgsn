@@ -4,4 +4,13 @@ Testing Routing Area create/free
 Testing Routing Area BSSGP BVC RESET IND
 Testing Routing Area nsei failure
 Testing Routing Area paging
+Testing Routing Area GERAN to GERAN (BVCI change)
+ Registering GERAN RA/cell via BVCI A/BVC Reset Ind
+ Checking cell on BVCI A
+ Ensure only 1 RA is present
+ Ensure only 1 cell is present
+ Registering GERAN RA/cell via BVCI B/BVC Reset Ind
+ Checking cell on BVCI B
+ Ensure only 1 RA is present
+ Ensure only 1 cell is present
 Done

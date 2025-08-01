@@ -424,6 +424,66 @@ void test_routing_area_paging(void)
 	cleanup_test();
 }
 
+/* check if a GERAN cell X can changed it's BVCI by BVC Reset Ind */
+void test_routing_area_geran_geran_bvci_change(void)
+{
+	int rc;
+
+	/* GERAN */
+	struct osmo_routing_area_id geran_rai = {
+		.lac = {
+			.plmn = { .mcc = 262, .mnc = 42, .mnc_3_digits = false },
+			.lac = 24
+		},
+		.rac = 43
+	};
+	struct osmo_cell_global_id_ps cgi_ps = {
+		.rai = geran_rai,
+		.cell_identity = 9998,
+	};
+	uint16_t nsei = 2, bvci_a = 3, bvci_b = 4;
+
+	struct sgsn_ra_cell *cell_a, *cell_b;
+
+	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
+
+	printf("Testing Routing Area GERAN to GERAN (BVCI change)\n");
+
+	printf(" Registering GERAN RA/cell via BVCI A/BVC Reset Ind\n");
+	rc = sgsn_ra_bvc_reset_ind(nsei, bvci_a, &cgi_ps);
+	OSMO_ASSERT(rc == 0);
+
+	printf(" Checking cell on BVCI A\n");
+	cell_a = sgsn_ra_get_cell_by_cgi_ps(&cgi_ps);
+	OSMO_ASSERT(cell_a);
+	OSMO_ASSERT(cell_a->ran_type == RA_TYPE_GERAN_Gb);
+	OSMO_ASSERT(cell_a->u.geran.bvci == bvci_a);
+
+	printf(" Ensure only 1 RA is present\n");
+	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
+
+	printf(" Ensure only 1 cell is present\n");
+	OSMO_ASSERT(llist_count(&cell_a->ra->cells_alive_list) == 1);
+
+	printf(" Registering GERAN RA/cell via BVCI B/BVC Reset Ind\n");
+	rc = sgsn_ra_bvc_reset_ind(nsei, bvci_b, &cgi_ps);
+	OSMO_ASSERT(rc == 0);
+
+	printf(" Checking cell on BVCI B\n");
+	cell_b = sgsn_ra_get_cell_by_cgi_ps(&cgi_ps);
+	OSMO_ASSERT(cell_b);
+	OSMO_ASSERT(cell_b->ran_type == RA_TYPE_GERAN_Gb);
+	OSMO_ASSERT(cell_b->u.geran.bvci == bvci_b);
+
+	printf(" Ensure only 1 RA is present\n");
+	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
+
+	printf(" Ensure only 1 cell is present\n");
+	OSMO_ASSERT(llist_count(&cell_b->ra->cells_alive_list) == 1);
+
+	cleanup_test();
+}
+
 static struct log_info_cat gprs_categories[] = {
 	[DMM] = {
 		.name = "DMM",
@@ -486,6 +546,7 @@ int main(int argc, char **argv)
 	test_routing_area_reset_ind();
 	test_routing_area_nsei_free();
 	test_routing_area_paging();
+	test_routing_area_geran_geran_bvci_change();
 	printf("Done\n");
 
 	talloc_report_full(osmo_sgsn_ctx, stderr);
