@@ -143,7 +143,7 @@ struct sgsn_ra *sgsn_ra_get_ra(const struct osmo_routing_area_id *rai)
 	return NULL;
 }
 
-struct sgsn_ra *sgsn_ra_get_ra_geran(const struct osmo_routing_area_id *rai)
+struct sgsn_ra *sgsn_ra_geran_get_ra(const struct osmo_routing_area_id *rai)
 {
 	struct sgsn_ra *ra = sgsn_ra_get_ra(rai);
 
@@ -156,7 +156,7 @@ struct sgsn_ra *sgsn_ra_get_ra_geran(const struct osmo_routing_area_id *rai)
 	return NULL;
 }
 
-struct sgsn_ra_cell *sgsn_ra_get_cell_by_gb(uint16_t nsei, uint16_t bvci)
+struct sgsn_ra_cell *sgsn_ra_geran_get_cell_by_gb(uint16_t nsei, uint16_t bvci)
 {
 	struct sgsn_ra *ra;
 	struct sgsn_ra_cell *cell;
@@ -219,7 +219,7 @@ int sgsn_ra_foreach_cell2(struct osmo_routing_area_id *rai, sgsn_ra_cb_t *cb, vo
 }
 
 /* valid for GERAN */
-struct sgsn_ra_cell *sgsn_ra_get_cell_by_ra(const struct sgsn_ra *ra, uint16_t cell_id)
+struct sgsn_ra_cell *sgsn_ra_geran_get_cell_by_ra(const struct sgsn_ra *ra, uint16_t cell_id)
 {
 	struct sgsn_ra_cell *cell;
 
@@ -238,7 +238,7 @@ struct sgsn_ra_cell *sgsn_ra_get_cell_by_ra(const struct sgsn_ra *ra, uint16_t c
 }
 
 /* valid for GERAN */
-struct sgsn_ra_cell *sgsn_ra_get_cell_by_lai(const struct osmo_location_area_id *lai, uint16_t cell_id)
+struct sgsn_ra_cell *sgsn_ra_geran_get_cell_by_lai(const struct osmo_location_area_id *lai, uint16_t cell_id)
 {
 	struct sgsn_ra *ra;
 	struct sgsn_ra_cell *cell;
@@ -269,24 +269,24 @@ struct sgsn_ra_cell *sgsn_ra_get_cell_by_lai(const struct osmo_location_area_id 
  * \param cgi_ps
  * \return the cell or NULL if not found
  */
-struct sgsn_ra_cell *sgsn_ra_get_cell_by_cgi_ps(const struct osmo_cell_global_id_ps *cgi_ps)
+struct sgsn_ra_cell *sgsn_ra_geran_get_cell_by_cgi_ps(const struct osmo_cell_global_id_ps *cgi_ps)
 {
 	struct sgsn_ra *ra;
 
 	OSMO_ASSERT(cgi_ps);
 
-	ra = sgsn_ra_get_ra_geran(&cgi_ps->rai);
+	ra = sgsn_ra_geran_get_ra(&cgi_ps->rai);
 	if (!ra)
 		return NULL;
 
-	return sgsn_ra_get_cell_by_ra(ra, cgi_ps->cell_identity);
+	return sgsn_ra_geran_get_cell_by_ra(ra, cgi_ps->cell_identity);
 }
 
-struct sgsn_ra_cell *sgsn_ra_get_cell_by_cgi(const struct osmo_cell_global_id *cgi)
+struct sgsn_ra_cell *sgsn_ra_geran_get_cell_by_cgi(const struct osmo_cell_global_id *cgi)
 {
 	OSMO_ASSERT(cgi);
 
-	return sgsn_ra_get_cell_by_lai(&cgi->lai, cgi->cell_identity);
+	return sgsn_ra_geran_get_cell_by_lai(&cgi->lai, cgi->cell_identity);
 }
 
 /*! Callback from the BSSGP layer on NM RESET IND for a cell (PtP BVCI).
@@ -296,7 +296,7 @@ struct sgsn_ra_cell *sgsn_ra_get_cell_by_cgi(const struct osmo_cell_global_id *c
  * \param cgi_ps
  * \return 0 on success or -ENOMEM
  */
-int sgsn_ra_bvc_cell_reset_ind(uint16_t nsei, uint16_t bvci, struct osmo_cell_global_id_ps *cgi_ps)
+int sgsn_ra_geran_bvc_cell_reset_ind(uint16_t nsei, uint16_t bvci, struct osmo_cell_global_id_ps *cgi_ps)
 {
 	struct sgsn_ra *ra;
 	struct sgsn_ra_cell *cell;
@@ -304,7 +304,7 @@ int sgsn_ra_bvc_cell_reset_ind(uint16_t nsei, uint16_t bvci, struct osmo_cell_gl
 	OSMO_ASSERT(cgi_ps);
 
 	/* TODO: do we have to move all MS to GMM IDLE state when this happens for a alive cell which got reseted? */
-	ra = sgsn_ra_get_ra_geran(&cgi_ps->rai);
+	ra = sgsn_ra_geran_get_ra(&cgi_ps->rai);
 	if (!ra) {
 		/* TODO: check for UTRAN rai when introducing UTRAN support */
 		ra = sgsn_ra_find_or_create(&cgi_ps->rai, RA_TYPE_GERAN_Gb);
@@ -314,7 +314,7 @@ int sgsn_ra_bvc_cell_reset_ind(uint16_t nsei, uint16_t bvci, struct osmo_cell_gl
 	}
 
 	if (!ra_created) {
-		cell = sgsn_ra_get_cell_by_ra(ra, cgi_ps->cell_identity);
+		cell = sgsn_ra_geran_get_cell_by_ra(ra, cgi_ps->cell_identity);
 		if (cell && cell->ran_type == RA_TYPE_GERAN_Gb) {
 			/* Cell already exist, update NSEI/BVCI */
 			if (cell->u.geran.bvci != bvci || cell->u.geran.nsei != nsei) {
@@ -338,7 +338,7 @@ int sgsn_ra_bvc_cell_reset_ind(uint16_t nsei, uint16_t bvci, struct osmo_cell_gl
 			char new_ra[32];
 			/* check for the same cell id within the location area. The cell id is also unique for the cell within the LAC
 			 * This should only happen when a Cell is changing routing areas */
-			cell = sgsn_ra_get_cell_by_lai(&cgi_ps->rai.lac, cgi_ps->cell_identity);
+			cell = sgsn_ra_geran_get_cell_by_lai(&cgi_ps->rai.lac, cgi_ps->cell_identity);
 			if (cell) {
 				LOGRAI(LOGL_INFO, &cgi_ps->rai, "CGI %s: changed Routing Area. Old: %s, New: %s\n",
 				       osmo_cgi_ps_name(cgi_ps),
@@ -364,7 +364,7 @@ int sgsn_ra_bvc_cell_reset_ind(uint16_t nsei, uint16_t bvci, struct osmo_cell_gl
 }
 
 /* FIXME: call it on BSSGP BLOCK + unavailable with BVCI */
-int sgsn_ra_nsei_failure_ind(uint16_t nsei)
+int sgsn_ra_geran_nsei_failure_ind(uint16_t nsei)
 {
 	struct sgsn_ra *ra, *ra2;
 	struct sgsn_ra_cell *cell, *cell2;
@@ -391,9 +391,9 @@ int sgsn_ra_nsei_failure_ind(uint16_t nsei)
 	return found ? 0 : -ENOENT;
 }
 
-void sgsn_ra_bvc_sign_reset_ind(uint16_t nsei)
+void sgsn_ra_geran_bvc_sign_reset_ind(uint16_t nsei)
 {
-	sgsn_ra_nsei_failure_ind(nsei);
+	sgsn_ra_geran_nsei_failure_ind(nsei);
 }
 
 int sgsn_ra_geran_page_ra(const struct osmo_routing_area_id *rai, struct sgsn_mm_ctx *mmctx)
@@ -404,7 +404,7 @@ int sgsn_ra_geran_page_ra(const struct osmo_routing_area_id *rai, struct sgsn_mm
 
 	rate_ctr_inc(rate_ctr_group_get_ctr(mmctx->ctrg, GMM_CTR_PAGING_PS));
 
-	ra = sgsn_ra_get_ra_geran(rai);
+	ra = sgsn_ra_geran_get_ra(rai);
 	if (!ra)
 		return -ENOENT;
 

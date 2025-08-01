@@ -44,7 +44,7 @@ static int bssgp_nm_bvc_reset_ind(struct osmo_bssgp_prim *bp)
 	 * PtP BVCI: BVCI != 0, CGI-PS */
 
 	if (bp->bvci == 0) {
-		sgsn_ra_bvc_sign_reset_ind(bp->nsei);
+		sgsn_ra_geran_bvc_sign_reset_ind(bp->nsei);
 		return 0;
 	}
 
@@ -55,7 +55,7 @@ static int bssgp_nm_bvc_reset_ind(struct osmo_bssgp_prim *bp)
 		return -EINVAL;
 
 	bssgp_parse_cell_id2(&cgi_ps.rai, &cgi_ps.cell_identity, TLVP_VAL(bp->tp, BSSGP_IE_CELL_ID), 8);
-	return sgsn_ra_bvc_cell_reset_ind(bp->nsei, bp->bvci, &cgi_ps);
+	return sgsn_ra_geran_bvc_cell_reset_ind(bp->nsei, bp->bvci, &cgi_ps);
 }
 
 /* call-back function for the BSSGP protocol */

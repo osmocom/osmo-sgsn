@@ -171,19 +171,19 @@ static void test_routing_area_find(void)
 	OSMO_ASSERT(cell_a);
 	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
 
-	cell_b = sgsn_ra_get_cell_by_cgi_ps(&cgi_ps);
+	cell_b = sgsn_ra_geran_get_cell_by_cgi_ps(&cgi_ps);
 	OSMO_ASSERT(cell_b);
 	OSMO_ASSERT(cell_b == cell_a);
 
-	cell_b = sgsn_ra_get_cell_by_ra(ra_a, cgi.cell_identity);
+	cell_b = sgsn_ra_geran_get_cell_by_ra(ra_a, cgi.cell_identity);
 	OSMO_ASSERT(cell_b);
 	OSMO_ASSERT(cell_b == cell_a);
 
-	cell_b = sgsn_ra_get_cell_by_cgi(&cgi);
+	cell_b = sgsn_ra_geran_get_cell_by_cgi(&cgi);
 	OSMO_ASSERT(cell_b);
 	OSMO_ASSERT(cell_b == cell_a);
 
-	cell_b = sgsn_ra_get_cell_by_lai(&cgi.lai, cgi.cell_identity);
+	cell_b = sgsn_ra_geran_get_cell_by_lai(&cgi.lai, cgi.cell_identity);
 	OSMO_ASSERT(cell_b);
 	OSMO_ASSERT(cell_b == cell_a);
 
@@ -202,23 +202,23 @@ static void test_routing_area_find(void)
 	OSMO_ASSERT(cell_a);
 	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
 
-	cell_b = sgsn_ra_get_cell_by_cgi_ps(&cgi_ps);
+	cell_b = sgsn_ra_geran_get_cell_by_cgi_ps(&cgi_ps);
 	OSMO_ASSERT(!cell_b);
 
-	cell_b = sgsn_ra_get_cell_by_ra(ra_a, cgi_ps.cell_identity);
+	cell_b = sgsn_ra_geran_get_cell_by_ra(ra_a, cgi_ps.cell_identity);
 	OSMO_ASSERT(!cell_b);
 
-	cell_b = sgsn_ra_get_cell_by_cgi(&cgi);
+	cell_b = sgsn_ra_geran_get_cell_by_cgi(&cgi);
 	OSMO_ASSERT(!cell_b);
 
-	cell_b = sgsn_ra_get_cell_by_lai(&cgi.lai, cgi.cell_identity);
+	cell_b = sgsn_ra_geran_get_cell_by_lai(&cgi.lai, cgi.cell_identity);
 	OSMO_ASSERT(!cell_b);
 
 	/* try to find for a different RAC */
 	cgi_ps.rai.rac = 45;
 	rai.rac = 46;
 
-	cell_b = sgsn_ra_get_cell_by_cgi_ps(&cgi_ps);
+	cell_b = sgsn_ra_geran_get_cell_by_cgi_ps(&cgi_ps);
 	OSMO_ASSERT(!cell_b);
 
 	ra_b = sgsn_ra_get_ra(&rai);
@@ -226,7 +226,7 @@ static void test_routing_area_find(void)
 
 	/* try to find for different LAC */
 	cgi.lai.lac = 46;
-	cell_b = sgsn_ra_get_cell_by_cgi(&cgi);
+	cell_b = sgsn_ra_geran_get_cell_by_cgi(&cgi);
 	OSMO_ASSERT(!cell_b);
 
 	sgsn_ra_free(ra_a);
@@ -268,24 +268,24 @@ static void test_routing_area_reset_ind(void)
 	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
 	OSMO_ASSERT(llist_count(&ra_a->cells_alive_list) == 0);
 
-	rc = sgsn_ra_bvc_cell_reset_ind(nsei, bvci, &cgi_ps);
+	rc = sgsn_ra_geran_bvc_cell_reset_ind(nsei, bvci, &cgi_ps);
 	OSMO_ASSERT(rc == 0);
 	OSMO_ASSERT(llist_count(&ra_a->cells_alive_list) == 1);
 
-	cell_a = sgsn_ra_get_cell_by_cgi(&cgi);
+	cell_a = sgsn_ra_geran_get_cell_by_cgi(&cgi);
 	OSMO_ASSERT(cell_a);
 
-	rc = sgsn_ra_bvc_cell_reset_ind(nsei, bvci, &cgi_ps);
+	rc = sgsn_ra_geran_bvc_cell_reset_ind(nsei, bvci, &cgi_ps);
 	OSMO_ASSERT(rc == 0);
 
-	cell_b = sgsn_ra_get_cell_by_cgi(&cgi);
+	cell_b = sgsn_ra_geran_get_cell_by_cgi(&cgi);
 	OSMO_ASSERT(cell_b);
 	OSMO_ASSERT(cell_a == cell_b);
 
 	sgsn_ra_free(ra_a);
 	OSMO_ASSERT(llist_empty(&sgsn->routing_area->ra_list));
 
-	rc = sgsn_ra_bvc_cell_reset_ind(nsei, bvci, &cgi_ps);
+	rc = sgsn_ra_geran_bvc_cell_reset_ind(nsei, bvci, &cgi_ps);
 	OSMO_ASSERT(rc == 0);
 	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 1);
 
@@ -320,17 +320,17 @@ void test_routing_area_nsei_free(void)
 
 	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
 
-	rc = sgsn_ra_bvc_cell_reset_ind(nsei, bvci, &cgi_ps);
+	rc = sgsn_ra_geran_bvc_cell_reset_ind(nsei, bvci, &cgi_ps);
 	OSMO_ASSERT(rc == 0);
 
 	ra_a = sgsn_ra_get_ra(&cgi_ps.rai);
 	OSMO_ASSERT(llist_count(&ra_a->cells_alive_list) == 1);
 
-	rc = sgsn_ra_nsei_failure_ind(nsei);
+	rc = sgsn_ra_geran_nsei_failure_ind(nsei);
 	OSMO_ASSERT(rc == 0);
 	OSMO_ASSERT(llist_empty(&sgsn->routing_area->ra_list));
 
-	rc = sgsn_ra_nsei_failure_ind(nsei);
+	rc = sgsn_ra_geran_nsei_failure_ind(nsei);
 	OSMO_ASSERT(rc == -ENOENT);
 	OSMO_ASSERT(llist_empty(&sgsn->routing_area->ra_list));
 
@@ -402,11 +402,11 @@ void test_routing_area_paging(void)
 	g_paging[0].valid = true;
 	g_paging[0].paged = false;
 
-	rc = sgsn_ra_bvc_cell_reset_ind(nsei, bvci, &cgi_ps);
+	rc = sgsn_ra_geran_bvc_cell_reset_ind(nsei, bvci, &cgi_ps);
 	OSMO_ASSERT(rc == 0);
 
 	cgi_ps.cell_identity++;
-	rc = sgsn_ra_bvc_cell_reset_ind(nsei, bvci+1, &cgi_ps);
+	rc = sgsn_ra_geran_bvc_cell_reset_ind(nsei, bvci+1, &cgi_ps);
 	OSMO_ASSERT(rc == 0);
 
 	g_paging[1].bvci = bvci+1;
@@ -450,13 +450,13 @@ void test_routing_area_geran_geran_sig_reset(void)
 	printf("Testing Routing Area GERAN BVCI Signalling Reset Ind\n");
 
 	printf(" Registering GERAN RA/cell via BVCI 5/BVC Reset Ind\n");
-	sgsn_ra_bvc_sign_reset_ind(nsei);
+	sgsn_ra_geran_bvc_sign_reset_ind(nsei);
 
-	rc = sgsn_ra_bvc_cell_reset_ind(nsei, bvci, &cgi_ps);
+	rc = sgsn_ra_geran_bvc_cell_reset_ind(nsei, bvci, &cgi_ps);
 	OSMO_ASSERT(rc == 0);
 
 	printf(" Checking cell on BVCI 5\n");
-	cell = sgsn_ra_get_cell_by_cgi_ps(&cgi_ps);
+	cell = sgsn_ra_geran_get_cell_by_cgi_ps(&cgi_ps);
 	OSMO_ASSERT(cell);
 	OSMO_ASSERT(cell->ran_type == RA_TYPE_GERAN_Gb);
 	OSMO_ASSERT(cell->u.geran.bvci == bvci);
@@ -468,7 +468,7 @@ void test_routing_area_geran_geran_sig_reset(void)
 	OSMO_ASSERT(llist_count(&cell->ra->cells_alive_list) == 1);
 
 	printf(" Drop all cells via BVC Reset Ind on Signalling BVCI\n");
-	sgsn_ra_bvc_sign_reset_ind(nsei);
+	sgsn_ra_geran_bvc_sign_reset_ind(nsei);
 
 	printf(" Ensure only 0 RAs are present\n");
 	OSMO_ASSERT(llist_count(&sgsn->routing_area->ra_list) == 0);
@@ -503,11 +503,11 @@ void test_routing_area_geran_geran_bvci_change(void)
 	printf("Testing Routing Area GERAN to GERAN (BVCI change)\n");
 
 	printf(" Registering GERAN RA/cell via BVCI A/BVC Reset Ind\n");
-	rc = sgsn_ra_bvc_cell_reset_ind(nsei, bvci_a, &cgi_ps);
+	rc = sgsn_ra_geran_bvc_cell_reset_ind(nsei, bvci_a, &cgi_ps);
 	OSMO_ASSERT(rc == 0);
 
 	printf(" Checking cell on BVCI A\n");
-	cell_a = sgsn_ra_get_cell_by_cgi_ps(&cgi_ps);
+	cell_a = sgsn_ra_geran_get_cell_by_cgi_ps(&cgi_ps);
 	OSMO_ASSERT(cell_a);
 	OSMO_ASSERT(cell_a->ran_type == RA_TYPE_GERAN_Gb);
 	OSMO_ASSERT(cell_a->u.geran.bvci == bvci_a);
@@ -519,11 +519,11 @@ void test_routing_area_geran_geran_bvci_change(void)
 	OSMO_ASSERT(llist_count(&cell_a->ra->cells_alive_list) == 1);
 
 	printf(" Registering GERAN RA/cell via BVCI B/BVC Reset Ind\n");
-	rc = sgsn_ra_bvc_cell_reset_ind(nsei, bvci_b, &cgi_ps);
+	rc = sgsn_ra_geran_bvc_cell_reset_ind(nsei, bvci_b, &cgi_ps);
 	OSMO_ASSERT(rc == 0);
 
 	printf(" Checking cell on BVCI B\n");
-	cell_b = sgsn_ra_get_cell_by_cgi_ps(&cgi_ps);
+	cell_b = sgsn_ra_geran_get_cell_by_cgi_ps(&cgi_ps);
 	OSMO_ASSERT(cell_b);
 	OSMO_ASSERT(cell_b->ran_type == RA_TYPE_GERAN_Gb);
 	OSMO_ASSERT(cell_b->u.geran.bvci == bvci_b);

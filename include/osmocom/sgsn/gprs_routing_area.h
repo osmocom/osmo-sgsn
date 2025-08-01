@@ -88,27 +88,29 @@ void sgsn_ra_init(struct sgsn_instance *inst);
 
 struct sgsn_ra *sgsn_ra_alloc(const struct osmo_routing_area_id *rai, enum sgsn_ra_ran_type ran_type);
 struct sgsn_ra *sgsn_ra_find_or_create(const struct osmo_routing_area_id *rai, enum sgsn_ra_ran_type ran_type);
+struct sgsn_ra *sgsn_ra_get_ra(const struct osmo_routing_area_id *rai);
 void sgsn_ra_free(struct sgsn_ra *ra);
 struct sgsn_ra_cell *sgsn_ra_cell_alloc_geran(struct sgsn_ra *ra, uint16_t cell_id, uint16_t nsei, uint16_t bvci);
 void sgsn_ra_cell_free(struct sgsn_ra_cell *cell);
 
 /* GERAN */
 /* Called by BSSGP layer to inform about a reset on a PtP BVCI */
-int sgsn_ra_bvc_cell_reset_ind(uint16_t nsei, uint16_t bvci, struct osmo_cell_global_id_ps *cgi_ps);
+int sgsn_ra_geran_bvc_cell_reset_ind(uint16_t nsei, uint16_t bvci, struct osmo_cell_global_id_ps *cgi_ps);
 /* Called by BSSGP layer to inform about a reset on a Signal BVCI */
-void sgsn_ra_bvc_sign_reset_ind(uint16_t nsei);
+void sgsn_ra_geran_bvc_sign_reset_ind(uint16_t nsei);
 /* FIXME: handle BVC BLOCK/UNBLOCK/UNAVAILABLE */
 /* Called by NS-VC layer to inform about an unavailable NSEI (and all BVCI on them) */
-int sgsn_ra_nsei_failure_ind(uint16_t nsei);
+int sgsn_ra_geran_nsei_failure_ind(uint16_t nsei);
 
-struct sgsn_ra_cell *sgsn_ra_get_cell_by_cgi_ps(const struct osmo_cell_global_id_ps *cgi_ps);
-struct sgsn_ra_cell *sgsn_ra_get_cell_by_lai(const struct osmo_location_area_id *lai, uint16_t cell_id);
-struct sgsn_ra_cell *sgsn_ra_get_cell_by_cgi(const struct osmo_cell_global_id *cgi);
-struct sgsn_ra_cell *sgsn_ra_get_cell_by_ra(const struct sgsn_ra *ra, uint16_t cell_id);
-struct sgsn_ra_cell *sgsn_ra_get_cell_by_gb(uint16_t nsei, uint16_t bvci);
-struct sgsn_ra *sgsn_ra_get_ra(const struct osmo_routing_area_id *rai);
-struct sgsn_ra *sgsn_ra_get_ra_geran(const struct osmo_routing_area_id *rai);
+struct sgsn_ra_cell *sgsn_ra_geran_get_cell_by_cgi_ps(const struct osmo_cell_global_id_ps *cgi_ps);
+struct sgsn_ra_cell *sgsn_ra_geran_get_cell_by_lai(const struct osmo_location_area_id *lai, uint16_t cell_id);
+struct sgsn_ra_cell *sgsn_ra_geran_get_cell_by_cgi(const struct osmo_cell_global_id *cgi);
+struct sgsn_ra_cell *sgsn_ra_geran_get_cell_by_ra(const struct sgsn_ra *ra, uint16_t cell_id);
+struct sgsn_ra_cell *sgsn_ra_geran_get_cell_by_gb(uint16_t nsei, uint16_t bvci);
+struct sgsn_ra *sgsn_ra_geran_get_ra(const struct osmo_routing_area_id *rai);
 
+/* Page the whole routing area for this mmctx */
+int sgsn_ra_geran_page_ra(const struct osmo_routing_area_id *rai, struct sgsn_mm_ctx *mmctx);
 
 /*
  * return value for callbacks.
@@ -123,6 +125,3 @@ struct sgsn_ra *sgsn_ra_get_ra_geran(const struct osmo_routing_area_id *rai);
 typedef int (sgsn_ra_cb_t)(struct sgsn_ra_cell *ra_cell, void *cb_data);
 int sgsn_ra_foreach_cell(struct sgsn_ra *ra, sgsn_ra_cb_t *cb, void *cb_data);
 int sgsn_ra_foreach_cell2(struct osmo_routing_area_id *rai, sgsn_ra_cb_t *cb, void *cb_data);
-
-/* Page the whole routing area for this mmctx */
-int sgsn_ra_geran_page_ra(const struct osmo_routing_area_id *rai, struct sgsn_mm_ctx *mmctx);
