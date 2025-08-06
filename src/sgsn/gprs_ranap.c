@@ -144,14 +144,14 @@ static int sgsn_ranap_iu_event_mmctx(struct ranap_ue_conn_ctx *ctx, enum ranap_i
 
 	if (!ctx) {
 		LOGIUP(ctx, LOGL_ERROR, "NULL ctx given for IU event %s\n",
-		       ranap_iu_event_type_str(type));
+		       iu_client_event_type_str(type));
 		return rc;
 	}
 
 	mm = sgsn_mm_ctx_by_ue_ctx(ctx);
 	if (!mm) {
 		LOGIUP(ctx, LOGL_NOTICE, "Cannot find mm ctx for IU event %s\n",
-		       ranap_iu_event_type_str(type));
+		       iu_client_event_type_str(type));
 		ranap_iu_free_ue(ctx);
 		return rc;
 	}
@@ -164,7 +164,7 @@ static int sgsn_ranap_iu_event_mmctx(struct ranap_ue_conn_ctx *ctx, enum ranap_i
 		/* fall thru */
 	case RANAP_IU_EVENT_LINK_INVALIDATED:
 		/* Clean up ranap_ue_conn_ctx here */
-		LOGMMCTXP(LOGL_INFO, mm, "IU release (cause=%s)\n", ranap_iu_event_type_str(type));
+		LOGMMCTXP(LOGL_INFO, mm, "IU release (cause=%s)\n", iu_client_event_type_str(type));
 		rc = osmo_fsm_inst_dispatch(mm->iu.mm_state_fsm, E_PMM_PS_CONN_RELEASE, NULL);
 		if (rc < 0)
 			sgsn_ranap_iu_free(mm);

@@ -5,7 +5,7 @@
 #ifdef BUILD_IU
 #include <osmocom/ranap/ranap_ies_defs.h>
 #include <osmocom/ranap/ranap_msg_factory.h>
-#include <osmocom/ranap/iu_client.h>
+#include <osmocom/sgsn/iu_client.h>
 
 struct sgsn_mm_ctx;
 struct sgsn_pdp_ctx;
