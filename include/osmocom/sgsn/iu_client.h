@@ -54,10 +54,10 @@ enum ranap_iu_event_type {
 	RANAP_IU_EVENT_NEW_AREA, /* Either a new LAC/RAC has been detected */
 };
 
-extern const struct value_string ranap_iu_event_type_names[];
-static inline const char *ranap_iu_event_type_str(enum ranap_iu_event_type e)
+extern const struct value_string iu_client_event_type_names[];
+static inline const char *iu_client_event_type_str(enum ranap_iu_event_type e)
 {
-	return get_value_string(ranap_iu_event_type_names, e);
+	return get_value_string(iu_client_event_type_names, e);
 }
 
 /* Implementations of iu_recv_cb_t shall find the ranap_ue_conn_ctx in msg->dst. */
