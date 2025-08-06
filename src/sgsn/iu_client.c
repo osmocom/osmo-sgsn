@@ -79,11 +79,11 @@ struct ranap_iu_rnc {
 	struct llist_head lac_rac_list;
 };
 
-void *talloc_iu_ctx;
+static void *talloc_iu_ctx;
 
-ranap_iu_recv_cb_t global_iu_recv_cb = NULL;
-ranap_iu_event_cb_t global_iu_event_cb = NULL;
-int iu_log_subsystem = 0;
+static ranap_iu_recv_cb_t global_iu_recv_cb = NULL;
+static ranap_iu_event_cb_t global_iu_event_cb = NULL;
+static int iu_log_subsystem = 0;
 
 #define LOGPIU(level, fmt, args...) \
 	LOGP(iu_log_subsystem, level, fmt, ## args)
