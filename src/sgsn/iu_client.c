@@ -102,7 +102,7 @@ static struct osmo_sccp_addr g_local_sccp_addr;
 /* This rac will be used internally. RAC with 0xff will be rejected */
 #define OSMO_RESERVED_RAC 0xff
 
-const struct value_string ranap_iu_event_type_names[] = {
+const struct value_string iu_client_event_type_names[] = {
 	OSMO_VALUE_STRING(RANAP_IU_EVENT_RAB_ASSIGN),
 	OSMO_VALUE_STRING(RANAP_IU_EVENT_SECURITY_MODE_COMPLETE),
 	OSMO_VALUE_STRING(RANAP_IU_EVENT_IU_RELEASE),
@@ -121,7 +121,7 @@ static int global_iu_event(struct ranap_ue_conn_ctx *ue_ctx,
 	if (ue_ctx && !ue_ctx->notification)
 		return 0;
 
-	LOGPIU(LOGL_DEBUG, "Submit Iu event to upper layer: %s\n", ranap_iu_event_type_str(type));
+	LOGPIU(LOGL_DEBUG, "Submit Iu event to upper layer: %s\n", iu_client_event_type_str(type));
 
 	return global_iu_event_cb(ue_ctx, type, data);
 }
