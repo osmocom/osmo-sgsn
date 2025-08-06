@@ -17,7 +17,7 @@
 #include "../../config.h"
 
 #if BUILD_IU
-#include <osmocom/ranap/iu_client.h>
+#include <osmocom/sgsn/iu_client.h>
 #endif
 
 #include <ares.h>

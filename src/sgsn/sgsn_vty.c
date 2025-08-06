@@ -63,7 +63,7 @@
 #include "../../config.h"
 
 #ifdef BUILD_IU
-#include <osmocom/ranap/iu_client.h>
+#include <osmocom/sgsn/iu_client.h>
 #endif
 
 static struct sgsn_config *g_cfg = NULL;

@@ -77,7 +77,7 @@
 #if BUILD_IU
 #include <osmocom/sigtran/osmo_ss7.h>
 #include <osmocom/sigtran/protocol/m3ua.h>
-#include <osmocom/ranap/iu_client.h>
+#include <osmocom/sgsn/iu_client.h>
 #endif
 
 #define _GNU_SOURCE
