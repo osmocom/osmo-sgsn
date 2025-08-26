@@ -22,7 +22,6 @@ enum {
 	DRANAP,
 	DSUA,
 	DV42BIS,
-	DIUCS,
 	DSIGTRAN,
 	DGTP,
 	DOBJ,
