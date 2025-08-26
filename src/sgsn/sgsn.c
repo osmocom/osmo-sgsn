@@ -21,6 +21,8 @@
 
 #include <stdint.h>
 
+#include "config.h"
+
 #include <osmocom/core/linuxlist.h>
 #include <osmocom/core/talloc.h>
 #include <osmocom/core/timer.h>
@@ -58,6 +60,9 @@
 #include <osmocom/sgsn/gtp.h>
 #include <osmocom/sgsn/pdpctx.h>
 #include <osmocom/sgsn/gprs_routing_area.h>
+#if BUILD_IU
+#include <osmocom/sgsn/sccp.h>
+#endif /* #if BUILD_IU */
 
 #include <time.h>
 
@@ -152,6 +157,9 @@ static void sgsn_llme_check_cb(void *data_)
 static int sgsn_instance_talloc_destructor(struct sgsn_instance *sgi)
 {
 	sgsn_cdr_release(sgi);
+#if BUILD_IU
+	sgsn_sccp_release(sgi);
+#endif /* #if BUILD_IU */
 	osmo_timer_del(&sgi->llme_timer);
 	rate_ctr_group_free(sgi->rate_ctrs);
 	return 0;
@@ -184,6 +192,9 @@ struct sgsn_instance *sgsn_instance_alloc(void *talloc_ctx)
 	INIT_LLIST_HEAD(&inst->mme_list);
 	INIT_LLIST_HEAD(&inst->mm_list);
 	INIT_LLIST_HEAD(&inst->pdp_list);
+#if BUILD_IU
+	INIT_LLIST_HEAD(&inst->rnc_list);
+#endif /* #if BUILD_IU */
 
 	osmo_timer_setup(&inst->llme_timer, sgsn_llme_check_cb, NULL);
 	osmo_timer_schedule(&inst->llme_timer, GPRS_LLME_CHECK_TICK, 0);
@@ -218,5 +229,13 @@ int sgsn_inst_init(struct sgsn_instance *sgsn)
 		LOGP(DGPRS, LOGL_FATAL, "Cannot set up SGSN\n");
 		return rc;
 	}
+
+#if BUILD_IU
+	rc = sgsn_sccp_init(sgsn);
+	if (rc < 0) {
+		LOGP(DGPRS, LOGL_FATAL, "Cannot set up SGSN SCCP layer\n");
+		return rc;
+	}
+#endif /* #if BUILD_IU */
 	return 0;
 }

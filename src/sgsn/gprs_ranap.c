@@ -22,6 +22,9 @@
  */
 
 #include "config.h"
+
+#include <asn1c/asn1helpers.h>
+
 #include <osmocom/gtp/gtp.h>
 
 #include <osmocom/core/rate_ctr.h>
@@ -29,7 +32,11 @@
 #include <osmocom/gprs/gprs_msgb.h>
 
 #include <osmocom/ranap/ranap_common.h>
+#include <osmocom/ranap/ranap_common_cn.h>
+#include <osmocom/ranap/ranap_ies_defs.h>
+#include <osmocom/ranap/ranap_msg_factory.h>
 #include <osmocom/ranap/iu_helpers.h>
+#include <osmocom/sigtran/sccp_helpers.h>
 
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/gprs_sm.h>
@@ -41,8 +48,54 @@
 #include <osmocom/sgsn/gprs_routing_area.h>
 #include <osmocom/sgsn/gtp_ggsn.h>
 #include <osmocom/sgsn/gtp.h>
+#include <osmocom/sgsn/iu_rnc.h>
 #include <osmocom/sgsn/pdpctx.h>
 #include <osmocom/sgsn/mmctx.h>
+
+/* Parsed global RNC id. See also struct RANAP_GlobalRNC_ID, and note that the
+ * PLMN identity is a BCD representation of the MCC and MNC.
+ * See iu_grnc_id_parse(). */
+struct iu_grnc_id {
+	struct osmo_plmn_id plmn;
+	uint16_t rnc_id;
+};
+
+static int iu_grnc_id_parse(struct osmo_rnc_id *dst, struct RANAP_GlobalRNC_ID *src)
+{
+	/* The size is coming from arbitrary sender, check it gracefully */
+	if (src->pLMNidentity.size != 3) {
+		LOGP(DRANAP, LOGL_ERROR, "Invalid PLMN Identity size: should be 3, is %d\n",
+		     src->pLMNidentity.size);
+		return -1;
+	}
+	osmo_plmn_from_bcd(&src->pLMNidentity.buf[0], &dst->plmn);
+	dst->rnc_id = (uint16_t)src->rNC_ID;
+	return 0;
+}
+
+#if 0
+/* not used at present */
+static int iu_grnc_id_compose(struct iu_grnc_id *src, struct RANAP_GlobalRNC_ID *dst)
+{
+	/* The caller must ensure proper size */
+	OSMO_ASSERT(dst->pLMNidentity.size == 3);
+	gsm48_mcc_mnc_to_bcd(&dst->pLMNidentity.buf[0],
+			     src->mcc, src->mnc);
+	dst->rNC_ID = src->rnc_id;
+	return 0;
+}
+#endif
+
+struct ranap_iu_event_sccp_new_ue_context {
+	struct sgsn_sccp_user_iups *scu_iups;
+	struct osmo_sccp_addr rem_sccp_addr;
+	uint32_t conn_id;
+};
+
+struct ranap_iu_event_cl_msg_ind {
+	struct sgsn_sccp_user_iups *scu_iups;
+	struct osmo_scu_unitdata_param *ud_prim;
+};
 
 /* Send RAB activation requests for all PDP contexts */
 void activate_pdp_rabs(struct sgsn_mm_ctx *ctx)
@@ -280,4 +333,463 @@ int iu_rab_act_ps(uint8_t rab_id, struct sgsn_pdp_ctx *pdp)
 					    pdp->lib->teid_gn, use_x213_nsap);
 	msg->l2h = msg->data;
 	return ranap_iu_rab_act(uectx, msg);
+}
+
+int ranap_iu_rab_act(struct ranap_ue_conn_ctx *ue_ctx, struct msgb *msg)
+{
+	struct osmo_scu_prim *prim;
+
+	/* wrap RANAP message in SCCP N-DATA.req */
+	prim = (struct osmo_scu_prim *) msgb_push(msg, sizeof(*prim));
+	prim->u.data.conn_id = ue_ctx->conn_id;
+	osmo_prim_init(&prim->oph,
+		       SCCP_SAP_USER,
+		       OSMO_SCU_PRIM_N_DATA,
+		       PRIM_OP_REQUEST,
+		       msg);
+	return osmo_sccp_user_sap_down(ue_ctx->scu_iups->scu, &prim->oph);
+}
+
+int ranap_iu_rab_deact(struct ranap_ue_conn_ctx *ue_ctx, uint8_t rab_id)
+{
+	/* FIXME */
+	return -1;
+}
+
+int ranap_iu_tx_sec_mode_cmd(struct ranap_ue_conn_ctx *uectx, struct osmo_auth_vector *vec,
+			     int send_ck, int new_key)
+{
+	struct osmo_scu_prim *prim;
+	struct msgb *msg;
+
+	/* create RANAP message */
+	msg = ranap_new_msg_sec_mod_cmd(vec->ik, send_ck ? vec->ck : NULL,
+			new_key ? RANAP_KeyStatus_new : RANAP_KeyStatus_old);
+	msg->l2h = msg->data;
+	/* wrap RANAP message in SCCP N-DATA.req */
+	prim = (struct osmo_scu_prim *) msgb_push(msg, sizeof(*prim));
+	prim->u.data.conn_id = uectx->conn_id;
+	osmo_prim_init(&prim->oph, SCCP_SAP_USER,
+			OSMO_SCU_PRIM_N_DATA,
+			PRIM_OP_REQUEST, msg);
+	return osmo_sccp_user_sap_down(uectx->scu_iups->scu, &prim->oph);
+}
+
+int ranap_iu_tx_common_id(struct ranap_ue_conn_ctx *uectx, const char *imsi)
+{
+	struct msgb *msg;
+	struct osmo_scu_prim *prim;
+
+	LOGP(DRANAP, LOGL_INFO, "Transmitting RANAP CommonID (SCCP conn_id %u)\n",
+	     uectx->conn_id);
+
+	msg = ranap_new_msg_common_id(imsi);
+	msg->l2h = msg->data;
+	prim = (struct osmo_scu_prim *) msgb_push(msg, sizeof(*prim));
+	prim->u.data.conn_id = uectx->conn_id;
+	osmo_prim_init(&prim->oph, SCCP_SAP_USER,
+			OSMO_SCU_PRIM_N_DATA,
+			PRIM_OP_REQUEST, msg);
+	return osmo_sccp_user_sap_down(uectx->scu_iups->scu, &prim->oph);
+}
+
+/* Send a paging command down a given SCCP User. tmsi and paging_cause are
+ * optional and may be passed NULL and 0, respectively, to disable their use.
+ * See enum RANAP_PagingCause.
+ *
+ * If TMSI is given, the IMSI is not sent over the air interface. Nevertheless,
+ * the IMSI is still required for resolution in the HNB-GW and/or(?) RNC. */
+int ranap_iu_tx_paging_cmd(struct osmo_sccp_addr *called_addr,
+			   const char *imsi, const uint32_t *tmsi,
+			   bool is_ps, uint32_t paging_cause)
+{
+	struct msgb *msg;
+	msg = ranap_new_msg_paging_cmd(imsi, tmsi, is_ps ? 1 : 0, paging_cause);
+	msg->l2h = msg->data;
+	return osmo_sccp_tx_unitdata_msg(sgsn->sccp.scu_iups->scu, &sgsn->sccp.scu_iups->local_sccp_addr, called_addr, msg);
+}
+
+int ranap_iu_tx(struct msgb *msg_nas, uint8_t sapi)
+{
+	struct ranap_ue_conn_ctx *uectx = msg_nas->dst;
+	struct msgb *msg;
+	struct osmo_scu_prim *prim;
+
+	if (!uectx) {
+		LOGP(DRANAP, LOGL_ERROR,
+		     "Discarding to-be-transmitted L3 Message as RANAP DT with unset dst SCCP conn_id!\n");
+		return -ENOTCONN;
+	}
+
+	LOGP(DRANAP, LOGL_INFO, "Transmitting L3 Message as RANAP DT (SCCP conn_id %u)\n",
+	     uectx->conn_id);
+
+	msg = ranap_new_msg_dt(sapi, msg_nas->data, msgb_length(msg_nas));
+	msgb_free(msg_nas);
+	msg->l2h = msg->data;
+	prim = (struct osmo_scu_prim *) msgb_push(msg, sizeof(*prim));
+	prim->u.data.conn_id = uectx->conn_id;
+	osmo_prim_init(&prim->oph, SCCP_SAP_USER,
+			OSMO_SCU_PRIM_N_DATA,
+			PRIM_OP_REQUEST, msg);
+	return osmo_sccp_user_sap_down(uectx->scu_iups->scu, &prim->oph);
+}
+
+/* Send Iu Release for the given UE connection.
+ * If cause is NULL, Normal Release cause is sent, otherwise
+ * the provided cause. */
+int ranap_iu_tx_release(struct ranap_ue_conn_ctx *ctx, const struct RANAP_Cause *cause)
+{
+	struct msgb *msg;
+	struct osmo_scu_prim *prim;
+	static const struct RANAP_Cause default_cause = {
+		.present = RANAP_Cause_PR_nAS,
+		.choice.radioNetwork = RANAP_CauseNAS_normal_release,
+	};
+
+	if (!cause)
+		cause = &default_cause;
+
+	msg = ranap_new_msg_iu_rel_cmd(cause);
+	msg->l2h = msg->data;
+	prim = (struct osmo_scu_prim *) msgb_push(msg, sizeof(*prim));
+	prim->u.data.conn_id = ctx->conn_id;
+	osmo_prim_init(&prim->oph, SCCP_SAP_USER,
+			OSMO_SCU_PRIM_N_DATA,
+			PRIM_OP_REQUEST, msg);
+	return osmo_sccp_user_sap_down(ctx->scu_iups->scu, &prim->oph);
+}
+
+void ranap_iu_tx_release_free(struct ranap_ue_conn_ctx *ctx,
+			     const struct RANAP_Cause *cause,
+			     int timeout)
+{
+	ctx->notification = false;
+	ctx->free_on_release = true;
+	int ret = ranap_iu_tx_release(ctx, cause);
+	/* On Tx failure, trigger timeout immediately, as the response will never arrive */
+	if (ret)
+		timeout = 0;
+
+	osmo_timer_schedule(&ctx->release_timeout, timeout, 0);
+}
+
+static int ranap_handle_co_initial_ue(void *ctx, RANAP_InitialUE_MessageIEs_t *ies)
+{
+	struct ranap_iu_event_sccp_new_ue_context *new_ctx = ctx;
+	struct gprs_ra_id ra_id = {};
+	struct osmo_routing_area_id ra_id2 = {};
+	struct osmo_rnc_id rnc_id = {};
+	uint16_t sai;
+	struct ranap_ue_conn_ctx *ue;
+	struct msgb *msg = msgb_alloc(256, "RANAP->NAS");
+	struct ranap_iu_rnc *rnc;
+
+	if (ranap_parse_lai(&ra_id, &ies->lai) != 0) {
+		LOGP(DRANAP, LOGL_ERROR, "Failed to parse RANAP LAI IE\n");
+		return -1;
+	}
+
+	if (ies->presenceMask & INITIALUE_MESSAGEIES_RANAP_RAC_PRESENT) {
+		ra_id.rac = asn1str_to_u8(&ies->rac);
+		if (ra_id.rac == OSMO_RESERVED_RAC) {
+			LOGP(DRANAP, LOGL_ERROR,
+			     "Rejecting RNC with invalid/internally used RAC 0x%02x\n", ra_id.rac);
+			return -1;
+		}
+	} else {
+		ra_id.rac = OSMO_RESERVED_RAC;
+	}
+
+	if (iu_grnc_id_parse(&rnc_id, &ies->globalRNC_ID) != 0) {
+		LOGP(DRANAP, LOGL_ERROR,
+		     "Failed to parse RANAP Global-RNC-ID IE\n");
+		return -1;
+	}
+
+	sai = asn1str_to_u16(&ies->sai.sAC);
+	msgb_gmmh(msg) = msgb_put(msg, ies->nas_pdu.size);
+	memcpy(msgb_gmmh(msg), ies->nas_pdu.buf, ies->nas_pdu.size);
+
+	gprs_rai_to_osmo(&ra_id2, &ra_id);
+
+	/* Make sure we know the RNC Id and LAC+RAC coming in on this connection. */
+	rnc = iu_rnc_register(&rnc_id, &ra_id2, &new_ctx->rem_sccp_addr);
+
+	ue = ue_conn_ctx_alloc(rnc, new_ctx->scu_iups, new_ctx->conn_id);
+	OSMO_ASSERT(ue);
+	ue->ra_id = ra_id;
+
+	/* Feed into the MM layer */
+	msg->dst = ue;
+	gsm0408_gprs_rcvmsg_iu(msg, &ra_id, &sai);
+
+	msgb_free(msg);
+
+	return 0;
+}
+
+static void cn_ranap_handle_co_initial(void *ctx, ranap_message *message)
+{
+	int rc;
+
+	LOGP(DRANAP, LOGL_NOTICE, "handle_co_initial(dir=%u, proc=%u)\n", message->direction, message->procedureCode);
+
+	if (message->direction != RANAP_RANAP_PDU_PR_initiatingMessage
+	    || message->procedureCode != RANAP_ProcedureCode_id_InitialUE_Message) {
+		LOGP(DRANAP, LOGL_ERROR, "Expected direction 'InitiatingMessage',"
+		     " procedureCode 'InitialUE_Message', instead got %u and %u\n",
+		     message->direction, message->procedureCode);
+		rc = -1;
+	} else
+		rc = ranap_handle_co_initial_ue(ctx, &message->msg.initialUE_MessageIEs);
+
+	if (rc) {
+		LOGP(DRANAP, LOGL_ERROR, "Error in %s (%d)\n", __func__, rc);
+		/* TODO handling of the error? */
+	}
+}
+
+int sgsn_ranap_iu_rx_co_initial_msg(struct sgsn_sccp_user_iups *scu_iups, const struct osmo_sccp_addr *rem_sccp_addr, uint32_t conn_id, uint8_t *data, size_t len)
+{
+	struct ranap_iu_event_sccp_new_ue_context new_ctx = {
+		.scu_iups = scu_iups,
+		.conn_id = conn_id,
+		.rem_sccp_addr = *rem_sccp_addr,
+	};
+	return ranap_cn_rx_co(cn_ranap_handle_co_initial, &new_ctx, data, len);
+}
+
+static int ranap_handle_co_dt(void *ctx, RANAP_DirectTransferIEs_t *ies)
+{
+	struct gprs_ra_id _ra_id, *ra_id = NULL;
+	uint16_t _sai, *sai = NULL;
+	struct msgb *msg = msgb_alloc(256, "RANAP->NAS");
+
+	if (ies->presenceMask & DIRECTTRANSFERIES_RANAP_LAI_PRESENT) {
+		if (ranap_parse_lai(&_ra_id, &ies->lai) != 0) {
+			LOGP(DRANAP, LOGL_ERROR, "Failed to parse RANAP LAI IE\n");
+			return -1;
+		}
+		ra_id = &_ra_id;
+		if (ies->presenceMask & DIRECTTRANSFERIES_RANAP_RAC_PRESENT)
+			_ra_id.rac = asn1str_to_u8(&ies->rac);
+
+		if (ies->presenceMask & DIRECTTRANSFERIES_RANAP_SAI_PRESENT) {
+			_sai = asn1str_to_u16(&ies->sai.sAC);
+			sai = &_sai;
+		}
+	}
+
+	msgb_gmmh(msg) = msgb_put(msg, ies->nas_pdu.size);
+	memcpy(msgb_gmmh(msg), ies->nas_pdu.buf, ies->nas_pdu.size);
+
+	/* Feed into the MM/CC/SMS-CP layer */
+	msg->dst = ctx;
+	gsm0408_gprs_rcvmsg_iu(msg, ra_id, sai);
+
+	msgb_free(msg);
+
+	return 0;
+}
+
+static int ranap_handle_co_err_ind(void *ctx, RANAP_ErrorIndicationIEs_t *ies)
+{
+	if (ies->presenceMask & ERRORINDICATIONIES_RANAP_CAUSE_PRESENT)
+		LOGP(DRANAP, LOGL_ERROR, "Rx Error Indication (%s)\n",
+		     ranap_cause_str(&ies->cause));
+	else
+		LOGP(DRANAP, LOGL_ERROR, "Rx Error Indication\n");
+
+	return 0;
+}
+
+static int ranap_handle_co_iu_rel_req(struct ranap_ue_conn_ctx *ctx, RANAP_Iu_ReleaseRequestIEs_t *ies)
+{
+	LOGP(DRANAP, LOGL_INFO, "Received Iu Release Request, Sending Release Command\n");
+	ranap_iu_tx_release(ctx, &ies->cause);
+	return 0;
+}
+
+static int ranap_handle_co_rab_ass_resp(struct ranap_ue_conn_ctx *ctx, RANAP_RAB_AssignmentResponseIEs_t *ies)
+{
+	int rc = -1;
+
+	LOGP(DRANAP, LOGL_INFO,
+	       "Rx RAB Assignment Response for UE conn_id %u\n", ctx->conn_id);
+	if (ies->presenceMask & RAB_ASSIGNMENTRESPONSEIES_RANAP_RAB_SETUPORMODIFIEDLIST_PRESENT) {
+		/* TODO: Iterate over list of SetupOrModifiedList IEs and handle each one */
+		RANAP_IE_t *ranap_ie = ies->raB_SetupOrModifiedList.raB_SetupOrModifiedList_ies.list.array[0];
+		RANAP_RAB_SetupOrModifiedItemIEs_t setup_ies;
+
+		rc = ranap_decode_rab_setupormodifieditemies_fromlist(&setup_ies, &ranap_ie->value);
+		if (rc) {
+			LOGP(DRANAP, LOGL_ERROR, "Error in ranap_decode_rab_setupormodifieditemies()\n");
+			return rc;
+		}
+
+		rc = global_iu_event(ctx, RANAP_IU_EVENT_RAB_ASSIGN, &setup_ies);
+
+		ranap_free_rab_setupormodifieditemies(&setup_ies);
+	}
+	/* FIXME: handle RAB Ass failure? */
+
+	return rc;
+}
+
+/* Entry point for connection-oriented RANAP message */
+static void cn_ranap_handle_co(void *ctx, ranap_message *message)
+{
+	int rc;
+
+	LOGP(DRANAP, LOGL_NOTICE, "handle_co(dir=%u, proc=%u)\n", message->direction, message->procedureCode);
+
+	switch (message->direction) {
+	case RANAP_RANAP_PDU_PR_initiatingMessage:
+		switch (message->procedureCode) {
+		case RANAP_ProcedureCode_id_InitialUE_Message:
+			LOGP(DRANAP, LOGL_ERROR, "Got InitialUE_Message but this is not a new conn\n");
+			rc = -1;
+			break;
+		case RANAP_ProcedureCode_id_DirectTransfer:
+			rc = ranap_handle_co_dt(ctx, &message->msg.directTransferIEs);
+			break;
+		case RANAP_ProcedureCode_id_ErrorIndication:
+			rc = ranap_handle_co_err_ind(ctx, &message->msg.errorIndicationIEs);
+			break;
+		case RANAP_ProcedureCode_id_Iu_ReleaseRequest:
+			/* Iu Release Request */
+			rc = ranap_handle_co_iu_rel_req(ctx, &message->msg.iu_ReleaseRequestIEs);
+			break;
+		default:
+			LOGP(DRANAP, LOGL_ERROR, "Received Initiating Message: unknown Procedure Code %d\n",
+			       message->procedureCode);
+			rc = -1;
+			break;
+		}
+		break;
+	case RANAP_RANAP_PDU_PR_successfulOutcome:
+		switch (message->procedureCode) {
+		case RANAP_ProcedureCode_id_SecurityModeControl:
+			/* Security Mode Complete */
+			rc = global_iu_event(ctx, RANAP_IU_EVENT_SECURITY_MODE_COMPLETE, NULL);
+			break;
+		case RANAP_ProcedureCode_id_Iu_Release:
+			/* Iu Release Complete */
+			rc = global_iu_event(ctx, RANAP_IU_EVENT_IU_RELEASE, NULL);
+			if (rc) {
+				LOGP(DRANAP, LOGL_ERROR, "Iu Release event: Iu Event callback returned %d\n",
+				       rc);
+			}
+			break;
+		default:
+			LOGP(DRANAP, LOGL_ERROR, "Received Successful Outcome: unknown Procedure Code %d\n",
+			     message->procedureCode);
+			rc = -1;
+			break;
+		}
+		break;
+	case RANAP_RANAP_PDU_PR_outcome:
+		switch (message->procedureCode) {
+		case RANAP_ProcedureCode_id_RAB_Assignment:
+			/* RAB Assignment Response */
+			rc = ranap_handle_co_rab_ass_resp(ctx, &message->msg.raB_AssignmentResponseIEs);
+			break;
+		default:
+			LOGP(DRANAP, LOGL_ERROR, "Received Outcome: unknown Procedure Code %d\n",
+			     message->procedureCode);
+			rc = -1;
+			break;
+		}
+		break;
+	case RANAP_RANAP_PDU_PR_unsuccessfulOutcome:
+	default:
+		LOGP(DRANAP, LOGL_ERROR, "Received Unsuccessful Outcome: Procedure Code %d\n",
+		     message->procedureCode);
+		rc = -1;
+		break;
+	}
+
+	if (rc) {
+		LOGP(DRANAP, LOGL_ERROR, "Error in %s (%d)\n", __func__, rc);
+		/* TODO handling of the error? */
+	}
+}
+
+int sgsn_ranap_iu_rx_co_msg(struct ranap_ue_conn_ctx *ue_ctx, uint8_t *data, size_t len)
+{
+	return ranap_cn_rx_co(cn_ranap_handle_co, ue_ctx, data, len);
+}
+
+static int ranap_handle_cl_reset_req(struct ranap_iu_event_cl_msg_ind *cl_msg_ind, RANAP_ResetIEs_t *ies)
+{
+	RANAP_GlobalRNC_ID_t *grnc_id = NULL;
+	struct msgb *resp;
+
+	/* FIXME: verify ies.cN_DomainIndicator */
+
+	if (ies->presenceMask & RESETIES_RANAP_GLOBALRNC_ID_PRESENT)
+		grnc_id = &ies->globalRNC_ID;
+
+	/* send reset response */
+	resp = ranap_new_msg_reset_ack(ies->cN_DomainIndicator, grnc_id);
+	if (!resp)
+		return -ENOMEM;
+	resp->l2h = resp->data;
+	return osmo_sccp_tx_unitdata_msg(cl_msg_ind->scu_iups->scu, &cl_msg_ind->scu_iups->local_sccp_addr, &cl_msg_ind->ud_prim->calling_addr, resp);
+}
+
+static int ranap_handle_cl_err_ind(struct ranap_iu_event_cl_msg_ind *cl_msg_ind, RANAP_ErrorIndicationIEs_t *ies)
+{
+	if (ies->presenceMask & ERRORINDICATIONIES_RANAP_CAUSE_PRESENT)
+		LOGP(DRANAP, LOGL_ERROR, "Rx Error Indication (%s)\n",
+		     ranap_cause_str(&ies->cause));
+	else
+		LOGP(DRANAP, LOGL_ERROR, "Rx Error Indication\n");
+
+	return 0;
+}
+
+/* Entry point for connection-less RANAP message */
+static void cn_ranap_handle_cl(void *ctx, ranap_message *message)
+{
+	struct ranap_iu_event_cl_msg_ind *cl_msg_ind = ctx;
+	int rc;
+
+	switch (message->direction) {
+	case RANAP_RANAP_PDU_PR_initiatingMessage:
+		switch (message->procedureCode) {
+		case RANAP_ProcedureCode_id_Reset:
+			/* received reset.req, send reset.resp */
+			rc = ranap_handle_cl_reset_req(cl_msg_ind, &message->msg.resetIEs);
+			break;
+		case RANAP_ProcedureCode_id_ErrorIndication:
+			rc = ranap_handle_cl_err_ind(cl_msg_ind, &message->msg.errorIndicationIEs);
+			break;
+		default:
+			rc = -1;
+			break;
+		}
+		break;
+	case RANAP_RANAP_PDU_PR_successfulOutcome:
+	case RANAP_RANAP_PDU_PR_unsuccessfulOutcome:
+	case RANAP_RANAP_PDU_PR_outcome:
+	default:
+		rc = -1;
+		break;
+	}
+
+	if (rc) {
+		LOGP(DRANAP, LOGL_ERROR, "Error in %s (%d)\n", __func__, rc);
+		/* TODO handling of the error? */
+	}
+}
+
+int sgsn_ranap_iu_rx_cl_msg(struct sgsn_sccp_user_iups *scu_iups, struct osmo_scu_unitdata_param *ud_prim, uint8_t *data, size_t len)
+{
+	struct ranap_iu_event_cl_msg_ind cl_msg_ind = {
+		.scu_iups = scu_iups,
+		.ud_prim = ud_prim,
+	};
+	return ranap_cn_rx_cl(cn_ranap_handle_cl, &cl_msg_ind, data, len);
 }

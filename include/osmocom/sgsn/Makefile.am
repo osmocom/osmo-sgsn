@@ -28,8 +28,10 @@ noinst_HEADERS = \
 	gtp_ggsn.h \
 	gtp_mme.h \
 	iu_client.h \
+	iu_rnc.h \
 	mmctx.h \
 	pdpctx.h \
+	sccp.h \
 	sgsn.h \
 	sgsn_rim.h \
 	signal.h \

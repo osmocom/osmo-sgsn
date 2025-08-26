@@ -14,13 +14,13 @@ struct msgb;
 struct osmo_auth_vector;
 
 struct RANAP_RAB_SetupOrModifiedItemIEs_s;
-struct RANAP_Cause;
 
 struct ranap_iu_rnc;
 
 struct ranap_ue_conn_ctx {
-	struct llist_head list;
+	struct llist_head list; /* item in sgsn_sccp->ue_conn_ctx_list */
 	struct ranap_iu_rnc *rnc;
+	struct sgsn_sccp_user_iups *scu_iups;
 	uint32_t conn_id;
 	int integrity_active;
 	struct gprs_ra_id ra_id;
@@ -70,10 +70,12 @@ typedef int (*ranap_iu_event_cb_t)(struct ranap_ue_conn_ctx *ue_ctx,
 typedef int (*ranap_iu_rab_ass_resp_cb_t)(struct ranap_ue_conn_ctx *ue_ctx, uint8_t rab_id,
 					  struct RANAP_RAB_SetupOrModifiedItemIEs_s *setup_ies);
 
-int ranap_iu_init(void *ctx, int log_subsystem, const char *sccp_user_name, struct osmo_sccp_instance *sccp,
-		  ranap_iu_recv_cb_t iu_recv_cb, ranap_iu_event_cb_t iu_event_cb);
+int global_iu_event(struct ranap_ue_conn_ctx *ue_ctx,
+		    enum ranap_iu_event_type type,
+		    void *data);
 
-int ranap_iu_tx(struct msgb *msg, uint8_t sapi);
+
+int ranap_iu_init(void *ctx);
 
 int ranap_iu_page_cs(const char *imsi, const uint32_t *tmsi, uint16_t lac)
 	OSMO_DEPRECATED("Use ranap_iu_page_cs2 instead");
@@ -84,19 +86,8 @@ int ranap_iu_page_ps(const char *imsi, const uint32_t *ptmsi, uint16_t lac, uint
 int ranap_iu_page_cs2(const char *imsi, const uint32_t *tmsi, const struct osmo_location_area_id *lai);
 int ranap_iu_page_ps2(const char *imsi, const uint32_t *ptmsi, const struct osmo_routing_area_id *rai);
 
-int ranap_iu_rab_act(struct ranap_ue_conn_ctx *ue_ctx, struct msgb *msg);
-int ranap_iu_rab_deact(struct ranap_ue_conn_ctx *ue_ctx, uint8_t rab_id);
-int ranap_iu_tx_sec_mode_cmd(struct ranap_ue_conn_ctx *uectx, struct osmo_auth_vector *vec,
-			     int send_ck, int new_key);
-int ranap_iu_tx_common_id(struct ranap_ue_conn_ctx *ue_ctx, const char *imsi);
-int ranap_iu_tx_release(struct ranap_ue_conn_ctx *ctx, const struct RANAP_Cause *cause);
 
-/* Transmit a Iu Release Command and submit event RANAP_IU_EVENT_IU_RELEASE upon
- * Release Complete or timeout. Caller is responsible to free the context and
- * closing the SCCP connection (ranap_iu_free_ue) upon recieval of the event. */
-void ranap_iu_tx_release_free(struct ranap_ue_conn_ctx *ctx,
-			      const struct RANAP_Cause *cause,
-			      int timeout);
+struct ranap_ue_conn_ctx *ue_conn_ctx_alloc(struct ranap_iu_rnc *rnc, struct sgsn_sccp_user_iups *scu_iups, uint32_t conn_id);
 
 /* freeing the UE will release all resources
  * This will close the SCCP connection connected to the UE */

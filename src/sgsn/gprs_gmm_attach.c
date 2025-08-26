@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <osmocom/core/tdef.h>
 #include <osmocom/crypt/utran_cipher.h>
 
@@ -7,6 +9,7 @@
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/gprs_gmm.h>
 #include <osmocom/sgsn/mmctx.h>
+#include <osmocom/sgsn/gprs_ranap.h>
 #include <osmocom/sgsn/sgsn.h>
 
 #define X(s) (1 << (s))

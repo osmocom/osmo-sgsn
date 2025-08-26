@@ -1,6 +1,7 @@
 #ifndef _SGSN_H
 #define _SGSN_H
 
+#include "config.h"
 
 #include <osmocom/core/msgb.h>
 #include <osmocom/core/select.h>
@@ -14,9 +15,8 @@
 #include <osmocom/gsupclient/gsup_client.h>
 #include <osmocom/sgsn/common.h>
 
-#include "../../config.h"
-
 #if BUILD_IU
+#include <osmocom/sigtran/sccp_sap.h>
 #include <osmocom/sgsn/iu_client.h>
 #endif
 
@@ -26,6 +26,9 @@
 struct hostent;
 
 #define SGSN_ERROR_CAUSE_NONE (-1)
+
+/* This rac will be used internally. RAC with 0xff will be rejected */
+#define OSMO_RESERVED_RAC 0xff
 
 enum sgsn_auth_policy {
 	SGSN_AUTH_POLICY_OPEN,
@@ -162,8 +165,19 @@ struct sgsn_instance {
 	struct llist_head mme_list; /* list of struct sgsn_mme_ctx */
 	struct llist_head mm_list; /* list of struct sgsn_mm_ctx */
 	struct llist_head pdp_list; /* list of struct sgsn_pdp_ctx */
+#if BUILD_IU
+	struct llist_head rnc_list; /* list of struct ranap_iu_rnc */
+#endif /* if BUILD_IU */
 
 	struct ctrl_handle *ctrlh;
+
+#if BUILD_IU
+	/* SCCP (Iu) */
+	struct {
+		struct osmo_sccp_instance *sccp;
+		struct sgsn_sccp_user_iups *scu_iups;
+	} sccp;
+#endif /* if BUILD_IU */
 };
 
 extern struct sgsn_instance *sgsn;

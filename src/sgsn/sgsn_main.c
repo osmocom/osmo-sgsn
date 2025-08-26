@@ -372,9 +372,6 @@ static bool file_exists(const char *path)
 int main(int argc, char **argv)
 {
 	int rc;
-#if BUILD_IU
-	struct osmo_sccp_instance *sccp;
-#endif
 
 	srand(time(NULL));
 	tall_sgsn_ctx = talloc_named_const(NULL, 0, "osmo_sgsn");
@@ -477,20 +474,7 @@ int main(int argc, char **argv)
 	}
 
 #if BUILD_IU
-	/* Note that these are mostly defaults and can be overriden from the VTY */
-	sccp = osmo_sccp_simple_client_on_ss7_id(tall_sgsn_ctx,
-						 sgsn->cfg.iu.cs7_instance,
-						 "OsmoSGSN",
-						 (23 << 3) + 4,
-						 OSMO_SS7_ASP_PROT_M3UA,
-						 0, "localhost",
-						 0, "localhost");
-	if (!sccp) {
-		printf("Setting up SCCP client failed.\n");
-		return 8;
-	}
-
-	ranap_iu_init(tall_sgsn_ctx, DRANAP, "OsmoSGSN-IuPS", sccp, gsm0408_gprs_rcvmsg_iu, sgsn_ranap_iu_event);
+	ranap_iu_init(tall_sgsn_ctx);
 #endif
 
 	if (daemonize) {
