@@ -2,6 +2,7 @@
 #define _GPRS_GMM_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include <osmocom/core/msgb.h>
 #include <osmocom/gsm/gsm48.h>
@@ -35,6 +36,10 @@ int gprs_gmm_rx_resume(struct osmo_routing_area_id *raid, uint32_t tlli,
 
 int gsm0408_gprs_rcvmsg_gb(struct msgb *msg, struct gprs_llc_llme *llme,
 			   bool drop_cipherable);
+#ifdef BUILD_IU
+int gsm0408_gprs_rcvmsg_iu(struct msgb *msg, struct gprs_ra_id *ra_id, uint16_t *sai);
+#endif /* ifdef BUILD_IU */
+
 /* Has to be called whenever any PDU (signaling, data, ...) has been received */
 void gprs_gb_recv_pdu(struct sgsn_mm_ctx *mmctx, const struct msgb *msg);
 

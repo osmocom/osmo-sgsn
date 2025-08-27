@@ -21,8 +21,6 @@ void sgsn_ranap_iu_free(struct sgsn_mm_ctx *ctx);
 void sgsn_ranap_iu_release_free(struct sgsn_mm_ctx *ctx,
 				const struct RANAP_Cause *cause);
 
-int gsm0408_gprs_rcvmsg_iu(struct msgb *msg, struct gprs_ra_id *ra_id, uint16_t *sai);
-
 #else /* ifndef BUILD_IU */
 inline static void sgsn_ranap_iu_free(void *ctx) {};
 inline static void sgsn_ranap_iu_release_free(void *ctx, void *cause) {};

@@ -2379,3 +2379,44 @@ int gsm0408_gprs_rcvmsg_gb(struct msgb *msg, struct gprs_llc_llme *llme,
 
 	return rc;
 }
+
+#ifdef BUILD_IU
+/* Main entry point for incoming 04.08 GPRS messages from Iu */
+int gsm0408_gprs_rcvmsg_iu(struct msgb *msg, struct gprs_ra_id *ra_id,
+			   uint16_t *sai)
+{
+	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
+	uint8_t pdisc = gsm48_hdr_pdisc(gh);
+	struct sgsn_mm_ctx *mmctx;
+	int rc = -EINVAL;
+
+	mmctx = sgsn_mm_ctx_by_ue_ctx(MSG_IU_UE_CTX(msg));
+	if (mmctx) {
+		rate_ctr_inc(rate_ctr_group_get_ctr(mmctx->ctrg, GMM_CTR_PKTS_SIG_IN));
+		if (ra_id)
+			memcpy(&mmctx->ra, ra_id, sizeof(mmctx->ra));
+	}
+
+	/* MMCTX can be NULL */
+
+	switch (pdisc) {
+	case GSM48_PDISC_MM_GPRS:
+		rc = gsm0408_rcv_gmm(mmctx, msg, NULL, false);
+#pragma message "set drop_cipherable arg for gsm0408_rcv_gmm() from IuPS?"
+		break;
+	case GSM48_PDISC_SM_GPRS:
+		rc = gsm0408_rcv_gsm(mmctx, msg, NULL);
+		break;
+	default:
+		LOGMMCTXP(LOGL_NOTICE, mmctx,
+			"Unknown GSM 04.08 discriminator 0x%02x: %s\n",
+			pdisc, osmo_hexdump((uint8_t *)gh, msgb_l3len(msg)));
+		/* FIXME: return status message */
+		break;
+	}
+
+	/* MMCTX can be invalid */
+
+	return rc;
+}
+#endif /* ifdef BUILD_IU */
