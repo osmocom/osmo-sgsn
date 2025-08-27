@@ -39,11 +39,14 @@ void sgsn_ranap_iu_free(struct sgsn_mm_ctx *ctx);
 void sgsn_ranap_iu_release_free(struct sgsn_mm_ctx *ctx,
 				const struct RANAP_Cause *cause);
 
-int sgsn_ranap_iu_rx_cl_msg(struct sgsn_sccp_user_iups *scu_iups, struct osmo_scu_unitdata_param *ud_prim,
-			    uint8_t *data, size_t len);
-int sgsn_ranap_iu_rx_co_initial_msg(struct sgsn_sccp_user_iups *scu_iups, const struct osmo_sccp_addr *rem_sccp_addr,
-				    uint32_t conn_id, uint8_t *data, size_t len);
-int sgsn_ranap_iu_rx_co_msg(struct ranap_ue_conn_ctx *ue_ctx, uint8_t *data, size_t len);
+int sgsn_ranap_iu_rx_cl_msg(struct sgsn_sccp_user_iups *scu_iups,
+			    const struct osmo_scu_unitdata_param *ud_prim,
+			    const uint8_t *data, size_t len);
+int sgsn_ranap_iu_rx_co_initial_msg(struct sgsn_sccp_user_iups *scu_iups,
+				    const struct osmo_sccp_addr *rem_sccp_addr,
+				    uint32_t conn_id,
+				    const uint8_t *data, size_t len);
+int sgsn_ranap_iu_rx_co_msg(struct ranap_ue_conn_ctx *ue_ctx, const uint8_t *data, size_t len);
 
 #else /* ifndef BUILD_IU */
 inline static void sgsn_ranap_iu_free(void *ctx) {};
