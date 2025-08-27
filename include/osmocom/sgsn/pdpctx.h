@@ -1,5 +1,7 @@
 #pragma once
 
+#include "config.h"
+
 #include <stdint.h>
 #include <netinet/in.h>
 #include <inttypes.h>
@@ -93,6 +95,11 @@ struct sgsn_pdp_ctx *sgsn_pdp_ctx_alloc(struct sgsn_mm_ctx *mm,
 					uint8_t nsapi);
 void sgsn_pdp_ctx_terminate(struct sgsn_pdp_ctx *pdp);
 void sgsn_pdp_ctx_free(struct sgsn_pdp_ctx *pdp);
+
+#ifdef BUILD_IU
+int sgsn_pdp_ctx_iu_rab_activate(struct sgsn_pdp_ctx *pdp, uint8_t rab_id);
+int sgsn_pdp_ctx_iu_rab_deactivate(struct sgsn_pdp_ctx *pdp, uint8_t rab_id);
+#endif /* ifdef BUILD_IU */
 
 char *gprs_pdpaddr2str(uint8_t *pdpa, uint8_t len, bool return_ipv6);
 

@@ -86,17 +86,6 @@ static int iu_grnc_id_compose(struct iu_grnc_id *src, struct RANAP_GlobalRNC_ID 
 }
 #endif
 
-/* Send RAB activation requests for all PDP contexts */
-void activate_pdp_rabs(struct sgsn_mm_ctx *ctx)
-{
-	struct sgsn_pdp_ctx *pdp;
-	if (ctx->ran_type != MM_CTX_T_UTRAN_Iu)
-		return;
-	llist_for_each_entry(pdp, &ctx->pdp_list, list) {
-		iu_rab_act_ps(pdp->nsapi, pdp);
-	}
-}
-
 /* Callback for RAB assignment response */
 static int sgsn_ranap_rab_ass_resp(struct sgsn_mm_ctx *ctx, RANAP_RAB_SetupOrModifiedItemIEs_t *setup_ies)
 {
@@ -299,34 +288,18 @@ void sgsn_ranap_iu_release_free(struct sgsn_mm_ctx *ctx,
 	ctx->iu.ue_ctx = NULL;
 }
 
-int iu_rab_act_ps(uint8_t rab_id, struct sgsn_pdp_ctx *pdp)
+int sgsn_ranap_iu_tx_rab_ps_ass_req(struct ranap_ue_conn_ctx *ue_ctx,
+				    uint8_t rab_id, uint32_t gtp_ip, uint32_t gtp_tei)
 {
 	struct msgb *msg;
-	struct sgsn_mm_ctx *mm = pdp->mm;
-	struct ranap_ue_conn_ctx *uectx;
-	uint32_t ggsn_ip;
-	bool use_x213_nsap;
+	bool use_x213_nsap = (ue_ctx->rab_assign_addr_enc == RANAP_NSAP_ADDR_ENC_X213);
 
-	uectx = mm->iu.ue_ctx;
-	use_x213_nsap = (uectx->rab_assign_addr_enc == RANAP_NSAP_ADDR_ENC_X213);
+	LOGP(DRANAP, LOGL_DEBUG,
+	     "Assigning RAB: rab_id=%u, ggsn_ip=%x, teid_gn=%x, use_x213_nsap=%d\n",
+	     rab_id, gtp_ip, gtp_tei, use_x213_nsap);
 
-	/* Get the IP address for ggsn user plane */
-	memcpy(&ggsn_ip, pdp->lib->gsnru.v, pdp->lib->gsnru.l);
-	ggsn_ip = htonl(ggsn_ip);
-
-	LOGP(DRANAP, LOGL_DEBUG, "Assigning RAB: rab_id=%d, ggsn_ip=%x,"
-	     " teid_gn=%x, use_x213_nsap=%d\n",
-	     rab_id, ggsn_ip, pdp->lib->teid_gn, use_x213_nsap);
-
-	msg = ranap_new_msg_rab_assign_data(rab_id, ggsn_ip,
-					    pdp->lib->teid_gn, use_x213_nsap);
-	return sgsn_scu_iups_tx_data_req(uectx->scu_iups, uectx->conn_id, msg);
-}
-
-int ranap_iu_rab_deact(struct ranap_ue_conn_ctx *ue_ctx, uint8_t rab_id)
-{
-	/* FIXME */
-	return -1;
+	msg = ranap_new_msg_rab_assign_data(rab_id, gtp_ip, gtp_tei, use_x213_nsap);
+	return sgsn_scu_iups_tx_data_req(ue_ctx->scu_iups, ue_ctx->conn_id, msg);
 }
 
 int ranap_iu_tx_sec_mode_cmd(struct ranap_ue_conn_ctx *uectx, struct osmo_auth_vector *vec,

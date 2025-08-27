@@ -1014,7 +1014,7 @@ int gsm48_gmm_authorize(struct sgsn_mm_ctx *ctx)
 		rc = gsm48_tx_gmm_service_ack(ctx);
 
 		if (ctx->iu.service.type != GPRS_SERVICE_T_SIGNALLING)
-			activate_pdp_rabs(ctx);
+			sgsn_mm_ctx_iu_activate_rabs(ctx);
 
 		return rc;
 #endif

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "config.h"
+
 #include <stdint.h>
 #include <netinet/in.h>
 #include <inttypes.h>
@@ -289,3 +291,7 @@ uint32_t sgsn_alloc_ptmsi(void);
 
 /* Called on subscriber data updates */
 void sgsn_update_subscriber_data(struct sgsn_mm_ctx *mmctx);
+
+#ifdef BUILD_IU
+void sgsn_mm_ctx_iu_activate_rabs(struct sgsn_mm_ctx *ctx);
+#endif /* ifdef BUILD_IU */

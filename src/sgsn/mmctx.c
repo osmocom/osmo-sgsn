@@ -608,3 +608,15 @@ bool sgsn_mm_ctx_is_r99(const struct sgsn_mm_ctx *mm)
 		return true;
 	return false;
 }
+
+#if BUILD_IU
+/* Send RAB activation requests for all PDP contexts */
+void sgsn_mm_ctx_iu_activate_rabs(struct sgsn_mm_ctx *ctx)
+{
+	struct sgsn_pdp_ctx *pdp;
+	OSMO_ASSERT(ctx->ran_type == MM_CTX_T_UTRAN_Iu);
+
+	llist_for_each_entry(pdp, &ctx->pdp_list, list)
+		sgsn_pdp_ctx_iu_rab_activate(pdp, pdp->nsapi);
+}
+#endif

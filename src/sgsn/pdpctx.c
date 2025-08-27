@@ -19,6 +19,8 @@
  *
  */
 
+#include "config.h"
+
 #include <stdint.h>
 
 #include <osmocom/core/linuxlist.h>
@@ -36,6 +38,7 @@
 #include <osmocom/sgsn/gprs_llc_xid.h>
 #include <osmocom/sgsn/gprs_sndcp.h>
 #include <osmocom/sgsn/gprs_llc.h>
+#include <osmocom/sgsn/gprs_ranap.h>
 #include <osmocom/sgsn/gprs_sm.h>
 #include <osmocom/sgsn/gtp.h>
 
@@ -156,3 +159,36 @@ void sgsn_pdp_ctx_free(struct sgsn_pdp_ctx *pdp)
 
 	talloc_free(pdp);
 }
+
+#ifdef BUILD_IU
+int sgsn_pdp_ctx_iu_rab_activate(struct sgsn_pdp_ctx *pdp, uint8_t rab_id)
+{
+	struct sgsn_mm_ctx *mm = pdp->mm;
+	struct ranap_ue_conn_ctx *ue_ctx;
+	uint32_t ggsn_ip;
+
+	OSMO_ASSERT(mm->ran_type == MM_CTX_T_UTRAN_Iu);
+	ue_ctx = mm->iu.ue_ctx;
+
+	/* Get the IP address for ggsn user plane */
+	memcpy(&ggsn_ip, pdp->lib->gsnru.v, pdp->lib->gsnru.l);
+	ggsn_ip = htonl(ggsn_ip);
+
+	LOGPDPCTXP(LOGL_INFO, pdp, "Activate RAB: rab_id=%u, ggsn_ip=%x, teid_gn=%x\n",
+		   rab_id, ggsn_ip, pdp->lib->teid_gn);
+
+	return sgsn_ranap_iu_tx_rab_ps_ass_req(ue_ctx, rab_id, ggsn_ip, pdp->lib->teid_gn);
+}
+
+int sgsn_pdp_ctx_iu_rab_deactivate(struct sgsn_pdp_ctx *pdp, uint8_t rab_id)
+{
+	struct sgsn_mm_ctx *mm = pdp->mm;
+
+	OSMO_ASSERT(mm->ran_type == MM_CTX_T_UTRAN_Iu);
+
+	LOGPDPCTXP(LOGL_NOTICE, pdp, "Release RAB: rab_id=%u not supported!\n", rab_id);
+	//struct ranap_ue_conn_ctx *ue_ctx = mm->iu.ue_ctx;
+	// TODO: add new function similar to sgsn_ranap_iu_tx_rab_ps_ass_req() but requesting relese of RAB.
+	return -ENOTSUP;
+}
+#endif /* ifdef BUILD_IU */

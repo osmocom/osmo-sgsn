@@ -1,5 +1,7 @@
 #pragma once
 
+#include "config.h"
+
 #include <osmocom/core/msgb.h>
 
 #ifdef BUILD_IU
@@ -11,12 +13,11 @@
 struct sgsn_mm_ctx;
 struct sgsn_pdp_ctx;
 
-void activate_pdp_rabs(struct sgsn_mm_ctx *ctx);
 int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type type, void *data);
-int iu_rab_act_ps(uint8_t rab_id, struct sgsn_pdp_ctx *pdp);
 
 int ranap_iu_tx(struct msgb *msg, uint8_t sapi);
-int ranap_iu_rab_deact(struct ranap_ue_conn_ctx *ue_ctx, uint8_t rab_id);
+int sgsn_ranap_iu_tx_rab_ps_ass_req(struct ranap_ue_conn_ctx *ue_ctx,
+				    uint8_t rab_id, uint32_t gtp_ip, uint32_t gtp_tei);
 int ranap_iu_tx_sec_mode_cmd(struct ranap_ue_conn_ctx *uectx, struct osmo_auth_vector *vec,
 			     int send_ck, int new_key);
 int ranap_iu_tx_common_id(struct ranap_ue_conn_ctx *ue_ctx, const char *imsi);

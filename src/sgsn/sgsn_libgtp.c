@@ -439,7 +439,7 @@ static int create_pdp_conf(struct pdp_t *pdp, void *cbp, int cause)
 	} else if (pctx->mm->ran_type == MM_CTX_T_UTRAN_Iu) {
 #ifdef BUILD_IU
 		/* Activate a radio bearer */
-		iu_rab_act_ps(pdp->nsapi, pctx);
+		sgsn_pdp_ctx_iu_rab_activate(pctx, pdp->nsapi);
 		return 0;
 #else
 		return -ENOTSUP;
@@ -564,7 +564,7 @@ static int delete_pdp_conf(struct pdp_t *pdp, void *cbp, int cause)
 		} else {
 #ifdef BUILD_IU
 			/* Deactivate radio bearer */
-			ranap_iu_rab_deact(pctx->mm->iu.ue_ctx, 1);
+			sgsn_pdp_ctx_iu_rab_deactivate(pctx, 1);
 #else
 			return -ENOTSUP;
 #endif
