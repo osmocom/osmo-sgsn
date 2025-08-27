@@ -331,23 +331,7 @@ int iu_rab_act_ps(uint8_t rab_id, struct sgsn_pdp_ctx *pdp)
 
 	msg = ranap_new_msg_rab_assign_data(rab_id, ggsn_ip,
 					    pdp->lib->teid_gn, use_x213_nsap);
-	msg->l2h = msg->data;
-	return ranap_iu_rab_act(uectx, msg);
-}
-
-int ranap_iu_rab_act(struct ranap_ue_conn_ctx *ue_ctx, struct msgb *msg)
-{
-	struct osmo_scu_prim *prim;
-
-	/* wrap RANAP message in SCCP N-DATA.req */
-	prim = (struct osmo_scu_prim *) msgb_push(msg, sizeof(*prim));
-	prim->u.data.conn_id = ue_ctx->conn_id;
-	osmo_prim_init(&prim->oph,
-		       SCCP_SAP_USER,
-		       OSMO_SCU_PRIM_N_DATA,
-		       PRIM_OP_REQUEST,
-		       msg);
-	return osmo_sccp_user_sap_down(ue_ctx->scu_iups->scu, &prim->oph);
+	return sgsn_scu_iups_tx_data_req(uectx->scu_iups, uectx->conn_id, msg);
 }
 
 int ranap_iu_rab_deact(struct ranap_ue_conn_ctx *ue_ctx, uint8_t rab_id)
@@ -359,38 +343,23 @@ int ranap_iu_rab_deact(struct ranap_ue_conn_ctx *ue_ctx, uint8_t rab_id)
 int ranap_iu_tx_sec_mode_cmd(struct ranap_ue_conn_ctx *uectx, struct osmo_auth_vector *vec,
 			     int send_ck, int new_key)
 {
-	struct osmo_scu_prim *prim;
 	struct msgb *msg;
 
 	/* create RANAP message */
 	msg = ranap_new_msg_sec_mod_cmd(vec->ik, send_ck ? vec->ck : NULL,
 			new_key ? RANAP_KeyStatus_new : RANAP_KeyStatus_old);
-	msg->l2h = msg->data;
-	/* wrap RANAP message in SCCP N-DATA.req */
-	prim = (struct osmo_scu_prim *) msgb_push(msg, sizeof(*prim));
-	prim->u.data.conn_id = uectx->conn_id;
-	osmo_prim_init(&prim->oph, SCCP_SAP_USER,
-			OSMO_SCU_PRIM_N_DATA,
-			PRIM_OP_REQUEST, msg);
-	return osmo_sccp_user_sap_down(uectx->scu_iups->scu, &prim->oph);
+	return sgsn_scu_iups_tx_data_req(uectx->scu_iups, uectx->conn_id, msg);
 }
 
 int ranap_iu_tx_common_id(struct ranap_ue_conn_ctx *uectx, const char *imsi)
 {
 	struct msgb *msg;
-	struct osmo_scu_prim *prim;
 
 	LOGP(DRANAP, LOGL_INFO, "Transmitting RANAP CommonID (SCCP conn_id %u)\n",
 	     uectx->conn_id);
 
 	msg = ranap_new_msg_common_id(imsi);
-	msg->l2h = msg->data;
-	prim = (struct osmo_scu_prim *) msgb_push(msg, sizeof(*prim));
-	prim->u.data.conn_id = uectx->conn_id;
-	osmo_prim_init(&prim->oph, SCCP_SAP_USER,
-			OSMO_SCU_PRIM_N_DATA,
-			PRIM_OP_REQUEST, msg);
-	return osmo_sccp_user_sap_down(uectx->scu_iups->scu, &prim->oph);
+	return sgsn_scu_iups_tx_data_req(uectx->scu_iups, uectx->conn_id, msg);
 }
 
 /* Send a paging command down a given SCCP User. tmsi and paging_cause are
@@ -413,7 +382,6 @@ int ranap_iu_tx(struct msgb *msg_nas, uint8_t sapi)
 {
 	struct ranap_ue_conn_ctx *uectx = msg_nas->dst;
 	struct msgb *msg;
-	struct osmo_scu_prim *prim;
 
 	if (!uectx) {
 		LOGP(DRANAP, LOGL_ERROR,
@@ -426,22 +394,16 @@ int ranap_iu_tx(struct msgb *msg_nas, uint8_t sapi)
 
 	msg = ranap_new_msg_dt(sapi, msg_nas->data, msgb_length(msg_nas));
 	msgb_free(msg_nas);
-	msg->l2h = msg->data;
-	prim = (struct osmo_scu_prim *) msgb_push(msg, sizeof(*prim));
-	prim->u.data.conn_id = uectx->conn_id;
-	osmo_prim_init(&prim->oph, SCCP_SAP_USER,
-			OSMO_SCU_PRIM_N_DATA,
-			PRIM_OP_REQUEST, msg);
-	return osmo_sccp_user_sap_down(uectx->scu_iups->scu, &prim->oph);
+
+	return sgsn_scu_iups_tx_data_req(uectx->scu_iups, uectx->conn_id, msg);
 }
 
 /* Send Iu Release for the given UE connection.
  * If cause is NULL, Normal Release cause is sent, otherwise
  * the provided cause. */
-int ranap_iu_tx_release(struct ranap_ue_conn_ctx *ctx, const struct RANAP_Cause *cause)
+int ranap_iu_tx_release(struct ranap_ue_conn_ctx *uectx, const struct RANAP_Cause *cause)
 {
 	struct msgb *msg;
-	struct osmo_scu_prim *prim;
 	static const struct RANAP_Cause default_cause = {
 		.present = RANAP_Cause_PR_nAS,
 		.choice.radioNetwork = RANAP_CauseNAS_normal_release,
@@ -451,13 +413,7 @@ int ranap_iu_tx_release(struct ranap_ue_conn_ctx *ctx, const struct RANAP_Cause 
 		cause = &default_cause;
 
 	msg = ranap_new_msg_iu_rel_cmd(cause);
-	msg->l2h = msg->data;
-	prim = (struct osmo_scu_prim *) msgb_push(msg, sizeof(*prim));
-	prim->u.data.conn_id = ctx->conn_id;
-	osmo_prim_init(&prim->oph, SCCP_SAP_USER,
-			OSMO_SCU_PRIM_N_DATA,
-			PRIM_OP_REQUEST, msg);
-	return osmo_sccp_user_sap_down(ctx->scu_iups->scu, &prim->oph);
+	return sgsn_scu_iups_tx_data_req(uectx->scu_iups, uectx->conn_id, msg);
 }
 
 void ranap_iu_tx_release_free(struct ranap_ue_conn_ctx *ctx,

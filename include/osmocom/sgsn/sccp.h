@@ -18,6 +18,8 @@
  */
 #pragma once
 
+#include <stdint.h>
+
 #include <osmocom/sigtran/sccp_sap.h>
 
 struct sgsn_instance;
@@ -33,6 +35,8 @@ struct sgsn_sccp_user_iups {
 
 struct sgsn_sccp_user_iups *sgsn_scu_iups_inst_alloc(struct sgsn_instance *sgsn, struct osmo_sccp_instance *sccp);
 void sgsn_scu_iups_free(struct sgsn_sccp_user_iups *scu_iups);
+
+int sgsn_scu_iups_tx_data_req(struct sgsn_sccp_user_iups *scu_iups, uint32_t conn_id, struct msgb *ranap_msg);
 
 int sgsn_sccp_init(struct sgsn_instance *sgsn);
 void sgsn_sccp_release(struct sgsn_instance *sgsn);

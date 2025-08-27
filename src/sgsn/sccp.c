@@ -77,6 +77,29 @@ void sgsn_scu_iups_free(struct sgsn_sccp_user_iups *scu_iups)
 	talloc_free(scu_iups);
 }
 
+/* wrap RANAP message in SCCP N-DATA.req
+ * ranap_msg becomes owned by the callee. */
+int sgsn_scu_iups_tx_data_req(struct sgsn_sccp_user_iups *scu_iups, uint32_t conn_id, struct msgb *ranap_msg)
+{
+	struct osmo_scu_prim *prim;
+	int rc;
+
+	if (!scu_iups) {
+		LOGP(DSUA, LOGL_ERROR, "Failed to send SCCP N-DATA.req(%u): no SCCP User\n", conn_id);
+		return -1;
+	}
+
+	ranap_msg->l2h = ranap_msg->data;
+	prim = (struct osmo_scu_prim *)msgb_push(ranap_msg, sizeof(*prim));
+	osmo_prim_init(&prim->oph, SCCP_SAP_USER, OSMO_SCU_PRIM_N_DATA, PRIM_OP_REQUEST, ranap_msg);
+	prim->u.data.conn_id = conn_id;
+
+	rc = osmo_sccp_user_sap_down(scu_iups->scu, &prim->oph);
+	if (rc)
+		LOGP(DSUA, LOGL_ERROR, "Failed to send SCCP N-DATA.req(%u)\n", conn_id);
+	return rc;
+}
+
 static struct ranap_ue_conn_ctx *ue_conn_ctx_find(struct sgsn_sccp_user_iups *scu_iups, uint32_t conn_id)
 {
 	struct ranap_ue_conn_ctx *ctx;
