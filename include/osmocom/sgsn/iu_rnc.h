@@ -32,4 +32,4 @@ struct ranap_iu_rnc {
 
 struct ranap_iu_rnc *iu_rnc_register(struct osmo_rnc_id *rnc_id,
 				     const struct osmo_routing_area_id *rai,
-				     struct osmo_sccp_addr *addr);
+				     const struct osmo_sccp_addr *addr);

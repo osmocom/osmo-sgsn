@@ -43,7 +43,7 @@
 #include <osmocom/sgsn/sccp.h>
 #include <osmocom/sgsn/sgsn.h>
 
-static struct ranap_iu_rnc *iu_rnc_alloc(const struct osmo_rnc_id *rnc_id, struct osmo_sccp_addr *addr)
+static struct ranap_iu_rnc *iu_rnc_alloc(const struct osmo_rnc_id *rnc_id, const struct osmo_sccp_addr *addr)
 {
 	struct ranap_iu_rnc *rnc = talloc_zero(sgsn, struct ranap_iu_rnc);
 	OSMO_ASSERT(rnc);
@@ -98,7 +98,7 @@ static struct ranap_iu_rnc *iu_rnc_id_find(struct osmo_rnc_id *rnc_id)
 	return NULL;
 }
 
-static bool same_sccp_addr(struct osmo_sccp_addr *a, struct osmo_sccp_addr *b)
+static bool same_sccp_addr(const struct osmo_sccp_addr *a, const struct osmo_sccp_addr *b)
 {
 	char buf[256];
 	osmo_strlcpy(buf, osmo_sccp_addr_dump(a), sizeof(buf));
@@ -125,7 +125,7 @@ static void global_iu_event_new_area(const struct osmo_rnc_id *rnc_id, const str
 
 struct ranap_iu_rnc *iu_rnc_register(struct osmo_rnc_id *rnc_id,
 				     const struct osmo_routing_area_id *rai,
-				     struct osmo_sccp_addr *addr)
+				     const struct osmo_sccp_addr *addr)
 {
 	struct ranap_iu_rnc *rnc;
 	struct ranap_iu_rnc *old_rnc;
