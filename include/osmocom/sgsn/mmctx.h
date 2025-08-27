@@ -293,5 +293,9 @@ uint32_t sgsn_alloc_ptmsi(void);
 void sgsn_update_subscriber_data(struct sgsn_mm_ctx *mmctx);
 
 #ifdef BUILD_IU
+struct RANAP_Cause;
 void sgsn_mm_ctx_iu_activate_rabs(struct sgsn_mm_ctx *ctx);
+void sgsn_mm_ctx_iu_ranap_release_free(struct sgsn_mm_ctx *ctx,
+				       const struct RANAP_Cause *cause);
+void sgsn_mm_ctx_iu_ranap_free(struct sgsn_mm_ctx *ctx);
 #endif /* ifdef BUILD_IU */

@@ -155,7 +155,7 @@ static void ue_ctx_link_invalidated_free(struct ranap_ue_conn_ctx *ue)
 	if (!ue)
 		return;
 	if (ue->free_on_release)
-		ranap_iu_free_ue(ue);
+		sgsn_ranap_iu_free_ue(ue);
 }
 
 static void handle_notice_ind(struct sgsn_sccp_user_iups *scu_iups, const struct osmo_scu_notice_param *ni)

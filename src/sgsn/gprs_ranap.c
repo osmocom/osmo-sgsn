@@ -100,7 +100,7 @@ static int sgsn_ranap_rab_ass_resp(struct sgsn_mm_ctx *ctx, RANAP_RAB_SetupOrMod
 	pdp = sgsn_pdp_ctx_by_nsapi(ctx, rab_id);
 	if (!pdp) {
 		LOGP(DRANAP, LOGL_ERROR, "RAB Assignment Response for unknown RAB/NSAPI=%u\n", rab_id);
-		sgsn_ranap_iu_release_free(ctx, NULL);
+		sgsn_mm_ctx_iu_ranap_release_free(ctx, NULL);
 		return -1;
 	}
 
@@ -184,7 +184,7 @@ static int sgsn_ranap_iu_event_mmctx(struct ranap_ue_conn_ctx *ctx, enum ranap_i
 	if (!mm) {
 		LOGIUP(ctx, LOGL_NOTICE, "Cannot find mm ctx for IU event %s\n",
 		       iu_client_event_type_str(type));
-		ranap_iu_free_ue(ctx);
+		sgsn_ranap_iu_free_ue(ctx);
 		return rc;
 	}
 
@@ -199,7 +199,7 @@ static int sgsn_ranap_iu_event_mmctx(struct ranap_ue_conn_ctx *ctx, enum ranap_i
 		LOGMMCTXP(LOGL_INFO, mm, "IU release (cause=%s)\n", iu_client_event_type_str(type));
 		rc = osmo_fsm_inst_dispatch(mm->iu.mm_state_fsm, E_PMM_PS_CONN_RELEASE, NULL);
 		if (rc < 0)
-			sgsn_ranap_iu_free(mm);
+			sgsn_mm_ctx_iu_ranap_free(mm);
 
 		/* TODO: move this into FSM */
 		if (mm->ran_type == MM_CTX_T_UTRAN_Iu && mm->gmm_att_req.fsm->state != ST_INIT)
@@ -255,37 +255,6 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 		LOGP(DRANAP, LOGL_NOTICE, "Iu: Unknown event received: type: %d\n", type);
 		return -1;
 	}
-}
-
-void sgsn_ranap_iu_free(struct sgsn_mm_ctx *ctx)
-{
-	if (!ctx)
-		return;
-
-	if (!ctx->iu.ue_ctx)
-		return;
-
-	ranap_iu_free_ue(ctx->iu.ue_ctx);
-	ctx->iu.ue_ctx = NULL;
-}
-
-void sgsn_ranap_iu_release_free(struct sgsn_mm_ctx *ctx,
-				const struct RANAP_Cause *cause)
-{
-	unsigned long X1001;
-
-	if (!ctx)
-		return;
-
-	if (!ctx->iu.ue_ctx)
-		return;
-
-	X1001 = osmo_tdef_get(sgsn->cfg.T_defs, -1001, OSMO_TDEF_S, -1);
-
-	ranap_iu_tx_release_free(ctx->iu.ue_ctx,
-				 cause,
-				 (int) X1001);
-	ctx->iu.ue_ctx = NULL;
 }
 
 int sgsn_ranap_iu_tx_rab_ps_ass_req(struct ranap_ue_conn_ctx *ue_ctx,
@@ -378,9 +347,9 @@ int ranap_iu_tx_release(struct ranap_ue_conn_ctx *uectx, const struct RANAP_Caus
 	return sgsn_scu_iups_tx_data_req(uectx->scu_iups, uectx->conn_id, msg);
 }
 
-void ranap_iu_tx_release_free(struct ranap_ue_conn_ctx *ctx,
-			     const struct RANAP_Cause *cause,
-			     int timeout)
+void sgsn_ranap_iu_tx_release_free(struct ranap_ue_conn_ctx *ctx,
+				   const struct RANAP_Cause *cause,
+				   int timeout)
 {
 	ctx->notification = false;
 	ctx->free_on_release = true;

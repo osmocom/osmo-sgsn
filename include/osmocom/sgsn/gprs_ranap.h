@@ -28,17 +28,10 @@ int ranap_iu_tx_paging_cmd(struct osmo_sccp_addr *called_addr,
 int ranap_iu_tx_release(struct ranap_ue_conn_ctx *ctx, const struct RANAP_Cause *cause);
 /* Transmit a Iu Release Command and submit event RANAP_IU_EVENT_IU_RELEASE upon
  * Release Complete or timeout. Caller is responsible to free the context and
- * closing the SCCP connection (ranap_iu_free_ue) upon recieval of the event. */
-void ranap_iu_tx_release_free(struct ranap_ue_conn_ctx *ctx,
+ * closing the SCCP connection (sgsn_ranap_iu_free_ue) upon recieval of the event. */
+void sgsn_ranap_iu_tx_release_free(struct ranap_ue_conn_ctx *ctx,
 			      const struct RANAP_Cause *cause,
 			      int timeout);
-
-/* free the Iu UE context */
-void sgsn_ranap_iu_free(struct sgsn_mm_ctx *ctx);
-
-/* send a Iu Release Command and free afterwards the UE context */
-void sgsn_ranap_iu_release_free(struct sgsn_mm_ctx *ctx,
-				const struct RANAP_Cause *cause);
 
 int sgsn_ranap_iu_rx_cl_msg(struct sgsn_sccp_user_iups *scu_iups,
 			    const struct osmo_scu_unitdata_param *ud_prim,
@@ -49,10 +42,7 @@ int sgsn_ranap_iu_rx_co_initial_msg(struct sgsn_sccp_user_iups *scu_iups,
 				    const uint8_t *data, size_t len);
 int sgsn_ranap_iu_rx_co_msg(struct ranap_ue_conn_ctx *ue_ctx, const uint8_t *data, size_t len);
 
-#else /* ifndef BUILD_IU */
-inline static void sgsn_ranap_iu_free(void *ctx) {};
-inline static void sgsn_ranap_iu_release_free(void *ctx, void *cause) {};
-#endif /* BUILD_IU*/
+#endif /* ifdef BUILD_IU */
 
 struct ranap_ue_conn_ctx;
 /* On RANAP, Returns pointer to he associated ranap_ue_conn_ctx in msg, filled

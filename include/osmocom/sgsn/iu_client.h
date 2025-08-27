@@ -91,4 +91,4 @@ struct ranap_ue_conn_ctx *ue_conn_ctx_alloc(struct ranap_iu_rnc *rnc, struct sgs
 
 /* freeing the UE will release all resources
  * This will close the SCCP connection connected to the UE */
-void ranap_iu_free_ue(struct ranap_ue_conn_ctx *ue_ctx);
+void sgsn_ranap_iu_free_ue(struct ranap_ue_conn_ctx *ue_ctx);

@@ -1839,7 +1839,7 @@ rejected:
 #ifdef BUILD_IU
 	else if (MSG_IU_UE_CTX(msg)) {
 		unsigned long X1001 = osmo_tdef_get(sgsn->cfg.T_defs, -1001, OSMO_TDEF_S, -1);
-		ranap_iu_tx_release_free(MSG_IU_UE_CTX(msg), NULL, (int) X1001);
+		sgsn_ranap_iu_tx_release_free(MSG_IU_UE_CTX(msg), NULL, (int) X1001);
 	}
 #endif
 

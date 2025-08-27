@@ -19,6 +19,8 @@
  *
  */
 
+#include "config.h"
+
 #include <stdint.h>
 
 #include <osmocom/core/linuxlist.h>
@@ -51,14 +53,13 @@
 #include <osmocom/sgsn/gprs_mm_state_iu_fsm.h>
 #include <osmocom/sgsn/gprs_gmm_fsm.h>
 #include <osmocom/sgsn/gprs_llc.h>
+#include <osmocom/sgsn/gprs_ranap.h>
 #include <osmocom/sgsn/gprs_sndcp.h>
 #include <osmocom/sgsn/gtp_ggsn.h>
 #include <osmocom/sgsn/gtp.h>
 #include <osmocom/sgsn/pdpctx.h>
 
 #include <time.h>
-
-#include "../../config.h"
 
 const struct value_string sgsn_ran_type_names[] = {
 	{ MM_CTX_T_GERAN_Gb, "GPRS/EDGE via Gb" },
@@ -618,5 +619,36 @@ void sgsn_mm_ctx_iu_activate_rabs(struct sgsn_mm_ctx *ctx)
 
 	llist_for_each_entry(pdp, &ctx->pdp_list, list)
 		sgsn_pdp_ctx_iu_rab_activate(pdp, pdp->nsapi);
+}
+
+/* send a Iu Release Command and free afterwards the UE context */
+void sgsn_mm_ctx_iu_ranap_release_free(struct sgsn_mm_ctx *mmctx,
+				       const struct RANAP_Cause *cause)
+{
+	unsigned long X1001;
+
+	if (!mmctx)
+		return;
+
+	if (!mmctx->iu.ue_ctx)
+		return;
+
+	X1001 = osmo_tdef_get(sgsn->cfg.T_defs, -1001, OSMO_TDEF_S, -1);
+
+	sgsn_ranap_iu_tx_release_free(mmctx->iu.ue_ctx, cause, (int) X1001);
+	mmctx->iu.ue_ctx = NULL;
+}
+
+/* free the Iu UE context */
+void sgsn_mm_ctx_iu_ranap_free(struct sgsn_mm_ctx *mmctx)
+{
+	if (!mmctx)
+		return;
+
+	if (!mmctx->iu.ue_ctx)
+		return;
+
+	sgsn_ranap_iu_free_ue(mmctx->iu.ue_ctx);
+	mmctx->iu.ue_ctx = NULL;
 }
 #endif

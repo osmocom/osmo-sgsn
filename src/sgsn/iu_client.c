@@ -95,7 +95,7 @@ struct ranap_ue_conn_ctx *ue_conn_ctx_alloc(struct ranap_iu_rnc *rnc, struct sgs
 	return ctx;
 }
 
-void ranap_iu_free_ue(struct ranap_ue_conn_ctx *ue_ctx)
+void sgsn_ranap_iu_free_ue(struct ranap_ue_conn_ctx *ue_ctx)
 {
 	if (!ue_ctx)
 		return;

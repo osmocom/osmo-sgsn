@@ -95,12 +95,12 @@ static void st_pmm_connected(struct osmo_fsm_inst *fi, uint32_t event, void *dat
 
 	switch(event) {
 	case E_PMM_PS_CONN_RELEASE:
-		sgsn_ranap_iu_free(ctx);
+		sgsn_mm_ctx_iu_ranap_free(ctx);
 		mm_state_iu_fsm_state_chg(fi, ST_PMM_IDLE);
 		mmctx_change_gtpu_endpoints_to_sgsn(ctx, NULL);
 		break;
 	case E_PMM_PS_DETACH:
-		sgsn_ranap_iu_release_free(ctx, NULL);
+		sgsn_mm_ctx_iu_ranap_release_free(ctx, NULL);
 		mm_state_iu_fsm_state_chg(fi, ST_PMM_DETACHED);
 		break;
 	case E_PMM_RA_UPDATE:
@@ -108,7 +108,7 @@ static void st_pmm_connected(struct osmo_fsm_inst *fi, uint32_t event, void *dat
 	case E_PMM_RX_GGSN_GTPU_DT_EI:
 		/* GTPU Direct Tunnel (RNC<->GGSN): GGSN Received Error Indication when transmitting DL data*/
 		pctx = (struct sgsn_pdp_ctx *)data;
-		sgsn_ranap_iu_free(ctx);
+		sgsn_mm_ctx_iu_ranap_free(ctx);
 		mm_state_iu_fsm_state_chg(fi, ST_PMM_IDLE);
 		mmctx_change_gtpu_endpoints_to_sgsn(ctx, pctx);
 		break;
