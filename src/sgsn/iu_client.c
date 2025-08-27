@@ -146,7 +146,7 @@ static int iu_page(const char *imsi, const uint32_t *tmsi_or_ptmsi,
 
 	iu_rnc_lac_rac_find_legacy(&rnc, NULL, lac, rac);
 	if (rnc) {
-		if (ranap_iu_tx_paging_cmd(&rnc->sccp_addr, imsi, tmsi_or_ptmsi, is_ps, 0) == 0) {
+		if (sgsn_ranap_iu_tx_paging_cmd(&rnc->sccp_addr, imsi, tmsi_or_ptmsi, is_ps, 0) == 0) {
 			log_msg = "Paging";
 			log_level = LOGL_DEBUG;
 			paged = 1;
@@ -206,7 +206,7 @@ int ranap_iu_page_cs2(const char *imsi, const uint32_t *tmsi, const struct osmo_
 			if (osmo_lai_cmp(&entry->rai.lac, lai))
 				continue;
 
-			rc = ranap_iu_tx_paging_cmd(&rnc->sccp_addr, imsi, tmsi, false, 0);
+			rc = sgsn_ranap_iu_tx_paging_cmd(&rnc->sccp_addr, imsi, tmsi, false, 0);
 			if (rc > 0) {
 				LOGPIU(LOGL_ERROR, "IuCS: Failed to tx Paging RNC %s for LAC %s for IMSI %s / TMSI %08x",
 				       osmo_rnc_id_name(&rnc->rnc_id),
@@ -252,7 +252,7 @@ int ranap_iu_page_ps2(const char *imsi, const uint32_t *ptmsi, const struct osmo
 			if (osmo_rai_cmp(&entry->rai, rai))
 				continue;
 
-			rc = ranap_iu_tx_paging_cmd(&rnc->sccp_addr, imsi, ptmsi, true, 0);
+			rc = sgsn_ranap_iu_tx_paging_cmd(&rnc->sccp_addr, imsi, ptmsi, true, 0);
 			if (rc > 0) {
 				LOGPIU(LOGL_ERROR, "IuPS: Failed to tx Paging RNC %s for RAC %s for IMSI %s / P-TMSI %08x",
 				       osmo_rnc_id_name(&rnc->rnc_id),

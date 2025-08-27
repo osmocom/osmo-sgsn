@@ -214,7 +214,7 @@ static int sgsn_ranap_iu_event_mmctx(struct ranap_ue_conn_ctx *ctx, enum ranap_i
 		 */
 		/* Continue authentication here */
 		mm->iu.ue_ctx->integrity_active = 1;
-		ranap_iu_tx_common_id(mm->iu.ue_ctx, mm->imsi);
+		sgsn_ranap_iu_tx_common_id(mm->iu.ue_ctx, mm->imsi);
 
 		/* FIXME: remove gmm_authorize */
 		if (mm->pending_req != GSM48_MT_GMM_ATTACH_REQ)
@@ -271,7 +271,7 @@ int sgsn_ranap_iu_tx_rab_ps_ass_req(struct ranap_ue_conn_ctx *ue_ctx,
 	return sgsn_scu_iups_tx_data_req(ue_ctx->scu_iups, ue_ctx->conn_id, msg);
 }
 
-int ranap_iu_tx_sec_mode_cmd(struct ranap_ue_conn_ctx *uectx, struct osmo_auth_vector *vec,
+int sgsn_ranap_iu_tx_sec_mode_cmd(struct ranap_ue_conn_ctx *uectx, struct osmo_auth_vector *vec,
 			     int send_ck, int new_key)
 {
 	struct msgb *msg;
@@ -282,7 +282,7 @@ int ranap_iu_tx_sec_mode_cmd(struct ranap_ue_conn_ctx *uectx, struct osmo_auth_v
 	return sgsn_scu_iups_tx_data_req(uectx->scu_iups, uectx->conn_id, msg);
 }
 
-int ranap_iu_tx_common_id(struct ranap_ue_conn_ctx *uectx, const char *imsi)
+int sgsn_ranap_iu_tx_common_id(struct ranap_ue_conn_ctx *uectx, const char *imsi)
 {
 	struct msgb *msg;
 
@@ -299,7 +299,7 @@ int ranap_iu_tx_common_id(struct ranap_ue_conn_ctx *uectx, const char *imsi)
  *
  * If TMSI is given, the IMSI is not sent over the air interface. Nevertheless,
  * the IMSI is still required for resolution in the HNB-GW and/or(?) RNC. */
-int ranap_iu_tx_paging_cmd(struct osmo_sccp_addr *called_addr,
+int sgsn_ranap_iu_tx_paging_cmd(struct osmo_sccp_addr *called_addr,
 			   const char *imsi, const uint32_t *tmsi,
 			   bool is_ps, uint32_t paging_cause)
 {
@@ -309,7 +309,7 @@ int ranap_iu_tx_paging_cmd(struct osmo_sccp_addr *called_addr,
 	return osmo_sccp_tx_unitdata_msg(sgsn->sccp.scu_iups->scu, &sgsn->sccp.scu_iups->local_sccp_addr, called_addr, msg);
 }
 
-int ranap_iu_tx(struct msgb *msg_nas, uint8_t sapi)
+int sgsn_ranap_iu_tx(struct msgb *msg_nas, uint8_t sapi)
 {
 	struct ranap_ue_conn_ctx *uectx = msg_nas->dst;
 	struct msgb *msg;
@@ -332,7 +332,7 @@ int ranap_iu_tx(struct msgb *msg_nas, uint8_t sapi)
 /* Send Iu Release for the given UE connection.
  * If cause is NULL, Normal Release cause is sent, otherwise
  * the provided cause. */
-int ranap_iu_tx_release(struct ranap_ue_conn_ctx *uectx, const struct RANAP_Cause *cause)
+int sgsn_ranap_iu_tx_release(struct ranap_ue_conn_ctx *uectx, const struct RANAP_Cause *cause)
 {
 	struct msgb *msg;
 	static const struct RANAP_Cause default_cause = {
@@ -353,7 +353,7 @@ void sgsn_ranap_iu_tx_release_free(struct ranap_ue_conn_ctx *ctx,
 {
 	ctx->notification = false;
 	ctx->free_on_release = true;
-	int ret = ranap_iu_tx_release(ctx, cause);
+	int ret = sgsn_ranap_iu_tx_release(ctx, cause);
 	/* On Tx failure, trigger timeout immediately, as the response will never arrive */
 	if (ret)
 		timeout = 0;
@@ -511,7 +511,7 @@ static int ranap_handle_co_err_ind(struct ranap_ue_conn_ctx *ue_ctx, const RANAP
 static int ranap_handle_co_iu_rel_req(struct ranap_ue_conn_ctx *ue_ctx, const RANAP_Iu_ReleaseRequestIEs_t *ies)
 {
 	LOGP(DRANAP, LOGL_INFO, "Received Iu Release Request, Sending Release Command\n");
-	ranap_iu_tx_release(ue_ctx, &ies->cause);
+	sgsn_ranap_iu_tx_release(ue_ctx, &ies->cause);
 	return 0;
 }
 

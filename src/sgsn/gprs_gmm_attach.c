@@ -277,7 +277,7 @@ static void st_iu_security_cmd_on_enter(struct osmo_fsm_inst *fi, uint32_t prev_
 
 	/* FIXME: we should send the set of allowed UEA, as in ranap_new_msg_sec_mod_cmd2(). However, this
 	 * is not possible in the iu_client API. See OS#5487. */
-	ranap_iu_tx_sec_mode_cmd(ctx->iu.ue_ctx, &ctx->auth_triplet.vec, send_ck, ctx->iu.new_key);
+	sgsn_ranap_iu_tx_sec_mode_cmd(ctx->iu.ue_ctx, &ctx->auth_triplet.vec, send_ck, ctx->iu.new_key);
 	ctx->iu.new_key = 0;
 #endif
 }

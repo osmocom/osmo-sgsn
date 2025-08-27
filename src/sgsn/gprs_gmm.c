@@ -123,13 +123,13 @@ int gsm48_gmm_sendmsg(struct msgb *msg, int command,
 		rate_ctr_inc(rate_ctr_group_get_ctr(mm->ctrg, GMM_CTR_PKTS_SIG_OUT));
 #ifdef BUILD_IU
 		if (mm->ran_type == MM_CTX_T_UTRAN_Iu)
-			return ranap_iu_tx(msg, GPRS_SAPI_GMM);
+			return sgsn_ranap_iu_tx(msg, GPRS_SAPI_GMM);
 #endif
 	}
 
 #ifdef BUILD_IU
 	if (MSG_IU_UE_CTX(msg))
-		return ranap_iu_tx(msg, GPRS_SAPI_GMM);
+		return sgsn_ranap_iu_tx(msg, GPRS_SAPI_GMM);
 #endif
 
 	/* caller needs to provide TLLI, BVCI and NSEI */
@@ -979,7 +979,7 @@ int gsm48_gmm_authorize(struct sgsn_mm_ctx *ctx)
 			  send_ck ? "sending" : "not sending", sgsn->cfg.uea_encryption_mask);
 		/* FIXME: we should send the set of allowed UEA, as in ranap_new_msg_sec_mod_cmd2(). However, this
 		 * is not possible in the iu_client API. See OS#5487. */
-		rc = ranap_iu_tx_sec_mode_cmd(ctx->iu.ue_ctx, &ctx->auth_triplet.vec, send_ck, ctx->iu.new_key);
+		rc = sgsn_ranap_iu_tx_sec_mode_cmd(ctx->iu.ue_ctx, &ctx->auth_triplet.vec, send_ck, ctx->iu.new_key);
 		ctx->iu.new_key = 0;
 		return rc;
 	}
@@ -1452,7 +1452,7 @@ static int gsm48_rx_gmm_att_compl(struct sgsn_mm_ctx *mmctx)
 
 #ifdef BUILD_IU
 	if (mmctx->iu.ue_ctx) {
-		ranap_iu_tx_release(mmctx->iu.ue_ctx, NULL);
+		sgsn_ranap_iu_tx_release(mmctx->iu.ue_ctx, NULL);
 	}
 #endif
 

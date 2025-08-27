@@ -15,17 +15,17 @@ struct sgsn_pdp_ctx;
 
 int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type type, void *data);
 
-int ranap_iu_tx(struct msgb *msg, uint8_t sapi);
+int sgsn_ranap_iu_tx(struct msgb *msg, uint8_t sapi);
 int sgsn_ranap_iu_tx_rab_ps_ass_req(struct ranap_ue_conn_ctx *ue_ctx,
 				    uint8_t rab_id, uint32_t gtp_ip, uint32_t gtp_tei);
-int ranap_iu_tx_sec_mode_cmd(struct ranap_ue_conn_ctx *uectx, struct osmo_auth_vector *vec,
+int sgsn_ranap_iu_tx_sec_mode_cmd(struct ranap_ue_conn_ctx *uectx, struct osmo_auth_vector *vec,
 			     int send_ck, int new_key);
-int ranap_iu_tx_common_id(struct ranap_ue_conn_ctx *ue_ctx, const char *imsi);
-int ranap_iu_tx_paging_cmd(struct osmo_sccp_addr *called_addr,
+int sgsn_ranap_iu_tx_common_id(struct ranap_ue_conn_ctx *ue_ctx, const char *imsi);
+int sgsn_ranap_iu_tx_paging_cmd(struct osmo_sccp_addr *called_addr,
 		     const char *imsi, const uint32_t *tmsi,
 		     bool is_ps, uint32_t paging_cause);
 
-int ranap_iu_tx_release(struct ranap_ue_conn_ctx *ctx, const struct RANAP_Cause *cause);
+int sgsn_ranap_iu_tx_release(struct ranap_ue_conn_ctx *ctx, const struct RANAP_Cause *cause);
 /* Transmit a Iu Release Command and submit event RANAP_IU_EVENT_IU_RELEASE upon
  * Release Complete or timeout. Caller is responsible to free the context and
  * closing the SCCP connection (sgsn_ranap_iu_free_ue) upon recieval of the event. */
