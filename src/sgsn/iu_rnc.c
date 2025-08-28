@@ -60,6 +60,35 @@ static struct ranap_iu_rnc *iu_rnc_alloc(const struct osmo_rnc_id *rnc_id, const
 	return rnc;
 }
 
+static struct ranap_iu_rnc *iu_rnc_find_by_id(const struct osmo_rnc_id *rnc_id)
+{
+	struct ranap_iu_rnc *rnc;
+	llist_for_each_entry(rnc, &sgsn->rnc_list, entry) {
+		if (!osmo_rnc_id_cmp(&rnc->rnc_id, rnc_id))
+			return rnc;
+	}
+	return NULL;
+}
+
+struct ranap_iu_rnc *iu_rnc_find_or_create(const struct osmo_rnc_id *rnc_id,
+					   const struct osmo_sccp_addr *addr)
+{
+	struct ranap_iu_rnc *rnc;
+
+	/* Make sure we know this rnc_id and that this SCCP address is in our records */
+	rnc = iu_rnc_find_by_id(rnc_id);
+	if (rnc) {
+		if (!osmo_sccp_addr_ri_cmp(&rnc->sccp_addr, addr)) {
+			LOGP(DRANAP, LOGL_NOTICE, "RNC %s changed its SCCP addr to %s\n",
+			     osmo_rnc_id_name(&rnc->rnc_id), osmo_sccp_addr_dump(addr));
+			rnc->sccp_addr = *addr;
+		}
+	} else {
+		rnc = iu_rnc_alloc(rnc_id, addr);
+	}
+	return rnc;
+}
+
 /* Find a match for the given LAC (and RAC). For CS, pass rac as 0.
  * If rnc and lre pointers are not NULL, *rnc / *lre are set to NULL if no match is found, or to the
  * match if a match is found.  Return true if a match is found. */
@@ -88,16 +117,6 @@ static bool iu_rnc_lac_rac_find(struct ranap_iu_rnc **rnc, struct iu_lac_rac_ent
 	return false;
 }
 
-static struct ranap_iu_rnc *iu_rnc_id_find(struct osmo_rnc_id *rnc_id)
-{
-	struct ranap_iu_rnc *rnc;
-	llist_for_each_entry(rnc, &sgsn->rnc_list, entry) {
-		if (!osmo_rnc_id_cmp(&rnc->rnc_id, rnc_id))
-			return rnc;
-	}
-	return NULL;
-}
-
 static void global_iu_event_new_area(const struct osmo_rnc_id *rnc_id, const struct osmo_routing_area_id *rai)
 {
 	struct ranap_iu_event_new_area new_area = (struct ranap_iu_event_new_area) {
@@ -116,25 +135,11 @@ static void global_iu_event_new_area(const struct osmo_rnc_id *rnc_id, const str
 	global_iu_event(NULL, RANAP_IU_EVENT_NEW_AREA, &new_area);
 }
 
-struct ranap_iu_rnc *iu_rnc_register(struct osmo_rnc_id *rnc_id,
-				     const struct osmo_routing_area_id *rai,
-				     const struct osmo_sccp_addr *addr)
+
+void iu_rnc_update_rai_seen(struct ranap_iu_rnc *rnc, const struct osmo_routing_area_id *rai)
 {
-	struct ranap_iu_rnc *rnc;
 	struct ranap_iu_rnc *old_rnc;
 	struct iu_lac_rac_entry *lre;
-
-	/* Make sure we know this rnc_id and that this SCCP address is in our records */
-	rnc = iu_rnc_id_find(rnc_id);
-
-	if (rnc) {
-		if (!osmo_sccp_addr_ri_cmp(&rnc->sccp_addr, addr)) {
-			LOGP(DRANAP, LOGL_NOTICE, "RNC %s changed its SCCP addr to %s (LAC/RAC %s)\n",
-			     osmo_rnc_id_name(rnc_id), osmo_sccp_addr_dump(addr), osmo_rai_name2(rai));
-			rnc->sccp_addr = *addr;
-		}
-	} else
-		rnc = iu_rnc_alloc(rnc_id, addr);
 
 	/* Detect whether the LAC,RAC is already recorded in another RNC */
 	iu_rnc_lac_rac_find(&old_rnc, &lre, rai);
@@ -149,17 +154,15 @@ struct ranap_iu_rnc *iu_rnc_register(struct osmo_rnc_id *rnc_id,
 
 		llist_del(&lre->entry);
 		llist_add(&lre->entry, &rnc->lac_rac_list);
-		global_iu_event_new_area(rnc_id, rai);
+		global_iu_event_new_area(&rnc->rnc_id, rai);
 	} else if (!old_rnc) {
 		/* LAC, RAC not recorded yet */
 		LOGP(DRANAP, LOGL_NOTICE, "RNC %s: new LAC/RAC %s\n",
-		     osmo_rnc_id_name(rnc_id), osmo_rai_name2(rai));
+		     osmo_rnc_id_name(&rnc->rnc_id), osmo_rai_name2(rai));
 		lre = talloc_zero(rnc, struct iu_lac_rac_entry);
 		lre->rai = *rai;
 		llist_add(&lre->entry, &rnc->lac_rac_list);
-		global_iu_event_new_area(rnc_id, rai);
+		global_iu_event_new_area(&rnc->rnc_id, rai);
 	}
 	/* else, LAC,RAC already recorded with the current RNC. */
-
-	return rnc;
 }

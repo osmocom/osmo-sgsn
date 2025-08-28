@@ -404,7 +404,9 @@ static int ranap_handle_co_initial_ue(struct sgsn_sccp_user_iups *scu_iups,
 	gprs_rai_to_osmo(&ra_id2, &ra_id);
 
 	/* Make sure we know the RNC Id and LAC+RAC coming in on this connection. */
-	rnc = iu_rnc_register(&rnc_id, &ra_id2, rem_sccp_addr);
+	rnc = iu_rnc_find_or_create(&rnc_id, rem_sccp_addr);
+	OSMO_ASSERT(rnc);
+	iu_rnc_update_rai_seen(rnc, &ra_id2);
 
 	ue = ue_conn_ctx_alloc(rnc, scu_iups, conn_id);
 	OSMO_ASSERT(ue);

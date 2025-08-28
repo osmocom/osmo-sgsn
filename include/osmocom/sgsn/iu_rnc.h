@@ -30,6 +30,6 @@ struct ranap_iu_rnc {
 	struct llist_head lac_rac_list;
 };
 
-struct ranap_iu_rnc *iu_rnc_register(struct osmo_rnc_id *rnc_id,
-				     const struct osmo_routing_area_id *rai,
-				     const struct osmo_sccp_addr *addr);
+struct ranap_iu_rnc *iu_rnc_find_or_create(const struct osmo_rnc_id *rnc_id,
+					   const struct osmo_sccp_addr *addr);
+void iu_rnc_update_rai_seen(struct ranap_iu_rnc *rnc, const struct osmo_routing_area_id *rai);
