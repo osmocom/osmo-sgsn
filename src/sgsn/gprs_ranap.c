@@ -329,6 +329,30 @@ int sgsn_ranap_iu_tx(struct msgb *msg_nas, uint8_t sapi)
 	return sgsn_scu_iups_tx_data_req(uectx->scu_iups, uectx->conn_id, msg);
 }
 
+/* Send CL RANAP message over SCCP: */
+int sgsn_ranap_iu_tx_cl(struct sgsn_sccp_user_iups *scu_iups,
+			const struct osmo_sccp_addr *dst_addr,
+			struct msgb *msg)
+{
+	msg->l2h = msg->data;
+	return osmo_sccp_tx_unitdata_msg(scu_iups->scu, &scu_iups->local_sccp_addr, dst_addr, msg);
+}
+
+/* Send RANAP Error Indication */
+int sgsn_ranap_iu_tx_error_ind(struct sgsn_sccp_user_iups *scu_iups,
+			       const struct osmo_sccp_addr *dst_addr,
+			       const RANAP_Cause_t *cause)
+{
+	RANAP_CN_DomainIndicator_t domain = RANAP_CN_DomainIndicator_ps_domain;
+	struct msgb *ranap_msg;
+
+	ranap_msg = ranap_new_msg_error_ind(cause, NULL, &domain, NULL);
+	if (!ranap_msg)
+		return -ENOMEM;
+
+	return sgsn_ranap_iu_tx_cl(scu_iups, dst_addr, ranap_msg);
+}
+
 /* Send Iu Release for the given UE connection.
  * If cause is NULL, Normal Release cause is sent, otherwise
  * the provided cause. */
@@ -647,19 +671,50 @@ static int ranap_handle_cl_reset_req(struct sgsn_sccp_user_iups *scu_iups,
 				     const RANAP_ResetIEs_t *ies)
 {
 	const RANAP_GlobalRNC_ID_t *grnc_id = NULL;
+	RANAP_Cause_t cause;
+	struct osmo_rnc_id rnc_id = {};
 	struct msgb *resp;
 
-	/* FIXME: verify ies.cN_DomainIndicator */
+	if (ies->presenceMask & ERRORINDICATIONIES_RANAP_CN_DOMAININDICATOR_PRESENT) {
+		if (ies->cN_DomainIndicator != RANAP_CN_DomainIndicator_ps_domain) {
+			LOGP(DRANAP, LOGL_ERROR, "Rx RESET: Unexpected CN Domain Indicator %d\n",
+			     (int)ies->cN_DomainIndicator);
+			cause = (RANAP_Cause_t){
+				.present = RANAP_Cause_PR_protocol,
+				.choice.protocol = RANAP_CauseProtocol_semantic_error,
+			};
+			return sgsn_ranap_iu_tx_error_ind(scu_iups, &ud_prim->calling_addr, &cause);
+		}
+	} /* else: assume PS */
 
-	if (ies->presenceMask & RESETIES_RANAP_GLOBALRNC_ID_PRESENT)
-		grnc_id = &ies->globalRNC_ID;
+	/* FIXME: support handling Extended RNC-ID instead of Global RNC-ID */
+
+	if (!(ies->presenceMask & RESETIES_RANAP_GLOBALRNC_ID_PRESENT)) {
+		LOGP(DRANAP, LOGL_ERROR,
+		     "Rx RESET: Missing RANAP Global-RNC-ID IE\n");
+		cause = (RANAP_Cause_t){
+			.present = RANAP_Cause_PR_protocol,
+			.choice.protocol = RANAP_CauseProtocol_transfer_syntax_error,
+		};
+		return sgsn_ranap_iu_tx_error_ind(scu_iups, &ud_prim->calling_addr, &cause);
+	}
+	grnc_id = &ies->globalRNC_ID;
+
+	if (iu_grnc_id_parse(&rnc_id, &ies->globalRNC_ID) != 0) {
+		LOGP(DRANAP, LOGL_ERROR,
+		     "Rx RESET: Failed to parse RANAP Global-RNC-ID IE\n");
+		cause = (RANAP_Cause_t){
+			.present = RANAP_Cause_PR_protocol,
+			.choice.protocol = RANAP_CauseProtocol_transfer_syntax_error,
+		};
+		return sgsn_ranap_iu_tx_error_ind(scu_iups, &ud_prim->calling_addr, &cause);
+	}
 
 	/* send reset response */
 	resp = ranap_new_msg_reset_ack(ies->cN_DomainIndicator, grnc_id);
 	if (!resp)
 		return -ENOMEM;
-	resp->l2h = resp->data;
-	return osmo_sccp_tx_unitdata_msg(scu_iups->scu, &scu_iups->local_sccp_addr, &ud_prim->calling_addr, resp);
+	return sgsn_ranap_iu_tx_cl(scu_iups, &ud_prim->calling_addr, resp);
 }
 
 static int ranap_handle_cl_err_ind(struct sgsn_sccp_user_iups *scu_iups,

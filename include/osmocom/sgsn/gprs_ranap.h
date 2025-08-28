@@ -33,6 +33,13 @@ void sgsn_ranap_iu_tx_release_free(struct ranap_ue_conn_ctx *ctx,
 			      const struct RANAP_Cause *cause,
 			      int timeout);
 
+int sgsn_ranap_iu_tx_cl(struct sgsn_sccp_user_iups *scu_iups,
+			const struct osmo_sccp_addr *dst_addr,
+			struct msgb *msg);
+int sgsn_ranap_iu_tx_error_ind(struct sgsn_sccp_user_iups *scu_iups,
+			       const struct osmo_sccp_addr *dst_addr,
+			       const RANAP_Cause_t *cause);
+
 int sgsn_ranap_iu_rx_cl_msg(struct sgsn_sccp_user_iups *scu_iups,
 			    const struct osmo_scu_unitdata_param *ud_prim,
 			    const uint8_t *data, size_t len);
