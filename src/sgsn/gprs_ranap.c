@@ -379,15 +379,16 @@ static int ranap_handle_co_initial_ue(struct sgsn_sccp_user_iups *scu_iups,
 		return -1;
 	}
 
-	if (ies->presenceMask & INITIALUE_MESSAGEIES_RANAP_RAC_PRESENT) {
-		ra_id.rac = asn1str_to_u8(&ies->rac);
-		if (ra_id.rac == OSMO_RESERVED_RAC) {
-			LOGP(DRANAP, LOGL_ERROR,
-			     "Rejecting RNC with invalid/internally used RAC 0x%02x\n", ra_id.rac);
-			return -1;
-		}
-	} else {
-		ra_id.rac = OSMO_RESERVED_RAC;
+	if (!(ies->presenceMask & INITIALUE_MESSAGEIES_RANAP_RAC_PRESENT)) {
+		LOGP(DRANAP, LOGL_ERROR, "Rejecting InitialUE msg without RAC IE\n");
+		return -1;
+	}
+
+	ra_id.rac = asn1str_to_u8(&ies->rac);
+	if (ra_id.rac == OSMO_RESERVED_RAC) {
+		LOGP(DRANAP, LOGL_ERROR,
+		     "Rejecting RNC with invalid/internally used RAC 0x%02x\n", ra_id.rac);
+		return -1;
 	}
 
 	if (iu_grnc_id_parse(&rnc_id, &ies->globalRNC_ID) != 0) {
