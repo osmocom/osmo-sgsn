@@ -98,13 +98,6 @@ static struct ranap_iu_rnc *iu_rnc_id_find(struct osmo_rnc_id *rnc_id)
 	return NULL;
 }
 
-static bool same_sccp_addr(const struct osmo_sccp_addr *a, const struct osmo_sccp_addr *b)
-{
-	char buf[256];
-	osmo_strlcpy(buf, osmo_sccp_addr_dump(a), sizeof(buf));
-	return !strcmp(buf, osmo_sccp_addr_dump(b));
-}
-
 static void global_iu_event_new_area(const struct osmo_rnc_id *rnc_id, const struct osmo_routing_area_id *rai)
 {
 	struct ranap_iu_event_new_area new_area = (struct ranap_iu_event_new_area) {
@@ -135,7 +128,7 @@ struct ranap_iu_rnc *iu_rnc_register(struct osmo_rnc_id *rnc_id,
 	rnc = iu_rnc_id_find(rnc_id);
 
 	if (rnc) {
-		if (!same_sccp_addr(&rnc->sccp_addr, addr)) {
+		if (!osmo_sccp_addr_ri_cmp(&rnc->sccp_addr, addr)) {
 			LOGP(DRANAP, LOGL_NOTICE, "RNC %s changed its SCCP addr to %s (LAC/RAC %s)\n",
 			     osmo_rnc_id_name(rnc_id), osmo_sccp_addr_dump(addr), osmo_rai_name2(rai));
 			rnc->sccp_addr = *addr;
