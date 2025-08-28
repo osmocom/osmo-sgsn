@@ -23,6 +23,7 @@
 #include <osmocom/sigtran/sccp_sap.h>
 
 struct sgsn_instance;
+struct ranap_ue_conn_ctx;
 
 struct sgsn_sccp_user_iups {
 	struct sgsn_instance *sgsn; /* backpointer */

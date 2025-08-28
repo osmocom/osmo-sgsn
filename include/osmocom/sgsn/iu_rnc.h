@@ -4,6 +4,7 @@
 
 #include <osmocom/core/defs.h>
 #include <osmocom/core/linuxlist.h>
+#include <osmocom/core/fsm.h>
 #include <osmocom/gsm/gsm48.h>
 #include <osmocom/iuh/common.h>
 #include <osmocom/sigtran/sccp_sap.h>
@@ -26,6 +27,7 @@ struct ranap_iu_rnc {
 	struct osmo_rnc_id rnc_id;
 	struct sgsn_sccp_user_iups *scu_iups;
 	struct osmo_sccp_addr sccp_addr;
+	struct osmo_fsm_inst *fi;
 
 	/* A list of struct iu_lac_rac_entry */
 	struct llist_head lac_rac_list;
@@ -34,6 +36,15 @@ struct ranap_iu_rnc {
 struct ranap_iu_rnc *iu_rnc_find_or_create(const struct osmo_rnc_id *rnc_id,
 					   struct sgsn_sccp_user_iups *scu_iups,
 					   const struct osmo_sccp_addr *addr);
+
+struct ranap_iu_rnc *iu_rnc_find_by_addr(const struct osmo_sccp_addr *rnc_sccp_addr);
+
 void iu_rnc_update_rai_seen(struct ranap_iu_rnc *rnc, const struct osmo_routing_area_id *rai);
 
 void iu_rnc_discard_all_ue_ctx(struct ranap_iu_rnc *rnc);
+
+#define LOG_RNC_CAT(IU_RNC, subsys, loglevel, fmt, args ...) \
+	LOGPFSMSL((IU_RNC)->fi, subsys, loglevel, fmt, ## args)
+
+#define LOG_RNC(IU_RNC, loglevel, fmt, args ...) \
+	LOG_RNC_CAT(IU_RNC, DRANAP, loglevel, fmt, ## args)

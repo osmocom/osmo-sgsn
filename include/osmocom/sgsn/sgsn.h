@@ -180,6 +180,7 @@ struct sgsn_instance {
 #endif /* if BUILD_IU */
 };
 
+extern struct osmo_tdef sgsn_T_defs[];
 extern struct sgsn_instance *sgsn;
 extern void *tall_sgsn_ctx;
 

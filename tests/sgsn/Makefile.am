@@ -103,6 +103,7 @@ sgsn_test_LDADD += \
 	$(top_builddir)/src/sgsn/gprs_mm_state_iu_fsm.o \
 	$(top_builddir)/src/sgsn/iu_client.o \
 	$(top_builddir)/src/sgsn/iu_rnc.o \
+	$(top_builddir)/src/sgsn/iu_rnc_fsm.o \
 	$(top_builddir)/src/sgsn/sccp.o \
 	$(LIBOSMORANAP_LIBS) \
 	$(LIBOSMOSIGTRAN_LIBS) \

@@ -40,25 +40,45 @@
 #include <osmocom/sgsn/gprs_ranap.h>
 #include <osmocom/sgsn/iu_client.h>
 #include <osmocom/sgsn/iu_rnc.h>
+#include <osmocom/sgsn/iu_rnc_fsm.h>
 #include <osmocom/sgsn/sccp.h>
 #include <osmocom/sgsn/sgsn.h>
 
 static struct ranap_iu_rnc *iu_rnc_alloc(const struct osmo_rnc_id *rnc_id,
 					 struct sgsn_sccp_user_iups *scu_iups,
-					 const struct osmo_sccp_addr *addr)
+					 const struct osmo_sccp_addr *rnc_sccp_addr)
 {
-	struct ranap_iu_rnc *rnc = talloc_zero(sgsn, struct ranap_iu_rnc);
+	struct ranap_iu_rnc *rnc;
+	char *addr_str, *pos;
+
+	rnc = talloc_zero(sgsn, struct ranap_iu_rnc);
 	OSMO_ASSERT(rnc);
 
 	INIT_LLIST_HEAD(&rnc->lac_rac_list);
 
 	rnc->rnc_id = *rnc_id;
 	rnc->scu_iups = scu_iups;
-	rnc->sccp_addr = *addr;
+	rnc->sccp_addr = *rnc_sccp_addr;
+
+	rnc->fi = osmo_fsm_inst_alloc(&iu_rnc_fsm, rnc, rnc, LOGL_INFO, NULL);
+	OSMO_ASSERT(rnc->fi);
+
+	/* Unfortunately, osmo_sccp_inst_addr_name() returns "RI=SSN_PC,PC=0.24.1,SSN=BSSAP" but neither commas nor
+	 * full-stops are allowed as FSM inst id. Make it "RI-SSN_PC:PC-0-24-1:SSN-BSSAP". */
+	addr_str = osmo_sccp_addr_dump(rnc_sccp_addr);
+	for (pos = addr_str; *pos; pos++) {
+		if (*pos == ',')
+			*pos = ':';
+		else if (*pos == '.' || *pos == '=')
+			*pos = '-';
+	}
+	osmo_fsm_inst_update_id_f(rnc->fi, "RNC_ID-%s:%s",
+				  osmo_rnc_id_name(rnc_id), addr_str);
+
 	llist_add(&rnc->entry, &sgsn->rnc_list);
 
 	LOGP(DRANAP, LOGL_NOTICE, "New RNC %s at %s\n",
-	     osmo_rnc_id_name(&rnc->rnc_id), osmo_sccp_addr_dump(addr));
+	     osmo_rnc_id_name(&rnc->rnc_id), osmo_sccp_addr_dump(rnc_sccp_addr));
 
 	return rnc;
 }
@@ -69,6 +89,17 @@ static struct ranap_iu_rnc *iu_rnc_find_by_id(const struct osmo_rnc_id *rnc_id)
 	llist_for_each_entry(rnc, &sgsn->rnc_list, entry) {
 		if (!osmo_rnc_id_cmp(&rnc->rnc_id, rnc_id))
 			return rnc;
+	}
+	return NULL;
+}
+
+struct ranap_iu_rnc *iu_rnc_find_by_addr(const struct osmo_sccp_addr *rnc_sccp_addr)
+{
+	struct ranap_iu_rnc *rnc;
+	llist_for_each_entry(rnc, &sgsn->rnc_list, entry) {
+		if (osmo_sccp_addr_ri_cmp(rnc_sccp_addr, &rnc->sccp_addr))
+			continue;
+		return rnc;
 	}
 	return NULL;
 }

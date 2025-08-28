@@ -13,6 +13,7 @@ T3386 = 8 s	Wait for MODIFY PDP CTX ACK timer (s) (default: 8 s)
 T3395 = 8 s	Wait for DEACT PDP CTX ACK timer (s) (default: 8 s)
 T3397 = 8 s	Wait for DEACT AA PDP CTX ACK timer (s) (default: 8 s)
 X1001 = 5 s	RANAP Release timeout. Wait for RANAP Release Complete.On expiry release Iu connection (s) (default: 5 s)
+X1002 = 5 s	TRafR, Maximum time for Reset procedure in the CN (s) (default: 5 s)
 OsmoSGSN# configure terminal
 OsmoSGSN(config)# list
 ...

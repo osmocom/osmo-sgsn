@@ -99,6 +99,7 @@ osmo_sgsn_SOURCES += \
 	gprs_ranap.c \
 	iu_client.c \
 	iu_rnc.c \
+	iu_rnc_fsm.c \
 	sccp.c \
 	$(NULL)
 

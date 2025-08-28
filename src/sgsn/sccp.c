@@ -33,6 +33,7 @@
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/iu_client.h>
 #include <osmocom/sgsn/iu_rnc.h>
+#include <osmocom/sgsn/iu_rnc_fsm.h>
 #include <osmocom/sgsn/gprs_ranap.h>
 #include <osmocom/sgsn/sccp.h>
 #include <osmocom/sgsn/sgsn.h>
@@ -147,10 +148,21 @@ static void handle_notice_ind(struct sgsn_sccp_user_iups *scu_iups, const struct
 {
 	struct ranap_iu_rnc *rnc;
 
-	LOGP(DSUA, LOGL_DEBUG, "(calling_addr=%s) N-NOTICE.ind cause=%u='%s' importance=%u\n",
-	     osmo_sccp_addr_dump(&ni->calling_addr),
-	     ni->cause, osmo_sccp_return_cause_name(ni->cause),
-	     ni->importance);
+	rnc = iu_rnc_find_by_addr(&ni->calling_addr);
+
+	if (!rnc) {
+		LOGP(DSUA, LOGL_DEBUG,
+		     "(calling_addr=%s) N-NOTICE.ind cause=%u='%s' importance=%u didn't match any RNC, ignoring\n",
+		     osmo_sccp_addr_dump(&ni->calling_addr),
+		     ni->cause, osmo_sccp_return_cause_name(ni->cause),
+		     ni->importance);
+		return;
+	}
+
+	LOG_RNC(rnc, LOGL_NOTICE,
+		"N-NOTICE.ind cause=%u='%s' importance=%u\n",
+		ni->cause, osmo_sccp_return_cause_name(ni->cause),
+		ni->importance);
 
 	switch (ni->cause) {
 	case SCCP_RETURN_CAUSE_SUBSYSTEM_CONGESTION:
@@ -161,19 +173,8 @@ static void handle_notice_ind(struct sgsn_sccp_user_iups *scu_iups, const struct
 		break;
 	}
 
-	/* Messages are not arriving to RNC. Signal to user that all related ue_ctx are invalid. */
-	llist_for_each_entry(rnc, &sgsn->rnc_list, entry) {
-		if (osmo_sccp_addr_ri_cmp(&rnc->sccp_addr, &ni->calling_addr))
-			continue;
-		LOGP(DSUA, LOGL_NOTICE,
-		     "RNC %s now unreachable: N-NOTICE.ind cause=%u='%s' importance=%u\n",
-		     osmo_rnc_id_name(&rnc->rnc_id),
-		     ni->cause, osmo_sccp_return_cause_name(ni->cause),
-		     ni->importance);
-		iu_rnc_discard_all_ue_ctx(rnc);
-		/* TODO: ideally we'd have some event to submit to upper
-		 * layer to inform about peer availability change... */
-	}
+	/* Messages are not arriving to rnc. Signal it is unavailable to update local state. */
+	osmo_fsm_inst_dispatch(rnc->fi, IU_RNC_EV_UNAVAILABLE, NULL);
 }
 
 static void handle_pcstate_ind(struct sgsn_sccp_user_iups *scu_iups, const struct osmo_scu_pcstate_param *pcst)
@@ -190,6 +191,13 @@ static void handle_pcstate_ind(struct sgsn_sccp_user_iups *scu_iups, const struc
 	     osmo_sccp_rem_sccp_status_name(pcst->remote_sccp_status));
 
 	osmo_sccp_make_addr_pc_ssn(&rem_addr, pcst->affected_pc, OSMO_SCCP_SSN_RANAP);
+
+	rnc = iu_rnc_find_by_addr(&rem_addr);
+	if (!rnc) {
+		LOGP(DSUA, LOGL_DEBUG, "No RNC found under pc=%u=s%s\n",
+		     pcst->affected_pc, osmo_ss7_pointcode_print(cs7, pcst->affected_pc));
+		return;
+	}
 
 	/* See if this marks the point code to have become available, or to have been lost.
 	 *
@@ -245,38 +253,19 @@ static void handle_pcstate_ind(struct sgsn_sccp_user_iups *scu_iups, const struc
 	}
 
 	if (disconnected) {
-		/* A previously usable RNC has disconnected. Signal to user that all related ue_ctx are invalid. */
-		llist_for_each_entry(rnc, &sgsn->rnc_list, entry) {
-			struct ranap_ue_conn_ctx *ue_ctx, *ue_ctx_tmp;
-			if (osmo_sccp_addr_cmp(&rnc->sccp_addr, &rem_addr, OSMO_SCCP_ADDR_T_SSN | OSMO_SCCP_ADDR_T_PC))
-				continue;
-			LOGP(DSUA, LOGL_NOTICE,
-			     "RNC %s now unreachable: N-PCSTATE ind: pc=%u=%s sp_status=%s remote_sccp_status=%s\n",
-			     osmo_rnc_id_name(&rnc->rnc_id),
-			     pcst->affected_pc, osmo_ss7_pointcode_print(cs7, pcst->affected_pc),
-			     osmo_sccp_sp_status_name(pcst->sp_status),
-			     osmo_sccp_rem_sccp_status_name(pcst->remote_sccp_status));
-			llist_for_each_entry_safe(ue_ctx, ue_ctx_tmp, &scu_iups->ue_conn_ctx_list, list) {
-				if (ue_ctx->rnc != rnc)
-					continue;
-				ue_conn_ctx_link_invalidated_free(ue_ctx);
-			}
-			/* TODO: ideally we'd have some event to submit to upper
-			 * layer to inform about peer availability change... */
-		}
+		LOG_RNC(rnc, LOGL_NOTICE,
+			"now unreachable: N-PCSTATE ind: pc=%u=%s sp_status=%s remote_sccp_status=%s\n",
+			pcst->affected_pc, osmo_ss7_pointcode_print(cs7, pcst->affected_pc),
+			osmo_sccp_sp_status_name(pcst->sp_status),
+			osmo_sccp_rem_sccp_status_name(pcst->remote_sccp_status));
+		osmo_fsm_inst_dispatch(rnc->fi, IU_RNC_EV_UNAVAILABLE, NULL);
 	} else if (connected) {
-		llist_for_each_entry(rnc, &sgsn->rnc_list, entry) {
-			if (osmo_sccp_addr_cmp(&rnc->sccp_addr, &rem_addr, OSMO_SCCP_ADDR_T_SSN | OSMO_SCCP_ADDR_T_PC))
-				continue;
-			LOGP(DSUA, LOGL_NOTICE,
-			     "RNC %s now available: N-PCSTATE ind: pc=%u=%s sp_status=%s remote_sccp_status=%s\n",
-			     osmo_rnc_id_name(&rnc->rnc_id),
-			     pcst->affected_pc, osmo_ss7_pointcode_print(cs7, pcst->affected_pc),
-			     osmo_sccp_sp_status_name(pcst->sp_status),
-			     osmo_sccp_rem_sccp_status_name(pcst->remote_sccp_status));
-			/* TODO: ideally we'd have some event to submit to upper
-			 * layer to inform about peer availability change... */
-		}
+		LOG_RNC(rnc, LOGL_NOTICE,
+			"now available: N-PCSTATE ind: pc=%u=%s sp_status=%s remote_sccp_status=%s\n",
+			pcst->affected_pc, osmo_ss7_pointcode_print(cs7, pcst->affected_pc),
+			osmo_sccp_sp_status_name(pcst->sp_status),
+			osmo_sccp_rem_sccp_status_name(pcst->remote_sccp_status));
+		osmo_fsm_inst_dispatch(rnc->fi, IU_RNC_EV_AVAILABLE, NULL);
 	}
 }
 

@@ -29,6 +29,7 @@ noinst_HEADERS = \
 	gtp_mme.h \
 	iu_client.h \
 	iu_rnc.h \
+	iu_rnc_fsm.h \
 	mmctx.h \
 	pdpctx.h \
 	sccp.h \

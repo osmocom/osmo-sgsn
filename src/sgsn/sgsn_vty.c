@@ -98,7 +98,7 @@ const struct value_string sgsn_auth_pol_strs[] = {
 
 /* Non spec timer */
 #define NONSPEC_X1001_SECS     5       /* wait for a RANAP Release Complete */
-
+#define RANAP_TRafR_SECS       5       /* wait for a RANAP Release Complete */
 
 struct osmo_tdef sgsn_T_defs[] = {
 	{ .T=3312, .default_val=GSM0408_T3312_SECS, .desc="Periodic RA Update timer (s)" },
@@ -116,6 +116,7 @@ struct osmo_tdef sgsn_T_defs[] = {
 	/* non spec timers */
 	{ .T=-1001, .default_val=NONSPEC_X1001_SECS, .desc="RANAP Release timeout. Wait for RANAP Release Complete."
 							   "On expiry release Iu connection (s)" },
+	{ .T=-1002, .default_val=RANAP_TRafR_SECS, .desc="TRafR, Maximum time for Reset procedure in the CN (s)" },
 	{}
 };
 

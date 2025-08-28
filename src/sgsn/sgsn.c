@@ -61,14 +61,13 @@
 #include <osmocom/sgsn/pdpctx.h>
 #include <osmocom/sgsn/gprs_routing_area.h>
 #if BUILD_IU
+#include <osmocom/sgsn/iu_rnc_fsm.h>
 #include <osmocom/sgsn/sccp.h>
 #endif /* #if BUILD_IU */
 
 #include <time.h>
 
 #define GPRS_LLME_CHECK_TICK 30
-
-extern struct osmo_tdef sgsn_T_defs[];
 
 static const struct rate_ctr_desc sgsn_ctr_description[] = {
 	{ "llc:dl_bytes", "Count sent LLC bytes before giving it to the bssgp layer" },
