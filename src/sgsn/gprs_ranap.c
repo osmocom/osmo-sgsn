@@ -673,6 +673,7 @@ static int ranap_handle_cl_reset_req(struct sgsn_sccp_user_iups *scu_iups,
 	const RANAP_GlobalRNC_ID_t *grnc_id = NULL;
 	RANAP_Cause_t cause;
 	struct osmo_rnc_id rnc_id = {};
+	struct ranap_iu_rnc *rnc;
 	struct msgb *resp;
 
 	if (ies->presenceMask & ERRORINDICATIONIES_RANAP_CN_DOMAININDICATOR_PRESENT) {
@@ -709,6 +710,9 @@ static int ranap_handle_cl_reset_req(struct sgsn_sccp_user_iups *scu_iups,
 		};
 		return sgsn_ranap_iu_tx_error_ind(scu_iups, &ud_prim->calling_addr, &cause);
 	}
+
+	rnc = iu_rnc_find_or_create(&rnc_id, &ud_prim->calling_addr);
+	OSMO_ASSERT(rnc);
 
 	/* send reset response */
 	resp = ranap_new_msg_reset_ack(ies->cN_DomainIndicator, grnc_id);
