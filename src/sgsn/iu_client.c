@@ -78,19 +78,18 @@ static void ue_conn_ctx_release_timeout_cb(void *ctx_)
 	global_iu_event(ctx, RANAP_IU_EVENT_IU_RELEASE, NULL);
 }
 
-struct ranap_ue_conn_ctx *ue_conn_ctx_alloc(struct ranap_iu_rnc *rnc, struct sgsn_sccp_user_iups *scu_iups, uint32_t conn_id)
+struct ranap_ue_conn_ctx *ue_conn_ctx_alloc(struct ranap_iu_rnc *rnc, uint32_t conn_id)
 {
 	struct ranap_ue_conn_ctx *ctx = talloc_zero(sgsn, struct ranap_ue_conn_ctx);
 
 	ctx->rnc = rnc;
-	ctx->scu_iups = scu_iups;
 	ctx->conn_id = conn_id;
 	ctx->notification = true;
 	ctx->free_on_release = false;
 	osmo_timer_setup(&ctx->release_timeout,
 			 ue_conn_ctx_release_timeout_cb,
 			 ctx);
-	llist_add(&ctx->list, &scu_iups->ue_conn_ctx_list);
+	llist_add(&ctx->list, &rnc->scu_iups->ue_conn_ctx_list);
 
 	return ctx;
 }
@@ -101,7 +100,7 @@ void sgsn_ranap_iu_free_ue(struct ranap_ue_conn_ctx *ue_ctx)
 		return;
 
 	osmo_timer_del(&ue_ctx->release_timeout);
-	osmo_sccp_tx_disconn(ue_ctx->scu_iups->scu, ue_ctx->conn_id, NULL, 0);
+	osmo_sccp_tx_disconn(ue_ctx->rnc->scu_iups->scu, ue_ctx->conn_id, NULL, 0);
 	llist_del(&ue_ctx->list);
 	talloc_free(ue_ctx);
 }

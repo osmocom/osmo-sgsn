@@ -146,7 +146,7 @@ static void ue_conn_sccp_addr_del(struct sgsn_sccp_user_iups *scu_iups, uint32_t
 static void ue_ctx_link_invalidated_free(struct ranap_ue_conn_ctx *ue)
 {
 	uint32_t conn_id = ue->conn_id;
-	struct sgsn_sccp_user_iups *scu_iups = ue->scu_iups;
+	struct sgsn_sccp_user_iups *scu_iups = ue->rnc->scu_iups;
 
 	global_iu_event(ue, RANAP_IU_EVENT_LINK_INVALIDATED, NULL);
 

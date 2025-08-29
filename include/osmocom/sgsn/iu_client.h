@@ -20,7 +20,6 @@ struct ranap_iu_rnc;
 struct ranap_ue_conn_ctx {
 	struct llist_head list; /* item in sgsn_sccp->ue_conn_ctx_list */
 	struct ranap_iu_rnc *rnc;
-	struct sgsn_sccp_user_iups *scu_iups;
 	uint32_t conn_id;
 	int integrity_active;
 	struct gprs_ra_id ra_id;
@@ -87,7 +86,7 @@ int ranap_iu_page_cs2(const char *imsi, const uint32_t *tmsi, const struct osmo_
 int ranap_iu_page_ps2(const char *imsi, const uint32_t *ptmsi, const struct osmo_routing_area_id *rai);
 
 
-struct ranap_ue_conn_ctx *ue_conn_ctx_alloc(struct ranap_iu_rnc *rnc, struct sgsn_sccp_user_iups *scu_iups, uint32_t conn_id);
+struct ranap_ue_conn_ctx *ue_conn_ctx_alloc(struct ranap_iu_rnc *rnc, uint32_t conn_id);
 
 /* freeing the UE will release all resources
  * This will close the SCCP connection connected to the UE */

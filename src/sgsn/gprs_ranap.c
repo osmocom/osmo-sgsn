@@ -268,7 +268,7 @@ int sgsn_ranap_iu_tx_rab_ps_ass_req(struct ranap_ue_conn_ctx *ue_ctx,
 	     rab_id, gtp_ip, gtp_tei, use_x213_nsap);
 
 	msg = ranap_new_msg_rab_assign_data(rab_id, gtp_ip, gtp_tei, use_x213_nsap);
-	return sgsn_scu_iups_tx_data_req(ue_ctx->scu_iups, ue_ctx->conn_id, msg);
+	return sgsn_scu_iups_tx_data_req(ue_ctx->rnc->scu_iups, ue_ctx->conn_id, msg);
 }
 
 int sgsn_ranap_iu_tx_sec_mode_cmd(struct ranap_ue_conn_ctx *uectx, struct osmo_auth_vector *vec,
@@ -279,7 +279,7 @@ int sgsn_ranap_iu_tx_sec_mode_cmd(struct ranap_ue_conn_ctx *uectx, struct osmo_a
 	/* create RANAP message */
 	msg = ranap_new_msg_sec_mod_cmd(vec->ik, send_ck ? vec->ck : NULL,
 			new_key ? RANAP_KeyStatus_new : RANAP_KeyStatus_old);
-	return sgsn_scu_iups_tx_data_req(uectx->scu_iups, uectx->conn_id, msg);
+	return sgsn_scu_iups_tx_data_req(uectx->rnc->scu_iups, uectx->conn_id, msg);
 }
 
 int sgsn_ranap_iu_tx_common_id(struct ranap_ue_conn_ctx *uectx, const char *imsi)
@@ -290,7 +290,7 @@ int sgsn_ranap_iu_tx_common_id(struct ranap_ue_conn_ctx *uectx, const char *imsi
 	     uectx->conn_id);
 
 	msg = ranap_new_msg_common_id(imsi);
-	return sgsn_scu_iups_tx_data_req(uectx->scu_iups, uectx->conn_id, msg);
+	return sgsn_scu_iups_tx_data_req(uectx->rnc->scu_iups, uectx->conn_id, msg);
 }
 
 /* Send a paging command down a given SCCP User. tmsi and paging_cause are
@@ -326,7 +326,7 @@ int sgsn_ranap_iu_tx(struct msgb *msg_nas, uint8_t sapi)
 	msg = ranap_new_msg_dt(sapi, msg_nas->data, msgb_length(msg_nas));
 	msgb_free(msg_nas);
 
-	return sgsn_scu_iups_tx_data_req(uectx->scu_iups, uectx->conn_id, msg);
+	return sgsn_scu_iups_tx_data_req(uectx->rnc->scu_iups, uectx->conn_id, msg);
 }
 
 /* Send CL RANAP message over SCCP: */
@@ -368,7 +368,7 @@ int sgsn_ranap_iu_tx_release(struct ranap_ue_conn_ctx *uectx, const struct RANAP
 		cause = &default_cause;
 
 	msg = ranap_new_msg_iu_rel_cmd(cause);
-	return sgsn_scu_iups_tx_data_req(uectx->scu_iups, uectx->conn_id, msg);
+	return sgsn_scu_iups_tx_data_req(uectx->rnc->scu_iups, uectx->conn_id, msg);
 }
 
 void sgsn_ranap_iu_tx_release_free(struct ranap_ue_conn_ctx *ctx,
@@ -428,11 +428,11 @@ static int ranap_handle_co_initial_ue(struct sgsn_sccp_user_iups *scu_iups,
 	gprs_rai_to_osmo(&ra_id2, &ra_id);
 
 	/* Make sure we know the RNC Id and LAC+RAC coming in on this connection. */
-	rnc = iu_rnc_find_or_create(&rnc_id, rem_sccp_addr);
+	rnc = iu_rnc_find_or_create(&rnc_id, scu_iups, rem_sccp_addr);
 	OSMO_ASSERT(rnc);
 	iu_rnc_update_rai_seen(rnc, &ra_id2);
 
-	ue = ue_conn_ctx_alloc(rnc, scu_iups, conn_id);
+	ue = ue_conn_ctx_alloc(rnc, conn_id);
 	OSMO_ASSERT(ue);
 	ue->ra_id = ra_id;
 
@@ -711,7 +711,7 @@ static int ranap_handle_cl_reset_req(struct sgsn_sccp_user_iups *scu_iups,
 		return sgsn_ranap_iu_tx_error_ind(scu_iups, &ud_prim->calling_addr, &cause);
 	}
 
-	rnc = iu_rnc_find_or_create(&rnc_id, &ud_prim->calling_addr);
+	rnc = iu_rnc_find_or_create(&rnc_id, scu_iups, &ud_prim->calling_addr);
 	OSMO_ASSERT(rnc);
 
 	/* send reset response */

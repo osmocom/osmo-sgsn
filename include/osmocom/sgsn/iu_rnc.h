@@ -24,6 +24,7 @@ struct ranap_iu_rnc {
 	struct llist_head entry;
 
 	struct osmo_rnc_id rnc_id;
+	struct sgsn_sccp_user_iups *scu_iups;
 	struct osmo_sccp_addr sccp_addr;
 
 	/* A list of struct iu_lac_rac_entry */
@@ -31,5 +32,6 @@ struct ranap_iu_rnc {
 };
 
 struct ranap_iu_rnc *iu_rnc_find_or_create(const struct osmo_rnc_id *rnc_id,
+					   struct sgsn_sccp_user_iups *scu_iups,
 					   const struct osmo_sccp_addr *addr);
 void iu_rnc_update_rai_seen(struct ranap_iu_rnc *rnc, const struct osmo_routing_area_id *rai);

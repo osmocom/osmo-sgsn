@@ -43,7 +43,9 @@
 #include <osmocom/sgsn/sccp.h>
 #include <osmocom/sgsn/sgsn.h>
 
-static struct ranap_iu_rnc *iu_rnc_alloc(const struct osmo_rnc_id *rnc_id, const struct osmo_sccp_addr *addr)
+static struct ranap_iu_rnc *iu_rnc_alloc(const struct osmo_rnc_id *rnc_id,
+					 struct sgsn_sccp_user_iups *scu_iups,
+					 const struct osmo_sccp_addr *addr)
 {
 	struct ranap_iu_rnc *rnc = talloc_zero(sgsn, struct ranap_iu_rnc);
 	OSMO_ASSERT(rnc);
@@ -51,6 +53,7 @@ static struct ranap_iu_rnc *iu_rnc_alloc(const struct osmo_rnc_id *rnc_id, const
 	INIT_LLIST_HEAD(&rnc->lac_rac_list);
 
 	rnc->rnc_id = *rnc_id;
+	rnc->scu_iups = scu_iups;
 	rnc->sccp_addr = *addr;
 	llist_add(&rnc->entry, &sgsn->rnc_list);
 
@@ -71,6 +74,7 @@ static struct ranap_iu_rnc *iu_rnc_find_by_id(const struct osmo_rnc_id *rnc_id)
 }
 
 struct ranap_iu_rnc *iu_rnc_find_or_create(const struct osmo_rnc_id *rnc_id,
+					   struct sgsn_sccp_user_iups *scu_iups,
 					   const struct osmo_sccp_addr *addr)
 {
 	struct ranap_iu_rnc *rnc;
@@ -84,7 +88,7 @@ struct ranap_iu_rnc *iu_rnc_find_or_create(const struct osmo_rnc_id *rnc_id,
 			rnc->sccp_addr = *addr;
 		}
 	} else {
-		rnc = iu_rnc_alloc(rnc_id, addr);
+		rnc = iu_rnc_alloc(rnc_id, scu_iups, addr);
 	}
 	return rnc;
 }
