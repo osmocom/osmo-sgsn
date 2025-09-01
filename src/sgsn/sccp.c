@@ -100,7 +100,7 @@ int sgsn_scu_iups_tx_data_req(struct sgsn_sccp_user_iups *scu_iups, uint32_t con
 	return rc;
 }
 
-static struct ranap_ue_conn_ctx *ue_conn_ctx_find(struct sgsn_sccp_user_iups *scu_iups, uint32_t conn_id)
+struct ranap_ue_conn_ctx *sgsn_scu_iups_ue_conn_ctx_find(struct sgsn_sccp_user_iups *scu_iups, uint32_t conn_id)
 {
 	struct ranap_ue_conn_ctx *ctx;
 
@@ -143,21 +143,6 @@ static void ue_conn_sccp_addr_del(struct sgsn_sccp_user_iups *scu_iups, uint32_t
 	}
 }
 
-static void ue_ctx_link_invalidated_free(struct ranap_ue_conn_ctx *ue)
-{
-	uint32_t conn_id = ue->conn_id;
-	struct sgsn_sccp_user_iups *scu_iups = ue->rnc->scu_iups;
-
-	global_iu_event(ue, RANAP_IU_EVENT_LINK_INVALIDATED, NULL);
-
-	/* A RANAP_IU_EVENT_LINK_INVALIDATED, can lead to a free */
-	ue = ue_conn_ctx_find(scu_iups, conn_id);
-	if (!ue)
-		return;
-	if (ue->free_on_release)
-		sgsn_ranap_iu_free_ue(ue);
-}
-
 static void handle_notice_ind(struct sgsn_sccp_user_iups *scu_iups, const struct osmo_scu_notice_param *ni)
 {
 	struct ranap_iu_rnc *rnc;
@@ -178,7 +163,6 @@ static void handle_notice_ind(struct sgsn_sccp_user_iups *scu_iups, const struct
 
 	/* Messages are not arriving to RNC. Signal to user that all related ue_ctx are invalid. */
 	llist_for_each_entry(rnc, &sgsn->rnc_list, entry) {
-		struct ranap_ue_conn_ctx *ue_ctx, *ue_ctx_tmp;
 		if (osmo_sccp_addr_ri_cmp(&rnc->sccp_addr, &ni->calling_addr))
 			continue;
 		LOGP(DSUA, LOGL_NOTICE,
@@ -186,11 +170,7 @@ static void handle_notice_ind(struct sgsn_sccp_user_iups *scu_iups, const struct
 		     osmo_rnc_id_name(&rnc->rnc_id),
 		     ni->cause, osmo_sccp_return_cause_name(ni->cause),
 		     ni->importance);
-		llist_for_each_entry_safe(ue_ctx, ue_ctx_tmp, &scu_iups->ue_conn_ctx_list, list) {
-			if (ue_ctx->rnc != rnc)
-				continue;
-			ue_ctx_link_invalidated_free(ue_ctx);
-		}
+		iu_rnc_discard_all_ue_ctx(rnc);
 		/* TODO: ideally we'd have some event to submit to upper
 		 * layer to inform about peer availability change... */
 	}
@@ -279,7 +259,7 @@ static void handle_pcstate_ind(struct sgsn_sccp_user_iups *scu_iups, const struc
 			llist_for_each_entry_safe(ue_ctx, ue_ctx_tmp, &scu_iups->ue_conn_ctx_list, list) {
 				if (ue_ctx->rnc != rnc)
 					continue;
-				ue_ctx_link_invalidated_free(ue_ctx);
+				ue_conn_ctx_link_invalidated_free(ue_ctx);
 			}
 			/* TODO: ideally we'd have some event to submit to upper
 			 * layer to inform about peer availability change... */
@@ -355,7 +335,7 @@ static int sccp_sap_up(struct osmo_prim_hdr *oph, void *_scu)
 		LOGP(DSUA, LOGL_DEBUG, "N-DISCONNECT.ind(%u)\n", conn_id);
 
 		ue_conn_sccp_addr_del(scu_iups, conn_id);
-		ue = ue_conn_ctx_find(scu_iups, conn_id);
+		ue = sgsn_scu_iups_ue_conn_ctx_find(scu_iups, conn_id);
 		if (!ue)
 			break;
 
@@ -364,10 +344,10 @@ static int sccp_sap_up(struct osmo_prim_hdr *oph, void *_scu)
 			rc = sgsn_ranap_iu_rx_co_msg(ue, msgb_l2(oph->msg), msgb_l2len(oph->msg));
 
 		/* A Iu Release event might be used to free the UE in cn_ranap_handle_co(). */
-		ue = ue_conn_ctx_find(scu_iups, conn_id);
+		ue = sgsn_scu_iups_ue_conn_ctx_find(scu_iups, conn_id);
 		if (!ue)
 			break;
-		ue_ctx_link_invalidated_free(ue);
+		ue_conn_ctx_link_invalidated_free(ue);
 		break;
 	case OSMO_PRIM(OSMO_SCU_PRIM_N_DATA, PRIM_OP_INDICATION):
 		/* connection-oriented data received */
@@ -376,7 +356,7 @@ static int sccp_sap_up(struct osmo_prim_hdr *oph, void *_scu)
 		     osmo_hexdump(msgb_l2(oph->msg), msgb_l2len(oph->msg)));
 
 		/* resolve UE context */
-		ue = ue_conn_ctx_find(scu_iups, conn_id);
+		ue = sgsn_scu_iups_ue_conn_ctx_find(scu_iups, conn_id);
 		if (!ue) {
 			/* Could be an InitialUE-Message after an empty CR, recreate new_ctx */
 			const struct osmo_sccp_addr *sccp_addr = ue_conn_sccp_addr_find(scu_iups, conn_id);

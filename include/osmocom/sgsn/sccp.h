@@ -38,6 +38,8 @@ void sgsn_scu_iups_free(struct sgsn_sccp_user_iups *scu_iups);
 
 int sgsn_scu_iups_tx_data_req(struct sgsn_sccp_user_iups *scu_iups, uint32_t conn_id, struct msgb *ranap_msg);
 
+struct ranap_ue_conn_ctx *sgsn_scu_iups_ue_conn_ctx_find(struct sgsn_sccp_user_iups *scu_iups, uint32_t conn_id);
+
 int sgsn_sccp_init(struct sgsn_instance *sgsn);
 void sgsn_sccp_release(struct sgsn_instance *sgsn);
 

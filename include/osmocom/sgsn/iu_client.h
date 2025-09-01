@@ -88,6 +88,8 @@ int ranap_iu_page_ps2(const char *imsi, const uint32_t *ptmsi, const struct osmo
 
 struct ranap_ue_conn_ctx *ue_conn_ctx_alloc(struct ranap_iu_rnc *rnc, uint32_t conn_id);
 
+void ue_conn_ctx_link_invalidated_free(struct ranap_ue_conn_ctx *ue);
+
 /* freeing the UE will release all resources
  * This will close the SCCP connection connected to the UE */
 void sgsn_ranap_iu_free_ue(struct ranap_ue_conn_ctx *ue_ctx);

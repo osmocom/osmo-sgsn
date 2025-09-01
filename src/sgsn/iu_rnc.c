@@ -170,3 +170,14 @@ void iu_rnc_update_rai_seen(struct ranap_iu_rnc *rnc, const struct osmo_routing_
 	}
 	/* else, LAC,RAC already recorded with the current RNC. */
 }
+
+void iu_rnc_discard_all_ue_ctx(struct ranap_iu_rnc *rnc)
+{
+	struct ranap_ue_conn_ctx *ue_ctx, *ue_ctx_tmp;
+
+	llist_for_each_entry_safe(ue_ctx, ue_ctx_tmp, &sgsn->sccp.scu_iups->ue_conn_ctx_list, list) {
+		if (ue_ctx->rnc != rnc)
+			continue;
+		ue_conn_ctx_link_invalidated_free(ue_ctx);
+	}
+}

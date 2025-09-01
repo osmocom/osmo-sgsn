@@ -105,6 +105,22 @@ void sgsn_ranap_iu_free_ue(struct ranap_ue_conn_ctx *ue_ctx)
 	talloc_free(ue_ctx);
 }
 
+void ue_conn_ctx_link_invalidated_free(struct ranap_ue_conn_ctx *ue)
+{
+	uint32_t conn_id = ue->conn_id;
+	struct sgsn_sccp_user_iups *scu_iups = ue->rnc->scu_iups;
+
+	global_iu_event(ue, RANAP_IU_EVENT_LINK_INVALIDATED, NULL);
+
+	/* A RANAP_IU_EVENT_LINK_INVALIDATED, can lead to a free */
+	ue = sgsn_scu_iups_ue_conn_ctx_find(scu_iups, conn_id);
+	if (!ue)
+		return;
+	if (ue->free_on_release)
+		sgsn_ranap_iu_free_ue(ue);
+}
+
+
 /***********************************************************************
  * Paging
  ***********************************************************************/

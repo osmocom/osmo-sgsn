@@ -35,3 +35,5 @@ struct ranap_iu_rnc *iu_rnc_find_or_create(const struct osmo_rnc_id *rnc_id,
 					   struct sgsn_sccp_user_iups *scu_iups,
 					   const struct osmo_sccp_addr *addr);
 void iu_rnc_update_rai_seen(struct ranap_iu_rnc *rnc, const struct osmo_routing_area_id *rai);
+
+void iu_rnc_discard_all_ue_ctx(struct ranap_iu_rnc *rnc);
