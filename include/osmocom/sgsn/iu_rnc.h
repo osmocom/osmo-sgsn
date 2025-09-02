@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include <osmocom/core/defs.h>
 #include <osmocom/core/linuxlist.h>
@@ -42,6 +43,12 @@ struct ranap_iu_rnc *iu_rnc_find_by_addr(const struct osmo_sccp_addr *rnc_sccp_a
 void iu_rnc_update_rai_seen(struct ranap_iu_rnc *rnc, const struct osmo_routing_area_id *rai);
 
 void iu_rnc_discard_all_ue_ctx(struct ranap_iu_rnc *rnc);
+
+int iu_rnc_tx_paging_cmd(struct ranap_iu_rnc *rnc,
+			 const char *imsi,
+			 const uint32_t *tmsi,
+			 bool is_ps,
+			 uint32_t paging_cause);
 
 #define LOG_RNC_CAT(IU_RNC, subsys, loglevel, fmt, args ...) \
 	LOGPFSMSL((IU_RNC)->fi, subsys, loglevel, fmt, ## args)

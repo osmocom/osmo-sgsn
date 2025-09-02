@@ -213,3 +213,43 @@ void iu_rnc_discard_all_ue_ctx(struct ranap_iu_rnc *rnc)
 		ue_conn_ctx_link_invalidated_free(ue_ctx);
 	}
 }
+
+/* Send a paging command down a given SCCP User. tmsi_or_ptmsi and paging_cause are
+ * optional and may be passed NULL and 0, respectively, to disable their use.
+ * See enum RANAP_PagingCause.
+ *
+ * If tmsi_or_ptmsi is given, the imsi is not sent over the air interface.
+ * Nevertheless, the IMSI is still required for resolution in the HNB-GW
+ * and/or(?) RNC.
+ *
+ * returns negative if paging couldn't be sent (eg. because RNC is currently
+ * unreachable in lower layers).
+ **/
+int iu_rnc_tx_paging_cmd(struct ranap_iu_rnc *rnc,
+			 const char *imsi,
+			 const uint32_t *tmsi_or_ptmsi,
+			 bool is_ps,
+			 uint32_t paging_cause)
+{
+	struct msgb *ranap_msg;
+	int rc;
+
+	/* rnc is not ready for paging (link not ready). */
+	if (rnc->fi->state != IU_RNC_ST_READY)
+		return -ENOLINK;
+
+	LOG_RNC(rnc, LOGL_DEBUG, "Paging %s for %s=%08x IMSI=%s\n",
+		is_ps ? "PS" : "CS",
+		is_ps ? "P-TMSI" : "TMSI",
+		tmsi_or_ptmsi ? *tmsi_or_ptmsi : GSM_RESERVED_TMSI,
+		imsi);
+
+	ranap_msg = ranap_new_msg_paging_cmd(imsi, tmsi_or_ptmsi, is_ps ? 1 : 0, paging_cause);
+	if (!ranap_msg)
+		return -EINVAL;
+
+	rc = osmo_fsm_inst_dispatch(rnc->fi, IU_RNC_EV_MSG_DOWN_CL, ranap_msg);
+	if (rc != 0)
+		msgb_free(ranap_msg);
+	return rc;
+}

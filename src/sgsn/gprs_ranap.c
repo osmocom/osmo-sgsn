@@ -287,22 +287,6 @@ int sgsn_ranap_iu_tx_common_id(struct ranap_ue_conn_ctx *uectx, const char *imsi
 	return sgsn_scu_iups_tx_data_req(uectx->rnc->scu_iups, uectx->conn_id, msg);
 }
 
-/* Send a paging command down a given SCCP User. tmsi and paging_cause are
- * optional and may be passed NULL and 0, respectively, to disable their use.
- * See enum RANAP_PagingCause.
- *
- * If TMSI is given, the IMSI is not sent over the air interface. Nevertheless,
- * the IMSI is still required for resolution in the HNB-GW and/or(?) RNC. */
-int sgsn_ranap_iu_tx_paging_cmd(struct osmo_sccp_addr *called_addr,
-			   const char *imsi, const uint32_t *tmsi,
-			   bool is_ps, uint32_t paging_cause)
-{
-	struct msgb *msg;
-	msg = ranap_new_msg_paging_cmd(imsi, tmsi, is_ps ? 1 : 0, paging_cause);
-	msg->l2h = msg->data;
-	return osmo_sccp_tx_unitdata_msg(sgsn->sccp.scu_iups->scu, &sgsn->sccp.scu_iups->local_sccp_addr, called_addr, msg);
-}
-
 int sgsn_ranap_iu_tx(struct msgb *msg_nas, uint8_t sapi)
 {
 	struct ranap_ue_conn_ctx *uectx = msg_nas->dst;

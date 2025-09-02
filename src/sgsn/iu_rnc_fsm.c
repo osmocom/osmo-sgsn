@@ -57,6 +57,7 @@ static const struct value_string iu_rnc_fsm_event_names[] = {
 	OSMO_VALUE_STRING(IU_RNC_EV_MSG_UP_CO),
 	OSMO_VALUE_STRING(IU_RNC_EV_RX_RESET),
 	OSMO_VALUE_STRING(IU_RNC_EV_RX_RESET_ACK),
+	OSMO_VALUE_STRING(IU_RNC_EV_MSG_DOWN_CL),
 	OSMO_VALUE_STRING(IU_RNC_EV_AVAILABLE),
 	OSMO_VALUE_STRING(IU_RNC_EV_UNAVAILABLE),
 	{}
@@ -252,6 +253,11 @@ static void iu_rnc_st_ready(struct osmo_fsm_inst *fi, uint32_t event, void *data
 		iu_rnc_rx_reset(rnc);
 		return;
 
+	case IU_RNC_EV_MSG_DOWN_CL:
+		OSMO_ASSERT(data);
+		sgsn_ranap_iu_tx_cl(rnc->scu_iups, &rnc->sccp_addr, (struct msgb *)data);
+		return;
+
 	case IU_RNC_EV_AVAILABLE:
 		/* Do nothing, we were already up. */
 		return;
@@ -336,6 +342,7 @@ static const struct osmo_fsm_state iu_rnc_fsm_states[] = {
 			| S(IU_RNC_EV_RX_RESET)
 			| S(IU_RNC_EV_MSG_UP_CO_INITIAL)
 			| S(IU_RNC_EV_MSG_UP_CO)
+			| S(IU_RNC_EV_MSG_DOWN_CL)
 			| S(IU_RNC_EV_AVAILABLE)
 			| S(IU_RNC_EV_UNAVAILABLE)
 			,

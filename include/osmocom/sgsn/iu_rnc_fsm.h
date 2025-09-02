@@ -29,6 +29,7 @@ enum iu_rnc_event {
 	IU_RNC_EV_MSG_UP_CO, /* struct iu_rnc_ev_msg_up_co_ctx* */
 	IU_RNC_EV_RX_RESET, /* no param */
 	IU_RNC_EV_RX_RESET_ACK, /* no param */
+	IU_RNC_EV_MSG_DOWN_CL, /* struct msgb* */
 	IU_RNC_EV_AVAILABLE,
 	IU_RNC_EV_UNAVAILABLE
 };

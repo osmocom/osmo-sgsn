@@ -43,12 +43,6 @@
 #include <osmocom/sgsn/sccp.h>
 #include <osmocom/sgsn/sgsn.h>
 
-#define LOGPIU(level, fmt, args...) \
-	LOGP(DRANAP, level, fmt, ## args)
-
-#define LOGPIUC(level, fmt, args...) \
-	LOGPC(DRANAP, level, fmt, ## args)
-
 const struct value_string iu_client_event_type_names[] = {
 	OSMO_VALUE_STRING(RANAP_IU_EVENT_RAB_ASSIGN),
 	OSMO_VALUE_STRING(RANAP_IU_EVENT_SECURITY_MODE_COMPLETE),
@@ -66,7 +60,7 @@ int global_iu_event(struct ranap_ue_conn_ctx *ue_ctx,
 	if (ue_ctx && !ue_ctx->notification)
 		return 0;
 
-	LOGPIU(LOGL_DEBUG, "Submit Iu event to upper layer: %s\n", iu_client_event_type_str(type));
+	LOGP(DRANAP, LOGL_DEBUG, "Submit Iu event to upper layer: %s\n", iu_client_event_type_str(type));
 
 	return sgsn_ranap_iu_event(ue_ctx, type, data);
 }
@@ -126,78 +120,74 @@ void ue_conn_ctx_link_invalidated_free(struct ranap_ue_conn_ctx *ue)
  ***********************************************************************/
 
 /* legacy, do a first match with ignoring PLMN */
-static bool iu_rnc_lac_rac_find_legacy(struct ranap_iu_rnc **rnc, struct iu_lac_rac_entry **lre,
-				       uint16_t lac, uint8_t rac)
-{
-	struct ranap_iu_rnc *r;
-	struct iu_lac_rac_entry *e;
-
-	if (rnc)
-		*rnc = NULL;
-	if (lre)
-		*lre = NULL;
-
-	llist_for_each_entry(r, &sgsn->rnc_list, entry) {
-		llist_for_each_entry(e, &r->lac_rac_list, entry) {
-			if (e->rai.lac.lac == lac && e->rai.rac == rac) {
-				if (rnc)
-					*rnc = r;
-				if (lre)
-					*lre = e;
-				return true;
-			}
-		}
-	}
-	return false;
-}
-
-static int iu_page(const char *imsi, const uint32_t *tmsi_or_ptmsi,
-		   uint16_t lac, uint8_t rac, bool is_ps)
+static struct ranap_iu_rnc *iu_rnc_lac_rac_find_legacy(uint16_t lac, uint8_t rac)
 {
 	struct ranap_iu_rnc *rnc;
-	const char *log_msg;
-	int log_level;
-	int paged = 0;
+	struct iu_lac_rac_entry *e;
 
-	iu_rnc_lac_rac_find_legacy(&rnc, NULL, lac, rac);
-	if (rnc) {
-		if (sgsn_ranap_iu_tx_paging_cmd(&rnc->sccp_addr, imsi, tmsi_or_ptmsi, is_ps, 0) == 0) {
-			log_msg = "Paging";
-			log_level = LOGL_DEBUG;
-			paged = 1;
-		} else {
-			log_msg = "Paging failed";
-			log_level = LOGL_ERROR;
+	llist_for_each_entry(rnc, &sgsn->rnc_list, entry) {
+		llist_for_each_entry(e, &rnc->lac_rac_list, entry) {
+			if (e->rai.lac.lac == lac && e->rai.rac == rac)
+				return rnc;
 		}
-	} else {
-		log_msg = "Found no RNC to Page";
-		log_level = LOGL_ERROR;
 	}
-
-	if (is_ps)
-		LOGPIU(log_level, "IuPS: %s on LAC %d RAC %d", log_msg, lac, rac);
-	else
-		LOGPIU(log_level, "IuCS: %s on LAC %d", log_msg, lac);
-	if (rnc)
-		LOGPIUC(log_level, " at SCCP-addr %s", osmo_sccp_addr_dump(&rnc->sccp_addr));
-	if (tmsi_or_ptmsi)
-		LOGPIUC(log_level, ", for %s %08x\n", is_ps ? "PTMSI" : "TMSI", *tmsi_or_ptmsi);
-	else
-		LOGPIUC(log_level, ", for IMSI %s\n", imsi);
-
-	return paged;
+	return NULL;
 }
 
 /*! Old paging() doesn't use PLMN and transmit paging command only to the first RNC  */
 int ranap_iu_page_cs(const char *imsi, const uint32_t *tmsi, uint16_t lac)
 {
-	return iu_page(imsi, tmsi, lac, 0, false);
+	struct ranap_iu_rnc *rnc;
+	char log_msg[32] = {};
+	int rc;
+
+	if (tmsi)
+		snprintf(log_msg, sizeof(log_msg), "TMSI %08x\n", *tmsi);
+	else
+		snprintf(log_msg, sizeof(log_msg), "IMSI %s\n", imsi);
+
+	rnc = iu_rnc_lac_rac_find_legacy(lac, 0);
+	if (!rnc) {
+		LOGP(DRANAP, LOGL_INFO, "Found no RNC to Page CS on LAC %u for %s",
+		     lac, log_msg);
+		return 0;
+	}
+
+	rc = iu_rnc_tx_paging_cmd(rnc, imsi, tmsi, false, 0);
+	if (rc != 0) {
+		LOG_RNC(rnc, LOGL_ERROR, "Failed to tx Paging CS for LAC %u for %s",
+			lac, log_msg);
+		return 0;
+	}
+	return 1;
 }
 
 /*! Old paging() doesn't use PLMN and transmit paging command only to the first RNC  */
 int ranap_iu_page_ps(const char *imsi, const uint32_t *ptmsi, uint16_t lac, uint8_t rac)
 {
-	return iu_page(imsi, ptmsi, lac, rac, true);
+	struct ranap_iu_rnc *rnc;
+	char log_msg[32] = {};
+	int rc;
+
+	if (ptmsi)
+		snprintf(log_msg, sizeof(log_msg), "P-TMSI %08x\n", *ptmsi);
+	else
+		snprintf(log_msg, sizeof(log_msg), "IMSI %s\n", imsi);
+
+	rnc = iu_rnc_lac_rac_find_legacy(lac, rac);
+	if (!rnc) {
+		LOGP(DRANAP, LOGL_INFO, "Found no RNC to Page PS on LAC %u RAC %u for %s",
+		     lac, rac, log_msg);
+		return 0;
+	}
+
+	rc = iu_rnc_tx_paging_cmd(rnc, imsi, ptmsi, true, 0);
+	if (rc != 0) {
+		LOG_RNC(rnc, LOGL_ERROR, "Failed to tx Paging PS for LAC %u RAC %u for %s",
+			lac, rac, log_msg);
+		return 0;
+	}
+	return 1;
 }
 
 /*! Transmit a single page request towards all RNCs serving the specific LAI (no page retransmission).
@@ -212,8 +202,13 @@ int ranap_iu_page_cs2(const char *imsi, const uint32_t *tmsi, const struct osmo_
 	struct ranap_iu_rnc *rnc;
 	struct iu_lac_rac_entry *entry;
 	char log_msg[32] = {};
-	int paged = 0;
-	int rc = 0;
+	unsigned int paged = 0;
+	int rc;
+
+	if (tmsi)
+		snprintf(log_msg, sizeof(log_msg), "TMSI %08x\n", *tmsi);
+	else
+		snprintf(log_msg, sizeof(log_msg), "IMSI %s\n", imsi);
 
 	/* find all RNCs which are serving this LA */
 	llist_for_each_entry(rnc, &sgsn->rnc_list, entry) {
@@ -221,27 +216,23 @@ int ranap_iu_page_cs2(const char *imsi, const uint32_t *tmsi, const struct osmo_
 			if (osmo_lai_cmp(&entry->rai.lac, lai))
 				continue;
 
-			rc = sgsn_ranap_iu_tx_paging_cmd(&rnc->sccp_addr, imsi, tmsi, false, 0);
-			if (rc > 0) {
-				LOGPIU(LOGL_ERROR, "IuCS: Failed to tx Paging RNC %s for LAC %s for IMSI %s / TMSI %08x",
-				       osmo_rnc_id_name(&rnc->rnc_id),
-				       osmo_lai_name(lai), imsi, tmsi ? *tmsi : GSM_RESERVED_TMSI);
+			rc = iu_rnc_tx_paging_cmd(rnc, imsi, tmsi, false, 0);
+			if (rc != 0) {
+				LOG_RNC(rnc, LOGL_ERROR, "Failed to tx Paging CS for LAI %s for %s",
+					osmo_lai_name(lai), log_msg);
+			} else {
+				paged++;
 			}
-			paged++;
 			break;
 		}
 	}
 
-	if (tmsi)
-		snprintf(log_msg, sizeof(log_msg), "for TMSI %08x\n", *tmsi);
-	else
-		snprintf(log_msg, sizeof(log_msg) - 1, "for IMSI %s\n", imsi);
-
 	if (paged)
-		LOGPIU(LOGL_DEBUG, "IuPS: Paged %d RNCs on LAI %s for %s", paged, osmo_lai_name(lai), log_msg);
+		LOGP(DRANAP, LOGL_DEBUG, "Paged CS %u RNCs on LAI %s for %s",
+		     paged, osmo_lai_name(lai), log_msg);
 	else
-		LOGPIU(LOGL_INFO, "IuPS: Found no RNC to Page on LAI %s for %s", osmo_lai_name(lai), log_msg);
-
+		LOGP(DRANAP, LOGL_INFO, "Found no RNC to Page CS on LAI %s for %s",
+		     osmo_lai_name(lai), log_msg);
 
 	return paged;
 }
@@ -249,7 +240,7 @@ int ranap_iu_page_cs2(const char *imsi, const uint32_t *tmsi, const struct osmo_
 /*! Transmit a single page request towards all RNCs serving the specific RAI (no page retransmission).
  *
  * \param imsi the imsi as human readable string
- * \param ptmsi NULL or pointer to the tmsi
+ * \param ptmsi NULL or pointer to the ptmsi
  * \param rai full Location Area Identifier
  * \return amount of paged RNCs. 0 when no RNC found.
  */
@@ -258,8 +249,13 @@ int ranap_iu_page_ps2(const char *imsi, const uint32_t *ptmsi, const struct osmo
 	struct ranap_iu_rnc *rnc;
 	struct iu_lac_rac_entry *entry;
 	char log_msg[32] = {};
-	int paged = 0;
-	int rc = 0;
+	unsigned int paged = 0;
+	int rc;
+
+	if (ptmsi)
+		snprintf(log_msg, sizeof(log_msg), "P-TMSI %08x\n", *ptmsi);
+	else
+		snprintf(log_msg, sizeof(log_msg), "IMSI %s\n", imsi);
 
 	/* find all RNCs which are serving this RAC */
 	llist_for_each_entry(rnc, &sgsn->rnc_list, entry) {
@@ -267,26 +263,23 @@ int ranap_iu_page_ps2(const char *imsi, const uint32_t *ptmsi, const struct osmo
 			if (osmo_rai_cmp(&entry->rai, rai))
 				continue;
 
-			rc = sgsn_ranap_iu_tx_paging_cmd(&rnc->sccp_addr, imsi, ptmsi, true, 0);
-			if (rc > 0) {
-				LOGPIU(LOGL_ERROR, "IuPS: Failed to tx Paging RNC %s for RAC %s for IMSI %s / P-TMSI %08x",
-				       osmo_rnc_id_name(&rnc->rnc_id),
-				       osmo_rai_name2(rai), imsi, ptmsi ? *ptmsi : GSM_RESERVED_TMSI);
+			rc = iu_rnc_tx_paging_cmd(rnc, imsi, ptmsi, true, 0);
+			if (rc != 0) {
+				LOG_RNC(rnc, LOGL_ERROR, "Failed to tx Paging PS for RAI %s for %s",
+					osmo_rai_name2(rai), log_msg);
+			} else {
+				paged++;
 			}
-			paged++;
 			break;
 		}
 	}
 
-	if (ptmsi)
-		snprintf(log_msg, sizeof(log_msg) - 1, "for PTMSI %08x\n", *ptmsi);
-	else
-		snprintf(log_msg, sizeof(log_msg) - 1, "for IMSI %s\n", imsi);
-
 	if (paged)
-		LOGPIU(LOGL_DEBUG, "IuPS: Paged %d RNCs on RAI %s for %s", paged, osmo_rai_name2(rai), log_msg);
+		LOGP(DRANAP, LOGL_DEBUG, "Paged PS %u RNCs on RAI %s for %s",
+		     paged, osmo_rai_name2(rai), log_msg);
 	else
-		LOGPIU(LOGL_INFO, "IuPS: Found no RNC to Page on RAI %s for %s", osmo_rai_name2(rai), log_msg);
+		LOGP(DRANAP, LOGL_INFO, "Found no RNC to Page PS on RAI %s for %s",
+		     osmo_rai_name2(rai), log_msg);
 
 	return paged;
 }
