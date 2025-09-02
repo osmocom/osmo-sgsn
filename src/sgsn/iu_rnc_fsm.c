@@ -216,6 +216,12 @@ static void iu_rnc_st_wait_rx_reset_ack(struct osmo_fsm_inst *fi, uint32_t event
 	}
 }
 
+static void iu_rnc_st_ready_onenter(struct osmo_fsm_inst *fi, uint32_t prev_state)
+{
+	if (prev_state != IU_RNC_ST_READY)
+		sgsn_stat_inc(SGSN_STAT_IU_PEERS_ACTIVE, 1);
+}
+
 static void iu_rnc_st_ready(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	struct ranap_iu_rnc *rnc = fi->priv;
@@ -261,6 +267,12 @@ static void iu_rnc_st_ready(struct osmo_fsm_inst *fi, uint32_t event, void *data
 	}
 }
 
+static void iu_rnc_st_ready_onleave(struct osmo_fsm_inst *fi, uint32_t next_state)
+{
+	if (next_state != IU_RNC_ST_READY)
+		sgsn_stat_dec(SGSN_STAT_IU_PEERS_ACTIVE, 1);
+}
+
 static int iu_rnc_fsm_timer_cb(struct osmo_fsm_inst *fi)
 {
 	struct ranap_iu_rnc *rnc = fi->priv;
@@ -273,6 +285,10 @@ static void iu_rnc_fsm_cleanup(struct osmo_fsm_inst *fi, enum osmo_fsm_term_caus
 	struct ranap_iu_rnc *rnc = fi->priv;
 
 	iu_rnc_discard_all_ue_ctx(rnc);
+
+	if (rnc->fi->state == IU_RNC_ST_READY)
+		sgsn_stat_dec(SGSN_STAT_IU_PEERS_ACTIVE, 1);
+	sgsn_stat_dec(SGSN_STAT_IU_PEERS_TOTAL, 1);
 }
 
 static const struct osmo_fsm_state iu_rnc_fsm_states[] = {
@@ -314,6 +330,8 @@ static const struct osmo_fsm_state iu_rnc_fsm_states[] = {
 	[IU_RNC_ST_READY] = {
 		.name = "READY",
 		.action = iu_rnc_st_ready,
+		.onenter = iu_rnc_st_ready_onenter,
+		.onleave = iu_rnc_st_ready_onleave,
 		.in_event_mask = 0
 			| S(IU_RNC_EV_RX_RESET)
 			| S(IU_RNC_EV_MSG_UP_CO_INITIAL)

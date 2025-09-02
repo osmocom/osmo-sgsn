@@ -76,6 +76,7 @@ static struct ranap_iu_rnc *iu_rnc_alloc(const struct osmo_rnc_id *rnc_id,
 				  osmo_rnc_id_name(rnc_id), addr_str);
 
 	llist_add(&rnc->entry, &sgsn->rnc_list);
+	sgsn_stat_inc(SGSN_STAT_IU_PEERS_TOTAL, 1);
 
 	LOGP(DRANAP, LOGL_NOTICE, "New RNC %s at %s\n",
 	     osmo_rnc_id_name(&rnc->rnc_id), osmo_sccp_addr_dump(rnc_sccp_addr));

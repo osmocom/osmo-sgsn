@@ -103,6 +103,20 @@ static const struct rate_ctr_group_desc sgsn_ctrg_desc = {
 	sgsn_ctr_description,
 };
 
+
+static const struct osmo_stat_item_desc sgsn_stat_item_description[] = {
+	[SGSN_STAT_IU_PEERS_TOTAL]	= { "iu_peers:total", "Total Iu peers (RNC, HNBGW) seen since startup", OSMO_STAT_ITEM_NO_UNIT, 4, 0},
+	[SGSN_STAT_IU_PEERS_ACTIVE]	= { "iu_peers:active", "Currently active Iu peers (RANAP ready)", OSMO_STAT_ITEM_NO_UNIT, 4, 0},
+};
+
+static const struct osmo_stat_item_group_desc sgsn_statg_desc = {
+	"sgsn",
+	"serving GPRS support node statistics",
+	OSMO_STATS_CLASS_GLOBAL,
+	ARRAY_SIZE(sgsn_stat_item_description),
+	sgsn_stat_item_description,
+};
+
 static void sgsn_llme_cleanup_free(struct gprs_llc_llme *llme)
 {
 	struct sgsn_mm_ctx *mmctx = NULL;
@@ -161,6 +175,7 @@ static int sgsn_instance_talloc_destructor(struct sgsn_instance *sgi)
 #endif /* #if BUILD_IU */
 	osmo_timer_del(&sgi->llme_timer);
 	rate_ctr_group_free(sgi->rate_ctrs);
+	osmo_stat_item_group_free(sgi->statg);
 	return 0;
 }
 
@@ -185,6 +200,8 @@ struct sgsn_instance *sgsn_instance_alloc(void *talloc_ctx)
 
 	inst->rate_ctrs = rate_ctr_group_alloc(inst, &sgsn_ctrg_desc, 0);
 	OSMO_ASSERT(inst->rate_ctrs);
+	inst->statg = osmo_stat_item_group_alloc(inst, &sgsn_statg_desc, 0);
+	OSMO_ASSERT(inst->statg);
 
 	INIT_LLIST_HEAD(&inst->apn_list);
 	INIT_LLIST_HEAD(&inst->ggsn_list);

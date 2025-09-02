@@ -5,6 +5,7 @@
 
 #include <osmocom/core/msgb.h>
 #include <osmocom/core/select.h>
+#include <osmocom/core/stat_item.h>
 #include <osmocom/crypt/gprs_cipher.h>
 #include <osmocom/gprs/gprs_ns2.h>
 #include <osmocom/gprs/gprs_bssgp.h>
@@ -159,6 +160,7 @@ struct sgsn_instance {
 	struct sgsn_ra_global *routing_area;
 
 	struct rate_ctr_group *rate_ctrs;
+	struct osmo_stat_item_group *statg;
 
 	struct llist_head apn_list; /* list of struct sgsn_apn_ctx */
 	struct llist_head ggsn_list; /* list of struct sgsn_ggsn_ctx */
@@ -183,6 +185,21 @@ struct sgsn_instance {
 extern struct osmo_tdef sgsn_T_defs[];
 extern struct sgsn_instance *sgsn;
 extern void *tall_sgsn_ctx;
+
+enum {
+	SGSN_STAT_IU_PEERS_TOTAL,
+	SGSN_STAT_IU_PEERS_ACTIVE,
+};
+static inline void sgsn_stat_inc(unsigned int idx, int32_t value)
+{
+	osmo_stat_item_inc(osmo_stat_item_group_get_item(sgsn->statg, idx), value);
+}
+
+static inline void sgsn_stat_dec(unsigned int idx, int32_t value)
+{
+	osmo_stat_item_dec(osmo_stat_item_group_get_item(sgsn->statg, idx), value);
+}
+
 
 /*
  * ctrl interface related work (sgsn_ctrl.c)
