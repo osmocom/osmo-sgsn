@@ -73,7 +73,7 @@ struct sgsn_pdp_ctx *sgsn_pdp_ctx_alloc(struct sgsn_mm_ctx *mm,
 	if (!pctx)
 		return NULL;
 
-	pctx->ctrg = rate_ctr_group_alloc(pctx, &pdpctx_ctrg_desc, nsapi);
+	pctx->ctrg = rate_ctr_group_alloc(pctx, &pdpctx_ctrg_desc, pdp->teic_own);
 	if (!pctx->ctrg) {
 		LOGPDPCTXP(LOGL_ERROR, pctx, "Error allocation counter group\n");
 		talloc_free(pctx);
