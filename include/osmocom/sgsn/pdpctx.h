@@ -92,6 +92,7 @@ struct sgsn_pdp_ctx {
 
 struct sgsn_pdp_ctx *sgsn_pdp_ctx_alloc(struct sgsn_mm_ctx *mm,
 					struct sgsn_ggsn_ctx *ggsn,
+					struct pdp_t *pdp,
 					uint8_t nsapi);
 void sgsn_pdp_ctx_terminate(struct sgsn_pdp_ctx *pdp);
 void sgsn_pdp_ctx_free(struct sgsn_pdp_ctx *pdp);

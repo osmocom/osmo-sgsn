@@ -60,32 +60,40 @@ static const struct rate_ctr_group_desc pdpctx_ctrg_desc = {
 /* you don't want to use this directly, call sgsn_create_pdp_ctx() */
 struct sgsn_pdp_ctx *sgsn_pdp_ctx_alloc(struct sgsn_mm_ctx *mm,
 					struct sgsn_ggsn_ctx *ggsn,
+					struct pdp_t *pdp,
 					uint8_t nsapi)
 {
-	struct sgsn_pdp_ctx *pdp;
+	struct sgsn_pdp_ctx *pctx;
 
-	pdp = sgsn_pdp_ctx_by_nsapi(mm, nsapi);
-	if (pdp)
+	pctx = sgsn_pdp_ctx_by_nsapi(mm, nsapi);
+	if (pctx)
 		return NULL;
 
-	pdp = talloc_zero(sgsn, struct sgsn_pdp_ctx);
-	if (!pdp)
+	pctx = talloc_zero(sgsn, struct sgsn_pdp_ctx);
+	if (!pctx)
 		return NULL;
 
-	pdp->mm = mm;
-	pdp->ggsn = ggsn;
-	pdp->nsapi = nsapi;
-	pdp->ctrg = rate_ctr_group_alloc(pdp, &pdpctx_ctrg_desc, nsapi);
-	if (!pdp->ctrg) {
-		LOGPDPCTXP(LOGL_ERROR, pdp, "Error allocation counter group\n");
-		talloc_free(pdp);
+	pctx->ctrg = rate_ctr_group_alloc(pctx, &pdpctx_ctrg_desc, nsapi);
+	if (!pctx->ctrg) {
+		LOGPDPCTXP(LOGL_ERROR, pctx, "Error allocation counter group\n");
+		talloc_free(pctx);
 		return NULL;
 	}
-	llist_add(&pdp->list, &mm->pdp_list);
-	sgsn_ggsn_ctx_add_pdp(pdp->ggsn, pdp);
-	llist_add(&pdp->g_list, &sgsn->pdp_list);
 
-	return pdp;
+	pdp->priv = pctx;
+	pctx->lib = pdp;
+	pctx->mm = mm;
+	pctx->ggsn = ggsn;
+	pctx->nsapi = nsapi;
+
+	/* Back up our own local TEID in case we update the library one with RNC TEID when setting up Direct Tunnel: */
+	pctx->sgsn_teid_own = pdp->teid_own;
+
+	llist_add(&pctx->list, &mm->pdp_list);
+	sgsn_ggsn_ctx_add_pdp(pctx->ggsn, pctx);
+	llist_add(&pctx->g_list, &sgsn->pdp_list);
+
+	return pctx;
 }
 
 /*

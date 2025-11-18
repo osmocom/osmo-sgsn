@@ -152,12 +152,6 @@ struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
 	const uint8_t *qos;
 	int rc;
 
-	pctx = sgsn_pdp_ctx_alloc(mmctx, ggsn, nsapi);
-	if (!pctx) {
-		LOGP(DGPRS, LOGL_ERROR, "Couldn't allocate PDP Ctx\n");
-		return NULL;
-	}
-
 	imsi_ui64 = imsi_str2gtp(mmctx->imsi);
 
 	rc = gtp_pdp_newpdp(ggsn->gsn, &pdp, imsi_ui64, nsapi, NULL);
@@ -165,11 +159,13 @@ struct sgsn_pdp_ctx *sgsn_create_pdp_ctx(struct sgsn_ggsn_ctx *ggsn,
 		LOGP(DGPRS, LOGL_ERROR, "Out of libgtp PDP Contexts\n");
 		return NULL;
 	}
-	pdp->priv = pctx;
-	pctx->lib = pdp;
 
-	/* Back up our own local TEID in case we update the library one with RNC TEID when setting up Direct Tunnel: */
-	pctx->sgsn_teid_own = pdp->teid_own;
+	pctx = sgsn_pdp_ctx_alloc(mmctx, ggsn, pdp, nsapi);
+	if (!pctx) {
+		LOGP(DGPRS, LOGL_ERROR, "Couldn't allocate PDP Ctx\n");
+		pdp_freepdp(pdp);
+		return NULL;
+	}
 
 	//pdp->peer =	/* sockaddr_in of GGSN (receive) */
 	//pdp->ipif =	/* not used by library */
