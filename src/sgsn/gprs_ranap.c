@@ -142,6 +142,12 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 	struct sgsn_mm_ctx *mm;
 	int rc = -1;
 
+	if (!ctx) {
+		LOGP(DRANAP, LOGL_NOTICE, "Iu: event without ue_conn_ctx received: %s\n",
+		     ranap_iu_event_type_str(type));
+		return rc;
+	}
+
 	mm = sgsn_mm_ctx_by_ue_ctx(ctx);
 	if (!mm) {
 		LOGIUP(ctx, LOGL_NOTICE, "Cannot find mm ctx for IU event %s\n",
