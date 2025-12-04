@@ -1,3 +1,11 @@
+osmo-sgsn (1.13.1) unstable; urgency=medium
+
+  [ Alexander Couzens ]
+  * gprs_gmm: fix endianess of GSM48_IE_GMM_PDP_CTX_STATUS
+  * mmctx: LOGIUP: allow ue to be NULL
+
+ -- Pau Espin Pedrol <pespin@sysmocom.de>  Thu, 04 Dec 2025 14:32:14 +0100
+
 osmo-sgsn (1.13.0) unstable; urgency=medium
 
   [ Pau Espin Pedrol ]
