@@ -1828,6 +1828,15 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 			goto rejected;
 	}
 
+	switch (mmctx->ran_type) {
+	case MM_CTX_T_GERAN_Gb:
+		mmctx->vsub->cs.attached_via_ran = OSMO_RAT_GERAN_A;
+		break;
+	case MM_CTX_T_UTRAN_Iu:
+		mmctx->vsub->cs.attached_via_ran = OSMO_RAT_UTRAN_IU;
+		break;
+	}
+
 	mmctx->attach_rau.old_rai = req.old_rai;
 
 	/* FIXME: copy stuff from VSUB over */
