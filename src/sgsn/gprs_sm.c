@@ -206,7 +206,16 @@ int gsm48_tx_gsm_act_pdp_acc(struct sgsn_pdp_ctx *pdp)
 
 	/* FIXME: copy QoS parameters from original request */
 	//msgb_lv_put(msg, pdp->lib->qos_neg.l, pdp->lib->qos_neg.v);
-	msgb_lv_put(msg, sizeof(default_qos), (uint8_t *)&default_qos);
+
+	/* qos_req.l is encoded as 1 (ARP byte) + N QoS profile bytes in GTP.
+	 * Mirror back the same QoS profile length the UE requested, capped at
+	 * sizeof(default_qos) (14 bytes, covering up to R99/R7 QoS format). */
+	uint8_t qos_len = sizeof(default_qos);
+	if (pdp->lib->qos_req.l > 1)
+		qos_len = pdp->lib->qos_req.l - 1;
+	if (qos_len > sizeof(default_qos))
+		qos_len = sizeof(default_qos);
+	msgb_lv_put(msg, qos_len, (uint8_t *)&default_qos);
 
 	/* Radio priority 10.5.7.2 */
 	msgb_v_put(msg, pdp->lib->radio_pri);
