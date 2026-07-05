@@ -17,10 +17,7 @@ Build-Depends: debhelper (>= 10),
                libosmo-netif-dev (>= 1.4.0),
                libosmo-gsup-client-dev (>= 1.7.0),
                libasn1c-dev (>= 0.9.30),
-               libosmo-ranap-dev (>= 1.5.0),
                libosmo-sigtran-dev (>= 1.8.0),
-               libosmo-sccp-dev (>= 1.8.0),
-               osmo-gsm-manuals-dev (>= 1.5.0)
 Standards-Version: 3.9.8
 Vcs-Git: https://gitea.osmocom.org/cellular-infrastructure/osmo-sgsn
 Vcs-Browser: https://gitea.osmocom.org/cellular-infrastructure/osmo-sgsn
