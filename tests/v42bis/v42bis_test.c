@@ -333,7 +333,6 @@ static void test_v42bis_tcpip_decompress(const void *ctx, int packet_id)
 	uint8_t *uncompressed;
 	v42bis_state_t *rx_state;
 	int rc;
-	int rc_sum = 0;
 	int len;
 	struct v42bis_output_buffer uncompressed_data;
 
@@ -363,13 +362,10 @@ static void test_v42bis_tcpip_decompress(const void *ctx, int packet_id)
 	rx_state->decompress.user_data = (&uncompressed_data);
 	rc = v42bis_decompress_flush(rx_state);
 	printf("v42bis_decompress_flush() rc=%d\n", rc);
-	rc_sum += rc;
 	rc = v42bis_decompress(rx_state, compressed, compressed_len);
 	printf("v42bis_decompress() rc=%d\n", rc);
-	rc_sum += rc;
 	rc = v42bis_decompress_flush(rx_state);
 	printf("v42bis_decompress_flush() rc=%d\n", rc);
-	rc_sum += rc;
 
 	/* Check results */
 	printf("compressed=   %s ASCII:",
