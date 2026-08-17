@@ -173,19 +173,23 @@ int sgsn_pdp_ctx_iu_rab_activate(struct sgsn_pdp_ctx *pdp, uint8_t rab_id)
 {
 	struct sgsn_mm_ctx *mm = pdp->mm;
 	struct ranap_ue_conn_ctx *ue_ctx;
-	uint32_t ggsn_ip;
+	struct osmo_sockaddr gtp_addr;
+	char ip_str[INET6_ADDRSTRLEN];
 
 	OSMO_ASSERT(mm->ran_type == MM_CTX_T_UTRAN_Iu);
 	ue_ctx = mm->iu.ue_ctx;
 
 	/* Get the IP address for ggsn user plane */
-	memcpy(&ggsn_ip, pdp->lib->gsnru.v, pdp->lib->gsnru.l);
-	ggsn_ip = htonl(ggsn_ip);
+	if (gsna_to_osa(&gtp_addr, &pdp->lib->gsnru) < 0) {
+		LOGPDPCTXP(LOGL_INFO, pdp, "Activate RAB: rab_id=%u, teid_gn=%x: Invalid GTP1U address! len=%u\n",
+		   rab_id, pdp->lib->teid_gn, pdp->lib->gsnru.l);
+		return -EINVAL;
+	}
 
-	LOGPDPCTXP(LOGL_INFO, pdp, "Activate RAB: rab_id=%u, ggsn_ip=%x, teid_gn=%x\n",
-		   rab_id, ggsn_ip, pdp->lib->teid_gn);
+	LOGPDPCTXP(LOGL_INFO, pdp, "Activate RAB: rab_id=%u, ggsn_ip=%s, teid_gn=%x\n",
+		   rab_id, osmo_sockaddr_ntop(&gtp_addr.u.sa, ip_str), pdp->lib->teid_gn);
 
-	return sgsn_ranap_iu_tx_rab_ps_ass_req(ue_ctx, rab_id, ggsn_ip, pdp->lib->teid_gn);
+	return sgsn_ranap_iu_tx_rab_ps_ass_req(ue_ctx, rab_id, &gtp_addr, pdp->lib->teid_gn);
 }
 
 int sgsn_pdp_ctx_iu_rab_deactivate(struct sgsn_pdp_ctx *pdp, uint8_t rab_id)

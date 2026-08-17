@@ -3,6 +3,7 @@
 #include "config.h"
 
 #include <osmocom/core/msgb.h>
+#include <osmocom/core/socket.h>
 
 #ifdef BUILD_IU
 #include <osmocom/ranap/ranap_ies_defs.h>
@@ -26,7 +27,9 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 
 int sgsn_ranap_iu_tx(struct msgb *msg, uint8_t sapi);
 int sgsn_ranap_iu_tx_rab_ps_ass_req(struct ranap_ue_conn_ctx *ue_ctx,
-				    uint8_t rab_id, uint32_t gtp_ip, uint32_t gtp_tei);
+				    uint8_t rab_id,
+				    const struct osmo_sockaddr *gtp_addr,
+				    uint32_t gtp_tei);
 int sgsn_ranap_iu_tx_sec_mode_cmd(struct ranap_ue_conn_ctx *uectx, struct osmo_auth_vector *vec,
 			     int send_ck, int new_key);
 int sgsn_ranap_iu_tx_common_id(struct ranap_ue_conn_ctx *ue_ctx, const char *imsi);

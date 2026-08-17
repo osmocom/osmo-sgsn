@@ -3,8 +3,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <osmocom/core/socket.h>
 #include <osmocom/gsm/tlv.h>
 #include <osmocom/gprs/gprs_bssgp_rim.h>
+
+#include <osmocom/gtp/pdp.h>
 
 struct gprs_ra_id;
 struct sgsn_instance;
@@ -27,3 +30,8 @@ int sgsn_gtp_data_req(struct osmo_routing_area_id *rai, int32_t tlli, uint8_t ns
 		      struct msgb *msg, uint32_t npdu_len, uint8_t *npdu);
 int sgsn_delete_pdp_ctx(struct sgsn_pdp_ctx *pctx);
 int send_act_pdp_cont_acc(struct sgsn_pdp_ctx *pctx);
+
+static inline int gsna_to_osa(struct osmo_sockaddr *dst, const struct ul16_t *in)
+{
+	return osmo_sockaddr_from_octets(dst, &in->v[0], in->l);
+}

@@ -252,16 +252,19 @@ int sgsn_ranap_iu_event(struct ranap_ue_conn_ctx *ctx, enum ranap_iu_event_type 
 }
 
 int sgsn_ranap_iu_tx_rab_ps_ass_req(struct ranap_ue_conn_ctx *ue_ctx,
-				    uint8_t rab_id, uint32_t gtp_ip, uint32_t gtp_tei)
+				    uint8_t rab_id,
+				    const struct osmo_sockaddr *gtp_addr,
+				    uint32_t gtp_tei)
 {
 	struct msgb *msg;
 	bool use_x213_nsap = (ue_ctx->rab_assign_addr_enc == RANAP_NSAP_ADDR_ENC_X213);
+	char ip_str[INET6_ADDRSTRLEN];
 
 	LOGP(DRANAP, LOGL_DEBUG,
-	     "Assigning RAB: rab_id=%u, ggsn_ip=%x, teid_gn=%x, use_x213_nsap=%d\n",
-	     rab_id, gtp_ip, gtp_tei, use_x213_nsap);
+	     "Assigning RAB: rab_id=%u, ggsn_ip=%s, teid_gn=%x, use_x213_nsap=%d\n",
+	     rab_id, osmo_sockaddr_ntop(&gtp_addr->u.sa, ip_str), gtp_tei, use_x213_nsap);
 
-	msg = ranap_new_msg_rab_assign_data(rab_id, gtp_ip, gtp_tei, use_x213_nsap);
+	msg = ranap_new_msg_rab_assign_data2(rab_id, gtp_addr, gtp_tei, use_x213_nsap);
 	return sgsn_scu_iups_tx_data_req(ue_ctx->rnc->scu_iups, ue_ctx->conn_id, msg);
 }
 
