@@ -13,6 +13,7 @@
 #include <osmocom/gsm/gsm0808.h>
 #include <osmocom/gsm/gsup.h>
 #include <osmocom/gsm/ipa.h>
+#include <osmocom/msc/msc_common.h>
 #include <osmocom/gsupclient/gsup_client.h>
 #include <osmocom/vlr/vlr_sgs.h>
 
