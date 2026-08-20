@@ -1615,8 +1615,8 @@ int fsm_lu_timer_cb(struct osmo_fsm_inst *fi)
 		}
 
 		lfp->vlr->ops.tx_lu_rej(lfp->msc_conn_ref, gsm48_cause, lfp->lu_type);
-		/* 1 will terminate the fsm */
-		return 1;
+		/* The callback might already cleaned up this FSM */
+		return 0;
 	}
 
 	switch (fi->state) {
