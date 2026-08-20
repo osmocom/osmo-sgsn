@@ -1,3 +1,17 @@
+osmo-sgsn (1.13.2) unstable; urgency=medium
+
+  [ Pau Espin Pedrol ]
+  * Pass pdp_t to sgsn_pdp_ctx_alloc()
+  * pdpctx: Use pdp->teic_own as rate_ctr id
+  * sndcp: Remove unused variable
+  * tests/v42bis: Remove unused variable
+  * ranap: Avoid write buffer overflow on GTPv1U outter IPv6 addr
+
+  [ Vadim Yanitskiy ]
+  * gprs_sm: gsm48_tx_gsm_act_pdp_acc(): fix QoS profile length
+
+ -- Pau Espin Pedrol <pespin@sysmocom.de>  Thu, 20 Aug 2026 14:36:47 +0200
+
 osmo-sgsn (1.13.1) unstable; urgency=medium
 
   [ Alexander Couzens ]
