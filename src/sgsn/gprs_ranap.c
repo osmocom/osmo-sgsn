@@ -236,6 +236,11 @@ int iu_rab_act_ps(uint8_t rab_id, struct sgsn_pdp_ctx *pdp)
 	use_x213_nsap = (uectx->rab_assign_addr_enc == RANAP_NSAP_ADDR_ENC_X213);
 
 	/* Get the IP address for ggsn user plane */
+	if (pdp->lib->gsnru.l != sizeof(ggsn_ip)) {
+		LOGPDPCTXP(LOGL_ERROR, pdp, "GSN-U address length %u unsupported\n",
+			   pdp->lib->gsnru.l);
+		return -EINVAL;
+	}
 	memcpy(&ggsn_ip, pdp->lib->gsnru.v, pdp->lib->gsnru.l);
 	ggsn_ip = htonl(ggsn_ip);
 
