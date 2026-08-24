@@ -119,12 +119,11 @@ _vlr_subscr_next_auth_tuple(struct vlr_subscr *vsub, int max_reuse_count)
 	return at;
 }
 
-/* Return an auth tuple and increment its use count. */
+/* Return an auth tuple */
 static struct vlr_auth_tuple *
-vlr_subscr_get_auth_tuple(struct vlr_subscr *vsub, int max_reuse_count)
+vlr_subscr_get_auth_tuple(struct vlr_subscr *vsub)
 {
-	struct vlr_auth_tuple *at = _vlr_subscr_next_auth_tuple(vsub,
-							       max_reuse_count);
+	struct vlr_auth_tuple *at = _vlr_subscr_next_auth_tuple(vsub, 0);
 	if (!at)
 		return NULL;
 	at->use_count++;
@@ -311,7 +310,7 @@ static int _vlr_subscr_authenticate(struct osmo_fsm_inst *fi)
 	bool use_umts_aka;
 
 	/* Caller ensures we have vectors available */
-	at = vlr_subscr_get_auth_tuple(vsub, afp->auth_tuple_max_reuse_count);
+	at = vlr_subscr_get_auth_tuple(vsub);
 	if (!at) {
 		LOGPFSML(fi, LOGL_ERROR, "A previous check ensured that an"
 			 " auth tuple was available, but now there is in fact"
