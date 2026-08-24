@@ -2771,7 +2771,9 @@ int gmm_vlr_init(struct sgsn_instance *sgi)
 
 	sgsn->vlr->cfg.assign_tmsi = true;
 	sgsn->vlr->cfg.auth_reuse_old_sets_on_error = false;
-	sgsn->vlr->cfg.auth_tuple_max_reuse_count = 0;
+
+	/* how often an auth tuple is used for ciphering, the challenge will always only done once. */
+	sgsn->vlr->cfg.auth_tuple_max_reuse_count = 5;
 	sgsn->vlr->cfg.is_ps = true;
 
 	rc = vlr_start(sgsn->vlr, sgsn->gcm);
