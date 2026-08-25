@@ -126,6 +126,8 @@ void sgsn_pdp_ctx_terminate(struct sgsn_pdp_ctx *pdp)
 	pdp_ctx_detach_mm_ctx(pdp);
 	if (pdp->ggsn)
 		sgsn_delete_pdp_ctx(pdp);
+	else /* GTP side already detached, freeing */
+		sgsn_pdp_ctx_free(pdp);
 }
 
 /*
