@@ -986,17 +986,21 @@ static void vlr_loc_upd_node1(struct osmo_fsm_inst *fi)
 
 	OSMO_ASSERT(vsub);
 
+	/* check if we need to do an authentication, if only ciphering, check if ciphering key is available */
 	if (try_auth(lfp)) {
 		/* Authenticate_VLR */
 		osmo_fsm_inst_state_chg(fi, VLR_ULA_S_WAIT_AUTH,
 					LU_TIMEOUT_LONG, 0);
-		vsub->auth_fsm = auth_fsm_start(lfp->vsub,
+		/* if auth_fsm_start fails and the fsm already ran into a failure of auth_fsm,.
+		 * auth_fsm is assigned an already free'ed fsm */
+		vsub->auth_fsm = auth_fsm_create(lfp->vsub,
 						fi,
 						VLR_ULA_E_AUTH_SUCCESS,
 						VLR_ULA_E_AUTH_NO_INFO,
 						VLR_ULA_E_AUTH_FAILURE,
 						lfp->is_r99,
 						lfp->is_utran);
+		auth_fsm_start(vsub->auth_fsm);
 	} else {
 		/* no need for authentication */
 		vlr_loc_upd_post_auth(fi);

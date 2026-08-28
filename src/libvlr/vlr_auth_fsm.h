@@ -29,13 +29,15 @@ enum vlr_fsm_auth_event {
 	VLR_AUTH_E_MS_ID_IMSI,
 };
 
-struct osmo_fsm_inst *auth_fsm_start(struct vlr_subscr *vsub,
+struct osmo_fsm_inst *auth_fsm_create(struct vlr_subscr *vsub,
 				     struct osmo_fsm_inst *parent,
 				     uint32_t parent_event_success,
 				     uint32_t parent_event_no_auth_info,
 				     uint32_t parent_event_failure,
 				     bool is_r99,
 				     bool is_utran);
+
+int auth_fsm_start(struct osmo_fsm_inst *fi);
 
 void vlr_auth_fsm_init(bool is_ps);
 void vlr_auth_fsm_set_log_subsys(int log_level);
