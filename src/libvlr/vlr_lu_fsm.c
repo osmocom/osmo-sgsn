@@ -1761,9 +1761,14 @@ vlr_loc_update(struct osmo_fsm_inst *parent,
 		LOGPFSML(fi, LOGL_ERROR,
 			 "Authentication off on UTRAN network. Good luck.\n");
 
-	osmo_fsm_inst_dispatch(fi, VLR_ULA_E_UPDATE_LA, NULL);
-
 	return fi;
+}
+
+int vlr_loc_start(struct osmo_fsm_inst *fi)
+{
+	if (fi)
+		return osmo_fsm_inst_dispatch(fi, VLR_ULA_E_UPDATE_LA, NULL);
+	return -ENOENT;
 }
 
 struct osmo_fsm_inst *
@@ -1819,9 +1824,14 @@ vlr_ra_update(struct osmo_fsm_inst *parent,
 		LOGPFSML(fi, LOGL_ERROR,
 			 "Authentication off on UTRAN network. Good luck.\n");
 
-	osmo_fsm_inst_dispatch(fi, VLR_ULA_E_UPDATE_LA, NULL);
-
 	return fi;
+}
+
+int vlr_ra_start(struct osmo_fsm_inst *fi)
+{
+	if (fi)
+		return osmo_fsm_inst_dispatch(fi, VLR_ULA_E_UPDATE_LA, NULL);
+	return -ENOENT;
 }
 
 void vlr_loc_update_cancel(struct osmo_fsm_inst *fi,

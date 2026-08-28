@@ -312,6 +312,8 @@ vlr_loc_update(struct osmo_fsm_inst *parent,
 	       bool is_r99, bool is_utran,
 	       bool assign_tmsi);
 
+int vlr_loc_start(struct osmo_fsm_inst *fi);
+
 struct osmo_fsm_inst *
 vlr_ra_update(struct osmo_fsm_inst *parent,
 	      uint32_t parent_event_success,
@@ -327,6 +329,8 @@ vlr_ra_update(struct osmo_fsm_inst *parent,
 	      uint8_t key_seq,
 	      bool is_r99, bool is_utran,
 	      bool assign_tmsi);
+
+int vlr_ra_start(struct osmo_fsm_inst *fi);
 
 void vlr_loc_update_cancel(struct osmo_fsm_inst *fi,
 			   enum osmo_fsm_term_cause fsm_cause,
