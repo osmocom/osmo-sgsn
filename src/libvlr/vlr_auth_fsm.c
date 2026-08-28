@@ -641,7 +641,7 @@ void vlr_auth_fsm_set_log_subsys(int log_level)
  ***********************************************************************/
 
 /* MSC->VLR: Start Procedure Authenticate_VLR (TS 23.012 Ch. 4.1.2.2) */
-struct osmo_fsm_inst *auth_fsm_start(struct vlr_subscr *vsub,
+struct osmo_fsm_inst *auth_fsm_create(struct vlr_subscr *vsub,
 				     struct osmo_fsm_inst *parent,
 				     uint32_t parent_event_success,
 				     uint32_t parent_event_no_auth_info,
@@ -675,9 +675,12 @@ struct osmo_fsm_inst *auth_fsm_start(struct vlr_subscr *vsub,
 	fi->priv = afp;
 	vsub->auth_fsm = fi;
 
-	osmo_fsm_inst_dispatch(fi, VLR_AUTH_E_START, NULL);
-
 	return fi;
+}
+
+int auth_fsm_start(struct osmo_fsm_inst *fi)
+{
+	return osmo_fsm_inst_dispatch(fi, VLR_AUTH_E_START, NULL);
 }
 
 bool auth_try_reuse_tuple(struct vlr_subscr *vsub, uint8_t key_seq)
