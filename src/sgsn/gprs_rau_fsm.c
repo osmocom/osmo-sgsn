@@ -77,10 +77,11 @@ static inline struct sgsn_mm_ctx *gmm_rau_fsm_priv(struct osmo_fsm_inst *fi)
 static void gmm_rau_fsm_s_init(struct osmo_fsm_inst *fi, uint32_t event, void *data)
 {
 	struct sgsn_mm_ctx *mmctx = gmm_rau_fsm_priv(fi);
+	struct osmo_fsm_inst *inst;
 
 	switch (event) {
 	case GMM_RAU_E_UE_RAU_REQUEST:
-		mmctx->vsub->lu_fsm = vlr_ra_update(
+		inst = vlr_ra_update(
 		    mmctx->attach_rau.rau_fsm, GMM_RAU_E_VLR_TERM_SUCCESS, GMM_RAU_E_VLR_TERM_FAIL, NULL,
 		    sgsn->vlr,
 		    mmctx,
@@ -99,6 +100,9 @@ static void gmm_rau_fsm_s_init(struct osmo_fsm_inst *fi, uint32_t event, void *d
 
 		osmo_tdef_fsm_inst_state_chg(fi, GMM_RAU_S_WAIT_VLR_ANSWER, gmm_rau_tdef_states, gmm_rau_tdefs, 0);
 		osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_GMM_COMMON_PROC_INIT_REQ, NULL);
+		if (inst)
+			vlr_ra_start(inst);
+
 		break;
 	default:
 		OSMO_ASSERT(0);
