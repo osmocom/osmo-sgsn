@@ -99,6 +99,8 @@ static void gmm_rau_fsm_s_init(struct osmo_fsm_inst *fi, uint32_t event, void *d
 
 		osmo_tdef_fsm_inst_state_chg(fi, GMM_RAU_S_WAIT_VLR_ANSWER, gmm_rau_tdef_states, gmm_rau_tdefs, 0);
 		osmo_fsm_inst_dispatch(mmctx->gmm_fsm, E_GMM_COMMON_PROC_INIT_REQ, NULL);
+		vlr_ra_start(mmctx->vsub->lu_fsm);
+
 		break;
 	default:
 		OSMO_ASSERT(0);
