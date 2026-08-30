@@ -349,7 +349,7 @@ static void auth_fsm_needs_auth(struct osmo_fsm_inst *fi, uint32_t event, void *
 	afp->auth_tuple_max_reuse_count = vsub->vlr->cfg.auth_tuple_max_reuse_count;
 
 	/* Check if we have vectors available */
-	if (!vlr_subscr_has_auth_tuple(vsub, afp->auth_tuple_max_reuse_count)) {
+	if (!vlr_subscr_has_auth_tuple(vsub, 0)) {
 		/* Obtain_Authentication_Sets_VLR */
 		int rc = vlr_subscr_req_sai(vsub, NULL, NULL);
 		if (rc < 0)
