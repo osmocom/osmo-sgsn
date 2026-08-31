@@ -343,6 +343,7 @@ int vlr_subscr_tx_auth_fail_rep(const struct vlr_subscr *vsub) __attribute__((wa
 void vlr_subscr_rx_ciph_res(struct vlr_subscr *vsub, enum vlr_ciph_result_cause result);
 int vlr_subscr_rx_tmsi_reall_compl(struct vlr_subscr *vsub);
 int vlr_subscr_rx_imsi_detach(struct vlr_subscr *vsub);
+int vlr_subscr_rx_rau_complete(struct vlr_subscr *vsub);
 void vlr_subscr_rx_pvlr_id_ack(struct vlr_subscr *vsub);
 void vlr_subscr_rx_pvlr_id_nack(struct vlr_subscr *vsub);
 
