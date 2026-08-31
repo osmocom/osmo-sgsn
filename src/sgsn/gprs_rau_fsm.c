@@ -81,6 +81,7 @@ static void gmm_rau_fsm_s_init(struct osmo_fsm_inst *fi, uint32_t event, void *d
 
 	switch (event) {
 	case GMM_RAU_E_UE_RAU_REQUEST:
+		/* FIXME: need to check if this 2G or 4G and work based on it */
 		inst = vlr_ra_update(
 		    mmctx->attach_rau.rau_fsm, GMM_RAU_E_VLR_TERM_SUCCESS, GMM_RAU_E_VLR_TERM_FAIL, NULL,
 		    sgsn->vlr,
