@@ -777,15 +777,6 @@ struct lu_fsm_priv {
 	int N;
 };
 
-
-/* Determine if given location area is served by this VLR */
-static bool lai_in_this_vlr(struct vlr_instance *vlr,
-			    const struct osmo_location_area_id *lai)
-{
-	/* TODO: VLR needs to keep a locally configured list of LAIs */
-	return true;
-}
-
 /* Return true when authentication should be attempted. */
 static bool try_auth(struct lu_fsm_priv *lfp)
 {
@@ -1150,16 +1141,11 @@ static void _start_lu_main(struct osmo_fsm_inst *fi)
 	/* TODO: PUESBINE related handling */
 
 	/* Is previous LAI in this VLR? */
-	if (!lai_in_this_vlr(vlr, &lfp->old_lai)) {
-#if 0
+	if (!vlr->ops.location_served(lfp->vsub, &lfp->old_lai)) {
 		/* FIXME: check previous VLR, (3) */
 		osmo_fsm_inst_state_chg(fi, VLR_ULA_S_WAIT_PVLR,
 					LU_TIMEOUT_LONG, 0);
 		return;
-#endif
-		LOGPFSML(fi, LOGL_NOTICE, "LAI change from %s,"
-			 " but checking previous VLR not implemented\n",
-			 osmo_lai_name(&lfp->old_lai));
 	}
 
 	/* If this is a TMSI based LU, we may not have the IMSI. Make sure that
