@@ -2700,7 +2700,7 @@ int vlr_pvlr_request_cb(void *ref, const struct osmo_routing_area_id *old_rai)
 	i++;
 
 	rc = gtp_sgsn_context_req(sgsn->gsn, &local_ref, &remote, ie);
-	if (!rc) {
+	if (rc) {
 		/* FIXME: reject with impl. */
 		return -1;
 	} else {
