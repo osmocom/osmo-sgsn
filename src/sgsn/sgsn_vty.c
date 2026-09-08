@@ -666,7 +666,11 @@ static void vty_dump_mmctx(struct vty *vty, const char *pfx,
 	switch(mm->ran_type) {
 	case MM_CTX_T_UTRAN_Iu:
 #if BUILD_IU
-		id = mm->iu.ue_ctx->conn_id;
+		/* The Iu connection can be released while the MM context stays
+		 * attached, which leaves iu.ue_ctx NULL; there is no connection
+		 * id to show then. The MM state below still reports PMM-IDLE. */
+		if (mm->iu.ue_ctx)
+			id = mm->iu.ue_ctx->conn_id;
 		mm_state_name = osmo_fsm_inst_state_name(mm->iu.mm_state_fsm);
 #endif
 		break;
