@@ -196,7 +196,6 @@ static void mm_ctx_cleanup_free(struct sgsn_mm_ctx *ctx, const char *log_text)
 	sgsn_mm_ctx_cleanup_free(ctx);
 }
 
-
 /* 3GPP TS 24.008 § 10.5.7.1 Process PDP context status value, bit 0 corresponds to nsapi 0 */
 static void process_ms_ctx_status(struct sgsn_mm_ctx *mmctx,
 				  uint16_t pdp_status)
@@ -891,8 +890,9 @@ static int _tx_gmm_service_rej(struct msgb *msg, uint8_t gmm_cause,
 
 	return gsm48_gmm_sendmsg(msg, 0, NULL, true);
 }
+
 static int gsm48_tx_gmm_service_rej_oldmsg(const struct msgb *old_msg,
-					uint8_t gmm_cause)
+					   uint8_t gmm_cause)
 {
 	struct msgb *msg = gsm48_msgb_alloc_name("GSM 04.08 SERVICE REJ OLD");
 	gmm_copy_id(msg, old_msg);
@@ -901,7 +901,7 @@ static int gsm48_tx_gmm_service_rej_oldmsg(const struct msgb *old_msg,
 #if 0
 -- currently unused --
 static int gsm48_tx_gmm_service_rej(struct sgsn_mm_ctx *mm,
-				uint8_t gmm_cause)
+				    uint8_t gmm_cause)
 {
 	struct msgb *msg = gsm48_msgb_alloc_name("GSM 04.08 SERVICE REJ");
 	mmctx2msgid(msg, mm);
@@ -1407,7 +1407,6 @@ rejected:
 		gprs_llgmm_unassign(llme);
 
 	return rc;
-
 }
 
 /* 3GPP TS 24.008 § 9.4.3 Attach complete */
@@ -1772,7 +1771,7 @@ static int gsm48_rx_gmm_ra_upd_req(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 #endif
 	if (mmctx->ran_type == MM_CTX_T_GERAN_Gb) {
 		/* Even if there is no P-TMSI allocated, the MS will switch from
-	 	* foreign TLLI to local TLLI */
+		 * foreign TLLI to local TLLI */
 		mmctx->gb.tlli_new = gprs_tmsi2tlli(mmctx->p_tmsi, TLLI_LOCAL);
 
 		/* Inform LLC layer about new TLLI but keep accepting the old one during Rx */
@@ -1974,9 +1973,7 @@ rejected:
 	rc = gsm48_tx_gmm_service_rej_oldmsg(msg, reject_cause);
 
 	return rc;
-
 }
-
 
 static int gsm48_rx_gmm_status(struct sgsn_mm_ctx *mmctx, struct msgb *msg)
 {
