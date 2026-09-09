@@ -1417,6 +1417,7 @@ static int gsm48_rx_gmm_att_compl(struct sgsn_mm_ctx *mmctx)
 	LOGMMCTXP(LOGL_INFO, mmctx, "-> GMM ATTACH COMPLETE\n");
 
 #ifdef BUILD_IU
+	/* TODO: check follow-on request */
 	if (mmctx->iu.ue_ctx) {
 		sgsn_ranap_iu_tx_release(mmctx->iu.ue_ctx, NULL);
 	}
