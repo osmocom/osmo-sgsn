@@ -249,7 +249,6 @@ static void config_write_mme(struct vty *vty, const struct sgsn_mme_ctx *mme, co
 static int config_write_sgsn(struct vty *vty)
 {
 	struct sgsn_ggsn_ctx *gctx;
-	struct imsi_acl_entry *acl;
 	struct apn_ctx *actx;
 	struct ares_addr_node *server;
 	struct sgsn_mme_ctx *mme;
@@ -328,9 +327,6 @@ static int config_write_sgsn(struct vty *vty)
 		vty_out(vty, " gsup oap-opc %s%s",
 			osmo_hexdump_nospc(g_cfg->oap.secret_opc, sizeof(g_cfg->oap.secret_opc)),
 			VTY_NEWLINE);
-
-	llist_for_each_entry(acl, &g_cfg->imsi_acl, list)
-		vty_out(vty, " imsi-acl add %s%s", acl->imsi, VTY_NEWLINE);
 
 	if (llist_empty(&sgsn->apn_list))
 		vty_out(vty, " ! apn * ggsn 0%s", VTY_NEWLINE);
@@ -781,44 +777,15 @@ DEFUN(show_pdpctx_all, show_pdpctx_all_cmd,
 	return CMD_SUCCESS;
 }
 
-
-DEFUN(imsi_acl, cfg_imsi_acl_cmd,
+DEFUN_DEPRECATED(imsi_acl, cfg_imsi_acl_cmd,
 	"imsi-acl (add|del) IMSI",
 	"Access Control List of foreign IMSIs\n"
 	"Add IMSI to ACL\n"
 	"Remove IMSI from ACL\n"
 	"IMSI of subscriber\n")
 {
-	char imsi_sanitized[GSM23003_IMSI_MAX_DIGITS + 1];
-	const char *op = argv[0];
-	const char *imsi = imsi_sanitized;
-	size_t len = strnlen(argv[1], GSM23003_IMSI_MAX_DIGITS + 1);
-	int rc;
-
-	memset(imsi_sanitized, '0', GSM23003_IMSI_MAX_DIGITS);
-	imsi_sanitized[GSM23003_IMSI_MAX_DIGITS] = '\0';
-
-	/* Sanitize IMSI */
-	if (len > GSM23003_IMSI_MAX_DIGITS) {
-		vty_out(vty, "%% IMSI (%s) too long (max %u digits) -- ignored!%s",
-			argv[1], GSM23003_IMSI_MAX_DIGITS, VTY_NEWLINE);
-		return CMD_WARNING;
-	}
-
-	osmo_strlcpy(imsi_sanitized + GSM23003_IMSI_MAX_DIGITS - len, argv[1],
-		     sizeof(imsi_sanitized) - (GSM23003_IMSI_MAX_DIGITS - len));
-
-	if (!strcmp(op, "add"))
-		rc = sgsn_acl_add(imsi, g_cfg);
-	else
-		rc = sgsn_acl_del(imsi, g_cfg);
-
-	if (rc < 0) {
-		vty_out(vty, "%% unable to %s ACL%s", op, VTY_NEWLINE);
-		return CMD_WARNING;
-	}
-
-	return CMD_SUCCESS;
+	vty_out(vty, "ACL based on IMSI has been deprecated.%s", VTY_NEWLINE);
+	return CMD_WARNING;
 }
 
 DEFUN_DEPRECATED(cfg_encrypt, cfg_encrypt_cmd,
@@ -956,11 +923,18 @@ DEFUN(cfg_auth_policy, cfg_auth_policy_cmd,
 	" permitted to register to the network.\n"
 	"Accept all IMSIs (DANGEROUS)\n"
 	"Accept only home network subscribers or those in the ACL\n"
-	"Accept only subscribers in the ACL\n"
+	"Accept only subscribers in the ACL. Deprecated.\n"
 	"Use remote subscription data only (HLR)\n")
 {
 	int val = get_string_value(sgsn_auth_pol_strs, argv[0]);
 	OSMO_ASSERT(val >= SGSN_AUTH_POLICY_OPEN && val <= SGSN_AUTH_POLICY_REMOTE);
+
+	if (val == SGSN_AUTH_POLICY_ACL_ONLY) {
+		vty_out(vty, "acl-only authentication is deprecated and not implemented anymore.%s",
+			VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+
 	g_cfg->auth_policy = val;
 	g_cfg->require_update_location = (val == SGSN_AUTH_POLICY_REMOTE);
 

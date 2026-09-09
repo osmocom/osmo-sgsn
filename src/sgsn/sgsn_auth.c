@@ -38,108 +38,21 @@ const struct value_string auth_state_names[] = {
 
 const struct value_string *sgsn_auth_state_names = auth_state_names;
 
-void sgsn_auth_init(struct sgsn_instance *sgsn)
-{
-	INIT_LLIST_HEAD(&sgsn->cfg.imsi_acl);
-}
-
-struct imsi_acl_entry *sgsn_acl_lookup(const char *imsi, const struct sgsn_config *cfg)
-{
-	struct imsi_acl_entry *acl;
-	llist_for_each_entry(acl, &cfg->imsi_acl, list) {
-		if (!strcmp(imsi, acl->imsi))
-			return acl;
-	}
-	return NULL;
-}
-
-int sgsn_acl_add(const char *imsi, struct sgsn_config *cfg)
-{
-	struct imsi_acl_entry *acl;
-
-	if (sgsn_acl_lookup(imsi, cfg))
-		return -EEXIST;
-
-	acl = talloc_zero(NULL, struct imsi_acl_entry);
-	if (!acl)
-		return -ENOMEM;
-	osmo_strlcpy(acl->imsi, imsi, sizeof(acl->imsi));
-
-	llist_add(&acl->list, &cfg->imsi_acl);
-
-	return 0;
-}
-
-int sgsn_acl_del(const char *imsi, struct sgsn_config *cfg)
-{
-	struct imsi_acl_entry *acl;
-
-	acl = sgsn_acl_lookup(imsi, cfg);
-	if (!acl)
-		return -ENODEV;
-
-	llist_del(&acl->list);
-	talloc_free(acl);
-
-	return 0;
-}
-
 enum sgsn_auth_state sgsn_auth_state(struct sgsn_mm_ctx *mmctx)
 {
-	char mccmnc[16];
-	int check_net = 0;
-	int check_acl = 0;
-
 	OSMO_ASSERT(mmctx);
+	if (!mmctx->subscr)
+		return mmctx->auth_state;
 
-	switch (sgsn->cfg.auth_policy) {
-	case SGSN_AUTH_POLICY_OPEN:
-		return SGSN_AUTH_ACCEPTED;
+	if (mmctx->subscr->flags & GPRS_SUBSCRIBER_UPDATE_PENDING_MASK)
+		return mmctx->auth_state;
 
-	case SGSN_AUTH_POLICY_CLOSED:
-		check_net = 1;
-		check_acl = 1;
-		break;
+	if (sgsn->cfg.require_authentication &&
+	    (!sgsn_mm_ctx_is_authenticated(mmctx) ||
+	     mmctx->subscr->sgsn_data->auth_triplets_updated))
+		return SGSN_AUTH_AUTHENTICATE;
 
-	case SGSN_AUTH_POLICY_ACL_ONLY:
-		check_acl = 1;
-		break;
-
-	case SGSN_AUTH_POLICY_REMOTE:
-		if (!mmctx->subscr)
-			return mmctx->auth_state;
-
-		if (mmctx->subscr->flags & GPRS_SUBSCRIBER_UPDATE_PENDING_MASK)
-			return mmctx->auth_state;
-
-		if (sgsn->cfg.require_authentication &&
-		    (!sgsn_mm_ctx_is_authenticated(mmctx) ||
-		     mmctx->subscr->sgsn_data->auth_triplets_updated))
-			return SGSN_AUTH_AUTHENTICATE;
-
-		if (mmctx->subscr->authorized)
-			return SGSN_AUTH_ACCEPTED;
-
-		return SGSN_AUTH_REJECTED;
-	}
-
-	if (!strlen(mmctx->imsi)) {
-		LOGMMCTXP(LOGL_NOTICE, mmctx,
-			  "Missing IMSI, authorization state not known\n");
-		return SGSN_AUTH_UNKNOWN;
-	}
-
-	if (check_net) {
-		/* We simply assume that the IMSI exists, as long as it is part
-		 * of 'our' network */
-		snprintf(mccmnc, sizeof(mccmnc), "%s%s",
-			 osmo_mcc_name(mmctx->ra.lac.plmn.mcc),
-			 osmo_mnc_name(mmctx->ra.lac.plmn.mnc, mmctx->ra.lac.plmn.mnc_3_digits));
-		if (strncmp(mccmnc, mmctx->imsi, mmctx->ra.lac.plmn.mnc_3_digits ? 6 : 5) == 0)
-			return SGSN_AUTH_ACCEPTED;
-	}
-
-	if (check_acl && sgsn_acl_lookup(mmctx->imsi, &sgsn->cfg))
+	if (mmctx->subscr->authorized)
 		return SGSN_AUTH_ACCEPTED;
 
 	return SGSN_AUTH_REJECTED;

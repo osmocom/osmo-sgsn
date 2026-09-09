@@ -33,7 +33,6 @@ OsmoSGSN(config-sgsn)# list
   ggsn <0-255> gtp-version (0|1)
   ggsn <0-255> echo-interval <1-36000>
   ggsn <0-255> no echo-interval
-  imsi-acl (add|del) IMSI
   auth-policy (accept-all|closed|acl-only|remote)
   authentication (optional|required)
   encryption gea <0-4> [<0-4>] [<0-4>] [<0-4>] [<0-4>]

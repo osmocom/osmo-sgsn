@@ -33,7 +33,6 @@ EXTRA_DIST = \
 	$(TESTSUITE) \
 	vty_test_runner.py \
 	ctrl_test_runner.py \
-	osmo-sgsn-accept-all.cfg \
 	osmo-sgsn.cfg \
 	osmo-sgsn_test-nodes.vty \
 	$(NULL)

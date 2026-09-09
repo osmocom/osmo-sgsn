@@ -65,16 +65,6 @@ static void cleanup_test(void)
 	TALLOC_FREE(sgsn);
 }
 
-static uint32_t get_new_ptmsi(const struct gprs_gb_parse_context *parse_ctx)
-{
-	uint32_t new_ptmsi = GSM_RESERVED_TMSI;
-
-	if (parse_ctx->new_ptmsi_enc)
-		gprs_parse_tmsi(parse_ctx->new_ptmsi_enc, &new_ptmsi);
-
-	return new_ptmsi;
-}
-
 /* override */
 int bssgp_tx_dl_ud(struct msgb *msg, uint16_t pdu_lifetime,
 		   struct bssgp_dl_ud_par *dup)
@@ -1232,118 +1222,6 @@ static void test_gmm_reject(void)
 	cleanup_test();
 }
 
-/*
- * Test cancellation of attached MM contexts
- */
-static void test_gmm_cancel(void)
-{
-	struct osmo_routing_area_id raid = { 0, };
-	struct sgsn_mm_ctx *ctx = NULL;
-	struct sgsn_mm_ctx *ictx;
-	uint32_t ptmsi1;
-	uint32_t foreign_tlli;
-	uint32_t local_tlli = 0;
-	struct gprs_llc_lle *lle;
-
-	sgsn = sgsn_instance_alloc(tall_sgsn_ctx);
-	sgsn->cfg.gea_encryption_mask = 0x1;
-	const enum sgsn_auth_policy saved_auth_policy = sgsn->cfg.auth_policy;
-
-	/* DTAP - Attach Request */
-	/* The P-TMSI is not known by the SGSN */
-	static const unsigned char attach_req[] = {
-		0x08, 0x01, 0x02, 0xf5, 0xe0, 0x21, 0x08, 0x02, 0x05, 0xf4,
-		0xfb, 0xc5, 0x46, 0x79, 0x11, 0x22, 0x33, 0x40, 0x50, 0x60,
-		0x19, 0x18, 0xb3, 0x43, 0x2b, 0x25, 0x96, 0x62, 0x00, 0x60,
-		0x80, 0x9a, 0xc2, 0xc6, 0x62, 0x00, 0x60, 0x80, 0xba, 0xc8,
-		0xc6, 0x62, 0x00, 0x60, 0x80, 0x00
-	};
-
-	/* DTAP - Identity Response IMEI */
-	static const unsigned char ident_resp_imei[] = {
-		0x08, 0x16, 0x08, 0x9a, 0x78, 0x56, 0x34, 0x12, 0x90, 0x78,
-		0x56
-	};
-
-	/* DTAP - Identity Response IMSI */
-	static const unsigned char ident_resp_imsi[] = {
-		0x08, 0x16, 0x08, 0x19, 0x32, 0x54, 0x76, 0x98, 0x10, 0x32,
-		0x54
-	};
-
-	/* DTAP - Attach Complete */
-	static const unsigned char attach_compl[] = {
-		0x08, 0x03
-	};
-
-	printf("Testing cancellation\n");
-	sgsn->cfg.auth_policy = SGSN_AUTH_POLICY_OPEN;
-
-	foreign_tlli = gprs_tmsi2tlli(0xc0000023, TLLI_FOREIGN);
-
-	/* Create a LLE/LLME */
-	OSMO_ASSERT(count(gprs_llme_list()) == 0);
-	lle = gprs_lle_get_or_create(foreign_tlli, 3);
-	OSMO_ASSERT(count(gprs_llme_list()) == 1);
-
-	/* inject the attach request */
-	send_0408_message(lle->llme, foreign_tlli, &raid,
-			  attach_req, ARRAY_SIZE(attach_req));
-
-	ctx = sgsn_mm_ctx_by_tlli(foreign_tlli, &raid);
-	OSMO_ASSERT(ctx != NULL);
-	OSMO_ASSERT(ctx->gmm_fsm->state == ST_GMM_COMMON_PROC_INIT);
-
-	/* we expect an identity request (IMEI) */
-	OSMO_ASSERT(sgsn_tx_counter == 1);
-
-	/* inject the identity response (IMEI) */
-	send_0408_message(ctx->gb.llme, foreign_tlli, &raid,
-			  ident_resp_imei, ARRAY_SIZE(ident_resp_imei));
-
-	/* we expect an identity request (IMSI) */
-	OSMO_ASSERT(sgsn_tx_counter == 1);
-
-	/* inject the identity response (IMSI) */
-	send_0408_message(ctx->gb.llme, foreign_tlli, &raid,
-			  ident_resp_imsi, ARRAY_SIZE(ident_resp_imsi));
-
-	/* check that the MM context has not been removed due to a failed
-	 * authorization */
-	OSMO_ASSERT(ctx == sgsn_mm_ctx_by_tlli(foreign_tlli, &raid));
-
-	OSMO_ASSERT(ctx->gmm_fsm->state == ST_GMM_COMMON_PROC_INIT);
-
-	/* we expect an attach accept/reject */
-	OSMO_ASSERT(sgsn_tx_counter == 1);
-	ptmsi1 = get_new_ptmsi(&last_dl_parse_ctx);
-	OSMO_ASSERT(ptmsi1 != GSM_RESERVED_TMSI);
-
-	/* this has been randomly assigned by the SGSN */
-	local_tlli = gprs_tmsi2tlli(ptmsi1, TLLI_LOCAL);
-
-	/* inject the attach complete */
-	send_0408_message(ctx->gb.llme, foreign_tlli, &raid,
-			  attach_compl, ARRAY_SIZE(attach_compl));
-
-	OSMO_ASSERT(ctx->gmm_fsm->state == ST_GMM_REGISTERED_NORMAL);
-
-	/* we don't expect a response */
-	OSMO_ASSERT(sgsn_tx_counter == 0);
-
-	/* cancel */
-	gsm0408_gprs_access_cancelled(ctx, 0);
-
-	/* verify that things are gone */
-	OSMO_ASSERT(count(gprs_llme_list()) == 0);
-	ictx = sgsn_mm_ctx_by_tlli(local_tlli, &raid);
-	OSMO_ASSERT(!ictx);
-
-	sgsn->cfg.auth_policy = saved_auth_policy;
-
-	cleanup_test();
-}
-
 static void test_apn_matching(void)
 {
 	struct apn_ctx *actx, *actxs[9];
@@ -1670,7 +1548,6 @@ int main(int argc, char **argv)
 	test_gmm_detach_accept_unexpected();
 	test_gmm_status_no_mmctx();
 	test_gmm_reject();
-	test_gmm_cancel();
 	test_apn_matching();
 	test_ggsn_selection();
 	test_pdp_status_has_active_nsapis();

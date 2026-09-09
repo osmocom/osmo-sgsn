@@ -187,7 +187,7 @@ struct sgsn_instance *sgsn_instance_alloc(void *talloc_ctx)
 	talloc_set_destructor(inst, sgsn_instance_talloc_destructor);
 
 	inst->cfg.gtp_statedir = talloc_strdup(inst, "./");
-	inst->cfg.auth_policy = SGSN_AUTH_POLICY_CLOSED;
+	inst->cfg.auth_policy = SGSN_AUTH_POLICY_REMOTE;
 	inst->cfg.gea_encryption_mask = (1 << GPRS_ALGO_GEA0); /* no encryption */
 	inst->cfg.uea_encryption_mask = (1 << OSMO_UTRAN_UEA2) | (1 << OSMO_UTRAN_UEA1);
 	inst->cfg.require_authentication = true; /* only applies if auth_policy is REMOTE */
@@ -215,7 +215,6 @@ struct sgsn_instance *sgsn_instance_alloc(void *talloc_ctx)
 	osmo_timer_setup(&inst->llme_timer, sgsn_llme_check_cb, NULL);
 	osmo_timer_schedule(&inst->llme_timer, GPRS_LLME_CHECK_TICK, 0);
 	/* These are mostly setting up stuff not related to VTY cfg, so they can be set up here: */
-	sgsn_auth_init(inst);
 	sgsn_cdr_init(inst);
 	sgsn_ra_init(inst);
 	return inst;

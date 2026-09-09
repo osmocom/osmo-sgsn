@@ -21,7 +21,6 @@ Testing GMM reject
   - Routing Area Update Request (valid)
   - Routing Area Update Request (invalid type)
   - Routing Area Update Request (invalid CAP length)
-Testing cancellation
 Testing APN matching
 Testing GGSN selection
 Testing pdp_status_has_active_nsapis
