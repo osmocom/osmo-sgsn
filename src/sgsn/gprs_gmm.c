@@ -1501,6 +1501,14 @@ static int gsm48_rx_gmm_det_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 	return rc;
 }
 
+/* CHapter 9.4.6: MT Detach Ack */
+static int gsm48_rx_gmm_det_accept(struct sgsn_mm_ctx *ctx, struct msgb *msg)
+{
+	LOGMMCTXP(LOGL_INFO, ctx, "-> DETACH ACK\n");
+	mm_ctx_cleanup_free(ctx, "GMM DETACH ACK");
+	return 0;
+}
+
 /* Chapter 9.4.15: Routing area update accept */
 static int gsm48_tx_gmm_ra_upd_ack(struct sgsn_mm_ctx *mm)
 {
@@ -2099,9 +2107,7 @@ int gsm0408_rcv_gmm(struct sgsn_mm_ctx *mmctx, struct msgb *msg,
 	case GSM48_MT_GMM_DETACH_ACK:
 		if (!mmctx)
 			goto null_mmctx;
-		LOGMMCTXP(LOGL_INFO, mmctx, "-> DETACH ACK\n");
-		mm_ctx_cleanup_free(mmctx, "GMM DETACH ACK");
-		rc = 0;
+		rc = gsm48_rx_gmm_det_accept(mmctx, msg);
 		break;
 	case GSM48_MT_GMM_ATTACH_COMPL:
 		if (!mmctx)
