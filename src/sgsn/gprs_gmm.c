@@ -1244,19 +1244,21 @@ static uint8_t gprs_ms_net_cap_gea_mask(const uint8_t *ms_net_cap, uint8_t cap_l
 static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 				struct gprs_llc_llme *llme)
 {
-	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_gmmh(msg);
-	uint8_t *cur = gh->data, *msnc, *mi_data, *ms_ra_acc_cap;
-	uint8_t msnc_len, att_type, mi_len, ms_ra_acc_cap_len;
-	uint16_t drx_par;
+	struct gprs_gmm_att_req req = {};
 	char mi_log_string[32];
 	struct osmo_routing_area_id rai;
 	uint16_t cid = 0;
 	enum gsm48_gmm_cause reject_cause;
-	struct osmo_mobile_identity mi;
 	int rc;
 
 	LOGMMCTXP(LOGL_INFO, ctx, "-> GMM ATTACH REQUEST ");
 	rate_ctr_inc(rate_ctr_group_get_ctr(sgsn->rate_ctrs, CTR_GPRS_ATTACH_REQUEST));
+
+	rc = gprs_gmm_parse_att_req(msg, &req);
+	if (rc) {
+		LOGMMCTXP(LOGL_ERROR, ctx, "Invalid Attach Request message received.\n");
+		goto err_inval;
+	}
 
 	/* As per TS 04.08 Chapter 4.7.1.4, the attach request arrives either
 	 * with a foreign TLLI (P-TMSI that was allocated to the MS before),
@@ -1274,58 +1276,23 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 #endif
 	}
 
-	/* MS network capability 10.5.5.12 */
-	msnc_len = *cur++;
-	msnc = cur;
-	if (msnc_len > sizeof(ctx->ms_network_capa.buf))
-		goto err_inval;
-	cur += msnc_len;
-
 	/* TODO: In iu mode - handle follow-on request.
 	 * The follow-on request can be signaled in an Attach Request on IuPS.
 	 * This means the MS/UE asks to keep the PS connection open for further requests
 	 * after the Attach Request succeed.
 	 * The SGSN can decide if it close the connection or not. Both are spec conform. */
 
-	/* aTTACH Type 10.5.5.2 */
-	att_type = *cur++ & 0x07;
-
-	/* DRX parameter 10.5.5.6 */
-	drx_par = *cur++ << 8;
-	drx_par |= *cur++;
-
-	/* Mobile Identity (P-TMSI or IMSI) 10.5.1.4 */
-	mi_len = *cur++;
-	mi_data = cur;
-	cur += mi_len;
-
-	rc = osmo_mobile_identity_decode(&mi, mi_data, mi_len, false);
-	if (rc)
-		goto err_inval;
-	osmo_mobile_identity_to_str_buf(mi_log_string, sizeof(mi_log_string), &mi);
-
-	DEBUGPC(DMM, "MI(%s) type=\"%s\" ", mi_log_string,
-		get_value_string(gprs_att_t_strs, att_type));
-
-	/* Old routing area identification 10.5.5.15. Skip it */
-	cur += 6;
-
-	/* MS Radio Access Capability 10.5.5.12a */
-	ms_ra_acc_cap_len = *cur++;
-	ms_ra_acc_cap = cur;
-	if (ms_ra_acc_cap_len > sizeof(ctx->ms_radio_access_capa.buf))
-		goto err_inval;
-	cur += ms_ra_acc_cap_len;
-
-	LOGPC(DMM, LOGL_INFO, "\n");
+	osmo_mobile_identity_to_str_buf(mi_log_string, sizeof(mi_log_string), &req.mi);
+	LOGPC(DMM, LOGL_INFO, "MI(%s) type=\"%s\"\n", mi_log_string,
+	      get_value_string(gprs_att_t_strs, req.attach_type));
 
 	/* Optional: Old P-TMSI Signature, Requested READY timer, TMSI Status */
 
-	switch (mi.type) {
+	switch (req.mi.type) {
 	case GSM_MI_TYPE_IMSI:
 		/* Try to find MM context based on IMSI */
 		if (!ctx)
-			ctx = sgsn_mm_ctx_by_imsi(mi.imsi);
+			ctx = sgsn_mm_ctx_by_imsi(req.mi.imsi);
 		if (!ctx) {
 			if (MSG_IU_UE_CTX(msg))
 				ctx = sgsn_mm_ctx_alloc_iu(MSG_IU_UE_CTX(msg));
@@ -1335,13 +1302,13 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 				reject_cause = GMM_CAUSE_NET_FAIL;
 				goto rejected;
 			}
-			OSMO_STRLCPY_ARRAY(ctx->imsi, mi.imsi);
+			OSMO_STRLCPY_ARRAY(ctx->imsi, req.mi.imsi);
 		}
 		break;
 	case GSM_MI_TYPE_TMSI:
 		/* Try to find MM context based on P-TMSI */
 		if (!ctx)
-			ctx = sgsn_mm_ctx_by_ptmsi(mi.tmsi);
+			ctx = sgsn_mm_ctx_by_ptmsi(req.mi.tmsi);
 		if (!ctx) {
 			/* Allocate a context as most of our code expects one.
 			 * Context will not have an IMSI ultil ID RESP is received */
@@ -1353,7 +1320,7 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 				reject_cause = GMM_CAUSE_NET_FAIL;
 				goto rejected;
 			}
-			ctx->p_tmsi = mi.tmsi;
+			ctx->p_tmsi = req.mi.tmsi;
 		}
 		break;
 	default:
@@ -1377,14 +1344,15 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 		ctx->gb.cell_id = cid;
 
 	/* Update MM Context with other data */
-	ctx->drx_parms = drx_par;
-	ctx->ms_radio_access_capa.len = ms_ra_acc_cap_len;
-	memcpy(ctx->ms_radio_access_capa.buf, ms_ra_acc_cap,
+	ctx->drx_parms = req.drx_parms;
+	ctx->ms_radio_access_capa.len = OSMO_MIN(req.ms_radio_cap_len, sizeof(ctx->ms_radio_access_capa.buf));
+	memcpy(ctx->ms_radio_access_capa.buf, req.ms_radio_cap,
 		ctx->ms_radio_access_capa.len);
-	ctx->ms_network_capa.len = msnc_len;
-	memcpy(ctx->ms_network_capa.buf, msnc, msnc_len);
 
-	ctx->ue_cipher_mask = gprs_ms_net_cap_gea_mask(ctx->ms_network_capa.buf, msnc_len);
+	ctx->ms_network_capa.len = OSMO_MIN(req.ms_network_cap_len, sizeof(ctx->ms_network_capa.buf));
+	memcpy(ctx->ms_network_capa.buf, req.ms_network_cap, ctx->ms_network_capa.len);
+
+	ctx->ue_cipher_mask = gprs_ms_net_cap_gea_mask(ctx->ms_network_capa.buf, ctx->ms_network_capa.len);
 
 	if (!(ctx->ue_cipher_mask & sgsn->cfg.gea_encryption_mask)) {
 		reject_cause = GMM_CAUSE_PROTO_ERR_UNSPEC;
@@ -1425,7 +1393,6 @@ static int gsm48_rx_gmm_att_req(struct sgsn_mm_ctx *ctx, struct msgb *msg,
 	return 0;
 
 err_inval:
-	LOGPC(DMM, LOGL_INFO, "\n");
 	reject_cause = GMM_CAUSE_SEM_INCORR_MSG;
 
 rejected:
