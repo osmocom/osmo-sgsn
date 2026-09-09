@@ -1945,6 +1945,7 @@ static int gsm48_rx_gmm_service_req(struct sgsn_mm_ctx *ctx, struct msgb *msg)
 		/* TODO: Use tlvp_val16le when available */
 		uint16_t pdp_status = osmo_load16le(TLVP_VAL(&tp, GSM48_IE_GMM_PDP_CTX_STATUS));
 
+		/* FIXME: this should be done after the connection has been authenticated! */
 		process_ms_ctx_status(ctx, pdp_status);
 
 		/* 3GPP TS 24.008 § 4.7.13.4 Service request procedure not
