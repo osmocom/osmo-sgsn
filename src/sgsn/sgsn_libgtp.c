@@ -531,7 +531,7 @@ static int update_pdp_conf(struct pdp_t *pdp, void *cbp, int cause)
 	 * a Cause value "Non-existent", it shall delete the PDP Context."
 	 */
 	if (cause != GTPCAUSE_NON_EXIST)
-		 return 0; /* Nothing to do */
+		return 0; /* Nothing to do */
 
 	LOGPDPCTXP(LOGL_INFO, pctx, "PDP CTX we tried to update doesn't exist in "
 		   "the GGSN anymore, deleting it locally.\n");
