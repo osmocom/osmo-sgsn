@@ -2351,6 +2351,14 @@ static int vlr_subscr_assoc_cb(void *ref, struct vlr_subscr *vsub)
 	if (!mmctx)
 		return -EINVAL;
 
+	if (mmctx->vsub) {
+		if (vsub == mmctx->vsub)
+			return 0;
+
+		/* free the old vsub */
+		vlr_subscr_put(mmctx->vsub, "mmctx");
+	}
+
 	vlr_subscr_get(vsub, "mmctx");
 	mmctx->vsub = vsub;
 	if (!strlen(mmctx->imsi) && strlen(mmctx->vsub->imsi))

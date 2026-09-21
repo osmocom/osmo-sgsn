@@ -650,6 +650,10 @@ int sgsn_mm_ctx_bind_vsub(struct sgsn_mm_ctx *mm, const char *imsi, uint32_t ptm
 {
 	bool created = false;
 
+	/* No need to bind it a second time */
+	if (mm->vsub)
+		return 0;
+
 	if (imsi)
 		mm->vsub = vlr_subscr_find_or_create_by_imsi(sgsn->vlr, imsi, "mmctx", &created);
 	else
