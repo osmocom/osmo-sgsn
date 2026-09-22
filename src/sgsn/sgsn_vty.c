@@ -1063,7 +1063,7 @@ static void subscr_dump_full_vty(struct vty *vty, struct vlr_subscr *vsub, int o
 
 		if (pdp->pdp_address[0].u.sa.sa_family != AF_UNSPEC)
 			vty_out(vty, " Addr[0]: %s", osmo_sockaddr_ntop(&pdp->pdp_address[0].u.sa, ip_str));
-		if (pdp->pdp_address[0].u.sa.sa_family != AF_UNSPEC)
+		if (pdp->pdp_address[1].u.sa.sa_family != AF_UNSPEC)
 			vty_out(vty, " Addr[1]: %s", osmo_sockaddr_ntop(&pdp->pdp_address[1].u.sa, ip_str));
 
 		vty_out(vty, ") APN: '%s'", pdp->apn_str);
