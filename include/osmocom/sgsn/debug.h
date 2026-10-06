@@ -27,6 +27,8 @@ enum {
 	DOBJ,
 	DRIM,
 	DRA, /* Routing Area handling */
+	DVLR,
+	DSGS, /* SGS is only used by the MSC, but libvlr shared libvlr code is using DSGS. To be removed. */
 	Debug_LastEntry,
 };
 

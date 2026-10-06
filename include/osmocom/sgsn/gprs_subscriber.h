@@ -12,6 +12,7 @@
 
 struct sgsn_instance;
 struct sgsn_mm_ctx;
+struct osmo_gsup_message;
 
 extern struct llist_head * const gprs_subscribers;
 
@@ -102,7 +103,7 @@ struct gprs_subscr *gprs_subscr_get_by_imsi(const char *imsi);
 void gprs_subscr_cancel(struct gprs_subscr *subscr);
 void gprs_subscr_update(struct gprs_subscr *subscr);
 void gprs_subscr_update_auth_info(struct gprs_subscr *subscr);
-int gprs_subscr_rx_gsup_message(struct msgb *msg);
+int gprs_subscr_rx_gsup_message(const struct osmo_gsup_message *gsup_msg);
 
 #define LOGGSUBSCRP(level, subscr, fmt, args...) \
 	LOGP(DGPRS, level, "SUBSCR(%s) " fmt, \

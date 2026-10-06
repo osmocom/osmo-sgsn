@@ -17,17 +17,22 @@ enum gmm_fsm_states {
 
 enum gmm_fsm_events {
 	E_GMM_COMMON_PROC_INIT_REQ,
-	/* E_GMM_COMMON_PROC_FAILED, NOT USED */
+	E_GMM_COMMON_PROC_FAILED,
 	/* E_GMM_LOWER_LAYER_FAILED, NOT USED */
 	E_GMM_COMMON_PROC_SUCCESS,
 	E_GMM_ATTACH_SUCCESS,
-	/* E_GMM_NET_INIT_DETACH_REQ, NOT USED */
-	/* E_GMM_MS_INIT_DETACH_REQ, NOT USED */
-	/* E_GMM_DETACH_ACCEPTED, */
+	E_GMM_ATTACH_FAILED, /* Osmocom specific */
+	E_GMM_RAU_SUCCESS,
+	E_GMM_RAU_FAILED,
+	E_GMM_NET_INIT_DETACH_REQ,
+	E_GMM_MS_INIT_DETACH_REQ,
+	E_GMM_DETACH_ACCEPTED,
 	E_GMM_SUSPEND,
 	E_GMM_RESUME,
 	E_GMM_CLEANUP,
 	E_GMM_RAT_CHANGE,
+	E_GMM_SERVICE_ACCEPT, /* When a Service Request got accepted, Osmocom specific */
+	E_GMM_SERVICE_REJECT, /* When a Service Request got rejected, Osmocom specific */
 };
 
 struct gmm_rat_change_data {

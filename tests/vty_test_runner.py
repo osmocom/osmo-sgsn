@@ -98,9 +98,7 @@ class TestVTYSGSN(TestVTYBase):
         self.assertTrue(self.vty.verify('show bssgp stats', ['']))
         self.assertTrue(self.vty.verify('show bssgp nsei 123', ['']))
         self.assertTrue(self.vty.verify('show bssgp nsei 123 stats', ['']))
-        self.assertTrue(self.vty.verify('show sgsn', [
-                '  Remote authorization: not connected to 127.0.0.1:4222 via GSUP',
-                '  GSN: signalling 127.0.0.1, user traffic 127.0.0.1']))
+        self.assertTrue(self.vty.verify('show sgsn', ['  GSN: signalling 127.0.0.1, user traffic 127.0.0.1']))
         self.assertTrue(self.vty.verify('show mm-context all', ['']))
         self.assertTrue(self.vty.verify('show mm-context imsi 000001234567', ['No MM context for IMSI 000001234567']))
         self.assertTrue(self.vty.verify('show pdp-context all', ['']))
@@ -110,25 +108,6 @@ class TestVTYSGSN(TestVTYBase):
 
         res = self.vty.command("show llc")
         self.assertTrue(res.find('State of LLC Entities') >= 0)
-
-    def testVtySubscriber(self):
-        self.vty.enable()
-        res = self.vty.command('show subscriber cache')
-        self.assertTrue(res.find('1234567890') < 0)
-        self.assertTrue(self.vty.verify('update-subscriber imsi 1234567890 create', ['']))
-        res = self.vty.command('show subscriber cache')
-        self.assertTrue(res.find('1234567890') >= 0)
-        self.assertTrue(res.find('Authorized: 0') >= 0)
-        self.assertTrue(self.vty.verify('update-subscriber imsi 1234567890 update-location-result ok', ['']))
-        res = self.vty.command('show subscriber cache')
-        self.assertTrue(res.find('1234567890') >= 0)
-        self.assertTrue(res.find('Authorized: 1') >= 0)
-        self.assertTrue(self.vty.verify('update-subscriber imsi 1234567890 cancel update-procedure', ['']))
-        res = self.vty.command('show subscriber cache')
-        self.assertTrue(res.find('1234567890') >= 0)
-        self.assertTrue(self.vty.verify('update-subscriber imsi 1234567890 destroy', ['']))
-        res = self.vty.command('show subscriber cache')
-        self.assertTrue(res.find('1234567890') < 0)
 
     def testVtyGgsn(self):
         self.vty.enable()

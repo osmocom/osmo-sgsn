@@ -34,6 +34,7 @@
 #include <arpa/inet.h>
 
 #include <osmocom/core/application.h>
+#include <osmocom/core/fsm.h>
 #include <osmocom/core/talloc.h>
 #include <osmocom/core/select.h>
 #include <osmocom/core/rate_ctr.h>
@@ -355,6 +356,16 @@ static struct log_info_cat gprs_categories[] = {
 		.description = "Routing Area",
 		.enabled = 1, .loglevel = LOGL_NOTICE,
 	},
+	[DVLR] = {
+		.name = "DVLR",
+		.description = "VLR",
+		.enabled = 1, .loglevel = LOGL_NOTICE,
+	},
+	[DSGS] = {
+		.name = "DSGS",
+		.description = "SGS - not active used",
+		.enabled = 0, .loglevel = LOGL_FATAL,
+	},
 };
 
 static const struct log_info gprs_log_info = {
@@ -372,6 +383,8 @@ static bool file_exists(const char *path)
 int main(int argc, char **argv)
 {
 	int rc;
+
+	osmo_fsm_term_safely(true);
 
 	srand(time(NULL));
 	tall_sgsn_ctx = talloc_named_const(NULL, 0, "osmo_sgsn");

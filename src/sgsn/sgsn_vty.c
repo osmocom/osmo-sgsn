@@ -921,17 +921,17 @@ DEFUN(cfg_auth_policy, cfg_auth_policy_cmd,
 	"auth-policy (accept-all|closed|acl-only|remote)",
 	"Configure the Authorization policy of the SGSN. This setting determines which subscribers are"
 	" permitted to register to the network.\n"
-	"Accept all IMSIs (DANGEROUS)\n"
-	"Accept only home network subscribers or those in the ACL\n"
+	"Accept all IMSIs (DANGEROUS). Deprecated.\n"
+	"Accept only home network subscribers or those in the ACL. Deprecated.\n"
 	"Accept only subscribers in the ACL. Deprecated.\n"
 	"Use remote subscription data only (HLR)\n")
 {
 	int val = get_string_value(sgsn_auth_pol_strs, argv[0]);
 	OSMO_ASSERT(val >= SGSN_AUTH_POLICY_OPEN && val <= SGSN_AUTH_POLICY_REMOTE);
 
-	if (val == SGSN_AUTH_POLICY_ACL_ONLY) {
-		vty_out(vty, "acl-only authentication is deprecated and not implemented anymore.%s",
-			VTY_NEWLINE);
+	if (val != SGSN_AUTH_POLICY_REMOTE) {
+		vty_out(vty, "%s authentication is deprecated and not implemented anymore.%s",
+			argv[0], VTY_NEWLINE);
 		return CMD_WARNING;
 	}
 
@@ -941,74 +941,125 @@ DEFUN(cfg_auth_policy, cfg_auth_policy_cmd,
 	return CMD_SUCCESS;
 }
 
-/* Subscriber */
-#include <osmocom/sgsn/gprs_subscriber.h>
+/* Prefix a given format string with a given amount of spaces */
+#define OFFSET_VTY_DUMP(vty, offset, fmt, args...) \
+	vty_out(vty, "%*s" fmt, offset, "", ##args)
 
-static void subscr_dump_full_vty(struct vty *vty, struct gprs_subscr *gsub, int pending)
+/* Print value of a named flag, prefixed with a given amount of spaces */
+#define OFFSET_VTY_DUMP_FLAG(vty, offset, name, flag) \
+	OFFSET_VTY_DUMP(vty, offset + 2, "%s: %*s%s%s", \
+		name, 30 - (int)strlen(name), "", \
+		flag ? "true" : "false", \
+		VTY_NEWLINE)
+
+static void subscr_dump_full_vty(struct vty *vty, struct vlr_subscr *vsub, int offset)
 {
-#if 0
-	char expire_time[200];
-#endif
-	struct gsm_auth_tuple *at;
-	int at_idx;
 	struct sgsn_subscriber_pdp_data *pdp;
+	char buf[128];
+	struct timespec now;
 
-	vty_out(vty, "    Authorized: %d%s",
-		gsub->authorized, VTY_NEWLINE);
-	vty_out(vty, "    LAC: %d/0x%x%s",
-		gsub->lac, gsub->lac, VTY_NEWLINE);
-	vty_out(vty, "    IMSI: %s%s", gsub->imsi, VTY_NEWLINE);
-	if (gsub->tmsi != GSM_RESERVED_TMSI)
-		vty_out(vty, "    TMSI: %08X%s", gsub->tmsi,
+	if (!vsub)
+		return;
+
+	if (vsub->name[0] != '\0')
+		OFFSET_VTY_DUMP(vty, offset, "Name: '%s'%s",
+			     vsub->name, VTY_NEWLINE);
+
+	if (vsub->msisdn[0] != '\0')
+		OFFSET_VTY_DUMP(vty, offset, "MSISDN: %s%s",
+			     vsub->msisdn, VTY_NEWLINE);
+
+	OFFSET_VTY_DUMP(vty, offset, "LAC / cell ID: %u / %u%s",
+			vsub->cgi.lai.lac, vsub->cgi.cell_identity,
 			VTY_NEWLINE);
-	if (gsub->sgsn_data->msisdn_len > 0)
-		vty_out(vty, "    MSISDN (BCD): %s%s",
-			osmo_hexdump(gsub->sgsn_data->msisdn,
-				     gsub->sgsn_data->msisdn_len),
+	OFFSET_VTY_DUMP(vty, offset, "RAN type: %s%s",
+			osmo_rat_type_name(vsub->attached_via_ran),
 			VTY_NEWLINE);
 
-	if (strlen(gsub->imei) > 0)
-		vty_out(vty, "    IMEI: %s%s", gsub->imei, VTY_NEWLINE);
+	OFFSET_VTY_DUMP(vty, offset, "IMSI: %s%s",
+			vsub->imsi, VTY_NEWLINE);
 
-	for (at_idx = 0; at_idx < ARRAY_SIZE(gsub->sgsn_data->auth_triplets);
-	     at_idx++) {
-		at = &gsub->sgsn_data->auth_triplets[at_idx];
-		if (at->key_seq == GSM_KEY_SEQ_INVAL)
-			continue;
+	if (vsub->tmsi != GSM_RESERVED_TMSI)
+		OFFSET_VTY_DUMP(vty, offset, "TMSI: %08X%s",
+				vsub->tmsi, VTY_NEWLINE);
 
-		vty_out(vty, "    A3A8 tuple (used %d times): ",
-			at->use_count);
-		vty_out(vty, "     CKSN: %d, ",
-			at->key_seq);
-		if (at->vec.auth_types & OSMO_AUTH_TYPE_GSM) {
-			vty_out(vty, "RAND: %s, ",
-				osmo_hexdump_nospc(at->vec.rand,
-					     sizeof(at->vec.rand)));
-			vty_out(vty, "SRES: %s, ",
-				osmo_hexdump_nospc(at->vec.sres,
-					     sizeof(at->vec.sres)));
-			vty_out(vty, "Kc: %s%s",
-				osmo_hexdump_nospc(at->vec.kc,
-					     sizeof(at->vec.kc)), VTY_NEWLINE);
-		}
-		if (at->vec.auth_types & OSMO_AUTH_TYPE_UMTS) {
-			vty_out(vty, "     AUTN: %s, ",
-				osmo_hexdump(at->vec.autn,
-					     sizeof(at->vec.autn)));
-			vty_out(vty, "RES: %s, ",
-				osmo_hexdump_nospc(at->vec.res, at->vec.res_len));
-			vty_out(vty, "IK: %s, ",
-				osmo_hexdump_nospc(at->vec.ik, sizeof(at->vec.ik)));
-			vty_out(vty, "CK: %s, ",
-				osmo_hexdump_nospc(at->vec.ck, sizeof(at->vec.ck)));
-		}
+	if (vsub->tmsi_new != GSM_RESERVED_TMSI)
+		OFFSET_VTY_DUMP(vty, offset, "New TMSI: %08X%s",
+			     vsub->tmsi_new, VTY_NEWLINE);
+
+	if (vsub->imei[0] != '\0')
+		OFFSET_VTY_DUMP(vty, offset, "IMEI: %s%s",
+			     vsub->imei, VTY_NEWLINE);
+
+	if (vsub->imeisv[0] != '\0')
+		OFFSET_VTY_DUMP(vty, offset, "IMEISV: %s%s",
+			     vsub->imeisv, VTY_NEWLINE);
+
+	OFFSET_VTY_DUMP(vty, offset, "Flags: %s", VTY_NEWLINE);
+	OFFSET_VTY_DUMP_FLAG(vty, offset, "IMSI detached",
+			  vsub->imsi_detached_flag);
+	OFFSET_VTY_DUMP_FLAG(vty, offset, "Conf. by radio contact",
+			  vsub->conf_by_radio_contact_ind);
+	OFFSET_VTY_DUMP_FLAG(vty, offset, "Subscr. data conf. by HLR",
+			  vsub->sub_dataconf_by_hlr_ind);
+	OFFSET_VTY_DUMP_FLAG(vty, offset, "Location conf. in HLR",
+			  vsub->loc_conf_in_hlr_ind);
+	OFFSET_VTY_DUMP_FLAG(vty, offset, "Subscriber dormant",
+			  vsub->dormant_ind);
+	OFFSET_VTY_DUMP_FLAG(vty, offset, "Received cancel location",
+			  vsub->cancel_loc_rx);
+	OFFSET_VTY_DUMP_FLAG(vty, offset, "MS not reachable",
+			  vsub->ms_not_reachable_flag);
+	OFFSET_VTY_DUMP_FLAG(vty, offset, "LA allowed",
+			  vsub->la_allowed);
+
+	if (vsub->last_tuple) {
+		struct vlr_auth_tuple *t = vsub->last_tuple;
+		OFFSET_VTY_DUMP(vty, offset, "A3A8 last tuple (used %d times): %s",
+			     t->auth_use_count, VTY_NEWLINE);
+		OFFSET_VTY_DUMP(vty, offset + 2, "seq # : %d%s",
+			     t->key_seq, VTY_NEWLINE);
+		OFFSET_VTY_DUMP(vty, offset + 2, "RAND  : %s%s",
+			     osmo_hexdump(t->vec.rand, sizeof(t->vec.rand)),
+			     VTY_NEWLINE);
+		OFFSET_VTY_DUMP(vty, offset + 2, "SRES  : %s%s",
+			     osmo_hexdump(t->vec.sres, sizeof(t->vec.sres)),
+			     VTY_NEWLINE);
+		OFFSET_VTY_DUMP(vty, offset + 2, "Kc    : %s%s",
+			     osmo_hexdump(t->vec.kc, sizeof(t->vec.kc)),
+			     VTY_NEWLINE);
 	}
 
-	llist_for_each_entry(pdp, &gsub->sgsn_data->pdp_list, list) {
+	if (!vlr_timer_secs(vsub->vlr, 3212, 3312)) {
+		OFFSET_VTY_DUMP(vty, offset, "Expires: never (%s is disabled)%s",
+			     vlr_is_cs(vsub->vlr) ? "T3212" : "T3312", VTY_NEWLINE);
+	} else if (vsub->expire_lu == VLR_SUBSCRIBER_NO_EXPIRATION) {
+		OFFSET_VTY_DUMP(vty, offset, "Expires: never%s",
+			     VTY_NEWLINE);
+	} else if (osmo_clock_gettime(CLOCK_MONOTONIC, &now) == 0) {
+		OFFSET_VTY_DUMP(vty, offset, "Expires: in %lld min %lld sec%s",
+			     (long long int) ((vsub->expire_lu - now.tv_sec) / 60),
+			     (long long int) ((vsub->expire_lu - now.tv_sec) % 60),
+			     VTY_NEWLINE);
+	}
+
+	OFFSET_VTY_DUMP(vty, offset, "Paging: %s paging for %d requests%s",
+		     vsub->cs.is_paging ? "is" : "not",
+		     llist_count(&vsub->cs.requests),
+		     VTY_NEWLINE);
+
+	OFFSET_VTY_DUMP(vty, offset, "Use count total: %d%s",
+		     osmo_use_count_total(&vsub->use_count),
+		     VTY_NEWLINE);
+	OFFSET_VTY_DUMP(vty, offset, "Use count: %s%s",
+		     osmo_use_count_name_buf(buf, sizeof(buf), &vsub->use_count),
+		     VTY_NEWLINE);
+
+	llist_for_each_entry(pdp, &vsub->ps.pdp_list, list) {
 		char ip_str[INET6_ADDRSTRLEN] = { 0 };
 
-		vty_out(vty, "    PDP info: Id: %d, Addr(Org: 0x%02x Type: 0x%02x",
-			pdp->context_id, pdp->pdp_type_org, pdp->pdp_type_nr);
+		OFFSET_VTY_DUMP(vty, offset, "PDP info: Id: %d, Addr(Org: 0x%02x Type: 0x%02x",
+				pdp->context_id, pdp->pdp_type_org, pdp->pdp_type_nr);
 
 		if (pdp->pdp_address[0].u.sa.sa_family != AF_UNSPEC)
 			vty_out(vty, " Addr[0]: %s", osmo_sockaddr_ntop(&pdp->pdp_address[0].u.sa, ip_str));
@@ -1022,32 +1073,6 @@ static void subscr_dump_full_vty(struct vty *vty, struct gprs_subscr *gsub, int 
 
 		vty_out(vty, "%s", VTY_NEWLINE);
 	}
-
-#if 0
-	/* print the expiration time of a subscriber */
-	if (gsub->expire_lu) {
-		strftime(expire_time, sizeof(expire_time),
-			 "%a, %d %b %Y %T %z", localtime(&gsub->expire_lu));
-		expire_time[sizeof(expire_time) - 1] = '\0';
-		vty_out(vty, "    Expiration Time: %s%s", expire_time, VTY_NEWLINE);
-	}
-#endif
-
-	if (gsub->flags)
-		vty_out(vty, "    Flags: %s%s%s%s%s%s",
-			gsub->flags & GPRS_SUBSCRIBER_FIRST_CONTACT ?
-			"FIRST_CONTACT " : "",
-			gsub->flags & GPRS_SUBSCRIBER_CANCELLED ?
-			"CANCELLED " : "",
-			gsub->flags & GPRS_SUBSCRIBER_UPDATE_LOCATION_PENDING ?
-			"UPDATE_LOCATION_PENDING " : "",
-			gsub->flags & GPRS_SUBSCRIBER_UPDATE_AUTH_INFO_PENDING ?
-			"AUTH_INFO_PENDING " : "",
-			gsub->flags & GPRS_SUBSCRIBER_ENABLE_PURGE ?
-			"ENABLE_PURGE " : "",
-			VTY_NEWLINE);
-
-	vty_out(vty, "    Use count: %u%s", gsub->use_count, VTY_NEWLINE);
 }
 
 #define RESET_SGSN_STATE_STR \
@@ -1059,7 +1084,6 @@ DEFUN_HIDDEN(reset_sgsn_state,
       "reset sgsn state",
       RESET_SGSN_STATE_STR RESET_SGSN_STATE_STR RESET_SGSN_STATE_STR)
 {
-	struct gprs_subscr *subscr, *tmp_subscr;
 	struct sgsn_mm_ctx *mm, *tmp_mm;
 
 	llist_for_each_entry_safe(mm, tmp_mm, &sgsn->mm_list, list)
@@ -1068,12 +1092,7 @@ DEFUN_HIDDEN(reset_sgsn_state,
 	}
 	vty_out(vty, "Cancelled MM Ctx. %s", VTY_NEWLINE);
 
-	llist_for_each_entry_safe(subscr, tmp_subscr, gprs_subscribers, entry) {
-		gprs_subscr_get(subscr);
-		gprs_subscr_cancel(subscr);
-		gprs_subscr_put(subscr);
-	}
-	vty_out(vty, "Removed all gprs subscribers.%s", VTY_NEWLINE);
+	/* TODO: reset libvlr. libvlr might still contains TMSI / IMSI relation even if the mmctx is gone. */
 
 	bssgp_flush_all_queues();
 	vty_out(vty, "Flushed all BSSGPs queues.%s", VTY_NEWLINE);
@@ -1091,11 +1110,12 @@ DEFUN(show_subscr_cache,
 	SHOW_STR "Show information about subscribers\n"
 	"Display contents of subscriber cache\n")
 {
-	struct gprs_subscr *subscr;
+	struct vlr_subscr *vsub;
+	unsigned int i = 0;
 
-	llist_for_each_entry(subscr, gprs_subscribers, entry) {
-		vty_out(vty, "  Subscriber:%s", VTY_NEWLINE);
-		subscr_dump_full_vty(vty, subscr, 0);
+	llist_for_each_entry(vsub, &sgsn->vlr->subscribers, list) {
+		vty_out(vty, "  Subscriber #%02u: %s", i++, VTY_NEWLINE);
+		subscr_dump_full_vty(vty, vsub, 4);
 	}
 
 	return CMD_SUCCESS;
@@ -1108,7 +1128,7 @@ DEFUN(show_subscr_cache,
 
 #define UPDATE_SUBSCR_INSERT_HELP "Insert data into the subscriber record\n"
 
-DEFUN(update_subscr_insert_auth_triplet, update_subscr_insert_auth_triplet_cmd,
+DEFUN_DEPRECATED(update_subscr_insert_auth_triplet, update_subscr_insert_auth_triplet_cmd,
 	UPDATE_SUBSCR_STR "insert auth-triplet <1-5> sres SRES rand RAND kc KC",
 	UPDATE_SUBSCR_HELP
 	UPDATE_SUBSCR_INSERT_HELP
@@ -1118,135 +1138,28 @@ DEFUN(update_subscr_insert_auth_triplet, update_subscr_insert_auth_triplet_cmd,
 	"Set RAND value\nRAND value (16 byte) in hex\n"
 	"Set Kc value\nKc value (8 byte) in hex\n")
 {
-	const char *imsi = argv[0];
-	const int cksn = atoi(argv[1]) - 1;
-	const char *sres_str = argv[2];
-	const char *rand_str = argv[3];
-	const char *kc_str = argv[4];
-	struct gsm_auth_tuple at = {0,};
-
-	struct gprs_subscr *subscr;
-
-	subscr = gprs_subscr_get_by_imsi(imsi);
-	if (!subscr) {
-		vty_out(vty, "%% unable get subscriber record for %s%s",
-			imsi, VTY_NEWLINE);
-		return CMD_WARNING;
-	}
-
-	OSMO_ASSERT(subscr->sgsn_data);
-
-	if (osmo_hexparse(sres_str, &at.vec.sres[0], sizeof(at.vec.sres)) < 0) {
-		vty_out(vty, "%% invalid SRES value '%s'%s",
-			sres_str, VTY_NEWLINE);
-		goto failed;
-	}
-	if (osmo_hexparse(rand_str, &at.vec.rand[0], sizeof(at.vec.rand)) < 0) {
-		vty_out(vty, "%% invalid RAND value '%s'%s",
-			rand_str, VTY_NEWLINE);
-		goto failed;
-	}
-	if (osmo_hexparse(kc_str, &at.vec.kc[0], sizeof(at.vec.kc)) < 0) {
-		vty_out(vty, "%% invalid Kc value '%s'%s",
-			kc_str, VTY_NEWLINE);
-		goto failed;
-	}
-	at.key_seq = cksn;
-
-	subscr->sgsn_data->auth_triplets[cksn] = at;
-	subscr->sgsn_data->auth_triplets_updated = 1;
-
-	gprs_subscr_put(subscr);
-
-	return CMD_SUCCESS;
-
-failed:
-	gprs_subscr_put(subscr);
-	return CMD_SUCCESS;
+	vty_out(vty, "There is no local subscriber database anymore.%s", VTY_NEWLINE);
+	return CMD_WARNING;
 }
 
-DEFUN(update_subscr_cancel, update_subscr_cancel_cmd,
-	UPDATE_SUBSCR_STR "cancel (update-procedure|subscription-withdraw)",
-	UPDATE_SUBSCR_HELP
-	"Cancel (remove) subscriber record\n"
-	"The MS moved to another SGSN\n"
-	"The subscription is no longer valid\n")
+DEFUN_DEPRECATED(update_subscr_cancel, update_subscr_cancel_cmd,
+		 UPDATE_SUBSCR_STR "cancel (update-procedure|subscription-withdraw)",
+		 UPDATE_SUBSCR_HELP
+		 "Cancel (remove) subscriber record\n"
+		 "The MS moved to another SGSN\n"
+		 "The subscription is no longer valid\n")
 {
-	const char *imsi = argv[0];
-	const char *cancel_type = argv[1];
-
-	struct gprs_subscr *subscr;
-
-	subscr = gprs_subscr_get_by_imsi(imsi);
-	if (!subscr) {
-		vty_out(vty, "%% no subscriber record for %s%s",
-			imsi, VTY_NEWLINE);
-		return CMD_WARNING;
-	}
-
-	if (strcmp(cancel_type, "update-procedure") == 0)
-		subscr->sgsn_data->error_cause = SGSN_ERROR_CAUSE_NONE;
-	else
-		subscr->sgsn_data->error_cause = GMM_CAUSE_IMPL_DETACHED;
-
-	gprs_subscr_cancel(subscr);
-	gprs_subscr_put(subscr);
-
-	return CMD_SUCCESS;
+	/* TODO: Re-implement cancel subscription via vty */
+	return CMD_WARNING;
 }
 
-DEFUN(update_subscr_create, update_subscr_create_cmd,
-	UPDATE_SUBSCR_STR "create",
-	UPDATE_SUBSCR_HELP
-	"Create a subscriber entry\n")
+DEFUN_DEPRECATED(update_subscr_create, update_subscr_create_cmd,
+		 UPDATE_SUBSCR_STR "create",
+		 UPDATE_SUBSCR_HELP
+		 "Create a subscriber entry\n")
 {
-	const char *imsi = argv[0];
-
-	struct gprs_subscr *subscr;
-
-	subscr = gprs_subscr_get_by_imsi(imsi);
-	if (subscr) {
-		vty_out(vty, "%% subscriber record already exists for %s%s",
-			imsi, VTY_NEWLINE);
-		return CMD_WARNING;
-	}
-
-	subscr = gprs_subscr_get_or_create(imsi);
-	if (!subscr) {
-		vty_out(vty, "Can not create subscriber. Out of memory.%s", imsi);
-		return CMD_WARNING;
-	}
-	subscr->keep_in_ram = 1;
-	gprs_subscr_put(subscr);
-
-	return CMD_SUCCESS;
-}
-
-DEFUN(update_subscr_destroy, update_subscr_destroy_cmd,
-	UPDATE_SUBSCR_STR "destroy",
-	UPDATE_SUBSCR_HELP
-	"Destroy a subscriber entry\n")
-{
-	const char *imsi = argv[0];
-
-	struct gprs_subscr *subscr;
-
-	subscr = gprs_subscr_get_by_imsi(imsi);
-	if (!subscr) {
-		vty_out(vty, "%% subscriber record does not exist for %s%s",
-			imsi, VTY_NEWLINE);
-		return CMD_WARNING;
-	}
-
-	subscr->keep_in_ram = 0;
-	subscr->sgsn_data->error_cause = SGSN_ERROR_CAUSE_NONE;
-	gprs_subscr_cancel(subscr);
-	if (subscr->use_count > 1)
-		vty_out(vty, "%% subscriber is still in use%s",
-			VTY_NEWLINE);
-	gprs_subscr_put(subscr);
-
-	return CMD_SUCCESS;
+	vty_out(vty, "There is no local subscriber database anymore.%s", VTY_NEWLINE);
+	return CMD_WARNING;
 }
 
 #define UL_ERR_STR "system-failure|data-missing|unexpected-data-value|" \
@@ -1258,73 +1171,6 @@ DEFUN(update_subscr_destroy, update_subscr_destroy_cmd,
 		"Force error code UnexpectedDataValue\n" \
 		"Force error code UnknownSubscriber\n" \
 		"Force error code RoamingNotAllowed\n"
-
-DEFUN(update_subscr_update_location_result, update_subscr_update_location_result_cmd,
-	UPDATE_SUBSCR_STR "update-location-result (ok|" UL_ERR_STR ")",
-	UPDATE_SUBSCR_HELP
-	"Complete the update location procedure\n"
-	"The update location request succeeded\n"
-	UL_ERR_HELP)
-{
-	const char *imsi = argv[0];
-	const char *ret_code_str = argv[1];
-
-	struct gprs_subscr *subscr;
-
-	const struct value_string cause_mapping[] = {
-		{ GMM_CAUSE_NET_FAIL,		"system-failure" },
-		{ GMM_CAUSE_INV_MAND_INFO,	"data-missing" },
-		{ GMM_CAUSE_PROTO_ERR_UNSPEC,   "unexpected-data-value" },
-		{ GMM_CAUSE_IMSI_UNKNOWN,       "unknown-subscriber" },
-		{ GMM_CAUSE_GPRS_NOTALLOWED,    "roaming-not-allowed" },
-		{ 0, NULL }
-	};
-
-	subscr = gprs_subscr_get_by_imsi(imsi);
-	if (!subscr) {
-		vty_out(vty, "%% unable to get subscriber record for %s%s",
-			imsi, VTY_NEWLINE);
-		return CMD_WARNING;
-	}
-
-	if (strcmp(ret_code_str, "ok") == 0) {
-		subscr->sgsn_data->error_cause = SGSN_ERROR_CAUSE_NONE;
-		subscr->authorized = 1;
-	} else {
-		subscr->sgsn_data->error_cause =
-			get_string_value(cause_mapping, ret_code_str);
-		subscr->authorized = 0;
-	}
-
-	gprs_subscr_update(subscr);
-
-	gprs_subscr_put(subscr);
-
-	return CMD_SUCCESS;
-}
-
-DEFUN(update_subscr_update_auth_info, update_subscr_update_auth_info_cmd,
-	UPDATE_SUBSCR_STR "update-auth-info",
-	UPDATE_SUBSCR_HELP
-	"Complete the send authentication info procedure\n")
-{
-	const char *imsi = argv[0];
-
-	struct gprs_subscr *subscr;
-
-	subscr = gprs_subscr_get_by_imsi(imsi);
-	if (!subscr) {
-		vty_out(vty, "%% unable to get subscriber record for %s%s",
-			imsi, VTY_NEWLINE);
-		return CMD_WARNING;
-	}
-
-	gprs_subscr_update_auth_info(subscr);
-
-	gprs_subscr_put(subscr);
-
-	return CMD_SUCCESS;
-}
 
 DEFUN(page_subscr, page_subscr_info_cmd,
 	"page imsi IMSI",
@@ -1886,10 +1732,7 @@ int sgsn_vty_init(struct sgsn_config *cfg)
 
 	install_element(ENABLE_NODE, &update_subscr_insert_auth_triplet_cmd);
 	install_element(ENABLE_NODE, &update_subscr_create_cmd);
-	install_element(ENABLE_NODE, &update_subscr_destroy_cmd);
 	install_element(ENABLE_NODE, &update_subscr_cancel_cmd);
-	install_element(ENABLE_NODE, &update_subscr_update_location_result_cmd);
-	install_element(ENABLE_NODE, &update_subscr_update_auth_info_cmd);
 	install_element(ENABLE_NODE, &page_subscr_info_cmd);
 	install_element(ENABLE_NODE, &reset_sgsn_state_cmd);
 

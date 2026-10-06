@@ -40,6 +40,7 @@ bin_PROGRAMS = \
 
 osmo_sgsn_SOURCES = \
 	apn.c \
+	gmm_rau_fsm.c \
 	gprs_bssgp.c \
 	gprs_gmm_attach.c \
 	gprs_gmm.c \
@@ -74,6 +75,7 @@ osmo_sgsn_SOURCES = \
 	gprs_llc_xid.c \
 	v42bis.c \
 	$(NULL)
+
 osmo_sgsn_LDADD = \
 	$(top_builddir)/src/gprs/gprs_llc_parse.o \
 	$(top_builddir)/src/gprs/crc24.o \

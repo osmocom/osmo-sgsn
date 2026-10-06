@@ -1,26 +1,4 @@
 Testing LLME allocations
-Testing core subscriber data API
-llist_count(gprs_subscribers) == 0
-llist_count(gprs_subscribers) == 1
-llist_count(gprs_subscribers) == 1
-llist_count(gprs_subscribers) == 2
-llist_count(gprs_subscribers) == 3
-llist_count(gprs_subscribers) == 2
-llist_count(gprs_subscribers) == 1
-llist_count(gprs_subscribers) == 0
-Testing authentication triplet handling
-Testing subscriber GSUP handling
-Testing GMM detach
-Testing GMM detach (power off)
-Testing GMM detach (no MMCTX)
-Testing GMM detach accept (unexpected)
-Testing GMM Status (no MMCTX)
-Testing GMM reject
-  - Attach Request (invalid MI length)
-  - Attach Request (invalid MI type)
-  - Routing Area Update Request (valid)
-  - Routing Area Update Request (invalid type)
-  - Routing Area Update Request (invalid CAP length)
 Testing APN matching
 Testing GGSN selection
 Testing pdp_status_has_active_nsapis

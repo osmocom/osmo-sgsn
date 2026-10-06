@@ -65,6 +65,8 @@
 #include <osmocom/sgsn/sccp.h>
 #endif /* #if BUILD_IU */
 
+#include <osmocom/vlr/vlr.h>
+
 #include <time.h>
 
 #define GPRS_LLME_CHECK_TICK 30
@@ -187,7 +189,7 @@ struct sgsn_instance *sgsn_instance_alloc(void *talloc_ctx)
 	talloc_set_destructor(inst, sgsn_instance_talloc_destructor);
 
 	inst->cfg.gtp_statedir = talloc_strdup(inst, "./");
-	inst->cfg.auth_policy = SGSN_AUTH_POLICY_REMOTE;
+	inst->cfg.auth_policy = SGSN_AUTH_POLICY_CLOSED;
 	inst->cfg.gea_encryption_mask = (1 << GPRS_ALGO_GEA0); /* no encryption */
 	inst->cfg.uea_encryption_mask = (1 << OSMO_UTRAN_UEA2) | (1 << OSMO_UTRAN_UEA1);
 	inst->cfg.require_authentication = true; /* only applies if auth_policy is REMOTE */
@@ -239,9 +241,9 @@ int sgsn_inst_init(struct sgsn_instance *sgsn)
 		return -EFAULT;
 	}
 
-	rc = gprs_subscr_init(sgsn);
+	rc = gmm_vlr_init(sgsn);
 	if (rc < 0) {
-		LOGP(DGPRS, LOGL_FATAL, "Cannot set up SGSN\n");
+		LOGP(DGPRS, LOGL_FATAL, "Cannot set up MM/VLR/GSUP\n");
 		return rc;
 	}
 

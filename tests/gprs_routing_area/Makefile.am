@@ -37,6 +37,7 @@ gprs_routing_area_test_SOURCES = \
 
 gprs_routing_area_test_LDADD = \
 	$(top_builddir)/src/sgsn/apn.o \
+	$(top_builddir)/src/sgsn/gmm_rau_fsm.o \
 	$(top_builddir)/src/sgsn/gprs_bssgp.o \
 	$(top_builddir)/src/sgsn/gprs_llc.o \
 	$(top_builddir)/src/sgsn/gprs_ns.o \
