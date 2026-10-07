@@ -34,7 +34,6 @@
 #include <osmocom/gprs/gprs_msgb.h>
 #include <osmocom/sigtran/sccp_sap.h>
 #include <osmocom/sigtran/sccp_helpers.h>
-#include <osmocom/sccp/sccp_types.h>
 
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/gprs_ranap.h>
@@ -94,7 +93,10 @@ void sgsn_ranap_iu_free_ue(struct ranap_ue_conn_ctx *ue_ctx)
 		return;
 
 	osmo_timer_del(&ue_ctx->release_timeout);
-	osmo_sccp_tx_disconn(ue_ctx->rnc->scu_iups->scu, ue_ctx->conn_id, NULL, 0);
+	osmo_sccp_tx_disconn(ue_ctx->rnc->scu_iups->scu,
+			     ue_ctx->conn_id,
+			     NULL,
+			     OSMO_SCCP_REL_REASON_NSU_DISC_NORMAL);
 	llist_del(&ue_ctx->list);
 	talloc_free(ue_ctx);
 }

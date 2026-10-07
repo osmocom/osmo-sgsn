@@ -182,7 +182,9 @@ static void iu_rnc_st_wait_rx_reset_ack(struct osmo_fsm_inst *fi, uint32_t event
 		LOG_RNC(rnc, LOGL_ERROR, "Receiving CO Initial message on RAN peer that has not done a proper RESET yet."
 			     " Disconnecting on incoming message, sending RESET to RAN peer.\n");
 		osmo_sccp_tx_disconn(ev_msg_up_co_initial_ctx->rnc->scu_iups->scu,
-				     ev_msg_up_co_initial_ctx->conn_id, NULL, 0);
+				     ev_msg_up_co_initial_ctx->conn_id,
+				     NULL,
+				     OSMO_SCCP_REL_REASON_NSU_DISC_END_USER_FAILURE);
 		/* No valid RESET procedure has happened here yet. */
 		iu_rnc_reset(rnc);
 		return;

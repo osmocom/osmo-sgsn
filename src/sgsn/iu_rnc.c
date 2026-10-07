@@ -34,7 +34,6 @@
 #include <osmocom/gprs/gprs_msgb.h>
 #include <osmocom/sigtran/sccp_sap.h>
 #include <osmocom/sigtran/sccp_helpers.h>
-#include <osmocom/sccp/sccp_types.h>
 
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/gprs_ranap.h>
