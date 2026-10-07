@@ -176,7 +176,6 @@ static void iu_rnc_st_wait_rx_reset_ack(struct osmo_fsm_inst *fi, uint32_t event
 		iu_rnc_state_chg(rnc, IU_RNC_ST_READY);
 		return;
 
-
 	case IU_RNC_EV_MSG_UP_CO_INITIAL:
 		ev_msg_up_co_initial_ctx = data;
 		OSMO_ASSERT(ev_msg_up_co_initial_ctx);
@@ -187,7 +186,7 @@ static void iu_rnc_st_wait_rx_reset_ack(struct osmo_fsm_inst *fi, uint32_t event
 		/* No valid RESET procedure has happened here yet. */
 		iu_rnc_reset(rnc);
 		return;
-		return;
+
 	case IU_RNC_EV_MSG_UP_CO:
 		ev_msg_up_co_ctx = data;
 		OSMO_ASSERT(ev_msg_up_co_ctx);
