@@ -14,3 +14,4 @@ libosmo-gsup-client >1.8.0  osmo_gsup_client_is_connected(), osmo_gsup_client_ge
 osmo-iuh >1.7.0 ranap multiple params are constified, see osmo-iuh Change-Id I667dc2ef377c1ceb5b11315458f00b282c143c81
 osmo-iuh >1.8.1 ranap_new_msg_rab_assign_data2() / ranap_new_msg_rab_assign_voice2()
 libosmo-sigtran >2.3.0 OSMO_SCCP_REL_REASON_NSU_*
+libosmo-sigtran >2.3.0                  OSMO_SCCP_RETURN_REASON_*, osmo_sccp_return_reason_name()

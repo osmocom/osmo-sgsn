@@ -28,7 +28,6 @@
 
 #include <osmocom/sigtran/sccp_sap.h>
 #include <osmocom/sigtran/sccp_helpers.h>
-#include <osmocom/sccp/sccp_types.h>
 
 #include <osmocom/sgsn/debug.h>
 #include <osmocom/sgsn/iu_client.h>
@@ -154,19 +153,19 @@ static void handle_notice_ind(struct sgsn_sccp_user_iups *scu_iups, const struct
 		LOGP(DSUA, LOGL_DEBUG,
 		     "(calling_addr=%s) N-NOTICE.ind cause=%u='%s' importance=%u didn't match any RNC, ignoring\n",
 		     osmo_sccp_addr_dump(&ni->calling_addr),
-		     ni->cause, osmo_sccp_return_cause_name(ni->cause),
+		     ni->cause, osmo_sccp_return_reason_name(ni->cause),
 		     ni->importance);
 		return;
 	}
 
 	LOG_RNC(rnc, LOGL_NOTICE,
 		"N-NOTICE.ind cause=%u='%s' importance=%u\n",
-		ni->cause, osmo_sccp_return_cause_name(ni->cause),
+		ni->cause, osmo_sccp_return_reason_name(ni->cause),
 		ni->importance);
 
 	switch (ni->cause) {
-	case SCCP_RETURN_CAUSE_SUBSYSTEM_CONGESTION:
-	case SCCP_RETURN_CAUSE_NETWORK_CONGESTION:
+	case OSMO_SCCP_RETURN_REASON_SUBSYSTEM_CONGESTION:
+	case OSMO_SCCP_RETURN_REASON_NETWORK_CONGESTION:
 		/* Transient failures (hopefully), keep going. */
 		return;
 	default:
