@@ -49,20 +49,24 @@ struct entity_algo_table {
 /* FUNCTIONS RELATED TO SNDCP-XID ENCODING */
 
 /* Encode applicable sapis (works the same in all three compression schemes) */
-static int encode_pcomp_applicable_sapis(uint8_t *dst,
+static int encode_pcomp_applicable_sapis(uint8_t *dst, unsigned int dst_maxlen,
 					 const uint8_t *nsapis,
 					 uint8_t nsapis_len)
 {
-	/* NOTE: Buffer *dst needs offer at 2 bytes
+	/* NOTE: Buffer *dst needs offer at least 2 bytes
 	 * of space to store the generation results */
 
 	uint16_t blob;
 	uint8_t nsapi;
 	int i;
 
+	if (dst_maxlen < 2)
+		return -ENOMEM;
+
 	/* Bail if number of possible nsapis exceeds valid range
 	 * (Only 11 nsapis possible for PDP-Contexts) */
-	OSMO_ASSERT(nsapis_len <= 11);
+	if (nsapis_len > 11)
+		return -EINVAL;
 
 	/* Encode applicable SAPIs */
 	blob = 0;
@@ -71,7 +75,9 @@ static int encode_pcomp_applicable_sapis(uint8_t *dst,
 		/* Only NSAPI 5 to 15 are applicable for user traffic (PDP-
 		 * contexts). Only for these NSAPIs SNDCP-XID parameters
 		 * can apply. See also 3GPP TS 44.065, 5.1 Service primitives */
-		OSMO_ASSERT(nsapi >= 5 && nsapi <= 15);
+		if (nsapi < 5 || nsapi > 15)
+			return -EINVAL;
+
 		blob |= (1 << nsapi);
 	}
 
@@ -95,20 +101,23 @@ static int encode_pcomp_rfc1144_params(uint8_t *dst, unsigned int dst_maxlen,
 	int dst_counter = 0;
 	int rc;
 
-	OSMO_ASSERT(dst_maxlen >= 3);
+	if (dst_maxlen < 3)
+		return -ENOMEM;
 
 	/* Zero out buffer */
 	memset(dst, 0, dst_maxlen);
 
 	/* Encode applicable SAPIs */
-	rc = encode_pcomp_applicable_sapis(dst, params->nsapi,
+	rc = encode_pcomp_applicable_sapis(dst, dst_maxlen, params->nsapi,
 					   params->nsapi_len);
+	if (rc < 0)
+		return rc;
 	dst += rc;
 	dst_counter += rc;
 
 	/* Encode s01 (see also: 3GPP TS 44.065, 6.5.2.1, Table 5) */
-	OSMO_ASSERT(params->s01 >= 0);
-	OSMO_ASSERT(params->s01 <= 255);
+	if (params->s01 < 0 || params->s01 > 255)
+		return -EINVAL;
 	*dst = params->s01;
 	dst++;
 	dst_counter++;
@@ -125,26 +134,29 @@ static int encode_pcomp_rfc2507_params(uint8_t *dst, unsigned int dst_maxlen,
 				       const struct
 				       gprs_sndcp_pcomp_rfc2507_params *params)
 {
-	/* NOTE: Buffer *dst should offer at least 3 bytes
+	/* NOTE: Buffer *dst should offer at least 9 bytes
 	 * of space to store the generation results */
 
 	int dst_counter = 0;
 	int rc;
 
-	OSMO_ASSERT(dst_maxlen >= 9);
+	if (dst_maxlen < 9)
+		return -ENOMEM;
 
 	/* Zero out buffer */
 	memset(dst, 0, dst_maxlen);
 
 	/* Encode applicable SAPIs */
-	rc = encode_pcomp_applicable_sapis(dst, params->nsapi,
+	rc = encode_pcomp_applicable_sapis(dst, dst_maxlen, params->nsapi,
 					   params->nsapi_len);
+	if (rc < 0)
+		return rc;
 	dst += rc;
 	dst_counter += rc;
 
 	/* Encode F_MAX_PERIOD (see also: 3GPP TS 44.065, 6.5.3.1, Table 6) */
-	OSMO_ASSERT(params->f_max_period >= 1);
-	OSMO_ASSERT(params->f_max_period <= 65535);
+	if (params->f_max_period < 1 || params->f_max_period > 65535)
+		return -EINVAL;
 	*dst = (params->f_max_period >> 8) & 0xFF;
 	dst++;
 	dst_counter++;
@@ -153,29 +165,30 @@ static int encode_pcomp_rfc2507_params(uint8_t *dst, unsigned int dst_maxlen,
 	dst_counter++;
 
 	/* Encode F_MAX_TIME (see also: 3GPP TS 44.065, 6.5.3.1, Table 6) */
-	OSMO_ASSERT(params->f_max_time >= 1);
-	OSMO_ASSERT(params->f_max_time <= 255);
+	if (params->f_max_time < 1 || params->f_max_time > 255)
+		return -EINVAL;
+
 	*dst = params->f_max_time;
 	dst++;
 	dst_counter++;
 
 	/* Encode MAX_HEADER (see also: 3GPP TS 44.065, 6.5.3.1, Table 6) */
-	OSMO_ASSERT(params->max_header >= 60);
-	OSMO_ASSERT(params->max_header <= 255);
+	if (params->max_header < 60 || params->max_header > 255)
+		return -EINVAL;
 	*dst = params->max_header;
 	dst++;
 	dst_counter++;
 
 	/* Encode TCP_SPACE (see also: 3GPP TS 44.065, 6.5.3.1, Table 6) */
-	OSMO_ASSERT(params->tcp_space >= 3);
-	OSMO_ASSERT(params->tcp_space <= 255);
+	if (params->tcp_space < 3 || params->tcp_space > 255)
+		return -EINVAL;
 	*dst = params->tcp_space;
 	dst++;
 	dst_counter++;
 
 	/* Encode NON_TCP_SPACE (see also: 3GPP TS 44.065, 6.5.3.1, Table 6) */
-	OSMO_ASSERT(params->non_tcp_space >= 3);
-	OSMO_ASSERT(params->non_tcp_space <= 65535);
+	if (params->non_tcp_space < 3 || params->non_tcp_space > 65535)
+		return -EINVAL;
 	*dst = (params->non_tcp_space >> 8) & 0xFF;
 	dst++;
 	dst_counter++;
@@ -193,7 +206,7 @@ static int encode_pcomp_rohc_params(uint8_t *dst, unsigned int dst_maxlen,
 				    const struct gprs_sndcp_pcomp_rohc_params
 				    *params)
 {
-	/* NOTE: Buffer *dst should offer at least 36
+	/* NOTE: Buffer *dst should offer at least 38
 	 * (2 * 16 Profiles + 2 * 3 Parameter) bytes
 	 * of memory space to store generation results */
 
@@ -201,24 +214,28 @@ static int encode_pcomp_rohc_params(uint8_t *dst, unsigned int dst_maxlen,
 	int dst_counter = 0;
 	int rc;
 
-	OSMO_ASSERT(dst_maxlen >= 38);
+	if (dst_maxlen < 38)
+		return -ENOMEM;
 
 	/* Bail if number of ROHC profiles exceeds limit
 	 * (ROHC supports only a maximum of 16 different profiles) */
-	OSMO_ASSERT(params->profile_len <= 16);
+	if (params->profile_len > 16)
+		return -EINVAL;
 
 	/* Zero out buffer */
 	memset(dst, 0, dst_maxlen);
 
 	/* Encode applicable SAPIs */
-	rc = encode_pcomp_applicable_sapis(dst, params->nsapi,
+	rc = encode_pcomp_applicable_sapis(dst, dst_maxlen, params->nsapi,
 					   params->nsapi_len);
+	if (rc < 0)
+		return rc;
 	dst += rc;
 	dst_counter += rc;
 
 	/* Encode MAX_CID (see also: 3GPP TS 44.065, 6.5.4.1, Table 10) */
-	OSMO_ASSERT(params->max_cid >= 0);
-	OSMO_ASSERT(params->max_cid <= 16383);
+	if (params->max_cid < 0 || params->max_cid > 16383)
+		return -EINVAL;
 	*dst = (params->max_cid >> 8) & 0xFF;
 	dst++;
 	*dst = params->max_cid & 0xFF;
@@ -226,8 +243,8 @@ static int encode_pcomp_rohc_params(uint8_t *dst, unsigned int dst_maxlen,
 	dst_counter += 2;
 
 	/* Encode MAX_HEADER (see also: 3GPP TS 44.065, 6.5.4.1, Table 10) */
-	OSMO_ASSERT(params->max_header >= 60);
-	OSMO_ASSERT(params->max_header <= 255);
+	if (params->max_header < 60 || params->max_header > 255)
+		return -EINVAL;
 	*dst = (params->max_header >> 8) & 0xFF;
 	dst++;
 	*dst = params->max_header & 0xFF;
@@ -259,27 +276,30 @@ static int encode_dcomp_v42bis_params(uint8_t *dst, unsigned int dst_maxlen,
 	int dst_counter = 0;
 	int rc;
 
-	OSMO_ASSERT(dst_maxlen >= 6);
+	if (dst_maxlen < 6)
+		return -ENOMEM;
 
 	/* Zero out buffer */
 	memset(dst, 0, dst_maxlen);
 
 	/* Encode applicable SAPIs */
-	rc = encode_pcomp_applicable_sapis(dst, params->nsapi,
+	rc = encode_pcomp_applicable_sapis(dst, dst_maxlen, params->nsapi,
 					   params->nsapi_len);
+	if (rc < 0)
+		return rc;
 	dst += rc;
 	dst_counter += rc;
 
 	/* Encode P0 (see also: 3GPP TS 44.065, 6.6.2.1, Table 7a) */
-	OSMO_ASSERT(params->p0 >= 0);
-	OSMO_ASSERT(params->p0 <= 3);
+	if (params->p0 < 0 || params->p0 > 3)
+		return -EINVAL;
 	*dst = params->p0 & 0x03;
 	dst++;
 	dst_counter++;
 
 	/* Encode P1 (see also: 3GPP TS 44.065, 6.6.2.1, Table 7a) */
-	OSMO_ASSERT(params->p1 >= 512);
-	OSMO_ASSERT(params->p1 <= 65535);
+	if (params->p1 < 512 || params->p1 > 65535)
+		return -EINVAL;
 	*dst = (params->p1 >> 8) & 0xFF;
 	dst++;
 	*dst = params->p1 & 0xFF;
@@ -287,8 +307,8 @@ static int encode_dcomp_v42bis_params(uint8_t *dst, unsigned int dst_maxlen,
 	dst_counter += 2;
 
 	/* Encode P2 (see also: 3GPP TS 44.065, 6.6.2.1, Table 7a) */
-	OSMO_ASSERT(params->p2 >= 6);
-	OSMO_ASSERT(params->p2 <= 250);
+	if (params->p2 < 6 || params->p2 > 250)
+		return -EINVAL;
 	*dst = params->p2;
 	dst++;
 	dst_counter++;
@@ -309,33 +329,37 @@ static int encode_dcomp_v44_params(uint8_t *dst, unsigned int dst_maxlen,
 	int dst_counter = 0;
 	int rc;
 
-	OSMO_ASSERT(dst_maxlen >= 12);
+	if (dst_maxlen < 12)
+		return -ENOMEM;
 
 	/* Zero out buffer */
 	memset(dst, 0, dst_maxlen);
 
 	/* Encode applicable SAPIs */
-	rc = encode_pcomp_applicable_sapis(dst, params->nsapi,
+	rc = encode_pcomp_applicable_sapis(dst, dst_maxlen, params->nsapi,
 					   params->nsapi_len);
+	if (rc < 0)
+		return rc;
 	dst += rc;
 	dst_counter += rc;
 
 	/* Encode C0 (see also: 3GPP TS 44.065, 6.6.3.1, Table 7c) */
-	OSMO_ASSERT(params->c0 == 0x80 || params->c0 == 0xC0);
+	if (params->c0 != 0x80 && params->c0 != 0xC0)
+		return -EINVAL;
 	*dst = params->c0 & 0xC0;
 	dst++;
 	dst_counter++;
 
 	/* Encode P0 (see also: 3GPP TS 44.065, 6.6.3.1, Table 7c) */
-	OSMO_ASSERT(params->p0 >= 0);
-	OSMO_ASSERT(params->p0 <= 3);
+	if (params->p0 < 0 || params->p0 > 3)
+		return -EINVAL;
 	*dst = params->p0 & 0x03;
 	dst++;
 	dst_counter++;
 
 	/* Encode P1T (see also: 3GPP TS 44.065, 6.6.3.1, Table 7c) */
-	OSMO_ASSERT(params->p1t >= 256);
-	OSMO_ASSERT(params->p1t <= 65535);
+	if (params->p1t < 256 || params->p1t > 65535)
+		return -EINVAL;
 	*dst = (params->p1t >> 8) & 0xFF;
 	dst++;
 	*dst = params->p1t & 0xFF;
@@ -343,8 +367,8 @@ static int encode_dcomp_v44_params(uint8_t *dst, unsigned int dst_maxlen,
 	dst_counter += 2;
 
 	/* Encode P1R (see also: 3GPP TS 44.065, 6.6.3.1, Table 7c) */
-	OSMO_ASSERT(params->p1r >= 256);
-	OSMO_ASSERT(params->p1r <= 65535);
+	if (params->p1r < 256 || params->p1r > 65535)
+		return -EINVAL;
 	*dst = (params->p1r >> 8) & 0xFF;
 	dst++;
 	*dst = params->p1r & 0xFF;
@@ -352,9 +376,8 @@ static int encode_dcomp_v44_params(uint8_t *dst, unsigned int dst_maxlen,
 	dst_counter += 2;
 
 	/* Encode P3T (see also: 3GPP TS 44.065, 6.6.3.1, Table 7c) */
-	OSMO_ASSERT(params->p3t >= 0);
-	OSMO_ASSERT(params->p3t <= 65535);
-	OSMO_ASSERT(params->p3t >= 2 * params->p1t);
+	if (params->p3t < 0 || params->p3t > 65535 || params->p3t < (2 * params->p1t))
+		return -EINVAL;
 	*dst = (params->p3t >> 8) & 0xFF;
 	dst++;
 	*dst = params->p3t & 0xFF;
@@ -362,9 +385,8 @@ static int encode_dcomp_v44_params(uint8_t *dst, unsigned int dst_maxlen,
 	dst_counter += 2;
 
 	/* Encode P3R (see also: 3GPP TS 44.065, 6.6.3.1, Table 7c) */
-	OSMO_ASSERT(params->p3r >= 0);
-	OSMO_ASSERT(params->p3r <= 65535);
-	OSMO_ASSERT(params->p3r >= 2 * params->p1r);
+	if (params->p3r < 0 || params->p3r > 65535 || params->p3r < (2 * params->p1r))
+		return -EINVAL;
 	*dst = (params->p3r >> 8) & 0xFF;
 	dst++;
 	*dst = params->p3r & 0xFF;
@@ -389,6 +411,10 @@ static int encode_comp_field(uint8_t *dst, unsigned int dst_maxlen,
 
 	uint8_t payload_bytes[256];
 	int payload_bytes_len = -1;
+
+	/* Bail if comp_len is out of bounds */
+	if (comp_field->comp_len > sizeof(comp_field->comp))
+		return -EINVAL;
 
 	/* If possible, try do encode payload bytes first */
 	if (comp_field->rfc1144_params) {
@@ -416,14 +442,13 @@ static int encode_comp_field(uint8_t *dst, unsigned int dst_maxlen,
 		    encode_dcomp_v44_params(payload_bytes,
 					    sizeof(payload_bytes),
 					    comp_field->v44_params);
-	} else
-		OSMO_ASSERT(false);
+	} else {
+		return -EINVAL;
+	}
 
-	/* Bail immediately if payload byte generation failed */
-	OSMO_ASSERT(payload_bytes_len >= 0);
-
-	/* Bail if comp_len is out of bounds */
-	OSMO_ASSERT(comp_field->comp_len <= sizeof(comp_field->comp));
+	/* Stop immediately if payload byte generation has failed */
+	if (payload_bytes_len < 0)
+		return payload_bytes_len;
 
 	/* Calculate length field of the data block */
 	if (comp_field->p) {
@@ -436,23 +461,27 @@ static int encode_comp_field(uint8_t *dst, unsigned int dst_maxlen,
 		expected_length = len + 2;
 	}
 
-	/* Bail immediately if no sufficient memory space is supplied */
-	OSMO_ASSERT(dst_maxlen >= expected_length);
+	/* Stop immediately if no sufficient memory space is supplied */
+	if (expected_length > dst_maxlen)
+		return -ENOMEM;
 
 	/* Check if the entity number is within bounds */
-	OSMO_ASSERT(comp_field->entity <= 0x1f);
+	if (comp_field->entity > 0x1f)
+		return -EINVAL;
 
 	/* Check if the algorithm number is within bounds */
 	compclass = gprs_sndcp_get_compression_class(comp_field);
 	switch (compclass) {
 	case SNDCP_XID_PROTOCOL_COMPRESSION:
-		OSMO_ASSERT(comp_field->algo.pcomp >= 0 && comp_field->algo.pcomp <= 0x1f);
+		if (comp_field->algo.pcomp < 0 || comp_field->algo.pcomp > 0x1f)
+			return -EINVAL;
 		break;
 	case SNDCP_XID_DATA_COMPRESSION:
-		OSMO_ASSERT(comp_field->algo.dcomp >= 0 && comp_field->algo.dcomp <= 0x1f);
+		if (comp_field->algo.dcomp < 0 || comp_field->algo.dcomp > 0x1f)
+			return -EINVAL;
 		break;
 	default:
-		OSMO_ASSERT(false);
+		return -EINVAL;
 	}
 
 	/* Zero out buffer */
@@ -547,10 +576,8 @@ static int gprs_sndcp_pack_fields(const struct llist_head *comp_fields,
 			rc = encode_comp_field(dst + byte_counter,
 					       dst_maxlen - byte_counter,
 					       comp_field);
-
-			/* When input data is correct, there is
-			 * no reason for the encoder to fail! */
-			OSMO_ASSERT(rc >= 0);
+			if (rc < 0)
+				return rc;
 
 			byte_counter += rc;
 		}
@@ -571,18 +598,19 @@ int gprs_sndcp_compile_xid(uint8_t *dst, unsigned int dst_maxlen,
 
 	OSMO_ASSERT(comp_fields);
 	OSMO_ASSERT(dst);
-	OSMO_ASSERT(dst_maxlen >= 2 + sizeof(xid_version_number));
 
 	/* Prepend header with version number */
 	if (version >= 0) {
+		byte_counter += TLV_GROSS_LEN(sizeof(xid_version_number));
+		if (byte_counter > dst_maxlen)
+			return -ENOMEM;
 		xid_version_number[0] = (uint8_t) (version & 0xff);
 		dst =
 		    tlv_put(dst, SNDCP_XID_VERSION_NUMBER,
 			    sizeof(xid_version_number), xid_version_number);
-		byte_counter += (sizeof(xid_version_number) + 2);
 	}
 
-	/* Stop if there is no compression fields supplied */
+	/* Bail if there is no compression fields supplied */
 	if (llist_empty(comp_fields))
 		return byte_counter;
 
@@ -590,7 +618,8 @@ int gprs_sndcp_compile_xid(uint8_t *dst, unsigned int dst_maxlen,
 	rc = gprs_sndcp_pack_fields(comp_fields, comp_bytes,
 				    sizeof(comp_bytes),
 				    SNDCP_XID_DATA_COMPRESSION);
-	OSMO_ASSERT(rc >= 0);
+	if (rc < 0)
+		return rc;
 
 	if (rc > 0) {
 		byte_counter += TLV_GROSS_LEN(rc);
@@ -603,7 +632,8 @@ int gprs_sndcp_compile_xid(uint8_t *dst, unsigned int dst_maxlen,
 	rc = gprs_sndcp_pack_fields(comp_fields, comp_bytes,
 				    sizeof(comp_bytes),
 				    SNDCP_XID_PROTOCOL_COMPRESSION);
-	OSMO_ASSERT(rc >= 0);
+	if (rc < 0)
+		return rc;
 
 	if (rc > 0) {
 		byte_counter += TLV_GROSS_LEN(rc);
