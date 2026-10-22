@@ -593,8 +593,10 @@ int gprs_sndcp_compile_xid(uint8_t *dst, unsigned int dst_maxlen,
 	OSMO_ASSERT(rc >= 0);
 
 	if (rc > 0) {
+		byte_counter += TLV_GROSS_LEN(rc);
+		if (byte_counter > dst_maxlen)
+			return -ENOMEM;
 		dst = tlv_put(dst, SNDCP_XID_DATA_COMPRESSION, rc, comp_bytes);
-		byte_counter += rc + 2;
 	}
 
 	/* Add header compression fields */
@@ -604,9 +606,11 @@ int gprs_sndcp_compile_xid(uint8_t *dst, unsigned int dst_maxlen,
 	OSMO_ASSERT(rc >= 0);
 
 	if (rc > 0) {
+		byte_counter += TLV_GROSS_LEN(rc);
+		if (byte_counter > dst_maxlen)
+			return -ENOMEM;
 		dst = tlv_put(dst, SNDCP_XID_PROTOCOL_COMPRESSION, rc,
 			      comp_bytes);
-		byte_counter += rc + 2;
 	}
 
 	/* Return generated length */

@@ -244,6 +244,38 @@ static void test_xid_encode_decode(const void *ctx)
 	talloc_free(comp_fields_dec);
 }
 
+/* Encode fields SNDCP-XID fields into a destination buffer that is to small */
+static void test_xid_encode_overflow(const void *ctx)
+{
+	printf("Testing SNDCP XID-Encoder with too small output buffer (overflow)\n");
+
+	LLIST_HEAD(comp_fields);
+	struct gprs_sndcp_pcomp_rfc1144_params rfc1144_params;
+	struct gprs_sndcp_comp_field rfc1144_comp_field;
+
+	uint8_t xid[16];
+	unsigned int xid_len = sizeof(xid);
+	int rc;
+
+	/* Setup dummy rfc1144 compression fields. This field is artificially enlarged and the encoding result will
+	   not fit into the xid buffer above. (we will leave all rfc1144_comp_field.comp values at zero) */
+	memset(&rfc1144_comp_field, 0, sizeof(struct gprs_sndcp_comp_field));
+	rfc1144_params.nsapi[0] = 5;
+	rfc1144_params.nsapi_len = 1;
+	rfc1144_params.s01 = 7;
+	rfc1144_comp_field.p = 1;
+	rfc1144_comp_field.entity = 0;
+	rfc1144_comp_field.algo.pcomp = RFC_1144;
+	rfc1144_comp_field.comp_len = 15;
+	rfc1144_comp_field.rfc1144_params = &rfc1144_params;
+	llist_add(&rfc1144_comp_field.list, &comp_fields);
+
+	rc = gprs_sndcp_compile_xid(xid, xid_len, &comp_fields,
+				    DEFAULT_SNDCP_VERSION);
+	printf("rc:  %d\n", rc);
+	OSMO_ASSERT(rc < 0);
+}
+
 static struct log_info_cat gprs_categories[] = {
 	[DSNDCP] = {
 		    .name = "DSNDCP",
@@ -269,6 +301,7 @@ int main(int argc, char **argv)
 
 	test_xid_decode_realworld(xid_ctx);
 	test_xid_encode_decode(xid_ctx);
+	test_xid_encode_overflow(xid_ctx);
 
 	printf("Done\n");
 
