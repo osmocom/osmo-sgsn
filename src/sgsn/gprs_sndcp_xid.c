@@ -566,7 +566,7 @@ int gprs_sndcp_compile_xid(uint8_t *dst, unsigned int dst_maxlen,
 {
 	int rc;
 	int byte_counter = 0;
-	uint8_t comp_bytes[512];
+	uint8_t comp_bytes[256];
 	uint8_t xid_version_number[1];
 
 	OSMO_ASSERT(comp_fields);
