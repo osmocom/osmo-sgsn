@@ -115,6 +115,10 @@ static int encode_pcomp_rfc1144_params(uint8_t *dst, unsigned int dst_maxlen,
 	dst += rc;
 	dst_counter += rc;
 
+	/* We still need to write 1 byte from here */
+	if (dst_maxlen < dst_counter + 1)
+		return -ENOMEM;
+
 	/* Encode s01 (see also: 3GPP TS 44.065, 6.5.2.1, Table 5) */
 	if (params->s01 < 0 || params->s01 > 255)
 		return -EINVAL;
@@ -153,6 +157,10 @@ static int encode_pcomp_rfc2507_params(uint8_t *dst, unsigned int dst_maxlen,
 		return rc;
 	dst += rc;
 	dst_counter += rc;
+
+	/* We still need to write 7 bytes from here */
+	if (dst_maxlen < dst_counter + 7)
+		return -ENOMEM;
 
 	/* Encode F_MAX_PERIOD (see also: 3GPP TS 44.065, 6.5.3.1, Table 6) */
 	if (params->f_max_period < 1 || params->f_max_period > 65535)
@@ -233,6 +241,10 @@ static int encode_pcomp_rohc_params(uint8_t *dst, unsigned int dst_maxlen,
 	dst += rc;
 	dst_counter += rc;
 
+	/* We still need to write 36 bytes from here */
+	if (dst_maxlen < dst_counter + 36)
+		return -ENOMEM;
+
 	/* Encode MAX_CID (see also: 3GPP TS 44.065, 6.5.4.1, Table 10) */
 	if (params->max_cid < 0 || params->max_cid > 16383)
 		return -EINVAL;
@@ -290,6 +302,10 @@ static int encode_dcomp_v42bis_params(uint8_t *dst, unsigned int dst_maxlen,
 	dst += rc;
 	dst_counter += rc;
 
+	/* We still need to write 4 bytes from here */
+	if (dst_maxlen < dst_counter + 4)
+		return -ENOMEM;
+
 	/* Encode P0 (see also: 3GPP TS 44.065, 6.6.2.1, Table 7a) */
 	if (params->p0 < 0 || params->p0 > 3)
 		return -EINVAL;
@@ -342,6 +358,10 @@ static int encode_dcomp_v44_params(uint8_t *dst, unsigned int dst_maxlen,
 		return rc;
 	dst += rc;
 	dst_counter += rc;
+
+	/* We still need to write 10 bytes from here */
+	if (dst_maxlen < dst_counter + 10)
+		return -ENOMEM;
 
 	/* Encode C0 (see also: 3GPP TS 44.065, 6.6.3.1, Table 7c) */
 	if (params->c0 != 0x80 && params->c0 != 0xC0)
