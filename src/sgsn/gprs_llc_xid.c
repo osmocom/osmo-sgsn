@@ -263,8 +263,7 @@ void gprs_llc_dump_xid_fields(const struct llist_head *xid_fields,
 	OSMO_ASSERT(xid_fields);
 
 	llist_for_each_entry(xid_field, xid_fields, list) {
-		if (xid_field->data_len) {
-			OSMO_ASSERT(xid_field->data);
+		if (xid_field->data_len && xid_field->data) {
 			LOGP(DLLC, logl,
 			     "XID: type %s, data_len=%d, data=%s\n",
 			     get_value_string(gprs_llc_xid_type_names,
